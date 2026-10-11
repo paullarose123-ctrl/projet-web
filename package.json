@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "promo:mexique": "node scripts/promo/mexique.mjs"
+    "promo:mexique": "node scripts/promo/mexique.mjs",
+    "promo:affiche": "node scripts/promo/affiche.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
