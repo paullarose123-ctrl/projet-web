@@ -28,6 +28,8 @@ Musique : une radio de sept morceaux calmes de la même famille, façon document
 
 Vidéo de la Série 2 (TikTok, 1080 × 1920, 21 s) : `promo/mexique.html` (page de développement, pas dans le site) anime le sous-bois du site, puis le lever de soleil sur le Mexique (pyramide de Teotihuacan, Popocatépetl, aigle royal, papel picado, pétales de cempasúchil), le booster de la Série 2 qui se déchire en cinq cartes mystère et la date de sortie. Chaque image dépend seulement du temps (`src/promo/MexiquePromo.tsx`) ; sa musique, plus cinéma que comptine, est en la mineur harmonique et en 6/8 lent : guitare nylon en arpèges et rasgueos, guitarrón, grand tambour, cordes sombres et flûte grave, avec une montée de tension pendant que le booster se charge et un impact quand il se déchire (`src/promo/musique.ts`). Rendu : `npm run dev` puis `npm run promo:mexique -- --url http://localhost:5173/promo/mexique.html --out serie2.mp4` (Playwright et ffmpeg) ; `--apercu 3,12,20` ne rend que quelques images. Le bouton « Aperçu avec le son » de la page rejoue la vidéo en direct.
 
+Affiche de la Série 2 (une image, 1080 × 1920) : `promo/affiche.html` reprend la scène de la vidéo, avec le booster devant le soleil entre quatre dos de cartes, le titre en haut et la date au milieu, hors de la zone que la légende et les boutons de TikTok recouvrent (`src/promo/MexiqueAffiche.tsx`). Rendu : `npm run dev` puis `npm run promo:affiche -- --url http://localhost:5173/promo/affiche.html --out affiche.png`.
+
 ## Lancer le jeu
 
 ```bash

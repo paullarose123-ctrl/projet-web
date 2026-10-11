@@ -97,7 +97,8 @@ function paintScene(): Scene {
   };
 }
 
-function MexicoScene({ t }: { t: number }) {
+/** Le paysage au temps `t` ; `eagle` fixe la position de l'aigle (pour l'affiche). */
+export function MexicoScene({ t, eagle }: { t: number; eagle?: [x: number, y: number] }) {
   scene ??= paintScene();
   const s = scene;
   const rise = easeOut(span(t, MEXICO - 0.4, MEXICO + 3.5));
@@ -106,8 +107,8 @@ function MexicoScene({ t }: { t: number }) {
   const zoom = 1.12 - 0.12 * easeOut(span(t, MEXICO - 0.4, DURATION));
   const lift = (k: number) => (1 - easeOut(span(t, MEXICO - 0.4, MEXICO + 1.6))) * 14 * k;
   const eagleK = span(t, MEXICO + 0.6, BOOSTER + 2);
-  const eagleX = -14 + eagleK * 122;
-  const eagleY = 54 - Math.sin(eagleK * Math.PI) * 10;
+  const eagleX = eagle ? eagle[0] : -14 + eagleK * 122;
+  const eagleY = eagle ? eagle[1] : 54 - Math.sin(eagleK * Math.PI) * 10;
   const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0} width={VW + 4} height={y1 - y0} fill="url(#mx-mist)" opacity={opacity} />;
   return (
     <svg className="promo__scene" viewBox={`0 0 ${VW} 160`} preserveAspectRatio="xMidYMid slice" style={{ transform: `scale(${zoom})` }}>
@@ -179,7 +180,7 @@ function MexicoScene({ t }: { t: number }) {
 
 const PAPEL = ['#c9473d', '#e2b25a', '#006847', '#fff3dd', '#a9cf7e', '#c4213a', '#f08a3c'];
 
-function Papel({ t }: { t: number }) {
+export function Papel({ t }: { t: number }) {
   const k = span(t, MEXICO + 0.2, MEXICO + 1.6);
   // chute, puis balancement amorti
   const drop = (1 - easeOut(k)) * -260 + Math.sin(k * Math.PI * 3) * (1 - k) * 18;
@@ -238,7 +239,8 @@ function Papel({ t }: { t: number }) {
 
 // ───────────── pétales de cempasúchil (la fleur du Jour des morts, le 1er novembre) ─────────────
 
-function Petals({ t, from }: { t: number; from: number }) {
+/** `keep` écarte des pétales selon leur position (l'affiche les retire de devant le texte). */
+export function Petals({ t, from, keep }: { t: number; from: number; keep?: (x: number, y: number) => boolean }) {
   if (t < from) return null;
   const r = mulberry32(42);
   const fade = span(t, from, from + 1);
@@ -253,6 +255,7 @@ function Petals({ t, from }: { t: number; from: number }) {
         const size = 4 + r() * 4;
         const y = ((t - from) * speed + offset) % (H + 60) - 30;
         const x = x0 + Math.sin(t * 1.3 + phase) * 26;
+        if (keep && !keep(x, y)) return null;
         return (
           <ellipse
             key={i}

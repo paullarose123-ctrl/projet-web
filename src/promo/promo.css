@@ -263,3 +263,66 @@ body {
   font: 600 16px var(--font-body);
   cursor: pointer;
 }
+
+/* ───────────── affiche (une image, même scène que la vidéo) ───────────── */
+
+/* assombrit le bas pour la date, et un peu le haut pour le titre */
+.affiche__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 30% at 50% 53%, rgba(255, 236, 190, 0.35), transparent 70%),
+    linear-gradient(180deg, rgba(8, 17, 13, 0.25) 0%, transparent 30%, transparent 58%, rgba(14, 6, 5, 0.82) 74%, rgba(14, 6, 5, 0.9) 100%);
+}
+
+.affiche__logo {
+  top: 150px;
+  font-size: 40px;
+}
+
+.affiche__title {
+  top: 196px;
+  font-size: 104px;
+}
+
+.affiche__pill {
+  top: 316px;
+}
+
+.affiche__rays {
+  top: 505px;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%) rotate(4deg);
+}
+
+.affiche__card {
+  position: absolute;
+  left: 50%;
+  top: 515px;
+  width: 128px;
+  aspect-ratio: 100 / 140;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45));
+}
+
+.affiche__pack {
+  position: absolute;
+  left: 50%;
+  top: 505px;
+  width: 188px;
+  transform: translate(-50%, -50%) rotate(-3deg);
+  filter: drop-shadow(0 0 36px rgba(255, 226, 150, 0.55)) drop-shadow(0 24px 30px rgba(0, 0, 0, 0.5));
+}
+
+.affiche__date-label {
+  top: 664px;
+}
+
+.affiche__date {
+  top: 694px;
+  font-size: 66px;
+}
+
+.affiche__url {
+  top: 774px;
+}
