@@ -35,7 +35,7 @@ function pickBackdrop(): { scene: SceneDef; seed: string } {
   return { scene: BACKDROPS[i], seed: `ouverture ${Math.random().toString(36).slice(2)}` };
 }
 
-// Éclats projetés par la déchirure : papier crème, feuilles aux couleurs du paysage, étincelles de la rareté.
+// Éclats projetés par la déchirure : papier crème, feuilles aux couleurs du paysage, étincelles de lumière (la même pour tous les boosters).
 const BITS = Array.from({ length: 18 }, (_, i) => ({
   x: 6 + ((i * 53) % 88),
   dx: (i % 2 ? 1 : -1) * (24 + ((i * 29) % 110)),
@@ -69,6 +69,13 @@ function isSpecial(card: CardFace): boolean {
   // une Icône (espèce disparue) est la carte la plus rare du jeu : elle a toujours sa grande révélation
   return tierOf(card) >= 3 || card.variant === 'prime' || isIcon(ATHLETES_BY_ID[card.athleteId]);
 }
+
+/**
+ * Lumière neutre, la même pour tous les boosters et toutes les cartes spéciales tant qu'elles ne sont pas
+ * révélées : aucune couleur ne doit trahir la rareté avant la révélation.
+ */
+const MYSTERY_LIGHT = '#f6e3b0';
+const MYSTERY_SPARKS = [MYSTERY_LIGHT, '#fff6dc', '#ffd98a', '#ffffff'];
 
 function glowOf(card: CardFace): string {
   if (card.variant === 'prime') return '#f2b8cf';
@@ -134,7 +141,8 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
   const silhouette = photo.src && photo.cutout ? photo.src : null;
   // étapes : 0 drapeau, 1 famille, 2 note, (2.5 silhouette si photo détourée), 3 carte
   const [shadow, setShadow] = useState(false);
-  const fxColors = useMemo(() => [glowOf(card), ...confettiColors(card)], [card]);
+  const revealed = step === 3;
+  const fxColors = useMemo(() => (revealed ? [glowOf(card), ...confettiColors(card)] : MYSTERY_SPARKS), [card, revealed]);
   // téléphone : la carte seule, bien centrée ; la fiche s'ouvre à la demande
   const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
   const [showStats, setShowStats] = useState(false);
@@ -178,17 +186,17 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
 
   return (
     <div
-      className={`walkout walkout--${prime ? 'prime' : rarity.id} walkout--step-${step}`}
-      style={{ ['--beam' as string]: glowOf(card) }}
+      className={`walkout walkout--${revealed ? (prime ? 'prime' : rarity.id) : 'mystere'} walkout--step-${step}`}
+      style={{ ['--beam' as string]: revealed ? glowOf(card) : MYSTERY_LIGHT }}
       role="dialog"
       aria-modal="true"
-      aria-label={`Révélation ${title}`}
+      aria-label={revealed ? `Révélation ${title}` : 'Révélation d’une carte spéciale'}
       onClick={skip}
     >
       {/* le paysage de la famille apparaît quand la famille est dévoilée */}
       <Landscape className="walkout__scene" scene={packScene('sport', athlete.sport)} seed={`Pack ${SPORTS[athlete.sport].name}`} />
-      {/* étincelles aspirées vers un cœur d'énergie, puis gerbe et braises à la révélation */}
-      <RevealFx phase={step === 3 ? 'burst' : 'charge'} colors={fxColors} intensity={rarity.order === 4 || prime || icon ? 1.5 : 1} />
+      {/* étincelles aspirées vers un cœur d'énergie (les mêmes pour toutes les raretés), puis gerbe et braises aux couleurs de la carte */}
+      <RevealFx phase={revealed ? 'burst' : 'charge'} colors={fxColors} intensity={revealed && (rarity.order === 4 || prime || icon) ? 1.5 : 1.2} />
       <div className="walkout__floor" aria-hidden="true" />
       {/* à chaque indice, une onde ; à la révélation, un flash blanc et une onde de choc */}
       <div className="walkout__wave" key={`wave-${step}-${shadow}`} aria-hidden="true" />
@@ -304,7 +312,6 @@ export function PackOpening() {
   }, [opening]);
 
   const cards = opening?.cards ?? [];
-  const best = useMemo(() => cards[cards.length - 1], [cards]);
   // un fond différent à chaque ouverture
   const backdrop = useMemo(() => (opening ? pickBackdrop() : null), [opening]);
 
@@ -382,7 +389,7 @@ export function PackOpening() {
 
   const tear = () => {
     if (stage !== 'pack') return;
-    // 1. le sachet se charge : il tremble de plus en plus, la couture s'illumine à la couleur de la meilleure carte
+    // 1. le sachet se charge : il tremble de plus en plus, la couture s'illumine (même lumière pour tous les boosters)
     // 2. la bande s'arrache en dents de scie, des éclats volent, un faisceau de lumière jaillit
     // 3. les cartes montent en éventail hors du sachet, puis le sachet s'éloigne vers le bas
     const charge = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 850;
@@ -410,12 +417,11 @@ export function PackOpening() {
   const focusIndex = focus ?? cards.length - 1;
   const focusCard = cards[focusIndex];
   const focusOwned = focusCard ? collection.find((c) => c.uid === focusCard.uid) : undefined;
-  // intensité de la mise en scène : 0 commune → 4 légendaire, 5 Prime
-  const intensity = best ? (best.variant === 'prime' ? 5 : tierOf(best)) : 0;
   const packStage = stage === 'pack' || stage === 'charging' || stage === 'tearing';
 
   return (
-    <div className={`opening opening--${stage} opening--t${intensity}`} style={{ ['--teaser' as string]: best ? glowOf(best) : '#fff' }}>
+    // le sachet s'ouvre de la même façon et dans la même lumière, quelles que soient les cartes qu'il contient
+    <div className={`opening opening--${stage}`} style={{ ['--teaser' as string]: MYSTERY_LIGHT }}>
       {/* un paysage tiré au hasard, en grand, derrière toute l'ouverture */}
       <div className="opening__backdrop" aria-hidden="true">
         {backdrop && <Landscape className="opening__scene" scene={backdrop.scene} seed={backdrop.seed} />}
@@ -502,7 +508,7 @@ export function PackOpening() {
               return (
                 <div
                   key={card.uid}
-                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}${!flipped && isSpecial(card) ? ' is-special' : ''}`}
+                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}`}
                   style={{ ['--glow' as string]: glowOf(card) }}
                   onClick={advance}
                   role="button"

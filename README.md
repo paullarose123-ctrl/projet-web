@@ -82,6 +82,7 @@ Le dos des cartes est une affiche de crépuscule : soleil couchant dans une vall
 - Boutique : Découverte, Pro (1 Rare garantie), Élite (1 Épique garantie), Icônes (1 seule carte, toujours une Icône : le pack le plus cher, 600 000 crédits), Prime (1 individu célèbre garanti, 250 000 crédits), Légende (1 Légendaire garantie) et un pack de 3 cartes par famille (4 000 crédits). Les chances sont affichées sur chaque pack.
 - Les Icônes sont les cartes les plus rares : hors du Pack Icônes, environ 1 carte sur 1 000 seulement (jamais à la place de la carte garantie), et elles passent très rarement sur le marché. Une Icône vaut de 100 000 à 350 000 crédits selon sa célébrité.
 - La monnaie du jeu : les crédits.
+- Aucun spoil : le sachet se charge et se déchire dans la même lumière dorée quelles que soient les cartes, une carte spéciale face cachée ne brille pas, et pendant les indices de sa révélation les étincelles restent dorées ; la couleur de la rareté n’apparaît qu’au moment où la carte se dévoile.
 - Les Épiques, Légendaires, Prime et Icônes ont droit à leur révélation : drapeau, puis famille, puis numéro, pendant que des étincelles sont aspirées vers un cœur d’énergie ; puis flash, onde de choc, gerbe d’étincelles et la carte qui jaillit dans un halo de sa couleur, avec confettis et fanfare.
 
 ### Marché

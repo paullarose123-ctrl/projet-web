@@ -2640,7 +2640,7 @@
     linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent 40%);
 }
 
-/* halo derrière le sachet : blanc doux au repos, couleur de la meilleure carte pendant la charge */
+/* halo derrière le sachet : blanc doux au repos, lumière dorée pendant la charge (la même pour tous les boosters, pour ne rien dévoiler) */
 .opening__halo {
   position: absolute;
   left: 50%;
@@ -2923,15 +2923,12 @@
   }
 }
 
-/* plus la meilleure carte est rare, plus la déchirure est spectaculaire */
-.opening--t3 .opening__flash,
-.opening--t4 .opening__flash,
-.opening--t5 .opening__flash {
+/* la déchirure est la même pour tous les boosters : rien ne trahit les cartes qu'ils contiennent */
+.opening__flash {
   --flash: 0.45;
 }
 
-.opening--tearing.opening--t4 .opening__stage,
-.opening--tearing.opening--t5 .opening__stage {
+.opening--tearing .opening__stage {
   animation: stage-shake 0.45s 0.32s ease-out;
 }
 
@@ -2948,13 +2945,6 @@
   80% {
     transform: translate(2px, -1px);
   }
-}
-
-.opening--t4 .pack3d__beam,
-.opening--t5 .pack3d__beam {
-  left: 6%;
-  right: 6%;
-  height: 320%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3171,10 +3161,6 @@
   filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.45));
 }
 
-.flip.is-special.is-next .flip__back {
-  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--glow) 55%, transparent));
-}
-
 /* ───── une carte à la fois, en grand et en 3D ───── */
 .opening__cards--single {
   gap: 14px;
@@ -3355,10 +3341,6 @@
 
 .stage-card:not(.is-flipped) .flip__back {
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.5));
-}
-
-.stage-card.is-special:not(.is-flipped) .flip__back {
-  filter: drop-shadow(0 0 26px color-mix(in srgb, var(--glow) 60%, transparent));
 }
 
 /* ombre au sol, qui s'éloigne quand la carte monte vers nous */
