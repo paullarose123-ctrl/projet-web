@@ -10,7 +10,8 @@
     "build:single": "vite build --mode single && node scripts/make-artifact.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "promo:mexique": "node scripts/promo/mexique.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
