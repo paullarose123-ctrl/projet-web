@@ -346,3 +346,126 @@ export function bird(ac: AudioContext, bus: Bus, t: number, gain = 0.02) {
     osc.stop(start + 0.1);
   }
 }
+
+// ───────────── instruments de la radio ─────────────
+
+/** Piano feutré : partiels presque harmoniques qui s'éteignent d'autant plus vite qu'ils sont aigus. */
+export function piano(ac: AudioContext, bus: Bus, freq: number, t: number, gain = 0.1, pan = 0, decay = 2.6) {
+  const partials: Array<[number, number, number]> = [
+    [1, 1, 1],
+    [2.002, 0.42, 0.55],
+    [3.005, 0.16, 0.35],
+    [4.012, 0.07, 0.24],
+    [5.02, 0.03, 0.16],
+  ];
+  // les notes aiguës sonnent moins longtemps, les graves un peu plus
+  const length = decay * Math.min(1.5, Math.max(0.55, Math.sqrt(440 / freq)));
+  const tone = ac.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.value = Math.min(5200, freq * 7);
+  out(ac, tone, bus, pan, 0.8);
+  for (const [ratio, level, fade] of partials) {
+    const osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq * ratio;
+    const env = envelope(ac, t, gain * level, 0.006, length * fade);
+    osc.connect(env).connect(tone);
+    osc.start(t);
+    osc.stop(t + length * fade + 0.1);
+  }
+  // le feutre du marteau
+  air(ac, bus, t, 0.03, { gain: gain * 0.12, from: Math.min(6000, freq * 4), q: 1.4, attack: 0.002, pan, send: 0 });
+}
+
+/** Flûte douce : sinus un peu boisé, vibrato qui arrive après l'attaque, souffle au début de la note. */
+export function flute(ac: AudioContext, bus: Bus, freq: number, t: number, duration: number, gain = 0.05, pan = 0) {
+  const tone = ac.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.value = 3200;
+  const amp = ac.createGain();
+  amp.gain.setValueAtTime(0.0001, t);
+  amp.gain.linearRampToValueAtTime(gain, t + 0.09);
+  amp.gain.setValueAtTime(gain, t + Math.max(0.1, duration));
+  amp.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.1, duration) + 0.28);
+  tone.connect(amp);
+  out(ac, amp, bus, pan, 0.9);
+  const vibrato = ac.createOscillator();
+  vibrato.frequency.value = 5.2;
+  const depth = ac.createGain();
+  depth.gain.setValueAtTime(0, t);
+  depth.gain.linearRampToValueAtTime(freq * 0.006, t + 0.45);
+  vibrato.connect(depth);
+  const end = t + Math.max(0.1, duration) + 0.35;
+  for (const [type, level] of [
+    ['sine', 1],
+    ['triangle', 0.22],
+  ] as const) {
+    const osc = ac.createOscillator();
+    osc.type = type;
+    osc.frequency.value = freq;
+    depth.connect(osc.frequency);
+    const g = ac.createGain();
+    g.gain.value = level;
+    osc.connect(g).connect(tone);
+    osc.start(t);
+    osc.stop(end);
+  }
+  vibrato.start(t);
+  vibrato.stop(end);
+  air(ac, bus, t, 0.14, { gain: gain * 0.3, from: Math.min(7000, freq * 2), q: 2, attack: 0.02, pan, send: 0.4 });
+}
+
+/** Lit de bruit doux et continu (pluie, vent), avec une montée et une descente lentes. */
+export function bed(ac: AudioContext, bus: Bus, t: number, duration: number, opts: { gain?: number; low?: number; high?: number; fade?: number; pan?: number } = {}) {
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuffer(ac);
+  src.loop = true;
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = opts.low ?? 2500;
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = opts.high ?? 7000;
+  const fade = opts.fade ?? 1;
+  const env = ac.createGain();
+  env.gain.setValueAtTime(0, t);
+  env.gain.linearRampToValueAtTime(opts.gain ?? 0.02, t + fade);
+  env.gain.setValueAtTime(opts.gain ?? 0.02, t + duration - fade);
+  env.gain.linearRampToValueAtTime(0, t + duration);
+  src.connect(hp).connect(lp).connect(env);
+  out(ac, env, bus, opts.pan ?? 0, 0.5);
+  src.start(t, Math.random() * 1.5);
+  src.stop(t + duration + 0.05);
+}
+
+/** Grillon : quelques stridulations aiguës et rapides. */
+export function cricket(ac: AudioContext, bus: Bus, t: number, gain = 0.008) {
+  const pan = Math.random() * 1.4 - 0.7;
+  const freq = 4300 + Math.random() * 600;
+  const chirps = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < chirps; i++) {
+    const start = t + i * 0.055;
+    const osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const env = envelope(ac, start, gain, 0.003, 0.035);
+    osc.connect(env);
+    out(ac, env, bus, pan, 0.6);
+    osc.start(start);
+    osc.stop(start + 0.05);
+  }
+}
+
+/** Bulle qui remonte : un petit glissando vers l'aigu. */
+export function bubble(ac: AudioContext, bus: Bus, t: number, gain = 0.02) {
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  const f0 = 260 + Math.random() * 260;
+  osc.frequency.setValueAtTime(f0, t);
+  osc.frequency.exponentialRampToValueAtTime(f0 * 2.6, t + 0.09);
+  const env = envelope(ac, t, gain, 0.004, 0.1);
+  osc.connect(env);
+  out(ac, env, bus, Math.random() * 1.4 - 0.7, 0.8);
+  osc.start(t);
+  osc.stop(t + 0.14);
+}

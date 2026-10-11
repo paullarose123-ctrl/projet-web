@@ -1995,3 +1995,137 @@ h3 {
     animation: none;
   }
 }
+
+/* ───────────── Radio : « en écoute » ───────────── */
+.now-playing {
+  position: fixed;
+  z-index: 60;
+  top: calc(env(safe-area-inset-top, 0px) + 66px);
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 8px 8px 8px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line-2);
+  background: rgba(16, 26, 20, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  animation: now-playing-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.now-playing__eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+}
+
+.now-playing__eq i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent-text);
+  transform-origin: bottom;
+  animation: now-playing-eq 1.1s ease-in-out infinite;
+}
+
+.now-playing__eq i:nth-child(2) {
+  animation-delay: -0.4s;
+}
+
+.now-playing__eq i:nth-child(3) {
+  animation-delay: -0.75s;
+}
+
+.now-playing__text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+  animation: fade-in 0.4s ease-out;
+}
+
+.now-playing__text small {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.now-playing__text b {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.now-playing__next {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.now-playing__next:hover {
+  color: var(--text);
+  background: var(--bg-4);
+}
+
+.now-playing__next svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* grand écran : en bas à gauche, à côté de la barre de navigation */
+@media (min-width: 900px) {
+  .now-playing {
+    top: auto;
+    right: auto;
+    left: 16px;
+    bottom: 16px;
+  }
+}
+
+@keyframes now-playing-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes now-playing-eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .now-playing,
+  .now-playing__eq i {
+    animation: none;
+  }
+}

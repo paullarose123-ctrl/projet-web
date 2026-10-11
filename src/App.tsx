@@ -24,6 +24,7 @@ import { useOnline } from './store/online';
 import { useTrades } from './store/trades';
 import { startPresence } from './store/presence';
 import { OnlinePlayers } from './components/OnlinePlayers';
+import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
 import { Landscape } from './components/PackScene';
 import { SITE_SCENE } from './art/scenes';
@@ -275,6 +276,7 @@ export function App() {
       <BottomNav />
       <CardDetail />
       <PackOpening />
+      <NowPlaying />
       <Toasts />
       <Juice />
     </div>

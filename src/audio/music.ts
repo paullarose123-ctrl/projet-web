@@ -1,123 +1,141 @@
-import { bass, bird, createBus, kalimba, midi, pluck, sharedAudio, strings, type Bus } from './engine';
+import { bird, createBus, sharedAudio, type Bus } from './engine';
+import { allTracks, type Track } from './tracks';
 
-// Musique de fond composée en direct avec Web Audio : aucun fichier, aucun droit d'auteur.
-// Une pièce calme en ré majeur à 76 bpm, façon documentaire nature : arpèges de harpe (corde pincée),
-// mélodie de kalimba qui respire, nappe de cordes, contrebasse et quelques chants d'oiseaux au loin.
+// La radio du jeu : sept morceaux calmes de la même famille (src/audio/tracks.ts), joués l'un après l'autre
+// dans un ordre mélangé, sans jamais repasser deux fois le même avant d'avoir entendu tous les autres.
+// Entre deux morceaux, l'accord final résonne puis quelques secondes de calme, avec des oiseaux au loin.
+// Chaque morceau a son propre bus : on peut passer au suivant en fondu sans couper les notes déjà prévues.
 
-const BPM = 76;
-const BEAT = 60 / BPM;
-const BAR = BEAT * 4;
 const VOLUME = 0.42;
+/** temps laissé à l'accord final pour résonner, en secondes */
+const RING = 4;
+/** silence entre deux morceaux, en secondes */
+const GAP_MIN = 4;
+const GAP_MAX = 8;
 
-// 16 mesures : Ré – Si m – Sol – La, puis Ré – Fa# m – Sol – La (notes MIDI)
-const PROGRESSION: Array<{ root: number; chord: number[] }> = [
-  { root: 38, chord: [62, 66, 69] }, // Ré
-  { root: 35, chord: [59, 62, 66] }, // Si m
-  { root: 43, chord: [59, 62, 67] }, // Sol
-  { root: 45, chord: [61, 64, 69] }, // La
-  { root: 38, chord: [62, 66, 69] }, // Ré
-  { root: 42, chord: [61, 66, 69] }, // Fa# m
-  { root: 43, chord: [59, 62, 67] }, // Sol
-  { root: 45, chord: [61, 64, 69] }, // La
-];
+let TRACKS = allTracks();
 
-// Ré majeur pentatonique, octave de la mélodie
-const MELODY = [74, 76, 78, 81, 83, 86];
-// motifs d'arpège (indices dans l'accord étalé sur deux octaves)
-const ARPEGGIOS = [
-  [0, 1, 2, 3, 4, 3, 2, 1],
-  [0, 2, 1, 3, 2, 4, 3, 5],
-  [0, 1, 2, 4, 5, 4, 2, 1],
-];
+interface Playing {
+  track: Track;
+  bus: Bus;
+  nextBar: number;
+  barIndex: number;
+}
 
-let bus: Bus | null = null;
-let timer: number | undefined;
-let nextBar = 0;
-let barIndex = 0;
+let current: Playing | null = null;
+let queue: Track[] = [];
+let lastId = '';
+/** heure (horloge audio) du prochain morceau, pendant la pause entre deux morceaux */
+let nextTrackAt = 0;
 let nextBird = 0;
-let melodyNote = 2;
+let ambience: Bus | null = null;
+let timer: number | undefined;
 let enabled = true;
 let started = false;
+let title: string | null = null;
+const listeners = new Set<(title: string | null) => void>();
 
-/** Programme une mesure entière. Chaque accord dure deux mesures. */
-function scheduleBar(ac: AudioContext, out: Bus, t0: number, index: number) {
-  const section = Math.floor(index / 16) % 2; // la deuxième fois, la mélodie est plus présente
-  const step = Math.floor(index / 2) % PROGRESSION.length;
-  const { root, chord } = PROGRESSION[step];
-  const firstOfChord = index % 2 === 0;
+const barLength = (track: Track) => (60 / track.bpm) * track.beats;
 
-  // nappe de cordes, tenue sur les deux mesures
-  if (firstOfChord) strings(ac, out, chord.map(midi), t0, BAR * 2 - 0.4, 0.032, { attack: 1.6, release: 2.2, open: 1400 });
-
-  // contrebasse sur les temps 1 et 3 (quinte au temps 3 une fois sur deux)
-  bass(ac, out, midi(root), t0, BEAT * 1.7, 0.15);
-  bass(ac, out, midi(root + (index % 2 ? 7 : 0)), t0 + BEAT * 2, BEAT * 1.5, 0.11);
-
-  // arpège de harpe en croches
-  const spread = [...chord, ...chord.map((n) => n + 12)];
-  const pattern = ARPEGGIOS[(Math.floor(index / 4) + section) % ARPEGGIOS.length];
-  pattern.forEach((k, i) => {
-    if (i === 7 && index % 4 === 3) return; // une respiration en fin de phrase
-    const swing = i % 2 ? 0.012 : 0;
-    const accent = i % 4 === 0 ? 0.2 : 0.13;
-    pluck(ac, out, midi(spread[k]), t0 + i * (BEAT / 2) + swing, accent, ((i % 4) - 1.5) * 0.18, 0.4);
-  });
-
-  // mélodie de kalimba : quelques notes qui se promènent dans la gamme, jamais trop chargée
-  const density = section ? 0.55 : 0.35;
-  for (let beat = 0; beat < 4; beat++) {
-    if (Math.random() > density || (beat === 3 && index % 2)) continue;
-    melodyNote = Math.max(0, Math.min(MELODY.length - 1, melodyNote + [-2, -1, -1, 1, 1, 2][Math.floor(Math.random() * 6)]));
-    const t = t0 + beat * BEAT + (Math.random() < 0.3 ? BEAT / 2 : 0);
-    kalimba(ac, out, midi(MELODY[melodyNote]), t, 0.11, 0.25);
-  }
-
-  // oiseaux au loin, de temps en temps
-  if (t0 >= nextBird) {
-    bird(ac, out, t0 + Math.random() * BAR, 0.012);
-    nextBird = t0 + 6 + Math.random() * 6;
-  }
+function announce(value: string | null) {
+  title = value;
+  listeners.forEach((listener) => listener(value));
 }
 
-function loop() {
-  const ac = sharedAudio();
-  if (!ac || !enabled || !bus) return;
-  // on programme toujours un peu d'avance, sans jamais prendre de retard
-  if (nextBar < ac.currentTime) nextBar = ac.currentTime + 0.1;
-  while (nextBar < ac.currentTime + BAR * 1.2) {
-    scheduleBar(ac, bus, nextBar, barIndex);
-    nextBar += BAR;
-    barIndex += 1;
+/** Le prochain morceau : la file mélangée est refaite quand elle est vide, sans répéter le dernier joué. */
+function nextInQueue(): Track {
+  if (!queue.length) {
+    queue = [...TRACKS].sort(() => Math.random() - 0.5);
+    if (queue.length > 1 && queue[0].id === lastId) queue.push(queue.shift()!);
   }
+  const track = queue.shift()!;
+  lastId = track.id;
+  return track;
 }
 
-function fadeTo(value: number, seconds: number) {
-  const ac = sharedAudio();
-  if (!ac || !bus) return;
-  for (const [node, level] of [[bus.dry, value], [bus.wet, value * 0.55]] as const) {
+function fade(ac: AudioContext, bus: Bus, value: number, seconds: number) {
+  for (const [node, level] of [
+    [bus.dry, value],
+    [bus.wet, value * 0.55],
+  ] as const) {
     node.gain.cancelScheduledValues(ac.currentTime);
     node.gain.setValueAtTime(node.gain.value, ac.currentTime);
     node.gain.linearRampToValueAtTime(level, ac.currentTime + seconds);
   }
 }
 
+/** Libère le bus d'un morceau une fois ses dernières notes éteintes. */
+function release(bus: Bus, afterSeconds: number) {
+  window.setTimeout(
+    () => {
+      bus.dry.disconnect();
+      bus.wet.disconnect();
+    },
+    afterSeconds * 1000 + 500,
+  );
+}
+
+function startTrack(ac: AudioContext, at: number) {
+  const track = nextInQueue();
+  const bus = createBus(ac, 0, 0);
+  current = { track, bus, nextBar: at, barIndex: 0 };
+  fade(ac, bus, VOLUME, 1.5);
+  // le titre s'affiche quand le morceau commence vraiment
+  window.setTimeout(() => announce(track.title), Math.max(0, (at - ac.currentTime) * 1000));
+}
+
+function endTrack(ac: AudioContext, at: number) {
+  if (!current) return;
+  release(current.bus, at - ac.currentTime + RING + 2);
+  current = null;
+  nextTrackAt = at + RING + GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
+  nextBird = at + RING;
+}
+
+function loop() {
+  const ac = sharedAudio();
+  if (!ac || !enabled) return;
+  const now = ac.currentTime;
+  if (!current) {
+    // pause entre deux morceaux : quelques oiseaux, puis le morceau suivant
+    if (now >= nextTrackAt - 0.5) {
+      startTrack(ac, Math.max(now + 0.1, nextTrackAt));
+    } else if (now >= nextBird) {
+      ambience ??= createBus(ac, VOLUME, 0.55);
+      bird(ac, ambience, now + 0.2, 0.01);
+      nextBird = now + 2.5 + Math.random() * 3;
+    }
+    return;
+  }
+  const playing = current;
+  const length = barLength(playing.track);
+  // on programme toujours un peu d'avance, sans jamais prendre de retard
+  if (playing.nextBar < now) playing.nextBar = now + 0.1;
+  while (current === playing && playing.nextBar < now + length * 1.2) {
+    if (playing.barIndex >= playing.track.bars) {
+      endTrack(ac, playing.nextBar);
+      break;
+    }
+    playing.track.bar(ac, playing.bus, playing.nextBar, playing.barIndex);
+    playing.nextBar += length;
+    playing.barIndex += 1;
+  }
+}
+
 function play() {
   const ac = sharedAudio();
   if (!ac) return;
-  if (!bus) {
-    bus = createBus(ac, 0, 0);
-  }
+  if (current) fade(ac, current.bus, VOLUME, 2);
+  else nextTrackAt = Math.min(nextTrackAt, ac.currentTime + 0.3);
   if (timer === undefined) {
-    nextBar = Math.max(nextBar, ac.currentTime + 0.1);
-    nextBird = Math.max(nextBird, ac.currentTime + 5);
     timer = window.setInterval(loop, 250);
     loop();
   }
-  fadeTo(VOLUME, 3);
 }
 
 function stop() {
-  fadeTo(0, 0.8);
+  const ac = sharedAudio();
+  if (ac && current) fade(ac, current.bus, 0, 0.8);
   if (timer !== undefined) {
     window.clearInterval(timer);
     timer = undefined;
@@ -136,4 +154,39 @@ export function setMusicEnabled(on: boolean): void {
   if (!started) return;
   if (on) play();
   else stop();
+}
+
+/** Passe au morceau suivant : fondu rapide du morceau en cours, puis le suivant démarre. */
+export function nextTrack(): void {
+  const ac = sharedAudio();
+  if (!ac || !started || !enabled) return;
+  if (current) {
+    fade(ac, current.bus, 0, 0.7);
+    release(current.bus, 1.5);
+    current = null;
+  }
+  nextTrackAt = ac.currentTime + 0.9;
+  loop();
+}
+
+/** Titre du dernier morceau lancé (null avant le premier). */
+export function currentTitle(): string | null {
+  return title;
+}
+
+/** Prévient à chaque nouveau morceau (et quand la musique reprend) ; renvoie de quoi se désabonner. */
+export function onTrackChange(listener: (title: string | null) => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** Liste des morceaux de la radio. */
+export function trackList(): Array<{ id: string; title: string }> {
+  return TRACKS.map(({ id, title: name }) => ({ id, title: name }));
+}
+
+/** Pour les tests : remplace la liste des morceaux (par exemple par des morceaux très courts). */
+export function setTracksForTesting(tracks: Track[]): void {
+  TRACKS = tracks;
+  queue = [];
 }
