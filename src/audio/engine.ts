@@ -469,3 +469,24 @@ export function bubble(ac: AudioContext, bus: Bus, t: number, gain = 0.02) {
   osc.start(t);
   osc.stop(t + 0.14);
 }
+
+/** Marimba : lame de bois frappée (partiels 1, ~4 et ~9,2 qui s'éteignent vite), plus le claquement de la mailloche. */
+export function marimba(ac: AudioContext, bus: Bus, freq: number, t: number, gain = 0.15, pan = 0) {
+  const length = Math.min(1.6, Math.max(0.6, Math.sqrt(440 / freq)));
+  const partials: Array<[number, number, number]> = [
+    [1, 1, 0.5],
+    [3.93, 0.26, 0.12],
+    [9.2, 0.07, 0.04],
+  ];
+  for (const [ratio, level, decay] of partials) {
+    const osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq * ratio;
+    const env = envelope(ac, t, gain * level, 0.003, decay * length);
+    osc.connect(env);
+    out(ac, env, bus, pan, 0.6);
+    osc.start(t);
+    osc.stop(t + decay * length + 0.1);
+  }
+  air(ac, bus, t, 0.012, { gain: gain * 0.18, from: Math.min(7000, freq * 6), q: 1.2, attack: 0.001, pan, send: 0 });
+}
