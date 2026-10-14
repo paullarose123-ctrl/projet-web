@@ -1,7 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { drawShape, type NatureShape } from './natureShapes';
 
 export interface ConfettiHandle {
-  burst: (colors: string[], count?: number) => void;
+  /** sans forme : confettis de papier ; sinon feuilles, pétales ou étoiles */
+  burst: (colors: string[], count?: number, shape?: NatureShape) => void;
 }
 
 interface Particle {
@@ -15,6 +17,7 @@ interface Particle {
   h: number;
   color: string;
   life: number;
+  shape?: NatureShape;
 }
 
 // Confettis en canvas, déclenchés à la révélation des grosses cartes.
@@ -33,6 +36,11 @@ export const Confetti = forwardRef<ConfettiHandle>(function Confetti(_, ref) {
     for (const p of particles.current) {
       p.vy += 0.18;
       p.vx *= 0.99;
+      // une feuille ou un pétale freine dans l'air et se balance
+      if (p.shape && p.shape !== 'etoile') {
+        p.vy = Math.min(p.vy, 2.2);
+        p.x += Math.sin(p.rot) * 0.7;
+      }
       p.x += p.vx;
       p.y += p.vy;
       p.rot += p.vr;
@@ -42,14 +50,20 @@ export const Confetti = forwardRef<ConfettiHandle>(function Confetti(_, ref) {
       ctx.rotate(p.rot);
       ctx.globalAlpha = Math.min(1, p.life / 40);
       ctx.fillStyle = p.color;
-      ctx.fillRect((-p.w / 2) * dpr, (-p.h / 2) * dpr, p.w * dpr, p.h * dpr * Math.abs(Math.cos(p.rot * 2)) + dpr);
+      if (p.shape) {
+        // la forme se retourne en tombant
+        ctx.scale(dpr, dpr * (0.3 + Math.abs(Math.cos(p.rot * 1.5)) * 0.7));
+        drawShape(ctx, p.shape, p.w * 0.75);
+      } else {
+        ctx.fillRect((-p.w / 2) * dpr, (-p.h / 2) * dpr, p.w * dpr, p.h * dpr * Math.abs(Math.cos(p.rot * 2)) + dpr);
+      }
       ctx.restore();
     }
     if (particles.current.length) frame.current = requestAnimationFrame(loop);
   };
 
   useImperativeHandle(ref, () => ({
-    burst: (colors, count = 160) => {
+    burst: (colors, count = 160, shape) => {
       if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -72,6 +86,7 @@ export const Confetti = forwardRef<ConfettiHandle>(function Confetti(_, ref) {
           h: 3 + Math.random() * 5,
           color: colors[i % colors.length],
           life: 140 + Math.random() * 80,
+          shape,
         });
       }
       cancelAnimationFrame(frame.current);

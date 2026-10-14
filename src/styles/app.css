@@ -2923,13 +2923,24 @@
   }
 }
 
-/* la déchirure est la même pour tous les boosters : rien ne trahit les cartes qu'ils contiennent */
-.opening__flash {
+/* plus la meilleure carte est rare, plus la déchirure est spectaculaire : flash plus fort, secousse, faisceau
+   plus large. La lumière reste la même lumière dorée pour tous les boosters : aucune couleur ne dévoile la rareté. */
+.opening--t3 .opening__flash,
+.opening--t4 .opening__flash,
+.opening--t5 .opening__flash {
   --flash: 0.45;
 }
 
-.opening--tearing .opening__stage {
+.opening--tearing.opening--t4 .opening__stage,
+.opening--tearing.opening--t5 .opening__stage {
   animation: stage-shake 0.45s 0.32s ease-out;
+}
+
+.opening--t4 .pack3d__beam,
+.opening--t5 .pack3d__beam {
+  left: 6%;
+  right: 6%;
+  height: 320%;
 }
 
 @keyframes stage-shake {
@@ -3343,6 +3354,21 @@
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.5));
 }
 
+/* une carte spéciale encore face cachée scintille, dans la lumière dorée commune à toutes les raretés */
+.stage-card.is-special:not(.is-flipped) .flip__back {
+  animation: special-back 1.8s ease-in-out infinite;
+}
+
+@keyframes special-back {
+  0%,
+  100% {
+    filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px color-mix(in srgb, var(--teaser) 45%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 30px color-mix(in srgb, var(--teaser) 75%, transparent));
+  }
+}
+
 /* ombre au sol, qui s'éloigne quand la carte monte vers nous */
 .opening__shadow {
   position: absolute;
@@ -3597,6 +3623,234 @@
   opacity: 0.6;
 }
 
+/* ciel de la couleur de la rareté, posé sur le paysage de la famille */
+.walkout__sky {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--beam) 30%, transparent), transparent 52%),
+    radial-gradient(70% 50% at 50% 46%, color-mix(in srgb, var(--beam) 20%, transparent), transparent 72%);
+  opacity: 0.55;
+  transition: opacity 1s ease;
+}
+
+.walkout:not(.walkout--step-0) .walkout__sky {
+  opacity: 1;
+}
+
+/* rayons de soleil qui tournent lentement, plus vifs à la révélation */
+.walkout__rays {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  width: 230vmax;
+  height: 230vmax;
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--beam) 45%, transparent) 0deg 4deg, transparent 4deg 20deg);
+  mask-image: radial-gradient(circle, #000 2%, transparent 23%);
+  -webkit-mask-image: radial-gradient(circle, #000 2%, transparent 23%);
+  opacity: 0.24;
+  transform: translate(-50%, -50%);
+  animation: rays-turn 60s linear infinite;
+  transition: opacity 0.8s ease;
+}
+
+.walkout--step-3 .walkout__rays {
+  opacity: 0.6;
+}
+
+@keyframes rays-turn {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* le soleil des boosters : un disque pâle, son halo et ses anneaux fins qui respirent */
+.walkout__sun {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  width: min(76vw, 460px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--beam) 35%, rgba(255, 248, 232, 0.5)) 0 31%, transparent 31.5%),
+    radial-gradient(circle, color-mix(in srgb, var(--beam) 45%, transparent) 0%, transparent 62%);
+  opacity: 0.5;
+  transform: translate(-50%, -50%) scale(0.8);
+  transition:
+    transform 1.4s cubic-bezier(0.2, 0.9, 0.25, 1),
+    opacity 0.9s ease;
+}
+
+.walkout:not(.walkout--step-0) .walkout__sun {
+  opacity: 0.7;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.walkout--step-3 .walkout__sun {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.walkout__sun i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--beam) 60%, #fff);
+  opacity: 0.35;
+  animation: sun-ring 5s ease-in-out infinite;
+}
+
+.walkout__sun i:nth-child(1) {
+  inset: 14%;
+}
+
+.walkout__sun i:nth-child(2) {
+  inset: 3%;
+  opacity: 0.22;
+  animation-delay: -1.6s;
+}
+
+.walkout__sun i:nth-child(3) {
+  inset: -9%;
+  opacity: 0.12;
+  animation-delay: -3.2s;
+}
+
+@keyframes sun-ring {
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+/* Épique : crépuscule violet, lucioles */
+.walkout--epique {
+  background: radial-gradient(70% 60% at 50% 46%, #2a1d4a, #07060f 72%);
+}
+
+/* Légendaire : soleil d'or, feuilles qui tombent */
+.walkout--legendaire {
+  background: radial-gradient(70% 60% at 50% 46%, #4a2a14, #0c0604 72%);
+}
+
+.walkout--legendaire .walkout__sun {
+  background:
+    radial-gradient(circle, rgba(255, 236, 190, 0.75) 0 31%, transparent 31.5%),
+    radial-gradient(circle, rgba(255, 190, 110, 0.55) 0%, transparent 64%);
+}
+
+/* Icône : nuit étoilée, une lune pâle et des orbites en pointillés */
+.walkout--icone {
+  background: radial-gradient(70% 60% at 50% 46%, #1b2542, #04060d 72%);
+}
+
+.walkout--icone .walkout__scene {
+  filter: saturate(0.35) brightness(0.55) hue-rotate(185deg);
+}
+
+.walkout--icone .walkout__sky {
+  background:
+    linear-gradient(180deg, rgba(20, 30, 70, 0.75), rgba(20, 30, 70, 0.2) 60%, transparent),
+    radial-gradient(60% 45% at 50% 46%, rgba(246, 240, 220, 0.16), transparent 72%);
+}
+
+.walkout--icone .walkout__sun {
+  background:
+    radial-gradient(circle, rgba(246, 240, 220, 0.6) 0 31%, transparent 31.5%),
+    radial-gradient(circle, rgba(207, 227, 255, 0.4) 0%, transparent 62%);
+}
+
+.walkout--icone .walkout__sun i {
+  border-style: dashed;
+  border-color: rgba(246, 240, 220, 0.8);
+}
+
+.walkout--icone .walkout__rays {
+  opacity: 0.12;
+}
+
+/* Prime : anneaux et rayons arc-en-ciel pastel, pétales */
+.walkout--prime .walkout__rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(242, 184, 207, 0.55) 0deg 4deg,
+    transparent 4deg 18deg,
+    rgba(168, 230, 212, 0.5) 18deg 22deg,
+    transparent 22deg 36deg,
+    rgba(201, 174, 232, 0.55) 36deg 40deg,
+    transparent 40deg 54deg
+  );
+}
+
+.walkout--prime .walkout__sun i:nth-child(1) {
+  border-color: #f2b8cf;
+}
+
+.walkout--prime .walkout__sun i:nth-child(2) {
+  border-color: #a8e6d4;
+}
+
+.walkout--prime .walkout__sun i:nth-child(3) {
+  border-color: #c9aee8;
+}
+
+/* le nom de la rareté, entre deux rameaux de feuilles qui poussent */
+.walkout__crest {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 1.5vw, 12px);
+}
+
+.walkout__sprig {
+  flex: none;
+  width: clamp(46px, 14vw, 96px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--beam) 70%, transparent));
+}
+
+.walkout__sprig--right {
+  transform: scaleX(-1);
+}
+
+.walkout__sprig-stem {
+  fill: none;
+  stroke: color-mix(in srgb, var(--beam) 70%, #fff);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 70;
+  stroke-dashoffset: 70;
+  animation: sprig-stem 0.7s 0.55s ease-out forwards;
+}
+
+.walkout__sprig-leaf {
+  fill: color-mix(in srgb, var(--beam) 75%, #fff);
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  transform: scale(0);
+  animation: sprig-leaf 0.5s calc(0.75s + var(--i) * 0.07s) cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+
+.walkout--prime .walkout__sprig g:nth-child(odd) .walkout__sprig-leaf {
+  fill: #f2b8cf;
+}
+
+@keyframes sprig-stem {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sprig-leaf {
+  to {
+    transform: scale(1);
+  }
+}
+
 .walkout__clue {
   position: relative;
   display: grid;
@@ -3654,11 +3908,17 @@
 
 .walkout__reveal {
   position: relative;
+  /* devant les feuilles, pétales et étoiles qui retombent : la carte et sa fiche restent lisibles */
+  z-index: 1;
   display: grid;
   justify-items: center;
   gap: 14px;
   padding: 16px;
   animation: shake 0.5s 0.1s;
+}
+
+.walkout .confetti {
+  z-index: 0;
 }
 
 .walkout__card {
