@@ -857,8 +857,11 @@ function awardBadges(state: GameState) {
   for (const sport of earned) useGame.getState().toast('gold', `Badge ${SPORTS[sport].name} : tu as complété la collection ${SPORTS[sport].of} !`);
 }
 
+// Pendant l'ouverture d'un booster, le badge attend que le booster soit refermé : sa notification dévoilerait
+// sinon les cartes avant qu'on les ait retournées.
 useGame.subscribe((state, previous) => {
-  if (state.discovered !== previous.discovered) awardBadges(state);
+  if (state.opening) return;
+  if (state.discovered !== previous.discovered || previous.opening) awardBadges(state);
 });
 // la sauvegarde du navigateur est relue avant cet abonnement : on vérifie aussi la partie chargée
 awardBadges(useGame.getState());
