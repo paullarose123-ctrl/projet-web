@@ -122,9 +122,9 @@ function untilt3d(event: PointerEvent<HTMLElement>) {
   el?.style.removeProperty('--gloss-x');
 }
 
-/** Étiquette sous une carte révélée : Reverse, sinon Nouveau ou Doublon. */
+/** Étiquette sous une carte révélée : Reverse, Nouvel habitat, sinon Nouveau ou Doublon (Habitats compris). */
 function CardTag({ card }: { card: CardFace & { isNew?: boolean } }) {
-  if (ATHLETES_BY_ID[card.athleteId].habitat) return <span className="tag tag--habitat">{card.isNew ? 'Nouvel habitat' : 'Habitat'}</span>;
+  if (ATHLETES_BY_ID[card.athleteId].habitat && card.isNew) return <span className="tag tag--habitat">Nouvel habitat</span>;
   if (card.variant === 'reverse') return <span className="tag tag--reverse">Reverse</span>;
   return <span className={`tag ${card.isNew ? 'tag--new' : 'tag--dupe'}`}>{card.isNew ? 'Nouveau' : 'Doublon'}</span>;
 }
