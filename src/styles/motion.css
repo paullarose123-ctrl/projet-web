@@ -1337,6 +1337,17 @@ h3 {
   .walkout__wave {
     display: none;
   }
+  .walkout__rays,
+  .walkout__sun i,
+  .stage-card.is-special:not(.is-flipped) .flip__back {
+    animation: none !important;
+  }
+  .walkout__sprig-stem,
+  .walkout__sprig-leaf {
+    animation: none !important;
+    stroke-dashoffset: 0;
+    transform: none;
+  }
 }
 
 /* ───────────── Barre du haut sur téléphone : tout tient sur la largeur ───────────── */

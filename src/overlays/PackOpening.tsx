@@ -15,7 +15,8 @@ import { Logo } from '../components/Logo';
 import { Flag, countryName } from '../components/Flag';
 import { CardStats } from '../components/CardStats';
 import { SportIcon } from '../components/SportIcon';
-import { RevealFx } from '../components/RevealFx';
+import { RevealFx, type RevealTheme } from '../components/RevealFx';
+import type { NatureShape } from '../components/natureShapes';
 import { Confetti, type ConfettiHandle } from '../components/Confetti';
 import { sfx } from '../audio/sfx';
 import { usePhoto } from '../photos';
@@ -71,11 +72,10 @@ function isSpecial(card: CardFace): boolean {
 }
 
 /**
- * Lumière neutre, la même pour tous les boosters et toutes les cartes spéciales tant qu'elles ne sont pas
- * révélées : aucune couleur ne doit trahir la rareté avant la révélation.
+ * Lumière dorée du sachet, la même pour tous les boosters : aucune couleur ne trahit la rareté des cartes avant
+ * qu'on les retourne (l'intensité de la déchirure, elle, suit la meilleure carte).
  */
 const MYSTERY_LIGHT = '#f6e3b0';
-const MYSTERY_SPARKS = [MYSTERY_LIGHT, '#fff6dc', '#ffd98a', '#ffffff'];
 
 function glowOf(card: CardFace): string {
   if (card.variant === 'prime') return '#f2b8cf';
@@ -88,8 +88,45 @@ function glowOf(card: CardFace): string {
 
 function confettiColors(card: CardFace): string[] {
   if (card.variant === 'prime') return ['#f2b8cf', '#f6dc95', '#a8e6d4', '#a0cdd7', '#c9aee8', '#ffffff'];
-  if (tierOf(card) === 4 || isIcon(ATHLETES_BY_ID[card.athleteId])) return ['#ffd76a', '#fff3c4', '#e0a93a', '#ffffff', '#f2b8cf', '#a0cdd7'];
-  return ['#b994ee', '#e3d2ff', '#f0cf6a', '#a9cf7e', '#ffffff'];
+  // Icône : poussière d'étoiles, ivoire, or et bleu de nuit claire
+  if (isIcon(ATHLETES_BY_ID[card.athleteId])) return ['#fff3c4', '#ffffff', '#f3dc9a', '#cfe3ff', '#e0c27a'];
+  // Légendaire : feuilles d'or et de feu
+  if (tierOf(card) === 4) return ['#ffd76a', '#f5b041', '#ff9a6a', '#e0a93a', '#fff3c4', '#c97b2a'];
+  return ['#b994ee', '#e3d2ff', '#cdb6ff', '#f0cf6a', '#a9cf7e', '#ffffff'];
+}
+
+/** Ambiance de la révélation : lucioles (Épique), feuilles d'or (Légendaire), étoiles (Icône), pétales (Prime). */
+function themeOf(card: CardFace): RevealTheme {
+  if (card.variant === 'prime') return 'petales';
+  if (isIcon(ATHLETES_BY_ID[card.athleteId])) return 'etoiles';
+  return tierOf(card) >= 4 ? 'feuilles' : 'lucioles';
+}
+
+/** Ce qui retombe à la révélation : des feuilles (lilas pour une Épique, d'or pour une Légendaire), des étoiles, des pétales. */
+const SHOWER: Record<RevealTheme, NatureShape> = { lucioles: 'feuille', feuilles: 'feuille', etoiles: 'etoile', petales: 'petale' };
+
+// Rameau de feuilles qui encadre le nom de la rareté (la feuille du logo, en guirlande) : position, angle, taille.
+const SPRIG_LEAVES: Array<[x: number, y: number, angle: number, scale: number]> = [
+  [55, 15.4, 218, 1.05],
+  [48, 15.8, 142, 1.1],
+  [39, 16, 214, 1.25],
+  [31, 15.8, 146, 1.25],
+  [22, 15, 212, 1.15],
+  [14, 13.8, 150, 1.05],
+  [6, 12.2, 186, 1],
+];
+
+function Sprig({ side }: { side: 'left' | 'right' }) {
+  return (
+    <svg className={`walkout__sprig walkout__sprig--${side}`} viewBox="0 0 64 28" aria-hidden="true">
+      <path className="walkout__sprig-stem" d="M63,15 C47,16.2 27,17 5,12" />
+      {SPRIG_LEAVES.map(([x, y, angle, scale], i) => (
+        <g key={i} transform={`translate(${x} ${y}) rotate(${angle}) scale(${scale})`}>
+          <path className="walkout__sprig-leaf" d="M0,0 C3,-4.6 8,-4.4 11,0 C8,4.4 3,4.6 0,0Z" style={{ ['--i' as string]: i }} />
+        </g>
+      ))}
+    </svg>
+  );
 }
 
 // Particules de lumière qui flottent dans la scène (positions fixes, pour un rendu stable).
@@ -141,8 +178,8 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
   const silhouette = photo.src && photo.cutout ? photo.src : null;
   // étapes : 0 drapeau, 1 famille, 2 note, (2.5 silhouette si photo détourée), 3 carte
   const [shadow, setShadow] = useState(false);
-  const revealed = step === 3;
-  const fxColors = useMemo(() => (revealed ? [glowOf(card), ...confettiColors(card)] : MYSTERY_SPARKS), [card, revealed]);
+  const theme = themeOf(card);
+  const fxColors = useMemo(() => [glowOf(card), ...confettiColors(card)], [card]);
   // téléphone : la carte seule, bien centrée ; la fiche s'ouvre à la demande
   const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
   const [showStats, setShowStats] = useState(false);
@@ -173,7 +210,7 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
   useEffect(() => {
     if (step === 3) {
       sfx.fanfare();
-      confetti.current?.burst(confettiColors(card), rarity.order === 4 || prime || icon ? 70 : 40);
+      confetti.current?.burst(confettiColors(card), rarity.order === 4 || prime || icon ? 70 : 44, SHOWER[themeOf(card)]);
     } else if (step > 0) {
       sfx.pulse();
     }
@@ -186,17 +223,25 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
 
   return (
     <div
-      className={`walkout walkout--${revealed ? (prime ? 'prime' : rarity.id) : 'mystere'} walkout--step-${step}`}
-      style={{ ['--beam' as string]: revealed ? glowOf(card) : MYSTERY_LIGHT }}
+      className={`walkout walkout--${prime ? 'prime' : rarity.id} walkout--step-${step}`}
+      style={{ ['--beam' as string]: glowOf(card) }}
       role="dialog"
       aria-modal="true"
-      aria-label={revealed ? `Révélation ${title}` : 'Révélation d’une carte spéciale'}
+      aria-label={`Révélation ${title}`}
       onClick={skip}
     >
-      {/* le paysage de la famille apparaît quand la famille est dévoilée */}
+      {/* le paysage de la famille apparaît quand la famille est dévoilée, sous un ciel de la couleur de la rareté */}
       <Landscape className="walkout__scene" scene={packScene('sport', athlete.sport)} seed={`Pack ${SPORTS[athlete.sport].name}`} />
-      {/* étincelles aspirées vers un cœur d'énergie (les mêmes pour toutes les raretés), puis gerbe et braises aux couleurs de la carte */}
-      <RevealFx phase={revealed ? 'burst' : 'charge'} colors={fxColors} intensity={revealed && (rarity.order === 4 || prime || icon) ? 1.5 : 1.2} />
+      <div className="walkout__sky" aria-hidden="true" />
+      {/* rayons et soleil cerclé d'anneaux, comme sur les boosters : il se lève quand la carte apparaît */}
+      <div className="walkout__rays" aria-hidden="true" />
+      <div className="walkout__sun" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
+      {/* étincelles aspirées vers un cœur d'énergie, puis gerbe et ambiance de la rareté (lucioles, feuilles d'or, étoiles, pétales) */}
+      <RevealFx phase={step === 3 ? 'burst' : 'charge'} colors={fxColors} intensity={rarity.order === 4 || prime || icon ? 1.5 : 1} theme={theme} />
       <div className="walkout__floor" aria-hidden="true" />
       {/* à chaque indice, une onde ; à la révélation, un flash blanc et une onde de choc */}
       <div className="walkout__wave" key={`wave-${step}-${shadow}`} aria-hidden="true" />
@@ -227,9 +272,13 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
       )}
       {step === 3 && (
         <div className="walkout__reveal">
-          <p className="walkout__title" data-text={title}>
-            {title}
-          </p>
+          <div className="walkout__crest">
+            <Sprig side="left" />
+            <p className="walkout__title" data-text={title}>
+              {title}
+            </p>
+            <Sprig side="right" />
+          </div>
           <div className="walkout__body">
             <div className="walkout__hero">
               <div className="walkout__aura" aria-hidden="true" />
@@ -312,6 +361,8 @@ export function PackOpening() {
   }, [opening]);
 
   const cards = opening?.cards ?? [];
+  // intensité de la déchirure : 0 commune → 4 légendaire, 5 Icône ou Prime (sans couleur : rien ne dévoile la carte)
+  const intensity = useMemo(() => Math.max(0, ...cards.map((c) => (c.variant === 'prime' ? 5 : tierOf(c)))), [cards]);
   // un fond différent à chaque ouverture
   const backdrop = useMemo(() => (opening ? pickBackdrop() : null), [opening]);
 
@@ -420,8 +471,8 @@ export function PackOpening() {
   const packStage = stage === 'pack' || stage === 'charging' || stage === 'tearing';
 
   return (
-    // le sachet s'ouvre de la même façon et dans la même lumière, quelles que soient les cartes qu'il contient
-    <div className={`opening opening--${stage}`} style={{ ['--teaser' as string]: MYSTERY_LIGHT }}>
+    // le sachet s'ouvre toujours dans la même lumière dorée ; seule la force de la déchirure suit la meilleure carte
+    <div className={`opening opening--${stage} opening--t${intensity}`} style={{ ['--teaser' as string]: MYSTERY_LIGHT }}>
       {/* un paysage tiré au hasard, en grand, derrière toute l'ouverture */}
       <div className="opening__backdrop" aria-hidden="true">
         {backdrop && <Landscape className="opening__scene" scene={backdrop.scene} seed={backdrop.seed} />}
@@ -508,7 +559,7 @@ export function PackOpening() {
               return (
                 <div
                   key={card.uid}
-                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}`}
+                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}${!flipped && isSpecial(card) ? ' is-special' : ''}`}
                   style={{ ['--glow' as string]: glowOf(card) }}
                   onClick={advance}
                   role="button"
