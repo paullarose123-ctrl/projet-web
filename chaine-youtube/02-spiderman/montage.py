@@ -35,7 +35,7 @@ import controle_micro as cm
 import voix
 
 SR = 48000
-LEAD, TAIL = 0.12, 0.20            # avant le premier mot, après le dernier (secondes d'ambiance gardées)
+LEAD, TAIL = 0.10, 0.15            # ambiance gardée avant la première plage de voix et après la dernière (secondes)
 GUARD_APRES, GUARD_AVANT = 0.15, 0.25   # zone protégée autour des mots quand on raccourcit un silence
 FADE = 0.012
 NUM = {"1": "un", "2": "deux", "3": "trois", "6": "six", "10": "dix", "2013": "deux mille treize"}
@@ -205,35 +205,62 @@ def fondu(a):
 
 
 # ───────── un paragraphe ─────────
-def region(x, H, s, e, mots_idx, gmax_fn):
-    """Une région : phrases contiguës de la prise. Alignement forcé du texte sur la fenêtre, découpe, raccourcissement des silences longs.
-    Renvoie (audio, temps des mots [(t0, t1)] dans l'audio, silences raccourcis [(t, durée)], alerte)."""
+ECART = 0.22          # silence (s) qui sépare deux plages de voix
+ANNONCE = {"paragraphe", "numero", "numéro", "test", "silence", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze",
+           "treize", "quatorze", "quinze", "seize", "dixsept", "dixhuit", "p", "pe"}
+FIN_PARASITE = {"voila", "voilà", "termine", "terminé", "fin", "stop", "merci", "ok"}
+
+
+def plages_voix(x):
+    """Plages de voix de la prise (début, fin) : trames à plus de 10 dB au-dessus du bruit de la pièce, séparées par au moins 0,22 s de calme.
+    C'est ce qui borne les coupes : on ne coupe jamais au milieu d'un mot, même si le reconnaisseur s'est trompé sur ses bords."""
+    lv, t = cm.niveaux(x.astype(np.float64))
+    bruit = float(np.percentile(lv, 10))
+    idx = np.where(lv > bruit + 10)[0]
+    runs = []
+    if len(idx):
+        s0 = p = idx[0]
+        for i in idx[1:]:
+            if (i - p) * 0.01 > ECART:
+                runs.append((float(t[s0]), float(t[p] + 0.02)))
+                s0 = i
+            p = i
+        runs.append((float(t[s0]), float(t[p] + 0.02)))
+    return [r for r in runs if r[1] - r[0] >= 0.12], bruit
+
+
+def plages_de(runs, ta, tb):
+    """Indices (premier, dernier) des plages de voix qui recouvrent [ta, tb] à 0,1 s près ; à défaut, la plus proche."""
+    r = [i for i, (a, b) in enumerate(runs) if b >= ta - 0.1 and a <= tb + 0.1]
+    if r:
+        return min(r), max(r)
+    c = (ta + tb) / 2
+    i = min(range(len(runs)), key=lambda k: abs((runs[k][0] + runs[k][1]) / 2 - c))
+    return i, i
+
+
+def region(x, A, B, mots_idx, gmax_fn, bruit):
+    """Une région de la prise : [A, B] s, bornée par des silences. Alignement forcé du texte attendu sur la fenêtre, raccourcissement des
+    silences trop longs. Renvoie (audio, temps des mots [(t0, t1)] dans l'audio, silences raccourcis [(t, durée)], alertes)."""
     mots_txt = [m["w"] for m in mots_idx]
-    A = max(0.0, H[s]["t0"] - 0.15)
-    if s > 0:
-        A = max(A, H[s - 1]["t1"] + 0.02)
-    A = min(A, max(0.0, H[s]["t0"] - 0.03))
-    B = min(len(x) / SR, H[e - 1]["t1"] + 0.35)
-    if e < len(H) and H[e]["t0"] - 0.02 > H[e - 1]["t1"] + 0.05:
-        B = min(B, H[e]["t0"] - 0.02)
-    fen = x[int(A * SR):int(B * SR)]
-    tm = voix.mots_forces(fen, SR, mots_txt)
+    clip = x[int(A * SR):int(B * SR)].copy()
+    tm = voix.mots_forces(clip, SR, mots_txt)
     t0s = [m["t0"] for m in tm]
     t1s = [m["t1"] for m in tm]
-    c0 = max(0.0, t0s[0] - LEAD)
-    c1 = min(len(fen) / SR, t1s[-1] + TAIL)
-    clip = fen[int(c0 * SR):int(c1 * SR)].copy()
-    t0s = [t - c0 for t in t0s]
-    t1s = [t - c0 for t in t1s]
+    alerte = []
+    # une coupe en plein son se verrait : le niveau aux deux bouts de la fenêtre doit être celui de la pièce
+    n30 = int(0.03 * SR)
+    for nom, seg in (("début", clip[:n30]), ("fin", clip[-n30:])):
+        if len(seg) and 20 * np.log10(np.sqrt(np.mean(seg.astype(np.float64) ** 2)) + 1e-9) > bruit + 14:
+            alerte.append(f"coupe en plein son au {nom} de la région ({A:.2f}–{B:.2f} s)")
     # silences longs : on retire le surplus au milieu de la zone protégée
-    cuts, alerte = [], []
+    cuts = []
     for i in range(len(mots_idx) - 1):
         g = t0s[i + 1] - t1s[i]
         gm = gmax_fn(mots_idx[i])
         if g > gm:
             r0, r1 = t1s[i] + GUARD_APRES, t0s[i + 1] - GUARD_AVANT
-            dispo = r1 - r0
-            retirer = min(dispo, g - gm)
+            retirer = min(r1 - r0, g - gm)
             if retirer > 0.03:
                 mid = (r0 + r1) / 2
                 cuts.append((mid - retirer / 2, mid + retirer / 2))
@@ -241,15 +268,14 @@ def region(x, H, s, e, mots_idx, gmax_fn):
     for a, b in cuts:
         morceaux.append(fondu(clip[int(prec * SR):int(a * SR)].copy()))
         prec = b
-    morceaux.append(fondu(clip[int(prec * SR):].copy()) if cuts else fondu(clip))
+    morceaux.append(fondu(clip[int(prec * SR):].copy()))
     audio = np.concatenate(morceaux)
 
     def dec(t):
         return t - sum(max(0.0, min(t, b) - a) for a, b in cuts)
 
     tw = [(dec(a), dec(b)) for a, b in zip(t0s, t1s)]
-    # alertes : mots de durée anormale (signe d'un mauvais alignement)
-    for i, (a, b) in enumerate(tw):
+    for i, (a, b) in enumerate(tw):          # un mot de durée anormale : signe d'un mauvais alignement
         if b - a > 1.4 or b - a < 0.03:
             alerte.append(f"« {mots_idx[i]['w']} » dure {b - a:.2f} s")
     return audio, tw, [(a, b - a) for a, b in cuts], alerte
@@ -268,8 +294,7 @@ def paragraphe(gi, g, par_id, prises, cache, gmax):
         aff, score = affecte(ukeys, Hk)
         trouvees = sum(1 for a in aff if a)
         moy = float(np.mean([a[2] for a in aff if a])) if trouvees else 0.0
-        mots_ok = sum(len(u) for u, a in zip(uni, aff) if a)
-        couv = mots_ok / len(mots)
+        couv = sum(len(u) for u, a in zip(uni, aff) if a) / len(mots)
         rap["prises"].append({"fichier": os.path.basename(path), "phrases_trouvees": f"{trouvees}/{len(uni)}", "ressemblance": round(moy, 2), "dit": " ".join(w["text"] for w in H)})
         cand = (couv, moy, path, x, H, aff, rap["prises"][-1])
         if meilleur is None or (round(cand[0], 3), round(cand[1], 3)) >= (round(meilleur[0], 3), round(meilleur[1], 3)):      # à égalité, la prise la plus tardive
@@ -277,39 +302,58 @@ def paragraphe(gi, g, par_id, prises, cache, gmax):
     couv, moy, path, x, H, aff, info = meilleur
     rap["retenue_info"] = info
     rap["retenue"] = os.path.basename(path)
-    rap["couverture_pc"] = round(100 * couv)
-    manquantes = [k for k, a in enumerate(aff) if a is None]
-    pieces, tw_all, coupes, alertes = [], [None] * len(mots), [], []
-    # régions : phrases contiguës dans la prise
-    k = 0
-    regs = []
-    while k < len(uni):
-        if aff[k] is None:
-            k += 1
-            continue
-        j = k
-        while j + 1 < len(uni) and aff[j + 1] is not None and aff[j + 1][0] == aff[j][1]:
-            j += 1
-        regs.append((k, j))
-        k = j + 1
-    if not regs:
-        rap["erreur"] = "aucune phrase du texte retrouvée dans la prise : à refaire ou à vérifier"
+    rap["alertes"] = []
+    runs, bruit = plages_voix(x)
+    if not runs:
+        rap["erreur"] = "aucune voix dans la prise"
         return None, rap
-    for (k0, k1) in regs:
-        idx = [i for u in uni[k0:k1 + 1] for i in u]
-        s, e = aff[k0][0], aff[k1][1]
-        # mots de la région avec leur drapeau « ... » (suspension) pour la durée de pause permise
+    manquantes = [k for k, a in enumerate(aff) if a is None]
+    # régions : groupes de phrases qui tiennent dans des plages de voix voisines ; les plages sans phrase (annonce, faux départ) sont écartées
+    regs = []                                           # (phrases, première plage, dernière plage)
+    if manquantes:
+        # une phrase n'a pas été reconnue : on prend toute la voix de la prise (sans les annonces) comme une seule lecture du texte
+        rap["alertes"].append("phrases non reconnues (" + " / ".join(" ".join(mots[i]["w"] for i in uni[k]) for k in manquantes) + ") : toute la voix de la prise est utilisée telle quelle")
+        r0, r1 = 0, len(runs) - 1
+        def mots_de(r):
+            return [cle(w["text"]) for w in H if w["t0"] >= runs[r][0] - 0.05 and w["t1"] <= runs[r][1] + 0.1]
+        while r0 < r1 and mots_de(r0) and all(k in ANNONCE for k in mots_de(r0)):
+            r0 += 1
+        while r1 > r0 and mots_de(r1) and all(k in FIN_PARASITE for k in mots_de(r1)):
+            r1 -= 1
+        regs.append((list(range(len(uni))), r0, r1))
+    else:
+        for k, a in enumerate(aff):
+            r0, r1 = plages_de(runs, H[a[0]]["t0"], H[a[1] - 1]["t1"])
+            if regs and r0 <= regs[-1][2] + 1 and r1 >= regs[-1][1]:
+                regs[-1] = (regs[-1][0] + [k], min(regs[-1][1], r0), max(regs[-1][2], r1))
+            else:
+                regs.append(([k], r0, r1))
+    pieces, tw_all, coupes = [], [None] * len(mots), []
+    for n_reg, (ks, r0, r1) in enumerate(regs):
+        idx = [i for k in ks for i in uni[k]]
+        A = max(0.0, runs[r0][0] - LEAD)
+        if r0 > 0:
+            A = max(A, runs[r0 - 1][1] + 0.05)
+        B = min(len(x) / SR, runs[r1][1] + TAIL)
+        if r1 + 1 < len(runs):
+            B = min(B, runs[r1 + 1][0] - 0.05)
+        if n_reg == 0 and aff[ks[0]] is not None:
+            # annonce dite d'un trait avec le début du texte (« paragraphe cinq, … » sans pause) : on ne la garde pas
+            s_first = aff[ks[0]][0]
+            exclus = [w for w in H[:s_first] if w["t0"] >= runs[r0][0] - 0.05]
+            if exclus and all(cle(w["text"]) in ANNONCE or w["text"].isdigit() for w in exclus):
+                A = max(A, exclus[-1]["t1"] + 0.03)
         mi = []
         for i in idx:
             m = dict(mots[i])
-            pr = paires[m["pair"]]
-            m["show"] = pr["show"]
+            m["show"] = paires[m["pair"]]["show"]
             mi.append(m)
+
         def gm(m, _g=gmax):
             if m["show"].endswith("..."):
                 return _g[2]
             return _g[1] if m["fin"] else _g[0]
-        audio, tw, cuts, al = region(x, H, s, e, mi, gm)
+        audio, tw, cuts, al = region(x, A, B, mi, gm, bruit)
         if pieces:
             pieces.append(("pause", max(0.0, 0.35 - (LEAD + TAIL))))
         off = sum(p[1] if p[0] == "pause" else len(p[1]) / SR for p in pieces)
@@ -317,16 +361,20 @@ def paragraphe(gi, g, par_id, prises, cache, gmax):
             tw_all[i] = (off + a, off + b)
         pieces.append(("audio", audio))
         coupes += [(round(off + a, 2), round(d, 2)) for a, d in cuts]
-        alertes += al
-    # mots des phrases manquantes : interpolés (signalés)
-    if manquantes:
-        rap["alerte_phrases"] = [" ".join(mots[i]["w"] for i in uni[k]) for k in manquantes]
+        rap["alertes"] += al
     for i, t in enumerate(tw_all):
         if t is None:
             prev = next((tw_all[j] for j in range(i - 1, -1, -1) if tw_all[j]), (0.0, 0.0))
             tw_all[i] = (prev[1], prev[1] + 0.2)
     rap["silences_raccourcis"] = coupes
-    rap["alertes"] = alertes
+    rap["regions"] = [(ks, round(runs[r0][0], 2), round(runs[r1][1], 2)) for ks, r0, r1 in regs]
+    # plages de voix de la prise qui n'entrent pas dans le montage (annonce, faux départ, reprise) et ce qu'on y entend : à relire
+    gardees = {r for _, r0, r1 in regs for r in range(r0, r1 + 1)}
+    rap["ecartees"] = []
+    for r, (ra, rb) in enumerate(runs):
+        if r not in gardees:
+            dit = " ".join(w["text"] for w in H if w["t0"] >= ra - 0.05 and w["t1"] <= rb + 0.1)
+            rap["ecartees"].append(f"{ra:.1f}–{rb:.1f} s « {dit or '…'} »")
     return {"pieces": pieces, "tw": tw_all, "mots": mots, "paires": paires}, rap
 
 
@@ -381,7 +429,7 @@ def main():
         gains_lufs.append(lufs)
         morceaux.append((res, par_audio))
         print(f"p{gi:02d} {rap['retenue']:12s} phrases {rap['retenue_info']['phrases_trouvees']:>4s} ressemblance {rap['retenue_info']['ressemblance']:.2f} durée {len(par_audio) / SR:5.2f}s niveau {lufs:6.1f} LUFS"
-              + (f"  ALERTES {rap['alertes']}" if rap["alertes"] else "") + (f"  PHRASES MANQUANTES {rap.get('alerte_phrases')}" if rap.get("alerte_phrases") else ""))
+              + (f"  ALERTES {rap['alertes']}" if rap["alertes"] else ""))
     # niveaux : on corrige 70 % de l'écart à la médiane, au plus ±6 dB
     med = float(np.median(gains_lufs))
     gdb = [float(np.clip(0.7 * (med - l), -6, 6)) for l in gains_lufs]
@@ -428,9 +476,9 @@ def main():
     open(f"{a.sortie}/timeline.js", "w").write("window.TL = " + json.dumps(tl, ensure_ascii=False) + ";\n")
     # rapport
     L = ["# Rapport de montage de la voix", "", f"Durée de la voix : {len(v48) / SR:.1f} s · niveau {lufs:.1f} → −19 LUFS (crête {20 * math.log10(max(crete_avant, 1e-9)):.1f} dBFS avant limiteur, {20 * math.log10(max(crete, 1e-9)):.1f} après)", "",
-         "| Paragraphe | Prise | Phrases retrouvées | Ressemblance texte/prise | Niveau (LUFS) | Gain (dB) | Silences raccourcis | Alertes |", "|---|---|---|---|---|---|---|---|"]
+         "| Paragraphe | Prise | Phrases retrouvées | Ressemblance texte/prise | Niveau (LUFS) | Gain (dB) | Silences raccourcis | Voix écartée | Alertes |", "|---|---|---|---|---|---|---|---|---|"]
     for r in rapports:
-        L.append(f"| p{r['gi']:02d} | {r['retenue']} | {r['retenue_info']['phrases_trouvees']} | {r['retenue_info']['ressemblance']:.2f} | {r['lufs']} | {r['gain_db']} | {len(r['silences_raccourcis'])} | {'; '.join(r['alertes'] + (['phrases manquantes : ' + ' / '.join(r['alerte_phrases'])] if r.get('alerte_phrases') else [])) or '-'} |")
+        L.append(f"| p{r['gi']:02d} | {r['retenue']} | {r['retenue_info']['phrases_trouvees']} | {r['retenue_info']['ressemblance']:.2f} | {r['lufs']} | {r['gain_db']} | {len(r['silences_raccourcis'])} | {'; '.join(r['ecartees']) or '-'} | {'; '.join(r['alertes']) or '-'} |")
     L += ["", "## Ce que le reconnaisseur a entendu", ""]
     for r in rapports:
         for pr in r["prises"]:

@@ -23,8 +23,10 @@ const NOTE = n => {
   return 440 * Math.pow(2, (12 * (+m[3] + 1) + st - 69) / 12);
 };
 const TAU = Math.PI * 2;
+let musicGain = null;                                   // gain de la musique dans le temps (voir plus bas), 1 ailleurs
 function put(i, v, pan, send) {
   if (i < 0 || i >= N) return;
+  if (musicGain && B === BUS.music) v *= musicGain[i];
   const l = v * Math.cos((pan + 1) * Math.PI / 4), r = v * Math.sin((pan + 1) * Math.PI / 4);
   B.L[i] += l; B.R[i] += r; B.SL[i] += l * send; B.SR[i] += r * send;
 }
@@ -147,6 +149,15 @@ function woodKnock(x, g = 0.12, f = 190) { noise(x, 0.07, { type: 'bp', f0: f * 
 const ch = (a, b, notes, o) => ({ a, b, notes, o });
 const p0 = id => P[id].t0;
 const t = { oui: p0('oui'), trois: p0('trois'), bas: p0('bas'), spag: p0('spaghetti'), acier: p0('acier'), chocs: p0('chocs'), darwin: p0('darwin'), metro: p0('metro'), bras: p0('bras'), prob: p0('probleme'), corps: p0('corps'), prot: p0('proteine'), app: p0('appetit'), fab: p0('fabrication'), jet: p0('jet'), pluie: p0('pluie'), gal: p0('galere'), ver: p0('verdict'), fic: p0('fiction'), labos: p0('labos'), bact: p0('bacteries'), coc: p0('cocon') };
+// retour de l'auteur : la musique était « un peu forte » pendant la comparaison acier / soie / mouche (de « Pour avoir de la marge… » à la fin de la mouche) : −3,3 dB, avec 0,5 s de rampe
+musicGain = new Float32Array(N).fill(1);
+{
+  const a = wt('spaghetti', 'pour') - 0.2, b = t.darwin - 0.1, r = 0.5, g = 0.68;
+  for (let i = Math.max(0, Math.floor((a - r) * SR)); i < Math.min(N, Math.floor((b + r) * SR)); i++) {
+    const x = i / SR, k = Math.min(1, Math.max(0, (x - (a - r)) / r), Math.max(0, (b + r - x) / r));
+    musicGain[i] = 1 - (1 - g) * k;
+  }
+}
 const CHORDS = [
   ch(0, t.oui - 0.15, ['D2', 'A2', 'D3', 'F3', 'C4'], { gain: 0.062, bright: 0.25 }),
   ch(t.oui - 0.1, t.trois - 0.15, ['D3', 'F#3', 'A3', 'D4', 'E4'], { gain: 0.06, bright: 0.45, att: 0.2 }),
@@ -209,9 +220,9 @@ for (const e of EV.events) {
     case 'bars': for (let k = 0; k < 14; k++) blip(x + k * 0.1, 600 + k * 60, 600 + k * 60, 0.03, { gain: 0.03 }); break;
     case 'zoom': noise(x - 0.3, 0.9, { type: 'bp', f0: 300, f1: 4200, q: 1.4, gain: 0.1, att: 0.7, rel: 0.12, send: 0.4 }); sweep(x - 0.3, 0.85, 260, 1700, { gain: 0.06, curve: 2 }); bell(x + 0.58, 'E6', { gain: 0.03, decay: 0.8 }); break;
     case 'stretch': sweep(x, 0.9, 180, 520, { gain: 0.07, curve: 1.2 }); sweep(x + 1.1, 0.9, 520, 180, { gain: 0.07, curve: 0.8 }); break;
-    case 'clank': bell(x, 'C5', { gain: 0.06, decay: 0.7 }); thud(x, 0.35); noise(x, 0.05, { type: 'hp', f0: 3000, f1: 3000, gain: 0.12, att: 0.001, rel: 0.04 }); break;
-    case 'fly': buzz(x, 2.2, { gain: 0.05 }); break;
-    case 'boing': boing(x, { gain: 0.12 }); noise(x, 0.08, { type: 'hp', f0: 3000, f1: 2000, gain: 0.1, att: 0.001, rel: 0.06 }); break;
+    case 'clank': bell(x, 'C5', { gain: 0.045, decay: 0.7 }); thud(x, 0.25); noise(x, 0.05, { type: 'hp', f0: 3000, f1: 3000, gain: 0.09, att: 0.001, rel: 0.04 }); break;
+    case 'fly': buzz(x, 2.2, { gain: 0.04 }); break;
+    case 'boing': boing(x, { gain: 0.1 }); noise(x, 0.08, { type: 'hp', f0: 3000, f1: 2000, gain: 0.08, att: 0.001, rel: 0.06 }); break;
     case 'swoosh': noise(x - 0.4, 0.9, { type: 'bp', f0: 300, f1: 1100, q: 0.9, gain: 0.12, att: 0.4, rel: 0.45, send: 0.35, pan: -0.5, panTo: 0.5 }); break;
     case 'train': noise(x, 2.2, { type: 'lp', f0: 120, f1: 300, q: 0.8, gain: 0.08, att: 1.8, rel: 0.2, send: 0.4 }); for (let k = 0; k < 14; k++) thud(x + 0.2 + k * 0.15, 0.04 + k * 0.008); break;
     case 'screech': squeal(x, 1.5, { gain: 0.05 }); noise(x, 1.5, { type: 'hp', f0: 4000, f1: 2500, gain: 0.04, att: 0.1, rel: 0.5 }); break;
