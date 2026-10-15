@@ -15,7 +15,6 @@ function buildShots2() {
   // 8. acier contre soie, à épaisseur égale
   const tEp = wt('acier', 'épaisseur'), tPar = wt('acier', 'pareil.'), tSix = wt('acier', 'six'), tMais = wt('acier', 'mais');
   shot('steelSilk', P.acier.t0 - 0.1, {
-    target: [135, 120],
     draw(u, t) {
       plateBG(t, { glowY: 200 });
       R(30, 0, 210, 12, ST[2]); R(30, 10, 210, 2, ST[4]); R(30, 0, 210, 1, ST[5]); for (let x = 36; x < 240; x += 14) px(x, 5, ST[4]);
@@ -37,7 +36,6 @@ function buildShots2() {
   });
   // 9. six fois plus légère : la balance
   shot('balance', tMais - 0.1, {
-    target: [135, 250],
     draw(u, t) {
       plateBG(t, { glowY: 260 });
       const n = Math.max(0, (u - 0.2) / 0.13), nS = Math.min(6, Math.floor(n)), u6 = 0.2 + 6 * 0.13;
@@ -54,7 +52,6 @@ function buildShots2() {
   // 10. une toile d'épeire à l'aube : la mouche arrive
   const tUne = wt('chocs', 'une');
   shot('webApproach', P.chocs.t0 - 0.1, {
-    target: [135, 205],
     draw(u, t) {
       drawDawn(t);
       foliage(-1, 5, 30, 400, 52, t); foliage(1, 9, 30, 400, 52, t);
@@ -79,7 +76,6 @@ function buildShots2() {
     for (let i = 0; i + 1 < pts.length; i++) { lineP(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], WH[3], 2); }
   };
   shot('flyHit', T11, {
-    target: [168, 240],
     draw(u, t) {
       plateBG(t, { glowY: 240 });
       const o = off(u - uH);
@@ -103,7 +99,6 @@ function buildShots2() {
   const T12 = wt('chocs', 'et', 1) - 0.1, tTen = wt('chocs', 'ténacité.');
   const steel = [[40, 330], [48, 190], [54, 140], [60, 122], [64, 120]], silkC = [[40, 330], [54, 232], [78, 216], [138, 196], [196, 146], [234, 108]];
   shot('toughCurve', T12, {
-    target: [135, 250],
     draw(u, t) {
       plateBG(t, { glowY: 250 });
       lineP(40, 336, 40, 84, AM[6], 2); lineP(36, 330, 252, 330, AM[6], 2);
@@ -125,7 +120,6 @@ function buildShots2() {
   // 13. Madagascar : l'araignée écorce de Darwin et sa toile au-dessus de la rivière
   const T13 = P.darwin.t0 - 0.1, tMad = wt('darwin', 'madagascar:'), tEc = wt('darwin', 'écorce');
   shot('darwinWeb', T13, {
-    target: [135, 190],
     draw(u, t) {
       drawDawn(t);
       foliage(-1, 21, 40, 420, 60, t); foliage(1, 33, 40, 420, 60, t);
@@ -148,7 +142,6 @@ function buildShots2() {
   // 14. dix fois plus tenace que le Kevlar
   const T14 = wt('darwin', 'sa') - 0.12, tJus = wt('darwin', "jusqu'à"), tDix = wt('darwin', 'dix'), tKev = wt('darwin', 'kevlar.');
   shot('kevlarChart', T14, {
-    target: [135, 200],
     draw(u, t) {
       plateBG(t, { glowY: 220 });
       const g1 = eo(prog(u, 0.5, 0.9)), g2 = eo(prog(t, tJus, tDix + 0.8));

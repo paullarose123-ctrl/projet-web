@@ -204,7 +204,6 @@ B = BUS.sfx;
 for (const e of EV.events) {
   const x = e.t;
   switch (e.type) {
-    case 'thwip': noise(x, 0.16, { type: 'hp', f0: 5000, f1: 9000, gain: 0.13, att: 0.003, rel: 0.1, send: 0.3 }); sweep(x, 0.12, 1800, 5200, { gain: 0.05, curve: 1.5 }); blip(x + 0.12, 700, 520, 0.05, { gain: 0.05, duty: 0.3 }); break;
     case 'ding': bell(x, 'A5', { gain: 0.07, decay: 1.4 }); bell(x + 0.09, 'E6', { gain: 0.045, decay: 1.2 }); break;
     case 'no': blip(x, 160, 105, 0.2, { gain: 0.11, duty: 0.5 }); noise(x, 0.12, { type: 'lp', f0: 600, f1: 200, gain: 0.04, att: 0.003, rel: 0.1 }); break;
     case 'label': blip(x, 880, 1320, 0.07, { gain: 0.085 }); for (let k = 1; k < 14; k++) blip(x + k / 22, 2400, 2200, 0.012, { gain: 0.02, pan: 0.2 }); break;

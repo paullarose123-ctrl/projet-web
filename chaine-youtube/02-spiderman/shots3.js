@@ -5,7 +5,6 @@ function buildShots3() {
   const tB = wt('bas', 'point') + 0.25, tPt = wt('bas', 'point');
   const swB = t => { const th = 0.27 * Math.sin(TAU / 3.6 * (t - tB)), om = 0.27 * TAU / 3.6 * Math.cos(TAU / 3.6 * (t - tB)); return { th, om, ax: 150, ay: -150, len: 350, hx: 150 + 350 * Math.sin(th), hy: -150 + 350 * Math.cos(th) }; };
   shot('lowPoint', P.bas.t0 - 0.1, {
-    target: [135, 210],
     draw(u, t) {
       const sw = swB(t); drawCityBG(sw.hx * 0.35, t);
       for (let a = -0.36; a < 0.36; a += 0.008) { const x = 150 + 350 * Math.sin(a), y = -150 + 350 * Math.cos(a); if (Math.round(a * 125) % 3 === 0) { px(x, y, AM[8]); px(x, y + 1, AM[3]); } }
@@ -23,7 +22,6 @@ function buildShots3() {
   // 17. un fil à peine plus fin qu'un spaghetti ; avec de la marge, un câble de chargeur
   const tFil = wt('spaghetti', 'fil'), tSp = wt('spaghetti', 'spaghetti'), tMarge = wt('spaghetti', 'marge?'), tCab = wt('spaghetti', 'câble');
   shot('threadSpaghetti', P.spaghetti.t0 - 0.1, {
-    target: [135, 200],
     draw(u, t) {
       plateBG(t, { glowY: 220 });
       const y1 = 292, h = 150, pxmm = 12, x0 = 15;
@@ -46,7 +44,6 @@ function buildShots3() {
   // 18. le métro de Spider-Man 2 : toile contre train
   const T18 = P.metro.t0 - 0.1, tEn = wt('metro', 'en') - 0.12;
   shot('metroTunnel', wt('metro', 'et') - 0.1 + 0.0 > 0 ? T18 + 0 : T18, {
-    target: [135, 245],
     draw(u, t) {
       drawTunnel(t);
       const k = clamp(u / (tEn - T18)), z = lerp(0.45, 1.0, eo(prog(k, 0, 0.8))), br = k > 0.75;
@@ -65,7 +62,6 @@ function buildShots3() {
   // 19. des étudiants font le calcul : ça tiendrait
   const T19 = tEn, t2013 = wt('metro', '2013,'), tCalc = wt('metro', 'calcul.'), tTien = wt('metro', 'tiendrait.');
   shot('leicester', T19, {
-    target: [135, 130],
     draw(u, t) {
       L.setTransform(1, 0, 0, 1, 0, 0);
       L.drawImage(WOODWALL, 0, 0); L.globalAlpha = 0.6; R(0, 0, LW, LH, WO[0]); L.globalAlpha = 1;
@@ -94,7 +90,6 @@ function buildShots3() {
   // 20. côté fil, c'est crédible : la nuit, la ville, le tableau des preuves
   const T20 = P.bras.t0 - 0.1, tCred = wt('bras', 'crédible.');
   shot('credible', T20, {
-    target: [135, 220],
     draw(u, t) { const sw = swing(t + 0.6, { ph: 1.9, A: 0.25 }); drawCityBG(sw.hx * 0.35, t); drawSwingHero(t + 0.6, sw, { s: 1.7 }); vignette(0.3, 150, 330); },
     ui(u, t) {
       const p0 = prog(t, tCred - 0.2, tCred + 0.25);
@@ -106,7 +101,6 @@ function buildShots3() {
   // 21. mais les bras de Peter Parker...
   const T21 = wt('bras', 'ce') - 0.1, tBras = wt('bras', 'bras'), tParker = wt('bras', 'parker');
   shot('arms', T21, {
-    target: [135, 200],
     draw(u, t) {
       plateBG(t, { glowY: 300 });
       const trem = 0.9 * Math.min(1, u / 0.5), cy = 346;

@@ -20,7 +20,6 @@ function buildShots4() {
   // 22. problème 1 : la quantité (carte-titre)
   const tQ = wt('probleme', 'quantité.');
   shot('quantA', P.probleme.t0 - 0.1, {
-    target: [135, 225],
     draw(u, t) {
       plateBG(t, { glowY: 230 });
       rgrad(135, 225, 10, 120, [[0, 'rgba(255,184,80,0.3)'], [1, 'rgba(255,184,80,0)']], 1, 'lighter');
@@ -37,7 +36,6 @@ function buildShots4() {
   // 23. 90 g de protéines pour un balancement, 60 g pour la journée
   const tBal = wt('proteine', 'balancement'), tPr = wt('proteine', 'protéines'), tBes = wt('proteine', 'besoins'), tEnt = wt('proteine', 'entière.');
   shot('quantB', P.proteine.t0 - 0.1, {
-    target: [135, 230],
     draw(u, t) {
       plateBG(t, { glowY: 230 });
       const g1 = eo(prog(t, tBal, tBal + 1.0)), g2 = eo(prog(t, tBes, tBes + 0.8));
@@ -60,7 +58,6 @@ function buildShots4() {
   // 24. un très gros appétit : la tour de pizzas
   const tTres = wt('appetit', 'très'), tApp = wt('appetit', 'appétit.');
   shot('pizza', P.appetit.t0 - 0.1, {
-    target: [135, 300],
     draw(u, t) {
       L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(WOODWALL, 0, 0); L.globalAlpha = 0.5; R(0, 0, LW, LH, WO[0]); L.globalAlpha = 1;
       drawWindow(16, 50, 74, 104, t, { rain: false });
@@ -88,7 +85,6 @@ function buildShots4() {
   // 25. problème 2 : la fabrication — un jet de liquide
   const tFab = wt('fabrication', 'fabrication.'), tUne2 = wt('fabrication', 'une');
   shot('fabA', P.fabrication.t0 - 0.1, {
-    target: [150, 280],
     draw(u, t) {
       plateBG(t, { glowY: 280 });
       R(0, 410, LW, 2, AM[4]); ditherRect(0, 412, LW, 68, AM[1], 0.5);
@@ -117,7 +113,6 @@ function buildShots4() {
   // 26. elle l'étire : l'araignée descend en tirant son fil
   const tEj = wt('fabrication', "n'éjecte"), tEtire = wt('fabrication', "l'étire.");
   shot('fabB', tUne2 - 0.1, {
-    target: [135, 230],
     draw(u, t) {
       drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.45)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
@@ -142,7 +137,6 @@ function buildShots4() {
   // 27. étirées = alignées = solides ; en vrac = pas le même fil
   const tSol = wt('jet', 'solide.'), tJet = wt('jet', 'jet'), tNon = wt('jet', 'non.');
   shot('alignment', P.jet.t0 - 0.1, {
-    target: [135, 205],
     draw(u, t) {
       fieldBG(t, NI[4], NI[1]);
       const r = rng(61);
@@ -165,7 +159,6 @@ function buildShots4() {
   // 28. problème 3 : la pluie sur la fenêtre du labo
   const tPl = wt('pluie', 'pluie.');
   shot('rainWindow', P.pluie.t0 - 0.1, {
-    target: [135, 180],
     draw(u, t) {
       L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(WOODWALL, 0, 0); L.globalAlpha = 0.6; R(0, 0, LW, LH, WO[0]); L.globalAlpha = 1;
       const fl = Math.max(bump(t, tPl - 0.25, tPl - 0.15, tPl - 0.1, tPl + 0.05), 0.7 * bump(t, tPl + 0.2, tPl + 0.25, tPl + 0.28, tPl + 0.5));
@@ -184,7 +177,6 @@ function buildShots4() {
   // 29. mouillée, la soie rétrécit de moitié (supercontraction)
   const tMou = wt('pluie', 'mouillée,'), tRet = wt('pluie', 'rétrécir'), tMoi = wt('pluie', 'moitié.');
   shot('shrink', tMou - 0.1, {
-    target: [135, 200],
     draw(u, t) {
       plateBG(t, { glowY: 220 });
       const k = eio(prog(t, tRet - 0.1, tMoi + 0.2)), len = 300 - 150 * k, hy = len;
@@ -211,7 +203,6 @@ function buildShots4() {
   // 30. en plein orage : la galère
   const tOr = wt('galere', 'orage...'), tGal = wt('galere', 'galère.');
   shot('storm', P.galere.t0 - 0.1, {
-    target: [135, 220],
     draw(u, t) {
       const A = 0.27 * (1 - sm(prog(u, 0.9, 1.8))), len = 350 - 70 * eio(prog(u, 1.0, 1.7));
       const sw = (() => { const th = A * Math.sin(TAU / 3.6 * (t - P.galere.t0) + 0.5), ax = 150, ay = -150; return { th, om: 0, ax, ay, len, hx: ax + len * Math.sin(th), hy: ay + len * Math.cos(th) }; })();
@@ -230,7 +221,6 @@ function buildShots4() {
   // 31. verdict : le fil tient, tout le reste est fiction
   const tVe = P.verdict.t0, tSo = wt('verdict', 'soie'), tSl = wt('verdict', 'solide'), tFi = wt('fiction', 'fiction,'), tRe = wt('fiction', 'reste.');
   shot('verdict', P.verdict.t0 - 0.1, {
-    target: [135, 110],
     draw(u, t) { plateBG(t, { glowY: 200 }); },
     ui(u, t) {
       ptextC('VERDICT', 135, 22, WH[3], 3, '#05040f', Math.floor((t - tVe + 0.1) * 12));
@@ -249,7 +239,6 @@ function buildShots4() {
   // 32. les labos d'aujourd'hui : des cuves de production
   const tLab = wt('labos', 'labos,'), tMasse = wt('labos', 'masse.');
   shot('vats', P.labos.t0 - 0.1, {
-    target: [135, 250],
     draw(u, t) {
       vgrad(0, 0, LW, 330, [[0, ST[1]], [1, ST[3]]]); for (let x = 0; x < LW; x += 30) R(x, 0, 1, 330, ST[2]);
       R(0, 330, LW, 150, ST[2]); for (let y = 330; y < 480; y += 20) for (let x = 0; x < LW; x += 20) R(x, y, 19, 19, ((x / 20 + (y - 330) / 20) % 2) ? ST[3] : ST[4]);
@@ -269,7 +258,6 @@ function buildShots4() {
   // 33. mais pas avec des araignées : elles se dévorent
   const tAr = wt('labos', 'araignées,'), tEl = wt('labos', 'elles'), tDev = wt('labos', 'dévorent');
   shot('fight', wt('labos', 'pas') - 0.1, {
-    target: [135, 230],
     draw(u, t) {
       drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.45)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
@@ -296,7 +284,6 @@ function buildShots4() {
   // 34. des bactéries qui fabriquent la soie
   const tBa = wt('bacteries', 'bactéries,');
   shot('bacteria', P.bacteries.t0 - 0.1, {
-    target: [135, 205],
     draw(u, t) {
       fieldBG(t, NI[5], NI[2]);
       const r = rng(5);
@@ -317,7 +304,6 @@ function buildShots4() {
   // 35. ou des vers à soie modifiés
   const tVe2 = wt('bacteries', 'vers'), tMo = wt('bacteries', 'modifiés.');
   shot('silkworm', tVe2 - 0.12, {
-    target: [135, 250],
     draw(u, t) {
       vgrad(0, 0, LW, LH, [[0, GR[0]], [0.5, GR[1]], [1, '#05140f']]);
       const r = rng(9); for (let i = 0; i < 30; i++) { L.globalAlpha = 0.25; disc(r() * LW, r() * 330, 4 + Math.round(r() * 8), r() < 0.5 ? GR[3] : CY[2]); L.globalAlpha = 1; }
@@ -334,7 +320,6 @@ function buildShots4() {
   // 36. je range l'échantillon... avant de finir en cocon
   const tRa = wt('cocon', 'range'), tAv = wt('cocon', 'avant'), tCo = wt('cocon', 'cocon.');
   shot('cocoon', P.cocon.t0 - 0.1, {
-    target: [135, 300],
     draw(u, t) {
       drawLabWall(t, { shelfY: 100, clockY: 56, dim: 0.5 });
       rgrad(40, 120, 10, 250, [[0, 'rgba(255,200,74,0.4)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');

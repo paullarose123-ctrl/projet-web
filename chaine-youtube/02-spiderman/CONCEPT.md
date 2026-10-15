@@ -4,7 +4,7 @@
 
 **Pourquoi c'est important** : on croit que la toile est la partie irréaliste du personnage. C'est l'inverse : la physique du fil est la partie crédible, et ce sont la biologie du corps et la météo qui coincent. Le film répond à la question du spectateur dans les 8 premières secondes (« oui, le fil tiendrait ») et garde l'attente pour la suite (« mais trois choses… »).
 
-**Fil conducteur** : le fil blanc. Il est dans l'image dès la première seconde et **chaque coupe est un tir de toile** : un fil part du haut du cadre, se plante sur le sujet du plan suivant, et une ouverture tramée s'élargit autour du point d'impact pendant que le fil remonte (« thwip »). Un second repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict.
+**Fil conducteur** : le fil blanc, dans l'image dès la première seconde, mais seulement comme élément de la scène : **les coupes sont franches** (pas de fil ni de transition entre les plans, pas de bruit de toile). Un repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict.
 
 **Format** : 1080 × 1920, 30 i/s, 2 min (120,2 s). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, courbe).
 

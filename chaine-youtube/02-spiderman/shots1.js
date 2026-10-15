@@ -3,7 +3,6 @@
 function buildShots1() {
   // 1. accroche : le héros se balance dans la nuit
   shot('hookCity', 0, {
-    tr: 'cut',
     draw(u, t) { const sw = swing(t); drawCityBG(sw.hx * 0.35, t); drawSwingHero(t, sw); },
     ui(u, t) { const sw = swing(t), v = 0.28 + 0.34 * Math.pow(Math.cos(sw.th * 2.4), 8); if (u > 0.3) gauge(10, 14, v, 'TENSION'); },
     ev: [[0.456, 'swoosh', 1], [2.256, 'swoosh', 1]],
@@ -11,7 +10,6 @@ function buildShots1() {
   // 2. « Oui. Le fil tiendrait. » : le fil tendu, le héros suspendu, la coche
   const tTient = wt('oui', 'tiendrait');
   shot('hookOui', P.oui.t0 - 0.1, {
-    target: [135, 170],
     draw(u, t) {
       drawCityBG(0, t, { moonDy: 40, farDy: 70, midDy: 100, nearDy: 150 });
       vignette(0.55, 60, 260);
@@ -30,7 +28,6 @@ function buildShots1() {
   // 3. « Mais trois choses ne passeraient jamais » : trois cases, trois ✗
   const t3 = [wt('trois', 'trois'), wt('trois', 'choses') + 0.15, wt('trois', 'ne')];
   shot('hookTrois', P.trois.t0 - 0.1, {
-    target: [135, 220],
     draw(u, t) { const sw = swing(t + 1.0, { ph: 2.4, ax: 120 }); drawCityBG(sw.hx * 0.35, t); drawSwingHero(t + 1.0, sw, { s: 1.6 }); vignette(0.35, 150, 330); },
     ui(u, t) {
       ['burger', 'spray', 'cloud'].forEach((k, i) => {
@@ -43,7 +40,6 @@ function buildShots1() {
   // 4. le labo : une araignée au bout de son fil, dans un bocal
   const tSoie = wt('soie', 'soie'), tProt = wt('soie', 'protéines');
   shot('labSpider', P.soie.t0 - 0.1, {
-    target: [135, 230],
     draw(u, t) {
       drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.55 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.5)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
@@ -75,7 +71,6 @@ function buildShots1() {
   // 5a. coupe dans l'abdomen : les protéines liquides (gel) dans la glande
   const tGel = wt('soie', 'gel'), tLiq = wt('soie', 'liquides');
   shot('cutGland', tProt - 0.18, {
-    target: [135, 165],
     draw(u, t) {
       plateBG(t, { glowY: 170 });
       const cx = 135, cy = 168;
@@ -124,7 +119,6 @@ function buildShots1() {
   const tEtire = wt('etire', 'étire'), tOrif = wt('etire', 'orifices'), tSolide = wt('etire', 'solide.');
   const hwDuct = y => 11 + 70 * Math.pow(clamp((y - 238) / 250), 1.7);
   shot('cutNozzle', P.etire.t0 - 0.1, {
-    target: [135, 240],
     draw(u, t) {
       plateBG(t, { glowY: 280 });
       const cx = 135, yN = 238;
@@ -176,7 +170,6 @@ function buildShots1() {
   const tMol = wt('zoom', 'molécules:'), tBr = wt('zoom', 'briques'), tSou = wt('zoom', 'souples.');
   const zT0 = P.zoom.t0 - 0.1, zA = 1.15, zB = 2.35;                    // fin du plan A, fin du plan B
   shot('microZoom', zT0, {
-    target: [135, 205],
     draw(u, t) {
       const kAB = prog(u, zA, zA + 0.5), kBC = prog(u, zB, zB + 0.5);
       const dA = tt => stageThread(tt), dB = tt => stageFibrils(tt), dC = tt => molecules(tt, 0, tt > tBr && tt < tBr + 0.5, false);
@@ -197,7 +190,6 @@ function buildShots1() {
   });
   const tFont = wt('briques', 'solidité.'), tEla = wt('briques', 'élastiques'), tCasse = wt('briques', 'casse.');
   shot('microBricks', P.briques.t0 - 0.1, {
-    target: [135, 205],
     draw(u, t) {
       // s : étirement (deux tractions) ; les briques restent rigides
       const s = 0.5 - 0.5 * Math.cos(clamp((t - tEla) / 2.2) * TAU * 1.0);

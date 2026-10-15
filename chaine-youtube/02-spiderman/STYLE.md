@@ -31,7 +31,7 @@ Même chaîne, même moteur que la vidéo 1 (pixel art 270 × 480 agrandi ×4, p
 
 ## Éléments récurrents (la « langue » de la chaîne)
 
-- **Fil blanc** : le fil de soie est toujours le même, blanc-cyan, avec un point brillant. Il traverse chaque plan et **chaque coupe est un tir de toile** (voir CONCEPT.md).
+- **Fil blanc** : le fil de soie est toujours le même, blanc-cyan, avec un point brillant. Il n'apparaît que quand il fait partie de la scène (le héros qui se balance, la soie de l'araignée, la toile) : **les coupes sont franches**, sans fil ni ouverture tramée entre deux plans (retiré à la demande de l'auteur).
 - **Étiquette** (tag) : boîte bleu nuit, liseré bleu, texte cyan en pixel 5×7 (« LABO », « MADAGASCAR · 2010 »). Variante rouge pour les alertes.
 - **Jauge de tension** : cadran en demi-cercle, aiguille blanche, zone rouge, mini-étiquette rouge. Elle revient à chaque épreuve du fil.
 - **Pastilles ✓ / ✗** : cercle vert avec coche, cercle rouge avec croix. Elles s'alignent en haut à droite et forment le tableau du verdict.
@@ -44,7 +44,7 @@ Coupes toutes les 2 à 4 s (rythme des références), chaque plan bouge en conti
 
 ## Son
 
-Voix off d'homme (même voix que la vidéo 1), nappe douce avec petite mélodie en cloches et pizzicato, un bruit pour chaque action : tir de toile (« thwip ») à chaque coupe, vent entre les gratte-ciel, bourdonnement de mouche et « boing » élastique, crissement de freins de métro, pluie et tonnerre, bips d'étiquettes, « ding » pour ✓ et buzz grave pour ✗.
+Voix off d'homme (même voix que la vidéo 1), nappe douce avec petite mélodie en cloches et pizzicato, un bruit pour chaque action (aucun bruit sur les coupes) : vent entre les gratte-ciel, bourdonnement de mouche et « boing » élastique, crissement de freins de métro, pluie et tonnerre, bips d'étiquettes, « ding » pour ✓ et buzz grave pour ✗.
 
 ## À ne pas copier (sujets des références)
 
