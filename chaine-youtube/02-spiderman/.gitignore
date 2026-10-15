@@ -1,0 +1,8 @@
+__pycache__/
+node_modules/
+modeles/
+*.mp4
+build/*
+!build/timeline.js
+!build/timeline.json
+!build/edge/

@@ -1,0 +1,17 @@
+{
+  "name": "chaine-02-spiderman",
+  "private": true,
+  "type": "module",
+  "description": "Vidéo 2 : la toile de Spider-Man est-elle possible ? (pixel art dessiné en code, voix d'homme neuronale).",
+  "scripts": {
+    "voix": "python voix.py build",
+    "stills": "node render.mjs piece.html --stills 0.6 5 10",
+    "events": "node render.mjs piece.html --events",
+    "score": "node score.mjs build/score.wav",
+    "rendu": "./rendu.sh"
+  },
+  "dependencies": {
+    "@fontsource/nunito": "^5.3.0",
+    "puppeteer-core": "^24.43.1"
+  }
+}
