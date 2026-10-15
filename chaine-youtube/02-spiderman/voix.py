@@ -199,6 +199,7 @@ def mots_whisper(audio, sr):
 
 
 _FA = None
+BIAIS_DEBUT = 0.08    # le CTC place le début d'un mot ~80 ms après celui du service Edge (mesuré sur 86 mots : écart-type 30 ms, maximum 0,2 s)
 
 
 def romanise(mot):
@@ -235,7 +236,7 @@ def mots_forces(audio, sr, attendus):
     for i in garde:
         sp = spans[k:k + len(rom[i])]
         k += len(rom[i])
-        out[i] = {"text": attendus[i], "t0": round(sp[0].start * img, 3), "t1": round(sp[-1].end * img, 3)}
+        out[i] = {"text": attendus[i], "t0": round(max(0.0, sp[0].start * img - BIAIS_DEBUT), 3), "t1": round(sp[-1].end * img, 3)}
     for i, o in enumerate(out):                      # mot sans lettre (ponctuation seule) : collé au voisin
         if o is None:
             prev = next((out[j] for j in range(i - 1, -1, -1) if out[j]), None)
