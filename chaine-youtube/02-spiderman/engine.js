@@ -16,8 +16,9 @@ const norm = s => s.toLowerCase().replace(/[.,:;!?…]/g, '');
 const wt = (id, txt, k = 0) => { const w = P[id].words.filter(w => norm(w.w) === norm(txt))[k]; if (!w) throw new Error('mot ' + id + ' ' + txt); return w.t0; };
 const wt1 = (id, txt, k = 0) => { const w = P[id].words.filter(w => norm(w.w) === norm(txt))[k]; if (!w) throw new Error('mot ' + id + ' ' + txt); return w.t1; };
 const VOICE_END = TL.phrases[TL.phrases.length - 1].t1;
-const CARD_T = 2.3;                                  // carton final
-const DUR = VOICE_END + CARD_T;
+const CARD_T = 2.0;                                  // carton final (« LE FIL TIENT. LE RESTE, NON. »), après la dernière parole
+const OUTRO_T = 5.0;                                 // plan de sortie : logo, nom de la chaîne, abonnez-vous (outro.js)
+const DUR = VOICE_END + CARD_T + OUTRO_T;
 const NF = Math.round(DUR * FPS);
 const WORDS = TL.phrases.flatMap(p => p.words);
 

@@ -12,4 +12,4 @@ function drawSwingHero(t, sw, o = {}) {
   return heroDraw(sw.hx, sw.hy, -sw.th * 0.92, o.s ?? 1.7, { legs: 0.2 + 0.5 * Math.abs(sw.om) * 0.6 + 0.2 * k, armL: 0.3 + 0.3 * k, lean: sw.om * 1.1, ...o });
 }
 
-function buildShots() { buildShots1(); buildShots2(); if (typeof buildShots3 === 'function') buildShots3(); if (typeof buildShots4 === 'function') buildShots4(); }
+function buildShots() { buildShots1(); buildShots2(); if (typeof buildShots3 === 'function') buildShots3(); if (typeof buildShots4 === 'function') buildShots4(); if (typeof buildOutro === 'function') buildOutro(); }

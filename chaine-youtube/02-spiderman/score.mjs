@@ -232,6 +232,11 @@ for (const e of EV.events) {
     case 'chomp': noise(x - 0.05, 0.08, { type: 'bp', f0: 900, f1: 500, q: 2, gain: 0.2, att: 0.002, rel: 0.06 }); noise(x + 0.12, 0.08, { type: 'bp', f0: 800, f1: 450, q: 2, gain: 0.18, att: 0.002, rel: 0.06 }); thud(x + 0.18, 0.5); horn(x + 0.3, NOTE('F3'), NOTE('F3'), 0.25, { gain: 0.06 }); break;
     case 'shelf': blip(x, 420, 300, 0.05, { gain: 0.07, duty: 0.4 }); bell(x + 0.03, 'C7', { gain: 0.025, decay: 0.5 }); break;
     case 'wrap': noise(x, 1.5, { type: 'hp', f0: 4500, f1: 7500, gain: 0.07, att: 0.15, rel: 0.4 }); for (let k = 0; k < 9; k++) pluck(x + k * 0.16, NOTE(['D4', 'F#4', 'A4', 'D5', 'F#5'][k % 5]) , { gain: 0.03, pan: -0.4 + k * 0.1 }); break;
+    case 'logo': thud(x, 0.4); thud(x + 0.36, 0.16); thud(x + 0.58, 0.08); [['D5', 0], ['F#5', 0.07], ['A5', 0.14], ['D6', 0.21]].forEach(([n, d]) => bell(x + d, n, { gain: 0.055, decay: 1.8 })); noise(x, 0.4, { type: 'hp', f0: 6000, f1: 9000, gain: 0.03, att: 0.01, rel: 0.3 }); break;
+    case 'letters': for (let k = 0; k < 7; k++) blip(x + k * 0.07, 900 + k * 70, 1200 + k * 70, 0.04, { gain: 0.05, pan: -0.3 + k * 0.1 }); break;
+    case 'click': blip(x, 1800, 900, 0.025, { gain: 0.09, duty: 0.3 }); woodKnock(x, 0.05, 320); break;
+    case 'subscribed': [['A5', 0], ['C#6', 0.09], ['E6', 0.18], ['A6', 0.27]].forEach(([n, d]) => bell(x + d, n, { gain: 0.06, decay: 1.7 })); noise(x, 0.5, { type: 'hp', f0: 5000, f1: 9000, gain: 0.035, att: 0.01, rel: 0.4 }); break;
+    case 'bellring': for (let k = 0; k < 5; k++) { bell(x + k * 0.3, 'E6', { gain: 0.05 - k * 0.007, decay: 1.2 }); bell(x + k * 0.3 + 0.02, 'B6', { gain: 0.025 - k * 0.003, decay: 1.0 }); } break;
     case 'endCard': for (let k = 0; k < 28; k++) blip(x + k / 26, 2400, 2200, 0.012, { gain: 0.012 }); bell(x + 0.2, 'D5', { gain: 0.05, decay: 3 }); break;
   }
 }
