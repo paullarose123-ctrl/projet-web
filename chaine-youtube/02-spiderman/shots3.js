@@ -2,7 +2,7 @@
 // ───────────────────────── plans 16 à 22 : le point le plus bas, spaghetti et câble, métro, étudiants, bras ─────────────────────────
 function buildShots3() {
   // 16. le point le plus bas du balancement
-  const tB = wt('bas', 'point') + 0.25, tPt = wt('bas', 'point');
+  const tPt = wt('bas', 'bas'), tB = tPt + 0.25;
   const swB = t => { const th = 0.27 * Math.sin(TAU / 3.6 * (t - tB)), om = 0.27 * TAU / 3.6 * Math.cos(TAU / 3.6 * (t - tB)); return { th, om, ax: 150, ay: -150, len: 350, hx: 150 + 350 * Math.sin(th), hy: -150 + 350 * Math.cos(th) }; };
   shot('lowPoint', P.bas.t0 - 0.1, {
     draw(u, t) {
@@ -20,7 +20,7 @@ function buildShots3() {
     ev: [[tB, 'swoosh', 1]],
   });
   // 17. un fil à peine plus fin qu'un spaghetti ; avec de la marge, un câble de chargeur
-  const tFil = wt('spaghetti', 'fil'), tSp = wt('spaghetti', 'spaghetti'), tMarge = wt('spaghetti', 'marge?'), tCab = wt('spaghetti', 'câble');
+  const tFil = wt('spaghetti', 'fil'), tSp = wt('spaghetti', 'spaghetti'), tJuste = wt('spaghetti', 'juste'), tMarge = wt('spaghetti', 'marge'), tCab = wt('spaghetti', 'câble');
   shot('threadSpaghetti', P.spaghetti.t0 - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 220 });
@@ -35,11 +35,13 @@ function buildShots3() {
       if (u > 0.3) tagBox(14, 16, 'MÊME RÈGLE', 'amber', 99);
       if (t > tFil) tagBox(15 + 4 * 12 + 10, 118, 'FIL DE SOIE', 'blue', Math.floor((t - tFil) * 30), true);
       if (t > tSp + 0.2) tagBox(15 + 8 * 12 + 18, 98, 'SPAGHETTI', 'amber', Math.floor((t - tSp - 0.2) * 30), true);
+      const pj = prog(t, tJuste - 0.05, tJuste + 0.4);
+      if (pj > 0) tagBox(135, 70, 'TOUT JUSTE', 'amber', Math.floor(pj * 16), true);
       const pm = prog(t, tMarge - 0.05, tMarge + 0.4);
       if (pm > 0) tagBox(135, 44, 'AVEC DE LA MARGE', 'green', Math.floor(pm * 24), true);
       if (t > tCab + 0.4) tagBox(15 + 13 * 12 + 23 + 20, 142, 'CÂBLE DE CHARGEUR', 'white', Math.floor((t - tCab - 0.4) * 30), true);
     },
-    ev: [[tFil, 'label', 1], [tSp, 'label', 1], [tMarge, 'blip', 1], [tCab, 'label', 1]],
+    ev: [[tFil, 'label', 1], [tSp, 'label', 1], [tJuste, 'blip', 1], [tMarge, 'blip', 1], [tCab, 'label', 1]],
   });
   // 18. le métro de Spider-Man 2 : toile contre train
   const T18 = P.metro.t0 - 0.1, tEn = wt('metro', 'en') - 0.12;

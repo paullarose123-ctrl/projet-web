@@ -18,8 +18,8 @@ function jarGraduated(x, y, w, h, level, col, t, bright) {   // éprouvette larg
 }
 function buildShots4() {
   // 22. problème 1 : la quantité (carte-titre)
-  const tQ = wt('probleme', 'quantité.');
-  shot('quantA', P.probleme.t0 - 0.1, {
+  const tQ = wt('probleme', 'quantité'), tPrem = wt('probleme', 'premier');
+  shot('quantA', tPrem - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 230 });
       rgrad(135, 225, 10, 120, [[0, 'rgba(255,184,80,0.3)'], [1, 'rgba(255,184,80,0)']], 1, 'lighter');
@@ -31,10 +31,31 @@ function buildShots4() {
       const p = prog(t, tQ - 0.05, tQ + 0.5);
       if (p > 0) ptextC('LA QUANTITÉ', 135, 318, WH[3], 2, '#05040f', Math.floor(p * 11));
     },
-    ev: [[P.probleme.t0 + 0.9, 'label', 1], [tQ, 'ding', 1]],
+    ev: [[tPrem + 0.1, 'label', 1], [tQ, 'ding', 1]],
   });
-  // 23. 90 g de protéines pour un balancement, 60 g pour la journée
-  const tBal = wt('proteine', 'balancement'), tPr = wt('proteine', 'protéines'), tBes = wt('proteine', 'besoins'), tEnt = wt('proteine', 'entière.');
+  // 22b. « la toile sort de son corps, et la soie, c'est de la protéine, comme la viande »
+  const tCor = wt('corps', 'corps,'), tPro = wt('corps', 'protéine,'), tVia = wt('corps', 'viande.');
+  shot('bodyThread', P.corps.t0 - 0.1, {
+    draw(u, t) {
+      plateBG(t, { glowY: 260 });
+      const cy = 350, s = 2.2;
+      heroFront(135, cy, s, t, { arms: 'out' });
+      // le fil sort du poignet droit du héros et file vers le haut du cadre
+      const wx = Math.round(135 + 41 * s), wy = Math.round(cy - 23 * s);          // le poing droit (bras écartés)
+      silkWave2(wx, wy, wx + 6, wy - 90, 2); silkWave2(wx + 6, wy - 90, wx + 2, -4, 2);
+      for (let i = 0; i < 5; i++) { const k = ((t * 1.2 + i * 0.2) % 1); px(wx + 3 + Math.sin(k * 9 + i) * 3, wy - k * 150, WH[3]); }
+    },
+    ui(u, t) {
+      if (u > 0.3) tagBox(14, 16, 'DANS LE FILM', 'blue', Math.floor((u - 0.3) * 30));
+      const p1 = prog(t, tCor - 0.05, tCor + 0.5); if (p1 > 0) tagBox(135, 44, 'LA TOILE SORT DU CORPS', 'blue', Math.floor(p1 * 26), true);
+      const p2 = prog(t, tPro - 0.05, tPro + 0.5); if (p2 > 0) tagBox(135, 96, 'SOIE = PROTÉINE', 'amber', Math.floor(p2 * 20), true);
+      const p3 = prog(t, tVia - 0.25, tVia + 0.3); if (p3 > 0) { bigIcon(iconBurger, 60, 166, 2); ptextC('COMME LA VIANDE', 135, 124, AM[9], 1, '#05040f', Math.floor(p3 * 16)); }
+      scoreTiles(t, { thread: 'yes' }, 'burger');
+    },
+    ev: [[tCor, 'label', 1], [tPro, 'blip', 1], [tVia, 'ding', 1]],
+  });
+  // 23. un seul balancement : plus de protéines que ce qu'un adulte doit manger en une journée
+  const tBal = wt('proteine', 'balancement,'), tBes = wt('proteine', 'adulte'), tEnt = wt('proteine', 'journée.');
   shot('quantB', P.proteine.t0 - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 230 });
@@ -46,7 +67,7 @@ function buildShots4() {
     },
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'PROTÉINES', 'amber', 99);
-      if (t > tBal + 0.4) { ptextC('1 GRAND BALANCEMENT', 73, 340, CY[4], 1); ptextC('≈ 90 G', 73, 100, WH[3], 2); }
+      if (t > tBal + 0.4) { ptextC('1 BALANCEMENT', 73, 340, CY[4], 1); ptextC('≈ 90 G', 73, 100, WH[3], 2); }
       if (t > tBes + 0.4) { ptextC("BESOIN D'UNE JOURNÉE", 197, 340, AM[9], 1); ptextC('≈ 60 G', 197, 100, AM[10], 2); }
       const p = prog(t, tEnt - 0.2, tEnt + 0.3);
       if (p > 0) { ptextC('PLUS', 135, 168, RD[5], 2, '#05040f'); arrow(135, 188, 135, 208, RD[5], 1, 4); }
@@ -111,7 +132,7 @@ function buildShots4() {
     ev: [[tFab - 0.2, 'spray', 1], [tFab, 'ding', 1]],
   });
   // 26. elle l'étire : l'araignée descend en tirant son fil
-  const tEj = wt('fabrication', "n'éjecte"), tEtire = wt('fabrication', "l'étire.");
+  const tEj = wt('fabrication', 'vraie'), tEtire = wt('fabrication', "l'étire.");
   shot('fabB', tUne2 - 0.1, {
     draw(u, t) {
       drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
@@ -134,28 +155,6 @@ function buildShots4() {
     },
     ev: [[tEj, 'no', 1], [tEtire, 'blip', 1]],
   });
-  // 27. étirées = alignées = solides ; en vrac = pas le même fil
-  const tSol = wt('jet', 'solide.'), tJet = wt('jet', 'jet'), tNon = wt('jet', 'non.');
-  shot('alignment', P.jet.t0 - 0.1, {
-    draw(u, t) {
-      fieldBG(t, NI[4], NI[1]);
-      const r = rng(61);
-      // gauche : protéines alignées qui montent
-      for (let i = 0; i < 34; i++) { const x = 20 + (i % 6) * 18 + (r() - 0.5) * 6, y = 330 - ((t * 36 + i * 17 + (i % 6) * 9) % 250); protein(x, y, -Math.PI / 2, 1, CY[4], 12); }
-      // droite : pelotes en vrac
-      const r2 = rng(63);
-      for (let i = 0; i < 26; i++) { const x = 150 + r2() * 100, y = 90 + r2() * 230 + Math.sin(t * 1.5 + i) * 3; protein(x, y, r2() * TAU + t * 0.5, 0, AM[8], 8); }
-      R(134, 90, 2, 240, '#05040f'); R(135, 90, 1, 240, ST[5]);
-      viewportMask();
-    },
-    ui(u, t) {
-      tagBox(14, 16, 'ZOOM ×1 000 000 · PROTÉINES', 'blue', 99);
-      ptextC('ÉTIRÉES', 80, 108, CY[4], 1); ptextC('JET : EN VRAC', 190, 108, AM[8], 1);
-      const p = prog(t, tSol - 0.05, tSol + 0.35); if (p > 0) { mark(80, 262, 'yes', p, 9); tagBox(80, 284, 'ALIGNÉES = SOLIDE', 'green', 99, true); }
-      const q = prog(t, tNon - 0.05, tNon + 0.35); if (q > 0) { mark(190, 262, 'no', q, 9); tagBox(190, 284, 'PAS LE MÊME FIL', 'red', 99, true); }
-    },
-    ev: [[tSol, 'ding', 1], [tNon, 'no', 1]],
-  });
   // 28. problème 3 : la pluie sur la fenêtre du labo
   const tPl = wt('pluie', 'pluie.');
   shot('rainWindow', P.pluie.t0 - 0.1, {
@@ -175,8 +174,8 @@ function buildShots4() {
     ev: [[P.pluie.t0 - 0.1, 'rain', 1], [tPl - 0.2, 'thunder', 0.5]],
   });
   // 29. mouillée, la soie rétrécit de moitié (supercontraction)
-  const tMou = wt('pluie', 'mouillée,'), tRet = wt('pluie', 'rétrécir'), tMoi = wt('pluie', 'moitié.');
-  shot('shrink', tMou - 0.1, {
+  const tMou = wt('pluie', 'mouillée'), tRet = wt('pluie', 'raccourcir'), tMoi = wt('pluie', 'moitié.');
+  shot('shrink', wt('pluie', 'quand') - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 220 });
       const k = eio(prog(t, tRet - 0.1, tMoi + 0.2)), len = 300 - 150 * k, hy = len;
@@ -193,7 +192,7 @@ function buildShots4() {
     },
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'FIL MOUILLÉ', 'blue', Math.floor((u - 0.3) * 30));
-      const p = prog(t, tRet - 0.05, tRet + 0.5); if (p > 0) tagBox(190, 70, 'SUPERCONTRACTION', 'red', Math.floor(p * 30), true);
+      const p = prog(t, tRet - 0.05, tRet + 0.5); if (p > 0) tagBox(190, 70, 'LE FIL RACCOURCIT', 'red', Math.floor(p * 30), true);
       if (t < tRet) ptext('100 %', 14, 100, AM[9], 2);
       const q = prog(t, tMoi - 0.1, tMoi + 0.4); if (q > 0) { ptext('50 %', 14, 100, RD[5], 2); ptext('−50 %', 190, 96, RD[5], 2); arrow(30, 130, 30, 190, RD[5], 1, 4); }
       scoreTiles(t, { thread: 'yes', burger: 'no', spray: 'no' }, 'cloud');
@@ -224,7 +223,7 @@ function buildShots4() {
     draw(u, t) { plateBG(t, { glowY: 200 }); },
     ui(u, t) {
       ptextC('VERDICT', 135, 22, WH[3], 3, '#05040f', Math.floor((t - tVe + 0.1) * 12));
-      const rows = [['thread', 'LA SOIE · SOLIDITÉ', 'yes', tSo], ['burger', 'LA QUANTITÉ', 'no', tFi + 0.15], ['spray', 'LA FABRICATION', 'no', tFi + 0.55], ['cloud', 'LA MÉTÉO', 'no', tFi + 0.95], ['mask', 'LA FORCE DE PETER PARKER', 'no', tRe - 0.15]];
+      const rows = [['thread', 'LA SOIE · SOLIDITÉ', 'yes', tSo], ['burger', 'LA QUANTITÉ', 'no', tFi + 0.15], ['spray', 'LA FABRICATION', 'no', tFi + 0.55], ['cloud', 'LA MÉTÉO', 'no', tFi + 0.95]];
       rows.forEach(([k, lab, st, tt], i) => {
         const y = 66 + i * 52, p = prog(t, tt - 0.05, tt + 0.3); if (p <= 0) return;
         if (k === 'mask') { R(23, y - 1, 26, 26, '#05040f'); R(24, y, 24, 24, ST[3]); R(25, y + 1, 22, 22, NI[1]); iconMask(36, y + 12); } else slot(24, y, k, null, 1);
@@ -234,7 +233,7 @@ function buildShots4() {
       const f = prog(t, tRe - 0.05, tRe + 0.25);
       if (f > 0) { ptextC('FICTION', 135, 330, RD[4], 4, '#05040f'); R(28, 318, 214, 2, RD[4]); R(28, 364, 214, 2, RD[4]); R(28, 318, 2, 48, RD[4]); R(240, 318, 2, 48, RD[4]); }
     },
-    ev: [[tSl, 'ding', 1], [tFi + 0.15, 'no', 1], [tFi + 0.55, 'no', 1], [tFi + 0.95, 'no', 1], [tRe - 0.15, 'no', 1], [tRe, 'stamp', 1]],
+    ev: [[tSl, 'ding', 1], [tFi + 0.15, 'no', 1], [tFi + 0.55, 'no', 1], [tFi + 0.95, 'no', 1], [tRe, 'stamp', 1]],
   });
   // 32. les labos d'aujourd'hui : des cuves de production
   const tLab = wt('labos', 'labos,'), tMasse = wt('labos', 'masse.');
@@ -256,8 +255,8 @@ function buildShots4() {
     ev: [[P.labos.t0, 'hum', 1], [tMasse, 'bubbles', 1]],
   });
   // 33. mais pas avec des araignées : elles se dévorent
-  const tAr = wt('labos', 'araignées,'), tEl = wt('labos', 'elles'), tDev = wt('labos', 'dévorent');
-  shot('fight', wt('labos', 'pas') - 0.1, {
+  const tAr = wt('labos', 'araignées'), tEl = wt('labos', 'elles'), tDev = wt('labos', 'dévorent');
+  shot('fight', wt('labos', 'mais') - 0.1, {
     draw(u, t) {
       drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.45)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');

@@ -1,51 +1,39 @@
 # Concept — « La toile de Spider-Man est-elle possible ? »
 
-**Logline** : un fil d'araignée pourrait-il vraiment retenir Spider-Man ? Oui : le fil tiendrait. À épaisseur égale la soie d'araignée vaut un bon acier, elle est six fois plus légère et elle encaisse les chocs mieux que le Kevlar. Au point le plus bas du balancement, un fil à peine plus fin qu'un spaghetti suffirait (un câble de chargeur avec de la marge), et des étudiants ont calculé en 2013 que la toile arrêterait même le métro de *Spider-Man 2*. Mais trois choses ne passeraient jamais : la quantité de protéines, la fabrication (une araignée étire sa soie, elle ne la projette pas) et la pluie (la soie mouillée rétrécit de moitié). Verdict : le fil tient, tout le reste est fiction.
+**Logline** : un fil d'araignée pourrait-il vraiment retenir Spider-Man ? Oui : un fil de soie à peine plus épais qu'un spaghetti suffirait au point le plus bas d'un balancement (un câble de chargeur avec de la marge), parce qu'à épaisseur égale la soie vaut à peu près un bon acier en étant six fois plus légère et qu'elle encaisse les chocs mieux que le Kevlar ; des étudiants ont même calculé en 2013 que la toile arrêterait le métro de *Spider-Man 2* (avec la soie de la meilleure araignée). Mais trois choses ne marcheraient pas : la quantité de protéines (la toile sortirait de son corps), la fabrication (une araignée étire sa soie, elle ne la lance pas) et la pluie (la soie mouillée peut raccourcir de moitié). Verdict : le fil tient, tout le reste est fiction.
 
-**Pourquoi c'est important** : on croit que la toile est la partie irréaliste du personnage. C'est l'inverse : la physique du fil est la partie crédible, et ce sont la biologie du corps et la météo qui coincent. Le film répond à la question du spectateur dans les 8 premières secondes (« oui, le fil tiendrait ») et garde l'attente pour la suite (« mais trois choses… »).
+**Version 2 du texte (à la demande de l'auteur : « moins compliqué à comprendre, trop scientifique au début »)** : plus de « gel », de « molécules », de « briques et chaînes », de « ténacité » ni de « supercontraction ». Le début parle de Spider-Man (le balancement, le spaghetti, le câble de chargeur) avant la soie ; chaque idée a une image du quotidien (spaghetti, câble de chargeur, gilet pare-balles, mouche dans la toile, viande, métro, pizzas). Le texte a été relu par quatre lecteurs indépendants (clarté pour un public sans bagage scientifique, exactitude, français oral et lecture par une voix de synthèse, rétention) ; leurs corrections ont été reprises (réserves « à peu près », « un bon acier », « tout juste » pour le spaghetti, « ce qu'un adulte doit manger » et non « ce qu'on mange », « avec la soie de cette championne » pour le métro, « ne marcheraient pas » et non « jamais », trois problèmes numérotés à voix haute).
 
-**Fil conducteur** : le fil blanc, dans l'image dès la première seconde, mais seulement comme élément de la scène : **les coupes sont franches** (pas de fil ni de transition entre les plans, pas de bruit de toile). Un repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict.
+**Pourquoi c'est important** : on croit que la toile est la partie irréaliste du personnage. C'est l'inverse : la physique du fil est la partie crédible, et ce sont la biologie du corps et la météo qui coincent. Le film répond à la question du spectateur dans les 5 premières secondes (« oui, le fil tiendrait ») et garde l'attente pour la suite (« mais trois choses ne marcheraient pas »).
 
-**Format** : 1080 × 1920, 30 i/s, 2 min (120,2 s). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, courbe).
+**Fil conducteur** : les coupes sont franches (pas de fil ni de transition entre les plans, pas de bruit de toile). Un repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict. Les bras de Peter Parker sont une blague, pas une quatrième case.
 
-| Temps | Ce qu'on voit | Ce qui motive la coupe | Son |
-|---|---|---|---|
-| 0–3,2 s | Nuit, ville, le héros se balance au bout du fil ; jauge TENSION | accroche | vent, souffle du balancement, nappe grave, battements |
-| 3,2–5,6 s | Le fil tendu, le héros suspendu ; ✓ « LE FIL TIENT » | « Oui. Le fil tiendrait. » | « ding » |
-| 5,6–8,6 s | Trois cases en haut à droite : hamburger, jet, nuage, chacune barrée | « trois choses… » | trois « buzz » graves |
-| 8,6–10,8 s | Labo : l'araignée au bout de son fil dans un bocal ; étiquette SOIE | « une toile, c'est de la soie » | ronronnement, tic-tac |
-| 10,8–13,8 s | Coupe de l'abdomen : glande pleine de gel, protéines | « des protéines liquides comme un gel » | bip d'étiquette |
-| 13,8–18 s | Gros plan des filières : le gel s'étire, le fil se fige | « elle les étire… un fil solide » | « ding » quand le fil se fige |
-| 18–22,3 s | Microscope : on zoome du fil aux fibrilles puis aux molécules | « au niveau des molécules » | zoom de microscope |
-| 22,3–26,7 s | Briques rigides et chaînes souples ; les chaînes s'étirent, les briques non | « les briques… les élastiques » | bips, étirement |
-| 26,7–31,1 s | Câble d'acier et fil de soie de même épaisseur portent la même charge ; coupes identiques ; « ≈ » | « à épaisseur égale, à peu près pareil » | choc métallique, « ding » |
-| 31,1–32,8 s | Balance : un cube d'acier, six cubes de soie | « six fois plus légère » | bips |
-| 32,8–35,1 s | Aube, toile d'épeire ; la mouche arrive en piqué | « elle encaisse les chocs » | bourdonnement |
-| 35,1–37,7 s | Vue de côté : la mouche heurte la toile, elle s'étire et rebondit ; barre d'énergie | « une mouche fonce dedans, le fil s'étire » | « boing » |
-| 37,7–40,2 s | Courbe force / allongement : l'aire sous la courbe est la ténacité | « ne casse pas. C'est la ténacité » | bips, « ding » |
-| 40,2–44,1 s | Madagascar, aube sur la rivière : l'araignée écorce de Darwin sur sa toile géante | « la championne vit à Madagascar » | étiquette |
-| 44,1–47,6 s | Barres : Kevlar ×1, araignée de Darwin jusqu'à ×10 | « jusqu'à dix fois plus tenace » | barres, « ding » |
-| 47,6–51,1 s | La ville : le héros au point le plus bas, arc en pointillé, jauge dans le rouge | « le point le plus bas » | souffle |
-| 51,1–56,9 s | Règle : fil de soie, spaghetti, puis câble de chargeur | « à peine plus fin qu'un spaghetti… un câble de chargeur » | étiquettes |
-| 56,9–59,5 s | Tunnel, le héros face au métro, toile tendue de mur à mur | « le métro de Spider-Man 2 » | grondement, crissement de freins |
-| 59,5–63,9 s | Tableau noir, trois étudiants, « F ≈ 300 000 N », ✓ « ÇA TIENT » | « en 2013… ça tiendrait » | « ding » |
-| 63,9–66,2 s | La ville, le fil crédible ; la case de la bobine passe au ✓ | « côté fil, c'est crédible » | « ding » |
-| 66,2–69,6 s | Le héros accroché des deux bras, tremblant, sueur ; jauge FORCE DES BRAS | « les bras de Peter Parker » | grincement |
-| 69,6–73 s | Carte-titre « PROBLÈME 1 SUR 3 · LA QUANTITÉ » | « d'abord, la quantité » | étiquette |
-| 73–77,3 s | Deux éprouvettes : ≈ 90 g pour un balancement, ≈ 60 g par jour | « plus de protéines que ses besoins » | bulles |
-| 77,3–80,9 s | Le héros attablé, une tour de boîtes à pizza | « un très gros appétit » | coups de bois |
-| 80,9–83,2 s | « PROBLÈME 2 SUR 3 · LA FABRICATION » ; jet de liquide qui se brise en gouttes | « ensuite, la fabrication » | jet |
-| 83,2–86,2 s | L'araignée descend en étirant son fil ; « pas un jet » | « elle l'étire » | |
-| 86,2–90,2 s | Protéines alignées (solide) contre pelotes en vrac (pas le même fil) | « un jet de liquide, non » | « ding », buzz |
-| 90,2–91,9 s | « PROBLÈME 3 SUR 3 · LA PLUIE » : fenêtre du labo sous l'orage | « enfin, la pluie » | pluie, tonnerre au loin |
-| 91,9–94,8 s | Fil mouillé qui rétrécit de 100 % à 50 % | « rétrécir de moitié » | grincement |
-| 94,8–98,4 s | Orage sur la ville : le fil rétrécit, le héros reste suspendu, trempé ✗ | « en plein orage… la galère » | éclair, tonnerre, trombone « raté » |
-| 98,4–105 s | VERDICT : la soie ✓, quantité / fabrication / météo / force de Peter Parker ✗ ; tampon FICTION | « la fiction, c'est tout le reste » | ✓ « ding », ✗ buzz, tampon |
-| 105–107,8 s | Labo d'aujourd'hui : cuves de production | « dans les labos, on essaie d'en produire en masse » | ronronnement |
-| 107,8–110,8 s | Deux araignées dans un bocal : elles se dévorent, il en reste une | « elles se dévorent entre elles » | « croc » |
-| 110,8–112,5 s | Bactéries qui fabriquent de la soie | « des bactéries » | bulles |
-| 112,5–114,3 s | Ver à soie modifié, double hélice | « des vers à soie modifiés » | |
-| 114,3–120,2 s | Le scientifique range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » (il se tape à partir de 118 s et reste affiché 1,6 s) | « avant de finir moi-même en cocon » | frottement, carillon |
+**Format** : 1080 × 1920, 30 i/s, environ 2 min (voix 113 s, carton « LE FIL TIENT. LE RESTE, NON. » 2 s, plan de sortie 4,2 s). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, barres).
+
+**Plan de sortie (demandé par l'auteur)** : le logo de la chaîne (grappe de raisin en pixel art, sprite à l'échelle du film, `../marque/`), le nom « RAISINS » et « ABONNEZ-VOUS » en jaune, sur fond nuit violette ; ni bouton, ni curseur, ni cloche. Bruitage : petite harmonie de cloches à l'atterrissage du logo.
+
+| Plan | Ce qu'on voit | Ce que dit la voix |
+|---|---|---|
+| hookCity | Nuit, ville, le héros se balance au bout du fil ; jauge TENSION | « Est-ce qu'un fil d'araignée pourrait vraiment retenir Spider-Man ? » |
+| hookOui | Le fil tendu, le héros suspendu ; ✓ « LE FIL TIENT » | « Oui, le fil tiendrait, » |
+| hookTrois | Trois cases en haut à droite : hamburger, jet, nuage, chacune barrée | « mais trois choses ne marcheraient pas. » |
+| lowPoint | Le balancement, flèche « POINT LE PLUS BAS », jauge dans le rouge | « Commençons par le fil. Quand Spider-Man se balance, c'est tout en bas que le fil tire le plus. » |
+| threadSpaghetti | Règle : fil de soie, spaghetti (« TOUT JUSTE »), câble de chargeur (« AVEC DE LA MARGE ») | « Un fil d'araignée à peine plus épais qu'un spaghetti suffirait, tout juste. Pour avoir de la marge, disons un câble de chargeur. » |
+| steelSilk | Câbles d'acier et de soie de même épaisseur portent la même charge ; « ≈ » | « Pourquoi ça tient ? À épaisseur égale, la soie est à peu près aussi solide qu'un bon acier, » |
+| balance | Balance : un cube d'acier, six cubes de soie ; « 6× PLUS LÉGÈRE » | « mais six fois plus légère. » |
+| webApproach, flyHit, webCaught | Toile d'épeire à l'aube ; la mouche fonce dedans, la toile s'étire (« ÉNERGIE ABSORBÉE ») ; elle est prise, ✓ « LE FIL NE CASSE PAS » | « Et la toile encaisse les chocs. Quand une mouche fonce dedans, le fil s'étire au lieu de casser. » |
+| darwinWeb, kevlarChart | Madagascar, araignée écorce de Darwin (étiquette écrite, pas dite) ; barres Kevlar (gilet pare-balles) ×1, soie jusqu'à ×10 | « La championne, c'est une araignée de Madagascar. Sa soie encaisse les chocs jusqu'à dix fois mieux que le Kevlar des gilets pare-balles. » |
+| metroTunnel, leicester | Tunnel, le héros face au métro ; tableau noir, trois étudiants, « F ≈ 300 000 N », ✓ « ÇA TIENT » | « Et le métro qu'il arrête dans Spider-Man 2 ? En 2013, des étudiants ont fait le calcul, et avec la soie de cette championne, ça tiendrait. » |
+| credible, arms | La ville, la case de la bobine passe au ✓ ; le héros accroché des deux bras, tremblant ; jauge FORCE DES BRAS | « Côté fil, c'est crédible. Ce sont plutôt les bras de Peter Parker qui m'inquiètent. » |
+| quantA, bodyThread, quantB | « PROBLÈME 1 SUR 3 · LA QUANTITÉ » ; la toile sort du poing du héros, « SOIE = PROTÉINE », « COMME LA VIANDE » ; deux éprouvettes ≈ 90 g contre ≈ 60 g | « Où est le piège ? Premier problème, la quantité. Dans le film, la toile sort de son corps, et la soie, c'est de la protéine, comme la viande. Pour un seul balancement, il lui en faudrait plus que ce qu'un adulte doit manger en une journée. » |
+| pizza | Le héros attablé, une tour de boîtes à pizza | « Un grand pouvoir implique... un très gros appétit. » |
+| fabA, fabB | « PROBLÈME 2 SUR 3 · LA FABRICATION » ; le héros lance un jet ; l'araignée descend en étirant son fil, « PAS UN JET » | « Deuxième problème, la fabrication. Spider-Man lance sa toile, mais une vraie araignée l'étire. » |
+| cutGland, jetDrops, cutNozzle | Coupe de l'abdomen, « SOIE LIQUIDE » ; un jet qui se brise en gouttes ; le liquide étiré devient un fil, « FIL SOLIDE » | « Dans l'araignée, la soie est liquide, alors en jet, elle ferait juste des gouttes. Pour devenir solide, il faut l'étirer. » |
+| rainWindow, shrink, storm | « PROBLÈME 3 SUR 3 · LA PLUIE », fenêtre sous l'orage ; le fil mouillé raccourcit de 100 % à 50 % ; le héros trempé, ✗ | « Troisième problème, la pluie. Quand elle est mouillée, la soie peut raccourcir de moitié. Pour un super-héros en plein orage, c'est la galère. » |
+| verdict | VERDICT : la soie ✓, quantité / fabrication / météo ✗ ; tampon FICTION | « Verdict : la soie est assez solide pour faire du Spider-Man. La fiction, c'est tout le reste. » |
+| vats, fight, bacteria, silkworm | Cuves de production ; deux araignées dans un bocal, il en reste une ; bactéries ; ver à soie modifié (double hélice) | « Dans les labos, on essaie de produire cette soie en masse. Mais les araignées ne s'élèvent pas, elles se dévorent entre elles. On fait plutôt travailler des bactéries, ou des vers à soie modifiés. » |
+| cocoon | Le scientifique range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » | « Bon... je range mon échantillon, avant de finir moi-même en cocon. » |
+| outro | Logo (grappe), « RAISINS », « ABONNEZ-VOUS » en jaune | (rien : musique seule) |
 
 ## Faits vérifiés et sources
 
@@ -64,3 +52,13 @@
 **Précautions**
 - *Spider-Man* est une marque de Marvel / Sony : le personnage est ici un dessin pixel art stylisé, pour un propos de vulgarisation ; à vérifier si la chaîne est monétisée.
 - La voix vient d'un accès non officiel à la voix de lecture d'Edge ; pour une chaîne monétisée, passer par Azure Speech (voir README).
+
+**Réserves d'exactitude (relecture)**
+- « Aussi solide que l'acier » n'est vrai qu'avec « à peu près » et « un bon acier » : l'acier va de 0,4 GPa (de construction) à 3 GPa (corde à piano).
+- Le fil « à peine plus épais qu'un spaghetti » est la limite avec une marge nulle (≈ 1,7 mm pour 76 kg, lâché de l'horizontale) ; « avec de la marge », ≈ 3,8 mm (un câble de chargeur). Un fil d'araignée réel ne fait que 3 à 5 µm : c'est un fil de la même matière, beaucoup plus gros.
+- Métro : le résultat des étudiants suppose une toile aussi tenace que la meilleure soie connue (≈ 500 MJ/m³ pour la toile du film, du même ordre que la soie de l'araignée de Darwin) ; d'où « avec la soie de cette championne ».
+- Protéines : ≈ 90 à 120 g pour un balancement contre un besoin d'environ 60 g par jour (0,8 g/kg/j) ; on compare au besoin (« ce qu'un adulte doit manger »), pas à la consommation réelle (souvent 70 à 100 g).
+- Soie mouillée : jusqu'à ≈ 50 % de raccourcissement pour un fil libre ; un fil chargé ne raccourcit pas, il s'amollit : c'est une simplification pour l'image.
+- Araignées : « les araignées ne s'élèvent pas » (la plupart sont territoriales et cannibales) ; la soie peut tout de même être récoltée (une cape de soie de 2009 à Madagascar a demandé ≈ 1,2 million d'araignées sauvages).
+- Une description / un commentaire épinglé devrait donner les hypothèses (76 kg, lâché de l'horizontale, soie à 1 GPa et 1,3 g/cm³, 30 m de fil), les sources (Agnarsson, Kuntner, Blackledge, *PLoS ONE* 2010 ; Forster, Bryan, Stone, *J. Phys. Special Topics*, Leicester, 2013) et une mention « chaîne indépendante, non affiliée à Marvel, Sony ou DuPont (Kevlar) ».
+

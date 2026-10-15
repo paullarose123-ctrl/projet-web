@@ -37,40 +37,9 @@ function buildShots1() {
     ev: t3.map(x => [x, 'no', 1]),
   });
 
-  // 4. le labo : une araignée au bout de son fil, dans un bocal
-  const tSoie = wt('soie', 'soie'), tProt = wt('soie', 'protéines');
-  shot('labSpider', P.soie.t0 - 0.1, {
-    draw(u, t) {
-      drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.55 });
-      rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.5)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
-      // plan de travail
-      vgrad(0, 338, LW, 142, [[0, WO[5]], [0.06, WO[4]], [1, WO[1]]]); R(0, 338, LW, 1, WO[6]); R(0, 339, LW, 1, WO[2]);
-      for (let i = 0; i < 12; i++) R(((i * 61) % 260), 350 + ((i * 29) % 120), 20 + (i % 3) * 8, 1, WO[3]);
-      bookStack(4, 338, 4, 3); deskLamp(24, 338, t);
-      flask(236, 338, 34, GR[4], t); bottle(206, 338, 11, 20, [AM[3], AM[6], AM[9]], { liquid: AM[7] });
-      ell(135, 340, 62, 5, WO[1]);
-      const jx = 78, jy = 126, jw = 116, jh = 214;
-      drawJar(jx, jy, jw, jh - 10, t);
-      // branche
-      lineP(jx + 3, jy + 16, jx + 70, jy + 5, WO[3], 3); lineP(jx + 3, jy + 15, jx + 70, jy + 4, WO[5], 1); lineP(jx + 50, jy + 6, jx + 88, jy + 22, WO[3], 2);
-      // araignée sur son fil, la tête en bas
-      const sw = Math.sin(t * 1.5) * 2.5, ax = 126 + sw * 0.5, ay = jy + 78 + 8 * Math.sin(t * 0.9);
-      silk(126, jy + 5, ax, ay, t, { glint: 1 });
-      drawSpider(ax, ay, 2.5, t, { legWig: 1.3 });
-      for (let i = 0; i < 26; i++) { const x = (i * 53 + t * (4 + i % 5)) % 270, y = (i * 97 + Math.sin(t * 0.7 + i) * 8 + t * 2) % 480; px(x, y, AM[9]); }
-      vignette(0.6, 120, 290);
-    },
-    ui(u, t) {
-      if (u > 0.4) tagBox(14, 16, 'LABO', 'blue', Math.floor((u - 0.4) * 30));
-      const p = prog(t, tSoie - 0.1, tSoie + 0.6);
-      if (p > 0) { lineP(128, 215, 160, 188, CY[3]); lineP(160, 188, 196, 188, CY[3]); ptext('SOIE', 164, 178, CY[4], 1, '#05040f', Math.floor(p * 8)); }
-    },
-    ev: [[tSoie, 'label', 1]],
-  });
-
-  // 5a. coupe dans l'abdomen : les protéines liquides (gel) dans la glande
-  const tGel = wt('soie', 'gel'), tLiq = wt('soie', 'liquides');
-  shot('cutGland', tProt - 0.18, {
+  // 5a. coupe dans l'abdomen : « Dans l'araignée, la soie est liquide »
+  const tLiq = wt('jet', 'liquide'), tJetW = wt('jet', 'jet');
+  shot('cutGland', P.jet.t0 - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 170 });
       const cx = 135, cy = 168;
@@ -104,21 +73,17 @@ function buildShots1() {
       for (const dx of [-5, 0, 5]) { poly([[cx + dx - 3, 104], [cx + dx + 3, 104], [cx + dx + 1, 96], [cx + dx - 1, 96]], AM[8]); }
     },
     ui(u, t) {
-      if (u > 0.4) tagBox(14, 16, 'COUPE · ABDOMEN', 'amber', Math.floor((u - 0.4) * 30));
-      const p1 = prog(t, tProt - 0.05, tProt + 0.7);
-      if (p1 > 0) { lineP(160, 190, 185, 158, AM[8]); lineP(185, 158, 193, 158, AM[8]); ptext('PROTÉINES', 196, 154, AM[9], 1, '#05040f', Math.floor(p1 * 12)); }
-      const p2 = prog(t, tLiq - 0.05, tLiq + 0.7);
-      if (p2 > 0) ptext('LIQUIDES', 196, 166, AM[8], 1, '#05040f', Math.floor(p2 * 12));
-      const p3 = prog(t, tGel - 0.05, tGel + 0.5);
-      if (p3 > 0) ptext('COMME UN GEL', 196, 178, AM[7], 1, '#05040f', Math.floor(p3 * 14));
+      if (u > 0.4) tagBox(14, 16, "DANS L'ARAIGNÉE", 'amber', Math.floor((u - 0.4) * 30));
+      const p2 = prog(t, tLiq - 0.05, tLiq + 0.5);
+      if (p2 > 0) { lineP(150, 190, 170, 160, AM[8]); lineP(170, 160, 176, 160, AM[8]); tagBox(178, 153, 'SOIE LIQUIDE', 'amber', Math.floor(p2 * 14)); }
     },
-    ev: [[tProt, 'label', 1], [tGel, 'blip', 1]],
+    ev: [[tLiq, 'label', 1]],
   });
 
-  // 5b. gros plan : le gel est étiré par les filières, le fil se solidifie
-  const tEtire = wt('etire', 'étire'), tOrif = wt('etire', 'orifices'), tSolide = wt('etire', 'solide.');
+  // 5b. gros plan : le liquide est étiré, le fil se solidifie (« Pour devenir solide, il faut l'étirer »)
+  const tPour = wt('jet', 'pour'), tDev = wt('jet', 'devenir'), tSolide = wt('jet', 'solide,'), tEtire = wt('jet', "l'étirer.");
   const hwDuct = y => 11 + 70 * Math.pow(clamp((y - 238) / 250), 1.7);
-  shot('cutNozzle', P.etire.t0 - 0.1, {
+  shot('cutNozzle', tPour - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 280 });
       const cx = 135, yN = 238;
@@ -151,56 +116,39 @@ function buildShots1() {
       lineP(cx + 1, 206, cx + 1, -2, CY[2], 1); lineP(cx, 206, cx, -2, WH[3], 1);
       for (let i = 0; i < 9; i++) { const y = 200 - ((t * 60 + i * 24) % 210); px(cx - 1, y, CY[4]); px(cx - 1, y - 1, WH[3]); }
       // brillance quand il se fige : petites étoiles le long du fil
-      const g = bump(t, tSolide - 0.15, tSolide + 0.1, tSolide + 0.9, tSolide + 1.3);
+      const g = bump(t, tSolide - 0.15, tSolide + 0.1, tSolide + 1.4, tSolide + 1.9);
       if (g > 0) for (let i = 0; i < 6; i++) { const y = 30 + i * 28 + ((t * 40) % 28), sz = Math.round(g * (1 + (i % 2))); lineP(cx - 2 - sz, y, cx + 2 + sz, y, WH[3]); lineP(cx, y - 2 - sz, cx, y + 2 + sz, WH[3]); }
     },
     ui(u, t) {
-      if (u > 0.4) tagBox(14, 16, 'GROS PLAN · FILIÈRES', 'amber', Math.floor((u - 0.4) * 30));
-      const pe = prog(t, tEtire - 0.05, tEtire + 0.5);
-      if (pe > 0) { arrow(168, 190, 168, 120, AM[9], 1, 4); ptext('ÉTIRÉ', 175, 150, AM[9], 1, '#05040f', Math.floor(pe * 8)); }
-      const po = prog(t, tOrif - 0.05, tOrif + 0.6);
-      if (po > 0) { lineP(152, 232, 190, 262, AM[8]); lineP(190, 262, 200, 262, AM[8]); ptext('FILIÈRES', 203, 258, AM[9], 1, '#05040f', Math.floor(po * 10)); }
+      if (u > 0.3) tagBox(14, 16, 'GROS PLAN', 'amber', Math.floor((u - 0.3) * 30));
+      const pl = prog(t, tDev - 0.05, tDev + 0.5);
+      if (pl > 0) { lineP(152, 380, 190, 396, AM[8]); tagBox(194, 389, 'LIQUIDE', 'amber', Math.floor(pl * 14)); }
       const ps = prog(t, tSolide - 0.1, tSolide + 0.5);
       if (ps > 0) { tagBox(150, 60, 'FIL SOLIDE', 'blue', Math.floor(ps * 12)); }
+      const pe = prog(t, tEtire - 0.05, tEtire + 0.5);
+      if (pe > 0) { arrow(168, 190, 168, 120, AM[9], 1, 4); ptext('ÉTIRÉ', 175, 150, AM[9], 1, '#05040f', Math.floor(pe * 8)); }
     },
-    ev: [[tEtire, 'label', 1], [tOrif, 'blip', 1], [tSolide, 'ding', 1]],
+    ev: [[tDev, 'label', 1], [tSolide, 'ding', 1], [tEtire, 'blip', 1]],
   });
 
-  // 6. microscope : on zoome du fil aux molécules ; 7. briques et élastiques
-  const tMol = wt('zoom', 'molécules:'), tBr = wt('zoom', 'briques'), tSou = wt('zoom', 'souples.');
-  const zT0 = P.zoom.t0 - 0.1, zA = 1.15, zB = 2.35;                    // fin du plan A, fin du plan B
-  shot('microZoom', zT0, {
+  // jet de liquide : des gouttes (« en jet, elle ferait juste des gouttes »)
+  const tGou = wt('jet', 'gouttes.');
+  shot('jetDrops', tJetW - 0.15, {
     draw(u, t) {
-      const kAB = prog(u, zA, zA + 0.5), kBC = prog(u, zB, zB + 0.5);
-      const dA = tt => stageThread(tt), dB = tt => stageFibrils(tt), dC = tt => molecules(tt, 0, tt > tBr && tt < tBr + 0.5, false);
-      if (kBC > 0) zoomThrough(dB, dC, kBC, t, t);
-      else if (kAB > 0) zoomThrough(dA, dB, kAB, t, t);
-      else dA(t);
-      viewportMask();
+      plateBG(t, { glowY: 250 });
+      R(0, 410, LW, 2, AM[4]); ditherRect(0, 412, LW, 68, AM[1], 0.5);
+      // buse en haut à gauche ; le jet part en continu, se brise en gouttes qui tombent et s'étalent en flaque
+      R(20, 140, 52, 18, ST[4]); R(20, 140, 52, 3, ST[6]); R(66, 144, 14, 10, ST[3]);
+      const x0 = 80, y0 = 150, st = clamp((u - 0.15) / 0.3);
+      const pos = s => [x0 + 120 * s, y0 - 10 * s + 230 * s * s];
+      for (let s = 0; s < st * 0.5; s += 0.01) { const [x, y] = pos(s); R(x, y - 1, 3, Math.max(1, 3 - Math.round(s * 4)), WH[3]); }
+      for (let i = 0; i < 18; i++) { const sp = ((t * 1.6 + i * 0.058) % 0.55) + 0.5, [x, y] = pos(sp); if (st < 0.5 || y > 408) continue; disc(x + Math.sin(i * 3.1) * 3, y + Math.cos(i * 2.3) * 2, 1 + (i % 2), i % 3 ? WH[3] : CY[4]); }
+      const fl = clamp((u - 0.9) / 1.2); if (fl > 0) ell(214, 409, Math.round(26 * fl), 3, WH[1]);
     },
     ui(u, t) {
-      const lab = u < zA + 0.35 ? 'ZOOM ×100 · LE FIL' : u < zB + 0.35 ? 'ZOOM ×10 000 · FIBRILLES' : 'ZOOM ×1 000 000 · MOLÉCULES';
-      tagBox(135, 350, lab, 'blue', 99, true);
-      if (u > zB + 0.6) {
-        const pb = prog(t, tBr, tBr + 0.5); if (pb > 0) { lineP(70, 168, 40, 140, CY[4]); ptext('BRIQUES', 8, 130, CY[4], 1, '#05040f', Math.floor(pb * 10)); }
-        const pc = prog(t, wt('zoom', 'chaînes'), wt('zoom', 'chaînes') + 0.5); if (pc > 0) { lineP(112, 214, 150, 262, AM[8]); ptext('CHAÎNES SOUPLES', 150, 266, AM[8], 1, '#05040f', Math.floor(pc * 16)); }
-      }
+      if (u > 0.3) tagBox(14, 16, 'EN JET', 'red', Math.floor((u - 0.3) * 30));
+      const p = prog(t, tGou - 0.1, tGou + 0.35); if (p > 0) { mark(190, 300, 'no', p, 11); tagBox(190, 322, 'DES GOUTTES', 'red', Math.floor(p * 20), true); }
     },
-    ev: [[zT0 + zA, 'zoom', 1], [zT0 + zB, 'zoom', 1], [tBr, 'label', 1]],
-  });
-  const tFont = wt('briques', 'solidité.'), tEla = wt('briques', 'élastiques'), tCasse = wt('briques', 'casse.');
-  shot('microBricks', P.briques.t0 - 0.1, {
-    draw(u, t) {
-      // s : étirement (deux tractions) ; les briques restent rigides
-      const s = 0.5 - 0.5 * Math.cos(clamp((t - tEla) / 2.2) * TAU * 1.0);
-      molecules(t, clamp(s), t > P.briques.t0 && t < tFont + 0.3 && Math.floor(t * 6) % 2 === 0, t > tEla && t < tCasse + 0.2 && Math.floor(t * 6) % 2 === 0);
-      viewportMask();
-    },
-    ui(u, t) {
-      tagBox(135, 350, 'ZOOM ×1 000 000 · MOLÉCULES', 'blue', 99, true);
-      const p1 = prog(t, P.briques.t0 + 0.2, P.briques.t0 + 0.7); if (p1 > 0) { tagBox(14, 16, 'BRIQUES = SOLIDE', 'blue', Math.floor(p1 * 20)); }
-      const p2 = prog(t, tEla, tEla + 0.5); if (p2 > 0) { tagBox(14, 34, "ÉLASTIQUES = S'ÉTIRE", 'amber', Math.floor(p2 * 22)); }
-    },
-    ev: [[tFont, 'blip', 1], [tEla, 'stretch', 1], [tCasse, 'ding', 1]],
+    ev: [[tJetW, 'spray', 1], [tGou, 'no', 1]],
   });
 }

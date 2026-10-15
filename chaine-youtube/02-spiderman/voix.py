@@ -51,55 +51,53 @@ SCRIPT = [
     # accroche
     ("q", 0.35, "Est-ce qu'un fil d'araignée pourrait vraiment retenir Spider-Man?"),
     ("oui", 0.25, "Oui, le fil tiendrait,"),
-    ("trois", 0.65, "mais trois choses, elles, ne passeraient jamais."),
-    # une toile, c'est quoi ?
-    ("soie", 0.15, "Une toile, c'est de la soie, des protéines liquides comme un gel dans l'araignée."),
-    ("etire", 0.45, "Elle les étire par de minuscules orifices, et ça devient un fil solide."),
-    ("zoom", 0.15, "Au niveau des molécules, il y a des briques rigides, reliées par des chaînes souples."),
-    ("briques", 0.55, "Les briques font la solidité, et les élastiques évitent que ça casse."),
-    # plus solide que l'acier ?
-    ("acier", 0.35, "Plus solide que l'acier? À épaisseur égale, à peu près pareil, mais six fois plus légère."),
-    ("chocs", 0.35, "Et surtout, elle encaisse les chocs: une mouche fonce dedans, le fil s'étire et ne casse pas, c'est ce qu'on appelle la ténacité."),
-    ("darwin", 0.65, "La championne vit à Madagascar, c'est l'araignée écorce de Darwin, et sa soie est jusqu'à dix fois plus tenace que le Kevlar."),
-    # et Spider-Man ?
-    ("bas", 0.15, "Le plus dur pour son fil, c'est le point le plus bas du balancement."),
-    ("spaghetti", 0.45, "Un fil à peine plus fin qu'un spaghetti suffirait, et avec de la marge, un câble de chargeur."),
-    ("metro", 0.40, "Et le métro qu'il arrête dans Spider-Man [2|deux]? En [2013|deux mille treize], des étudiants ont fait le calcul, et ça tiendrait."),
-    ("bras", 0.75, "Côté fil, c'est crédible, ce sont plutôt les bras de Peter Parker qui m'inquiètent."),
-    # là où ça coince
-    ("probleme", 0.25, "Où est le piège? D'abord, la quantité."),
-    ("proteine", 0.15, "Chaque grand balancement lui coûterait plus de protéines que ses besoins d'une journée entière."),
+    ("trois", 0.65, "mais trois choses ne marcheraient pas."),
+    # le fil de Spider-Man : quelle épaisseur ?
+    ("bas", 0.15, "Commençons par le fil. Quand Spider-Man se balance, c'est tout en bas que le fil tire le plus."),
+    ("spaghetti", 0.45, "Un fil d'araignée à peine plus épais qu'un spaghetti suffirait, tout juste. Pour avoir de la marge, disons un câble de chargeur."),
+    # pourquoi la soie tient
+    ("acier", 0.35, "Pourquoi ça tient? À épaisseur égale, la soie est à peu près aussi solide qu'un bon acier, mais six fois plus légère."),
+    ("chocs", 0.35, "Et la toile encaisse les chocs. Quand une mouche fonce dedans, le fil s'étire au lieu de casser."),
+    ("darwin", 0.65, "La championne, c'est une araignée de Madagascar. Sa soie encaisse les chocs jusqu'à dix fois mieux que le Kevlar des gilets pare-balles."),
+    ("metro", 0.40, "Et le métro qu'il arrête dans Spider-Man [2|deux]? En [2013|deux mille treize], des étudiants ont fait le calcul, et avec la soie de cette championne, ça tiendrait."),
+    ("bras", 0.75, "Côté fil, c'est crédible. Ce sont plutôt les bras de Peter Parker qui m'inquiètent."),
+    # là où ça coince : trois problèmes
+    ("probleme", 0.25, "Où est le piège? Premier problème, la quantité."),
+    ("corps", 0.15, "Dans le film, la toile sort de son corps, et la soie, c'est de la protéine, comme la viande."),
+    ("proteine", 0.15, "Pour un seul balancement, il lui en faudrait plus que ce qu'un adulte doit manger en une journée."),
     ("appetit", 0.65, "Un grand pouvoir implique... un très gros appétit."),
-    ("fabrication", 0.15, "Ensuite, la fabrication: une araignée n'éjecte pas sa soie, elle l'étire."),
-    ("jet", 0.55, "Et c'est ça qui la rend solide, alors qu'un jet de liquide, non."),
-    ("pluie", 0.15, "Et enfin, la pluie: mouillée, la soie peut rétrécir de moitié."),
-    ("galere", 0.75, "Pour un super-héros en plein orage... la galère."),
+    ("fabrication", 0.15, "Deuxième problème, la fabrication. Spider-Man lance sa toile, mais une vraie araignée l'étire."),
+    ("jet", 0.55, "Dans l'araignée, la soie est liquide, alors en jet, elle ferait juste des gouttes. Pour devenir solide, il faut l'étirer."),
+    ("pluie", 0.15, "Troisième problème, la pluie. Quand elle est mouillée, la soie peut raccourcir de moitié."),
+    ("galere", 0.75, "Pour un super-héros en plein orage, c'est la galère."),
     # verdict
     ("verdict", 0.25, "Verdict: la soie est assez solide pour faire du Spider-Man."),
     ("fiction", 0.70, "La fiction, c'est tout le reste."),
-    ("labos", 0.20, "Dans les labos, on essaie d'en produire en masse, mais pas avec des araignées, elles se dévorent entre elles."),
-    ("bacteries", 0.65, "On utilise plutôt des bactéries, ou des vers à soie modifiés."),
-    ("cocon", 0.00, "Bon... je range l'échantillon, avant de finir moi-même en cocon."),
+    ("labos", 0.20, "Dans les labos, on essaie de produire cette soie en masse. Mais les araignées ne s'élèvent pas, elles se dévorent entre elles."),
+    ("bacteries", 0.65, "On fait plutôt travailler des bactéries, ou des vers à soie modifiés."),
+    ("cocon", 0.00, "Bon... je range mon échantillon, avant de finir moi-même en cocon."),
 ]
-# paragraphes lus d'un seul souffle (un appel au service chacun) : ids, débit, hauteur
+# paragraphes lus d'un seul souffle (un appel au service chacun) : ids, débit, hauteur. Écarts de hauteur faibles entre voisins
+# (ils ne comptent que pour le service Edge ; un autre moteur lit les paragraphes tels quels)
 GROUPES = [
-    {"ids": ["q"], "rate": "+3%", "pitch": "+9Hz"},                 # accroche : question vive, haute
-    {"ids": ["oui", "trois"], "rate": "-5%", "pitch": "-7Hz"},      # réponse posée, grave
-    {"ids": ["soie", "etire"], "rate": "+0%", "pitch": "+2Hz"},
-    {"ids": ["zoom", "briques"], "rate": "-2%", "pitch": "+5Hz"},   # on s'émerveille
-    {"ids": ["acier"], "rate": "+1%", "pitch": "+4Hz"},
-    {"ids": ["chocs"], "rate": "+0%", "pitch": "+0Hz"},
-    {"ids": ["darwin"], "rate": "-2%", "pitch": "+8Hz"},            # la révélation
-    {"ids": ["bas", "spaghetti"], "rate": "+0%", "pitch": "-2Hz"},
-    {"ids": ["metro"], "rate": "+1%", "pitch": "+5Hz"},
-    {"ids": ["bras"], "rate": "-7%", "pitch": "-8Hz"},              # pince-sans-rire
-    {"ids": ["probleme", "proteine"], "rate": "+0%", "pitch": "-3Hz"},
-    {"ids": ["appetit"], "rate": "-9%", "pitch": "-6Hz"},           # temps comique
-    {"ids": ["fabrication", "jet"], "rate": "+0%", "pitch": "+1Hz"},
-    {"ids": ["pluie", "galere"], "rate": "-1%", "pitch": "-4Hz"},
-    {"ids": ["verdict", "fiction"], "rate": "-6%", "pitch": "-8Hz"},   # conclusion
-    {"ids": ["labos", "bacteries"], "rate": "+0%", "pitch": "+4Hz"},
-    {"ids": ["cocon"], "rate": "+2%", "pitch": "+6Hz"},             # léger, amusé
+    {"ids": ["q"], "rate": "+3%", "pitch": "+5Hz"},                       # accroche : question vive
+    {"ids": ["oui", "trois"], "rate": "-4%", "pitch": "-3Hz"},            # réponse posée
+    {"ids": ["bas", "spaghetti"], "rate": "+0%", "pitch": "-1Hz"},
+    {"ids": ["acier"], "rate": "+0%", "pitch": "+1Hz"},
+    {"ids": ["chocs"], "rate": "+0%", "pitch": "+1Hz"},
+    {"ids": ["darwin"], "rate": "-2%", "pitch": "+3Hz"},                  # la révélation
+    {"ids": ["metro"], "rate": "+1%", "pitch": "+3Hz"},
+    {"ids": ["bras"], "rate": "-5%", "pitch": "-4Hz"},                    # pince-sans-rire
+    {"ids": ["probleme", "corps"], "rate": "+0%", "pitch": "-2Hz"},
+    {"ids": ["proteine"], "rate": "+0%", "pitch": "-2Hz"},
+    {"ids": ["appetit"], "rate": "-7%", "pitch": "-4Hz"},                 # temps comique
+    {"ids": ["fabrication"], "rate": "+0%", "pitch": "+1Hz"},
+    {"ids": ["jet"], "rate": "+0%", "pitch": "+1Hz"},
+    {"ids": ["pluie", "galere"], "rate": "-1%", "pitch": "-3Hz"},
+    {"ids": ["verdict", "fiction"], "rate": "-5%", "pitch": "-5Hz"},      # conclusion
+    {"ids": ["labos"], "rate": "+0%", "pitch": "+2Hz"},
+    {"ids": ["bacteries"], "rate": "+0%", "pitch": "+2Hz"},
+    {"ids": ["cocon"], "rate": "+2%", "pitch": "+4Hz"},                   # léger, amusé
 ]
 # écriture lue par la voix quand un mot est mal prononcé (le sous-titre garde l'écriture normale)
 PRONONCE = {}

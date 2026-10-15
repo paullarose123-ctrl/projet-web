@@ -146,24 +146,22 @@ function woodKnock(x, g = 0.12, f = 190) { noise(x, 0.07, { type: 'bp', f0: f * 
 // ───────── harmonie : accords calés sur les phrases ─────────
 const ch = (a, b, notes, o) => ({ a, b, notes, o });
 const p0 = id => P[id].t0;
-const t = { oui: p0('oui'), trois: p0('trois'), soie: p0('soie'), etire: p0('etire'), zoom: p0('zoom'), briques: p0('briques'), acier: p0('acier'), chocs: p0('chocs'), darwin: p0('darwin'), bas: p0('bas'), spag: p0('spaghetti'), metro: p0('metro'), bras: p0('bras'), prob: p0('probleme'), prot: p0('proteine'), app: p0('appetit'), fab: p0('fabrication'), jet: p0('jet'), pluie: p0('pluie'), gal: p0('galere'), ver: p0('verdict'), fic: p0('fiction'), labos: p0('labos'), bact: p0('bacteries'), coc: p0('cocon') };
+const t = { oui: p0('oui'), trois: p0('trois'), bas: p0('bas'), spag: p0('spaghetti'), acier: p0('acier'), chocs: p0('chocs'), darwin: p0('darwin'), metro: p0('metro'), bras: p0('bras'), prob: p0('probleme'), corps: p0('corps'), prot: p0('proteine'), app: p0('appetit'), fab: p0('fabrication'), jet: p0('jet'), pluie: p0('pluie'), gal: p0('galere'), ver: p0('verdict'), fic: p0('fiction'), labos: p0('labos'), bact: p0('bacteries'), coc: p0('cocon') };
 const CHORDS = [
   ch(0, t.oui - 0.15, ['D2', 'A2', 'D3', 'F3', 'C4'], { gain: 0.062, bright: 0.25 }),
   ch(t.oui - 0.1, t.trois - 0.15, ['D3', 'F#3', 'A3', 'D4', 'E4'], { gain: 0.06, bright: 0.45, att: 0.2 }),
-  ch(t.trois - 0.1, t.soie - 0.15, ['G2', 'D3', 'Bb3', 'F4'], { gain: 0.06, bright: 0.2 }),
-  ch(t.soie - 0.1, t.etire - 0.1, ['D3', 'A3', 'E4', 'F4']),
-  ch(t.etire - 0.1, t.zoom - 0.1, ['Bb2', 'F3', 'D4', 'A4']),
-  ch(t.zoom - 0.1, t.briques - 0.1, ['G2', 'D3', 'Bb3', 'D4']),
-  ch(t.briques - 0.1, t.acier - 0.1, ['A2', 'E3', 'C#4', 'G4']),
+  ch(t.trois - 0.1, t.bas - 0.1, ['G2', 'D3', 'Bb3', 'F4'], { gain: 0.06, bright: 0.2 }),
+  ch(t.bas - 0.1, t.spag - 0.1, ['D2', 'A2', 'F3', 'D4'], { gain: 0.062 }),
+  ch(t.spag - 0.1, t.acier - 0.1, ['F2', 'A2', 'C3', 'E4']),
   ch(t.acier - 0.1, t.chocs - 0.1, ['F2', 'C3', 'A3', 'C4', 'E4']),
   ch(t.chocs - 0.1, t.darwin - 0.1, ['Bb2', 'D3', 'F3', 'A3', 'C4']),
-  ch(t.darwin - 0.1, t.bas - 0.1, ['C3', 'G3', 'E4', 'B4', 'D4'], { gain: 0.058, bright: 0.4 }),
-  ch(t.bas - 0.1, t.spag - 0.1, ['D2', 'A2', 'F3', 'D4'], { gain: 0.062 }),
-  ch(t.spag - 0.1, t.metro - 0.1, ['F2', 'A2', 'C3', 'E4']),
+  ch(t.darwin - 0.1, t.metro - 0.1, ['C3', 'G3', 'E4', 'B4', 'D4'], { gain: 0.058, bright: 0.4 }),
   ch(t.metro - 0.1, wt('metro', 'ça') - 0.1, ['G2', 'D3', 'Bb3', 'Db4'], { gain: 0.06, bright: 0.1 }),
   ch(wt('metro', 'ça') - 0.1, t.bras - 0.1, ['D3', 'F#3', 'A3', 'D4'], { gain: 0.062, bright: 0.45 }),
   ch(t.bras - 0.1, t.prob - 0.1, ['Bb2', 'F3', 'D4', 'A3'], { gain: 0.05 }),
-  ch(t.prob - 0.1, t.app - 0.1, ['D2', 'A2', 'D3', 'F3'], { gain: 0.062, bright: 0.1 }),
+  ch(t.prob - 0.1, t.corps - 0.1, ['D2', 'A2', 'D3', 'F3'], { gain: 0.062, bright: 0.1 }),
+  ch(t.corps - 0.1, t.prot - 0.1, ['G2', 'D3', 'A3', 'B3'], { gain: 0.058 }),
+  ch(t.prot - 0.1, t.app - 0.1, ['Bb2', 'F3', 'D4', 'A3'], { gain: 0.05 }),
   ch(t.app - 0.1, t.fab - 0.1, ['Bb1', 'F2', 'D3', 'Bb3'], { gain: 0.06 }),
   ch(t.fab - 0.1, t.jet - 0.1, ['E2', 'B2', 'G3', 'D4'], { gain: 0.058, bright: 0.1 }),
   ch(t.jet - 0.1, t.pluie - 0.1, ['A2', 'E3', 'C#4', 'G4'], { gain: 0.058 }),
@@ -179,7 +177,7 @@ const CHORDS = [
 for (const c of CHORDS) pad(c.a, c.b - c.a, c.notes, { gain: 0.05, ...(c.o || {}) });
 function chordAt(x) { let c = null; for (const k of CHORDS) if (x >= k.a && x < k.b) c = k; return c; }
 // arpèges pincés (petite mélodie qui avance) ; pas de 0,3 s, accent sur le premier temps
-const arpZones = [[t.soie, t.acier - 0.4, 0.034], [t.acier, t.metro - 0.2, 0.03], [t.metro + 2.4, t.bras - 0.2, 0.026], [t.ver, DUR - 1.8, 0.032]];
+const arpZones = [[t.spag, t.metro - 0.2, 0.03], [t.metro + 2.4, t.bras - 0.2, 0.026], [t.ver, DUR - 1.8, 0.032]];
 for (const [a, b, gn] of arpZones) {
   const step = 0.3; let k = 0;
   for (let x = a; x < b; x += step, k++) {
@@ -189,12 +187,12 @@ for (const [a, b, gn] of arpZones) {
   }
 }
 // petite basse pulsée dans les moments « données » (ténacité, verdict)
-for (const [a, b] of [[t.chocs, t.darwin], [t.ver, t.labos]]) for (let x = a; x < b; x += 0.6) { const c = chordAt(x); if (c) pluck(x, NOTE(c.notes[0]) , { gain: 0.04, decay: 0.994, len: 0.7, soft: 0.8, send: 0.2 }); }
+for (const [a, b] of [[t.acier, t.darwin], [t.ver, t.labos]]) for (let x = a; x < b; x += 0.6) { const c = chordAt(x); if (c) pluck(x, NOTE(c.notes[0]) , { gain: 0.04, decay: 0.994, len: 0.7, soft: 0.8, send: 0.2 }); }
 // battement de cœur dans l'accroche, puis dans la pluie (tension)
 for (const [a, b] of [[0.2, t.oui - 0.2], [t.pluie, t.gal - 0.2]]) for (let x = a; x < b; x += 0.9) { sweep(x, 0.3, 70, 38, { gain: 0.09, send: 0.15 }); sweep(x + 0.22, 0.25, 62, 34, { gain: 0.06, send: 0.15 }); }
 // ambiances : vent dans la ville, ronronnement de labo, pluie
-wind(0, t.oui, { gain: 0.05 }); wind(t.trois - 0.1, t.soie, { gain: 0.04 });
-room(t.soie, t.zoom, { gain: 0.04 }); room(t.app, t.fab, { gain: 0.03 });
+wind(0, t.oui, { gain: 0.05 }); wind(t.trois - 0.1, t.bas + 2.0, { gain: 0.04 });
+room(t.app, t.fab, { gain: 0.03 });
 wind(t.bas - 0.1, t.spag, { gain: 0.05 }); wind(t.bras - 0.1, wt('bras', 'ce'), { gain: 0.04 });
 rainBed(t.pluie - 0.1, t.ver - 0.1, 0.03);
 room(t.labos - 0.1, t.coc, { gain: 0.035, f0: 220, f1: 220 });
@@ -234,14 +232,11 @@ for (const e of EV.events) {
     case 'wrap': noise(x, 1.5, { type: 'hp', f0: 4500, f1: 7500, gain: 0.07, att: 0.15, rel: 0.4 }); for (let k = 0; k < 9; k++) pluck(x + k * 0.16, NOTE(['D4', 'F#4', 'A4', 'D5', 'F#5'][k % 5]) , { gain: 0.03, pan: -0.4 + k * 0.1 }); break;
     case 'logo': thud(x, 0.4); thud(x + 0.36, 0.16); thud(x + 0.58, 0.08); [['D5', 0], ['F#5', 0.07], ['A5', 0.14], ['D6', 0.21]].forEach(([n, d]) => bell(x + d, n, { gain: 0.055, decay: 1.8 })); noise(x, 0.4, { type: 'hp', f0: 6000, f1: 9000, gain: 0.03, att: 0.01, rel: 0.3 }); break;
     case 'letters': for (let k = 0; k < 7; k++) blip(x + k * 0.07, 900 + k * 70, 1200 + k * 70, 0.04, { gain: 0.05, pan: -0.3 + k * 0.1 }); break;
-    case 'click': blip(x, 1800, 900, 0.025, { gain: 0.09, duty: 0.3 }); woodKnock(x, 0.05, 320); break;
-    case 'subscribed': [['A5', 0], ['C#6', 0.09], ['E6', 0.18], ['A6', 0.27]].forEach(([n, d]) => bell(x + d, n, { gain: 0.06, decay: 1.7 })); noise(x, 0.5, { type: 'hp', f0: 5000, f1: 9000, gain: 0.035, att: 0.01, rel: 0.4 }); break;
-    case 'bellring': for (let k = 0; k < 5; k++) { bell(x + k * 0.3, 'E6', { gain: 0.05 - k * 0.007, decay: 1.2 }); bell(x + k * 0.3 + 0.02, 'B6', { gain: 0.025 - k * 0.003, decay: 1.0 }); } break;
     case 'endCard': for (let k = 0; k < 28; k++) blip(x + k / 26, 2400, 2200, 0.012, { gain: 0.012 }); bell(x + 0.2, 'D5', { gain: 0.05, decay: 3 }); break;
   }
 }
 // tic-tac discret de l'horloge du labo, dans les plans de labo
-for (const [a, b] of [[t.soie - 0.1, wt('soie', 'protéines') - 0.2], [wt('fabrication', 'une'), t.jet - 0.1], [wt('labos', 'pas'), t.bact - 0.1], [t.coc - 0.1, VOICE_END]]) for (let x = a; x < b; x += 1.0) blip(x, 2200, 2000, 0.008, { gain: 0.016, pan: 0.6, duty: 0.3 });
+for (const [a, b] of [[wt('fabrication', 'une'), t.jet - 0.1], [wt('labos', 'mais'), t.bact - 0.1], [t.coc - 0.1, VOICE_END]]) for (let x = a; x < b; x += 1.0) blip(x, 2200, 2000, 0.008, { gain: 0.016, pan: 0.6, duty: 0.3 });
 // pluie sur la vitre
 taps(t.pluie - 0.1, wt('pluie', 'mouillée,') - 0.1, 30, 0.045);
 

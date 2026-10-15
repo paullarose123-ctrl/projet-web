@@ -46,6 +46,10 @@ Coupes toutes les 2 à 4 s (rythme des références), chaque plan bouge en conti
 
 Voix off d'homme (même voix que la vidéo 1), nappe douce avec petite mélodie en cloches et pizzicato, un bruit pour chaque action (aucun bruit sur les coupes) : vent entre les gratte-ciel, bourdonnement de mouche et « boing » élastique, crissement de freins de métro, pluie et tonnerre, bips d'étiquettes, « ding » pour ✓ et buzz grave pour ✗.
 
+## Plan de sortie (marque de la chaîne)
+
+Logo : la grappe de raisin en pixel art de l'auteur (`../marque/logo-raisins.webp`), réduite à l'échelle des pixels du film par `../marque/logo_pixel.py` (88 × 121 pixels, 12 couleurs, couleurs exactes : dessiné après le tramage). Nom : « RAISINS » en police pixel 5×7 à l'échelle 6, lilas clair à ombre violette. Appel : « ABONNEZ-VOUS » en jaune, échelle 3, tapé lettre à lettre. Fond : nuit violette et étoiles. Pas de bouton, de curseur ni de cloche (demande de l'auteur).
+
 ## À ne pas copier (sujets des références)
 
 Fusée et budget spatial, bureau de la NASA, ouragan vu du ciel, Zambie, religieuse, microscopes de 1600, Terre et Lune, tour de Pise et son chantier, Mussolini, toute l'histoire des fondations. Pas de gabarit repris tel quel : on prend le rendu (détail, lumière, tramage, boîtes d'étiquette, jauge, vignette de couleur contre planche ambre), pas les décors.

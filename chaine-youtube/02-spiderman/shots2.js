@@ -13,7 +13,7 @@ function iconSpiderSmall(cx, cy) {
 
 function buildShots2() {
   // 8. acier contre soie, à épaisseur égale
-  const tEp = wt('acier', 'épaisseur'), tPar = wt('acier', 'pareil.'), tSix = wt('acier', 'six'), tMais = wt('acier', 'mais');
+  const tEp = wt('acier', 'épaisseur'), tPar = wt('acier', 'acier'), tSix = wt('acier', 'six'), tMais = wt('acier', 'mais');
   shot('steelSilk', P.acier.t0 - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 200 });
@@ -50,7 +50,7 @@ function buildShots2() {
     ev: [[tSix, 'blip', 1], [tMais + 0.8, 'ding', 1]],
   });
   // 10. une toile d'épeire à l'aube : la mouche arrive
-  const tUne = wt('chocs', 'une');
+  const tUne = wt('chocs', 'une');  // « Quand une mouche fonce dedans »
   shot('webApproach', P.chocs.t0 - 0.1, {
     draw(u, t) {
       drawDawn(t);
@@ -68,7 +68,7 @@ function buildShots2() {
     ev: [[P.chocs.t0 + 0.6, 'fly', 1]],
   });
   // 11. vue de côté : la toile encaisse le choc, « boing »
-  const T11 = tUne - 0.12, uH = 0.62, tE = wt('chocs', "s'étire,");
+  const T11 = tUne - 0.12, uH = 0.62, tE = wt('chocs', "s'étire");
   const off = tau => tau < 0 ? 0 : 26 * (1 - Math.exp(-6 * tau)) + 46 * Math.exp(-3.0 * tau) * Math.sin(8 * tau);
   const strand = (x0, k, o, y0 = 96, y1 = 384, yh = 240) => {          // brin déformé : forme en V arrondie
     const pts = []; for (let y = y0; y <= y1; y += 4) { const d = Math.abs(y - yh) / (y < yh ? yh - y0 : y1 - yh); pts.push([x0 + o * k * Math.pow(Math.max(0, 1 - d), 1.7), y]); }
@@ -95,30 +95,27 @@ function buildShots2() {
     },
     ev: [[T11 + uH, 'boing', 1], [tE, 'blip', 1]],
   });
-  // 12. courbe force / allongement : la ténacité est l'aire sous la courbe
-  const T12 = wt('chocs', 'et', 1) - 0.1, tTen = wt('chocs', 'ténacité.');
-  const steel = [[40, 330], [48, 190], [54, 140], [60, 122], [64, 120]], silkC = [[40, 330], [54, 232], [78, 216], [138, 196], [196, 146], [234, 108]];
-  shot('toughCurve', T12, {
+  // 12. « au lieu de casser » : la mouche est prise, le fil n'a pas cassé
+  const tAu = wt('chocs', 'au'), tCas = wt('chocs', 'casser.');
+  shot('webCaught', tAu - 0.1, {
     draw(u, t) {
-      plateBG(t, { glowY: 250 });
-      lineP(40, 336, 40, 84, AM[6], 2); lineP(36, 330, 252, 330, AM[6], 2);
-      const ps = clamp(u / 0.55), pk = clamp((u - 0.5) / 1.1);
-      plotCurve(steel, 40 + (64 - 40) * ps, ST[7], ST[4], 330, 0.7);
-      plotCurve(silkC, 40 + (234 - 40) * pk, CY[4], CY[2], 330, 0.5);
-      if (ps >= 1) { R(64, 120, 3, 3, RD[4]); }
-      if (pk >= 1) { R(234, 108, 3, 3, WH[3]); }
+      drawDawn(t);
+      foliage(-1, 5, 30, 400, 52, t); foliage(1, 9, 30, 400, 52, t);
+      const k = 5 * Math.exp(-1.7 * u) * Math.sin(8 * u + 0.6);
+      const def = (x, y, r, a) => [x, y + k * Math.max(0, 1 - r / 135)];
+      orbWeb(135, 205, 118, t, { def });
+      drawFly(135, 205 + k, 0, { s: 2.1 });
+      drawSpider(196, 120 + 30 * eo(prog(u, 0.2, 2.6)), 0.95, t, { legWig: 0.8 });
+      vignette(0.35, 150, 330);
     },
     ui(u, t) {
-      ptext('FORCE', 20, 70, AM[9], 1); arrow(40, 84, 40, 76, AM[9], 1, 3); ptextR('ALLONGEMENT', 250, 340, AM[9], 1);
-      if (u > 0.6) ptext('ACIER', 72, 120, ST[7], 1);
-      if (u > 1.0) ptext('SOIE', 158, 160, CY[4], 1);
-      const p = prog(t, tTen - 0.05, tTen + 0.4);
-      if (p > 0) { tagBox(135, 28, 'TÉNACITÉ', 'amber', 99, true); ptextC('= ÉNERGIE ABSORBÉE', 135, 46, AM[9], 1, '#05040f', Math.floor(p * 20)); ptextC('(AIRE SOUS LA COURBE)', 135, 58, AM[7], 1, '#05040f', Math.floor(p * 22)); }
+      const p = prog(t, tCas - 0.1, tCas + 0.3);
+      if (p > 0) { mark(135, 92, 'yes', p, 12); tagBox(135, 116, 'LE FIL NE CASSE PAS', 'green', Math.floor(p * 22), true); }
     },
-    ev: [[T12 + 0.1, 'blip', 1], [tTen, 'ding', 1]],
+    ev: [[tCas, 'ding', 1]],
   });
   // 13. Madagascar : l'araignée écorce de Darwin et sa toile au-dessus de la rivière
-  const T13 = P.darwin.t0 - 0.1, tMad = wt('darwin', 'madagascar:'), tEc = wt('darwin', 'écorce');
+  const T13 = P.darwin.t0 - 0.1, tMad = wt('darwin', 'madagascar'), tEc = wt('darwin', 'araignée');   // l'étiquette de l'espèce n'est pas dite, seulement écrite
   shot('darwinWeb', T13, {
     draw(u, t) {
       drawDawn(t);
@@ -140,7 +137,7 @@ function buildShots2() {
     ev: [[tMad, 'label', 1], [tEc, 'blip', 1]],
   });
   // 14. dix fois plus tenace que le Kevlar
-  const T14 = wt('darwin', 'sa') - 0.12, tJus = wt('darwin', "jusqu'à"), tDix = wt('darwin', 'dix'), tKev = wt('darwin', 'kevlar.');
+  const T14 = wt('darwin', 'sa') - 0.12, tJus = wt('darwin', "jusqu'à"), tDix = wt('darwin', 'dix'), tKev = wt('darwin', 'kevlar');
   shot('kevlarChart', T14, {
     draw(u, t) {
       plateBG(t, { glowY: 220 });
@@ -152,12 +149,12 @@ function buildShots2() {
       iconVest(14, 109); iconSpiderSmall(26, 216);
     },
     ui(u, t) {
-      if (u > 0.2) tagBox(135, 60, 'TÉNACITÉ', 'amber', 99, true);
-      if (u > 0.5) { ptext('KEVLAR', 56, 114, WH[2], 1); ptext('×1', 82, 129, AM[9], 1); }
+      if (u > 0.2) tagBox(135, 60, 'RÉSISTANCE AUX CHOCS', 'amber', 99, true);
+      if (u > 0.5) { ptext('KEVLAR', 56, 114, WH[2], 1); ptext('(GILET PARE-BALLES)', 98, 114, ST[6], 1); ptext('×1', 82, 129, AM[9], 1); }
       if (u > 0.9) ptext('ARAIGNÉE ÉCORCE DE DARWIN', 56, 194, CY[4], 1);
       const pd = prog(t, tDix - 0.05, tDix + 0.4);
       if (pd > 0) { ptext("JUSQU'À ×10", 150, 209, '#05040f', 1, null); }
-      if (pd > 0) { const k = eob(pd); counter(135, 270, '×10', 4); ptextC('PLUS TENACE QUE LE KEVLAR', 135, 330, AM[9], 1); }
+      if (pd > 0) { const k = eob(pd); counter(135, 270, '×10', 4); ptextC('PLUS RÉSISTANTE QUE LE KEVLAR', 135, 330, AM[9], 1); }
       if (u > 1.0) ptextC('SOURCE : PLOS ONE · 2010', 135, 432, AM[5], 1, '#05040f');
     },
     ev: [[tJus, 'bars', 1], [tDix, 'ding', 1]],
