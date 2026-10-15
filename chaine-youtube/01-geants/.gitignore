@@ -5,4 +5,4 @@ modeles/
 build/*
 !build/timeline.js
 !build/timeline.json
-!build/prises/
+!build/edge/

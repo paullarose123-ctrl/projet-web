@@ -1,50 +1,50 @@
-"""Voix off : voix d'homme française (Piper, voix « pierre » ou « tom ») phrase par phrase,
-avec l'instant de chaque mot pour les sous-titres mot à mot.
+"""Voix off : voix d'homme neuronale (Microsoft Edge, via edge-tts), lue par paragraphes, avec
+l'instant de chaque mot pour les sous-titres mot à mot.
 
-    python voix.py MODELES_DIR SORTIE_DIR [--voix pierre|tom] [--prises 6] [--whisper DOSSIER] [--refaire id1,id2]
+    python voix.py SORTIE_DIR [--voix fr-FR-RemyMultilingualNeural] [--debit -4%] [--refaire 1,2|tout]
 
-MODELES_DIR contient <voix>-duree.onnx et <voix>.onnx.json (voir modeles.py).
-Écrit SORTIE_DIR/voix.wav (48 kHz, mono), timeline.json et timeline.js (window.TL = ...),
-que lisent piece.html et score.mjs.
+Écrit SORTIE_DIR/voix.wav (48 kHz, mono), timeline.json et timeline.js (window.TL = ...), que lisent
+piece.html et score.mjs. Les paragraphes bruts (mp3 + temps des mots donnés par le service) sont gardés
+dans SORTIE_DIR/edge/<voix>/ : relancer sans --refaire ne rappelle pas le service.
 
-Chaque phrase est une liste de paires [affiché, prononcé] : l'affiché est le mot du
-sous-titre, le prononcé est ce que lit la voix (plusieurs mots possibles, ou des phonèmes
-entre chevrons quand espeak se trompe sur un nom).
+Chaque phrase est une liste de paires [affiché, prononcé] : l'affiché est le mot du sous-titre, le prononcé
+est ce que lit la voix (plusieurs mots possibles : « 1,75 » est dit « un mètre soixante-quinze »).
 
-Pour que l'intonation sonne moins « machine », chaque phrase est synthétisée plusieurs fois
-(le modèle est aléatoire) et on garde la prise la plus naturelle : on rejette celles que le
-vérificateur (Whisper) comprend mal, qui ont des sauts de hauteur ou une mélodie trop plate,
-ou un rythme anormal. La prise retenue de chaque phrase est gardée dans SORTIE_DIR/prises/ :
-relancer ne refait que les phrases demandées avec --refaire (ou toutes avec --refaire tout).
+Le texte est lu par paragraphes (GROUPES), pas phrase par phrase : la mélodie reste continue d'une phrase à
+l'autre, c'est ce qui évite l'effet haché. Les pauses voulues par l'animation (deuxième champ de SCRIPT) ne
+font qu'allonger les silences trop courts, jamais raccourcir ceux de la voix.
+
+Accès réseau : le service est un accès gratuit non officiel à la voix de lecture d'Edge. Pour une chaîne
+monétisée, la même voix existe dans Azure Speech (licence commerciale, clé à créer).
 """
 import argparse
+import asyncio
+import difflib
 import json
 import math
 import os
 import re
+import ssl
 import subprocess
-import unicodedata
 
+import edge_tts
+import edge_tts.communicate as _ec
 import numpy as np
-import onnxruntime as ort
-import phonemizer
 import soundfile as sf
-import espeakng_loader
-from phonemizer.backend.espeak.wrapper import EspeakWrapper
 from scipy.signal import resample_poly
 
-# id, pause après (s), texte
+# id, pause voulue après la phrase (s), texte
 SCRIPT = [
     ("hook", 0.30, "L'animal le plus lourd de toute l'histoire de la Terre..."),
     ("dino", 0.70, "n'est pas un dinosaure."),
     ("humain", 0.45, "Pour mesurer les géants, prenons un humain: [1,75|un mètre soixante-quinze]."),
-    ("quetzal", 0.15, "Il y a [68|soixante-huit] millions d'années, [Quetzalcoatlus|<kɛtsalkɔatlˈys>] planait avec [11|onze] mètres d'ailes."),
+    ("quetzal", 0.15, "Il y a [68|soixante-huit] millions d'années, Quetzalcoatlus planait avec [11|onze] mètres d'ailes."),
     ("vol", 0.55, "Le plus grand animal qui ait jamais volé."),
     ("argentino", 0.15, "Sur terre, Argentinosaurus: environ [35|trente-cinq] mètres, [70|soixante-dix] tonnes."),
     ("elephants", 0.55, "Plus lourd que [10|dix] éléphants."),
     ("megalodon", 0.55, "Dans la mer, le mégalodon: près de [20|vingt] mètres, avec des dents grandes comme une main."),
     ("fillette", 0.15, "En [2020|deux mille vingt], sur une plage anglaise, une fillette de [11|onze] ans ramasse un fossile."),
-    ("ichthyo", 0.80, "C'est la mâchoire d'[Ichthyotitan|<iktjotitˈɑ̃>]: un reptile marin d'environ [25|vingt-cinq] mètres."),
+    ("ichthyo", 0.80, "C'est la mâchoire d'Ichthyotitan: un reptile marin d'environ [25|vingt-cinq] mètres."),
     ("mais", 0.65, "Mais le plus lourd de tous..."),
     ("jamais", 0.90, "n'a jamais disparu."),
     ("baleine", 0.35, "La baleine bleue."),
@@ -56,11 +56,19 @@ SCRIPT = [
     ("fin", 0.15, "L'animal le plus lourd de tous les temps est notre contemporain."),
     ("proteger", 0.00, "À nous de le protéger."),
 ]
-START = 0.12      # première syllabe
-SOUFFLE = 0.08    # respiration naturelle entre deux phrases, en plus de la pause
+# phrases lues d'un seul souffle (même paragraphe)
+GROUPES = [
+    ["hook", "dino"], ["humain"], ["quetzal", "vol"], ["argentino", "elephants"], ["megalodon"],
+    ["fillette", "ichthyo"], ["mais", "jamais"], ["baleine"], ["chiffres", "poids"], ["chasse", "360"],
+    ["revient"], ["fin", "proteger"],
+]
+# écriture lue par la voix quand un mot est mal prononcé (le sous-titre garde l'écriture normale).
+# « bleue » est écrit « bleu » (même son) : avec « bleue » la voix durcit mal le « b » de « baleine » (on entend « valaine »).
+PRONONCE = {"bleue": "bleu"}
+START = 0.20      # début de la première syllabe
+ENTRE = 0.10      # respiration ajoutée à la pause voulue entre deux paragraphes
 OUT_SR = 48000
-NOMS = ("quetzalcoatlus", "argentinosaurus", "ichthyotitan", "d'ichthyotitan", "qu'argentinosaurus", "d'argentinosaurus")
-NOMBRES = set("un une deux trois quatre cinq six sept huit neuf dix onze douze treize quatorze quinze seize vingt trente quarante cinquante soixante cent cents mille millions million quatre-vingt quatre-vingts vingtième".split())
+PONCT = ".,:;!?…"
 
 
 def parse(line):
@@ -81,237 +89,154 @@ def parse(line):
     return merged
 
 
-class Voix:
-    def __init__(self, dossier, nom):
-        EspeakWrapper.set_library(espeakng_loader.get_library_path())
-        EspeakWrapper.set_data_path(espeakng_loader.get_data_path())
-        self.cfg = json.load(open(f"{dossier}/{nom}.onnx.json"))
-        self.idmap = self.cfg["phoneme_id_map"]
-        so = ort.SessionOptions()
-        so.intra_op_num_threads = 4
-        self.sess = ort.InferenceSession(f"{dossier}/{nom}-duree.onnx", so, providers=["CPUExecutionProvider"])
-        self.has_sid = "sid" in [i.name for i in self.sess.get_inputs()]
-        self.sid = 1 if nom == "pierre" else 0
-        self.sr = self.cfg["audio"]["sample_rate"]
-
-    def phonemes(self, pairs):
-        """Phonèmes de la phrase, avec le contexte (liaisons) des passages en texte ordinaire."""
-        chunks, buf = [], []
-        for _, say in pairs:
-            if "<" in say:
-                if buf:
-                    chunks.append(("t", " ".join(buf)))
-                    buf = []
-                chunks.append(("p", say))
-            else:
-                buf.append(say)
-        if buf:
-            chunks.append(("t", " ".join(buf)))
-        parts = []
-        for kind, s in chunks:
-            if kind == "t":
-                parts.append(phonemizer.phonemize(s, language="fr-fr", backend="espeak", preserve_punctuation=True, with_stress=True).strip())
-            else:
-                m = re.match(r"(.*)<([^>]+)>(.*)", s)
-                pre = {"d'": "d", "l'": "l"}.get(m.group(1), "")   # espeak lit « d' » comme la lettre : on garde la consonne
-                parts.append(pre + m.group(2) + m.group(3))
-        ph = unicodedata.normalize("NFD", " ".join(p.strip() for p in parts))
-        ph = ph.replace("-", "")      # espeak colle un « - » après les mots grammaticaux (lə-, də-)
-        if "(" in ph:
-            raise ValueError(f"espeak a changé de langue : {ph}")
-        return ph
-
-    def ids(self, ph):
-        ids, owner = [1], [-1]                # BOS
-        for i, ch in enumerate(ph):
-            if ch in self.idmap:
-                ids += self.idmap[ch] + [0]
-                owner += [i, i]
-        return ids + [2], owner + [-1]        # EOS
-
-    def prise(self, ids, longueur, bruit, bruit_w):
-        feeds = {"input": np.array([ids], np.int64), "input_lengths": np.array([len(ids)], np.int64),
-                 "scales": np.array([bruit, longueur, bruit_w], np.float32)}
-        if self.has_sid:
-            feeds["sid"] = np.array([self.sid], np.int64)
-        a, w = self.sess.run(["output", "duree"], feeds)
-        a, w = a.reshape(-1), w.reshape(-1)
-        return a, w, len(a) / max(1.0, w.sum())          # échantillons par trame
+def norm(w):
+    return w.lower().replace("’", "'").strip(PONCT + " ")
 
 
-# ───────── vérification et choix de la meilleure prise ─────────
-def mots(s):
-    return re.findall(r"[\wéèêàâîôûçùïœ']+", s.lower().replace("’", "'"))
+def lu(say):
+    """Ce que reçoit la voix pour un mot prononcé (réécriture éventuelle des noms)."""
+    core = say.rstrip(PONCT)
+    return PRONONCE.get(core.lower(), core) + say[len(core):]
 
 
-def sans_bruit(ws):
-    out = []
-    for w in ws:
-        if w.isdigit() or w in NOMBRES or w.startswith(NOMS):
-            continue
-        out += [p for p in w.split("-") if p and p not in NOMBRES]
-    return out
+# ───────── service de voix ─────────
+async def appelle(texte, voix, debit, tonalite, essais=4):
+    cafile = os.environ.get("SSL_CERT_FILE")
+    if cafile:      # derrière un proxy qui ré-émet le TLS (conteneurs) : on lui fait confiance via son certificat
+        _ec._SSL_CTX = ssl.create_default_context(cafile=cafile)
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    for k in range(essais):
+        try:
+            c = edge_tts.Communicate(texte, voix, rate=debit, pitch=tonalite, boundary="WordBoundary", proxy=proxy)
+            audio, events = bytearray(), []
+            async for ch in c.stream():
+                if ch["type"] == "audio":
+                    audio += ch["data"]
+                elif ch["type"] == "WordBoundary":
+                    events.append({"text": ch["text"], "t0": ch["offset"] / 1e7, "t1": (ch["offset"] + ch["duration"]) / 1e7})
+            if audio and events:
+                return bytes(audio), events
+        except Exception as e:  # réseau capricieux : on réessaie
+            print("   essai", k + 1, "raté :", repr(e)[:120])
+        await asyncio.sleep(2 * (k + 1))
+    raise RuntimeError("le service de voix ne répond pas")
 
 
-def couverture(ref, hyp):
-    r, h = sans_bruit(mots(ref)), sans_bruit(mots(hyp))
-    if not r:
-        return 1.0
-    d = np.zeros((len(r) + 1, len(h) + 1), int)
-    for i in range(1, len(r) + 1):
-        for j in range(1, len(h) + 1):
-            d[i, j] = d[i - 1, j - 1] + 1 if r[i - 1] == h[j - 1] else max(d[i - 1, j], d[i, j - 1])
-    return d[-1, -1] / len(r)
+def decode(mp3, sr=24000):
+    p = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-f", "f32le", "-ac", "1", "-ar", str(sr), "pipe:1"], input=mp3, capture_output=True, check=True)
+    return np.frombuffer(p.stdout, np.float32).copy(), sr
 
 
-def melodie(audio, sr):
-    """(étendue P10-P90 en demi-tons, sauts > 6 demi-tons par seconde, mélodie de fin) ; None si pas de voix."""
-    import parselmouth
-    p = parselmouth.Sound(audio, sampling_frequency=sr).to_pitch_ac(time_step=0.01, pitch_floor=60, pitch_ceiling=300)
-    f = p.selected_array["frequency"]
-    v = f > 0
-    if v.sum() < 20:
-        return None
-    st = 12 * np.log2(f[v] / np.median(f[v]))
-    idx = np.where(v)[0]
-    d = np.abs(np.diff(12 * np.log2(f[idx] / np.median(f[v])))[np.diff(idx) == 1])
-    # mélodie de fin : les 60 dernières ms voisées contre les 0,3 s d'avant (en demi-tons)
-    prev = idx[(idx > idx[-1] - 45) & (idx < idx[-1] - 15)]
-    fin = float(12 * np.log2(np.median(f[idx[-6:]]) / np.median(f[prev]))) if len(prev) >= 5 else 0.0
-    return float(np.percentile(st, 90) - np.percentile(st, 10)), float((d > 6).sum() / (len(audio) / sr)), fin
-
-
-def choisir(voix, ids, ref, fin_phrase, prises, rec, verbeux=False):
-    """Plusieurs prises (le modèle est aléatoire), on garde la plus naturelle. Si aucune n'est bien comprise,
-    on en refait jusqu'à deux fois autant."""
-    cands = []
-    for tour in range(3):
-        for k in range(prises):
-            kk = tour * prises + k
-            longueur = 1.0 + 0.05 * math.sin(kk * 2.1)            # le débit d'un lecteur varie un peu d'une phrase à l'autre
-            a, w, spt = voix.prise(ids, longueur, 0.667 + 0.04 * (kk % 3), 0.8)
-            a = a / max(1e-6, np.abs(a).max()) * 0.9
-            c = dict(a=a, w=w, spt=spt, dur=len(a) / voix.sr, err=0.0)
-            if rec is not None:
-                s = rec.create_stream()
-                s.accept_waveform(voix.sr, np.concatenate([a, np.zeros(int(0.5 * voix.sr), np.float32)]))
-                rec.decode_stream(s)
-                s2 = rec.create_stream()
-                b = resample_poly(a, 16000 // math.gcd(16000, voix.sr), voix.sr // math.gcd(16000, voix.sr)).astype(np.float32)
-                s2.accept_waveform(16000, np.concatenate([np.zeros(4800, np.float32), b * 0.7, np.zeros(4800, np.float32)]))
-                rec.decode_stream(s2)
-                c["txt"] = s.result.text.strip() + "  |  " + s2.result.text.strip()
-                c["err"] = (2 - couverture(ref, s.result.text) - couverture(ref, s2.result.text)) / 2
-            m = melodie(a, voix.sr)
-            c["rng"], c["jumps"], c["fin"] = m if m else (0.0, 9.0, 0.0)
-            cands.append(c)
-        if rec is None or min(c["err"] for c in cands) <= 0.15:
-            break
-    med = float(np.median([c["dur"] for c in cands]))
-    for c in cands:
-        # en français une affirmation redescend à la fin, une suite (deux-points, points de suspension) reste en l'air
-        fin_pen = 0.3 * max(0.0, c["fin"] + 1.5) if fin_phrase == "." else 0.3 * max(0.0, -0.8 - c["fin"])
-        c["score"] = (-4 * c["err"] - 0.25 * max(0, 7 - c["rng"]) - 0.15 * max(0, c["rng"] - 12) + 0.12 * min(c["rng"], 10.5)
-                      - 0.5 * c["jumps"] - 2.0 * abs(math.log(c["dur"] / med)) - fin_pen)
-    best = max(cands, key=lambda c: c["score"])
-    if verbeux:
-        print(f"      {len(cands)} prises ; retenue : erreurs {best['err']:.2f}, étendue {best['rng']:.1f} dt, fin {best['fin']:+.1f} dt, {best['dur']:.2f} s ; {best.get('txt', '')}")
-    return best
+def aligne(attendus, events):
+    """Associe chaque mot attendu au mot reconnu par le service (même ordre). Renvoie une liste de (t0, t1)."""
+    a = [norm(w) for w in attendus]
+    b = [norm(e["text"]) for e in events]
+    sm = difflib.SequenceMatcher(None, a, b, autojunk=False)
+    res = [None] * len(a)
+    for tag, i0, i1, j0, j1 in sm.get_opcodes():
+        if tag == "equal" or (tag == "replace" and i1 - i0 == j1 - j0):
+            for k in range(i1 - i0):
+                res[i0 + k] = (events[j0 + k]["t0"], events[j0 + k]["t1"])
+        elif tag in ("replace", "delete") and j1 > j0:
+            # nombre de mots différent : on répartit la plage de temps sur les mots attendus
+            t0, t1 = events[j0]["t0"], events[j1 - 1]["t1"]
+            n = i1 - i0
+            for k in range(n):
+                res[i0 + k] = (t0 + (t1 - t0) * k / n, t0 + (t1 - t0) * (k + 1) / n)
+    # trous restants : on interpole entre voisins
+    for i, r in enumerate(res):
+        if r is None:
+            prev = next((res[j] for j in range(i - 1, -1, -1) if res[j]), None)
+            nxt = next((res[j] for j in range(i + 1, len(res)) if res[j]), None)
+            t = (prev[1] if prev else 0.0, nxt[0] if nxt else (prev[1] + 0.2 if prev else 0.2))
+            res[i] = (t[0], max(t[0] + 0.05, t[1]))
+            print("   mot sans correspondance :", attendus[i])
+    return res
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("modeles")
     ap.add_argument("sortie")
-    ap.add_argument("--voix", default="pierre")
-    ap.add_argument("--prises", type=int, default=6)
-    ap.add_argument("--whisper", help="dossier sherpa-onnx-whisper-small (facultatif : vérifie que chaque prise est bien comprise)")
-    ap.add_argument("--refaire", default="", help="phrases à refaire (ids séparés par des virgules, ou « tout »)")
+    ap.add_argument("--voix", default="fr-FR-RemyMultilingualNeural")
+    ap.add_argument("--debit", default="-4%")
+    ap.add_argument("--tonalite", default="+0Hz")
+    ap.add_argument("--refaire", default="", help="paragraphes à refaire (numéros 1 à 12 séparés par des virgules, ou « tout »)")
     a = ap.parse_args()
-    voix = Voix(a.modeles, a.voix)
-    rec = None
-    if a.whisper:
-        import sherpa_onnx as so
-        rec = so.OfflineRecognizer.from_whisper(encoder=f"{a.whisper}/small-encoder.int8.onnx", decoder=f"{a.whisper}/small-decoder.int8.onnx",
-                                                tokens=f"{a.whisper}/small-tokens.txt", language="fr", task="transcribe", num_threads=4)
-    sr = voix.sr
+    cache = f"{a.sortie}/edge/{a.voix}"
+    os.makedirs(cache, exist_ok=True)
     refaire = set(a.refaire.split(","))
-    os.makedirs(f"{a.sortie}/prises", exist_ok=True)
-    pieces, phrases = [np.zeros(int(START * sr), np.float32)], []
-    t = START
-    for pid, pause, line in SCRIPT:
-        pairs = parse(line)
-        ph = voix.phonemes(pairs)
-        ids, owner = voix.ids(ph)
-        ref = " ".join(say for _, say in pairs)
-        cache = f"{a.sortie}/prises/{pid}.npz"
-        best = None
-        if os.path.exists(cache) and pid not in refaire and "tout" not in refaire:
-            z = np.load(cache)
-            if str(z["ph"]) == ph and str(z["voix"]) == a.voix:
-                best = dict(a=z["a"], w=z["w"], spt=float(z["spt"]))
-        if best is None:
-            fin_phrase = "." if line.rstrip().endswith(".") and not line.rstrip().endswith("...") else ":"
-            best = choisir(voix, ids, ref, fin_phrase, a.prises, rec, verbeux=True)
-            np.savez(cache, a=best["a"], w=best["w"], spt=best["spt"], ph=ph, voix=a.voix)
-        audio, w, spt = best["a"], best["w"], best["spt"]
-        # groupes de phonèmes séparés par des espaces = mots prononcés
-        edges = np.concatenate([[0], np.cumsum(w)]) * spt / sr          # fin de chaque jeton, en secondes
-        groups, cur = [], []
-        for ti, o in enumerate(owner):
-            if o < 0:
-                continue
-            ch = ph[o]
-            if ch == " ":
-                if cur:
-                    groups.append(cur)
-                cur = []
-            else:
-                cur.append(ti)
-        if cur:
-            groups.append(cur)
-        groups = [g for g in groups if any(re.match(r"\w", ph[owner[ti]]) for ti in g)]
-        say_words = [x for _, say in pairs for x in say.split()]
-        if len(groups) != len(say_words):
-            raise ValueError(f"{pid}: {len(groups)} groupes de phonèmes pour {len(say_words)} mots\n{ph}\n{say_words}")
-        # on retire le silence de début et de fin de la prise
+    par_id = {pid: (pause, line) for pid, pause, line in SCRIPT}
+    sr = 24000
+    pieces, phrases = [], []
+    t = 0.0                                    # début, sur la ligne de temps finale (avant START), du paragraphe en cours
+    for gi, ids in enumerate(GROUPES, 1):
+        pairs_par_id = {pid: parse(par_id[pid][1]) for pid in ids}
+        attendus = [lu(w) for pid in ids for _, say in pairs_par_id[pid] for w in say.split()]
+        texte = " ".join(attendus)
+        f_mp3, f_json = f"{cache}/g{gi}.mp3", f"{cache}/g{gi}.json"
+        if os.path.exists(f_mp3) and os.path.exists(f_json) and str(gi) not in refaire and "tout" not in refaire \
+                and json.load(open(f_json)).get("texte") == texte:
+            mp3 = open(f_mp3, "rb").read()
+            events = json.load(open(f_json))["events"]
+        else:
+            mp3, events = asyncio.run(appelle(texte, a.voix, a.debit, a.tonalite))
+            open(f_mp3, "wb").write(mp3)
+            json.dump({"texte": texte, "voix": a.voix, "events": events}, open(f_json, "w"), ensure_ascii=False)
+        audio, _ = decode(mp3, sr)
+        tm = aligne(attendus, events)
+        # silence de début et de fin du paragraphe
         env = np.abs(audio)
-        loud = np.where(env > 0.02)[0]
-        lead = max(0, loud[0] - int(0.06 * sr))
-        end = min(len(audio), loud[-1] + int(0.09 * sr))
+        loud = np.where(env > 0.01 * env.max())[0]
+        lead = max(0, loud[0] - int(0.04 * sr))
+        end = min(len(audio), loud[-1] + int(0.12 * sr))
         audio = audio[lead:end].copy()
-        fade = int(0.012 * sr)
+        fade = int(0.01 * sr)
         audio[:fade] *= np.linspace(0, 1, fade)
         audio[-fade:] *= np.linspace(1, 0, fade)
-        words, gi = [], 0
-        for show, say in pairs:
-            n = len(say.split())
-            g = groups[gi:gi + n]
-            gi += n
-            t0 = edges[g[0][0]] - lead / sr
-            t1 = edges[g[-1][-1] + 1] - lead / sr
-            words.append({"w": show, "t0": round(t + max(0.0, t0), 3), "t1": round(t + min(len(audio) / sr, t1), 3)})
-        dur = len(audio) / sr
-        phrases.append({"id": pid, "t0": round(t, 3), "t1": round(t + dur, 3), "words": words, "text": line})
-        print(f"{pid:10s} {t:6.2f} → {t + dur:6.2f}  {ph}")
-        pieces.append(audio.astype(np.float32))
-        gap = pause + (SOUFFLE if pid != SCRIPT[-1][0] else 0.0)
-        pieces.append(np.zeros(int(gap * sr), np.float32))
-        t += dur + gap
-    voice = np.concatenate(pieces)
+        tm = [(x0 - lead / sr, x1 - lead / sr) for x0, x1 in tm]
+        # mots de chaque phrase du paragraphe
+        k, recs = 0, []
+        for pid in ids:
+            words = []
+            for show, say in pairs_par_id[pid]:
+                n = len(say.split())
+                words.append((show, tm[k][0], tm[k + n - 1][1]))
+                k += n
+            recs.append((pid, words))
+        # pauses voulues à l'intérieur du paragraphe : on n'allonge que les silences trop courts
+        shifts = []                            # (temps d'origine, silence inséré)
+        for (pid_a, w_a), (pid_b, w_b) in zip(recs, recs[1:]):
+            voulu = par_id[pid_a][0]
+            naturel = max(0.0, w_b[0][1] - w_a[-1][2])
+            if naturel < voulu:
+                shifts.append(((w_a[-1][2] + w_b[0][1]) / 2, voulu - naturel))
+        morceaux, prec = [], 0
+        for pos, dur in shifts:
+            morceaux += [audio[prec:int(pos * sr)], np.zeros(int(dur * sr), np.float32)]
+            prec = int(pos * sr)
+        morceaux.append(audio[prec:])
+        audio2 = np.concatenate(morceaux)
+        dec = lambda x: x + sum(d for p, d in shifts if x >= p)
+        for pid, words in recs:
+            ws = [{"w": w, "t0": round(START + t + dec(x0), 3), "t1": round(START + t + dec(x1), 3)} for w, x0, x1 in words]
+            phrases.append({"id": pid, "t0": ws[0]["t0"], "t1": ws[-1]["t1"], "words": ws, "text": par_id[pid][1]})
+        print(f"g{gi:<2d} {START + t:6.2f} → {START + t + len(audio2) / sr:6.2f}  {texte[:90]}")
+        pause = par_id[ids[-1]][0] + (ENTRE if gi < len(GROUPES) else 0.0)
+        pieces += [audio2, np.zeros(int(pause * sr), np.float32)]
+        t += len(audio2) / sr + pause
+    voice = np.concatenate([np.zeros(int(START * sr), np.float32)] + pieces)
     g = math.gcd(OUT_SR, sr)
-    voice48 = resample_poly(voice, OUT_SR // g, sr // g)
-    voice48 = (voice48 / np.abs(voice48).max() * 0.89).astype(np.float32)
-    sf.write(f"{a.sortie}/voix_brut.wav", voice48, OUT_SR)
-    # porte douce : réduit le souffle du modèle entre les mots (sans toucher à la parole)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f"{a.sortie}/voix_brut.wav", "-af",
-                    "agate=threshold=0.014:ratio=3:attack=8:release=140:range=0.2:knee=3", f"{a.sortie}/voix.wav"], check=True)
-    tl = {"duration": round(len(voice48) / OUT_SR, 3), "voix": a.voix, "phrases": phrases}
-    with open(f"{a.sortie}/timeline.json", "w") as f:
-        json.dump(tl, f, ensure_ascii=False, indent=1)
-    with open(f"{a.sortie}/timeline.js", "w") as f:
-        f.write("window.TL = " + json.dumps(tl, ensure_ascii=False) + ";\n")
-    print("durée de la voix :", round(len(voice48) / OUT_SR, 2), "s")
+    v48 = resample_poly(voice, OUT_SR // g, sr // g).astype(np.float32)
+    sf.write(f"{a.sortie}/voix_brut.wav", v48, OUT_SR)
+    # un seul réglage de niveau pour tout le texte (pas de normalisation phrase par phrase) : −19 LUFS
+    p = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", f"{a.sortie}/voix_brut.wav", "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True)
+    lufs = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", p.stderr)[-1])
+    v48 = np.clip(v48 * 10 ** ((-19.0 - lufs) / 20), -0.97, 0.97)
+    sf.write(f"{a.sortie}/voix.wav", v48, OUT_SR)
+    tl = {"duration": round(len(v48) / OUT_SR, 3), "voix": a.voix, "phrases": phrases}
+    json.dump(tl, open(f"{a.sortie}/timeline.json", "w"), ensure_ascii=False, indent=1)
+    open(f"{a.sortie}/timeline.js", "w").write("window.TL = " + json.dumps(tl, ensure_ascii=False) + ";\n")
+    print("durée de la voix :", round(len(v48) / OUT_SR, 2), "s ; niveau", round(lufs, 1), "→ −19 LUFS")
 
 
 if __name__ == "__main__":
