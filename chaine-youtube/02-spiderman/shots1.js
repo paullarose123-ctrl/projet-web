@@ -111,11 +111,11 @@ function buildShots1() {
     ui(u, t) {
       if (u > 0.4) tagBox(14, 16, 'COUPE · ABDOMEN', 'amber', Math.floor((u - 0.4) * 30));
       const p1 = prog(t, tProt - 0.05, tProt + 0.7);
-      if (p1 > 0) { lineP(160, 190, 196, 158, AM[8]); lineP(196, 158, 204, 158, AM[8]); ptext('PROTÉINES', 207, 154, AM[9], 1, '#05040f', Math.floor(p1 * 12)); }
+      if (p1 > 0) { lineP(160, 190, 185, 158, AM[8]); lineP(185, 158, 193, 158, AM[8]); ptext('PROTÉINES', 196, 154, AM[9], 1, '#05040f', Math.floor(p1 * 12)); }
       const p2 = prog(t, tLiq - 0.05, tLiq + 0.7);
-      if (p2 > 0) ptext('LIQUIDES', 207, 166, AM[8], 1, '#05040f', Math.floor(p2 * 12));
+      if (p2 > 0) ptext('LIQUIDES', 196, 166, AM[8], 1, '#05040f', Math.floor(p2 * 12));
       const p3 = prog(t, tGel - 0.05, tGel + 0.5);
-      if (p3 > 0) ptext('COMME UN GEL', 207, 178, AM[7], 1, '#05040f', Math.floor(p3 * 14));
+      if (p3 > 0) ptext('COMME UN GEL', 196, 178, AM[7], 1, '#05040f', Math.floor(p3 * 14));
     },
     ev: [[tProt, 'label', 1], [tGel, 'blip', 1]],
   });

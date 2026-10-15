@@ -6,7 +6,7 @@
 
 **Fil conducteur** : le fil blanc. Il est dans l'image dès la première seconde et **chaque coupe est un tir de toile** : un fil part du haut du cadre, se plante sur le sujet du plan suivant, et une ouverture tramée s'élargit autour du point d'impact pendant que le fil remonte (« thwip »). Un second repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict.
 
-**Format** : 1080 × 1920, 30 i/s, environ 2 min. Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, courbe).
+**Format** : 1080 × 1920, 30 i/s, 2 min (120,2 s). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, courbe).
 
 | Temps | Ce qu'on voit | Ce qui motive la coupe | Son |
 |---|---|---|---|
@@ -45,14 +45,14 @@
 | 107,8–110,8 s | Deux araignées dans un bocal : elles se dévorent, il en reste une | « elles se dévorent entre elles » | « croc » |
 | 110,8–112,5 s | Bactéries qui fabriquent de la soie | « des bactéries » | bulles |
 | 112,5–114,3 s | Ver à soie modifié, double hélice | « des vers à soie modifiés » | |
-| 114,3–119,8 s | Le scientifique range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » | « avant de finir moi-même en cocon » | frottement, carillon |
+| 114,3–120,2 s | Le scientifique range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » (il se tape à partir de 118 s et reste affiché 1,6 s) | « avant de finir moi-même en cocon » | frottement, carillon |
 
 ## Faits vérifiés et sources
 
 - **Soie de trait : liquide qui devient fil quand on l'étire** : les protéines (spidroïnes) sont stockées sous forme de liquide concentré (> 50 %) ; en passant dans le canal des filières, le pH baisse (≈ 7,4 → < 5,5) et la contrainte de cisaillement augmente, ce qui les fige en fibre (revues et études consultées : *Nature* 2010, nature.com/articles/nature08962 ; Université de Kyoto, 2020 ; *Materials* 11(10), 2018).
 - **Soie ≈ bon acier, six fois plus légère** : résistance de la soie de trait ≈ 1 à 1,7 GPa contre ≈ 1,5 GPa pour un bon acier ; masse volumique ≈ 1,3 contre 7,8 g/cm³ (≈ 6 fois).
 - **Ténacité, araignée écorce de Darwin** : *Caerostris darwini*, Madagascar ; en moyenne 350 MJ/m³ et jusqu'à 520 MJ/m³ ; les auteurs écrivent « plus de dix fois mieux que le Kevlar » (Agnarsson, Kuntner, Blackledge, *PLoS ONE* 5(9) : e11234, 2010). Le film dit « jusqu'à dix fois » et n'affiche pas de valeur pour le Kevlar (non confirmée ici).
-- **Métro** : « Doing whatever a spider can », *Journal of Physics Special Topics* (Université de Leicester), 2013 : avec la meilleure soie connue la toile arrêterait la rame ; ordre de grandeur de la force : ≈ 300 000 N pour une rame d'environ 1 000 passagers.
+- **Métro** : « Doing whatever a spider can », *Journal of Physics Special Topics* (Université de Leicester), 2013 : trois étudiants de quatrième année (J. Forster, M. Bryan, A. Stone) estiment la force nécessaire pour arrêter quatre voitures de métro à environ 300 000 N, et la ténacité de la toile du film à environ 500 MJ/m³, du même ordre que la soie de l'araignée de Darwin : avec la meilleure soie connue, la toile arrêterait la rame (voir aussi sciencedaily.com/releases/2013/02/130225092040.htm).
 - **Supercontraction** : une soie de trait mouillée et non tendue peut raccourcir jusqu'à environ 50 % (chez l'araignée, cela aide à garder la toile tendue sous la rosée).
 - **Élever des araignées est impossible** : elles sont territoriales et s'entre-dévorent (sources de vulgarisation et brevets) ; les vers à soie, eux, sont élevés depuis des siècles.
 - **Production en masse** : soie recombinante dans des bactéries (*E. coli*, jusqu'à 3,6 g/L d'une spidroïne de 200 kDa en bioréacteur, 2024) et vers à soie transgéniques dont les cocons contiennent de la soie d'araignée (2009).

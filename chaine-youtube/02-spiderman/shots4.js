@@ -350,17 +350,17 @@ function buildShots4() {
       drawCocoon(cx, cy, s, wrap, t);
       // les lunettes dépassent
       if (wrap > 0.9) { const hy = cy - 76 * s; R(cx - 11, hy - 3, 22, 7, '#05040f'); R(cx - 9, hy - 2, 7, 5, CY[4]); R(cx + 2, hy - 2, 7, 5, CY[4]); px(cx - 7, hy - 1, WH[3]); px(cx + 4, hy - 1, WH[3]); }
-      { const k = clamp((t - VOICE_END - 0.02) / 0.5); if (k > 0) { L.globalAlpha = 0.62 * k; R(0, 0, LW, LH, '#05040f'); L.globalAlpha = 1; } }
+      { const k = clamp((t - VOICE_END + 0.25) / 0.5); if (k > 0) { L.globalAlpha = 0.62 * k; R(0, 0, LW, LH, '#05040f'); L.globalAlpha = 1; } }
       
     },
     ui(u, t) {
-      const c = t - VOICE_END - 0.05;
+      const c = t - VOICE_END + 0.2;
       if (c > 0) {
-        const L1 = 'LE FIL TIENT.', L2 = 'LE RESTE, NON.', n = Math.floor(c * 24);
+        const L1 = 'LE FIL TIENT.', L2 = 'LE RESTE, NON.', n = Math.floor(c * 32);
         ptext(L1, 135 - textW(L1, 3) / 2, 130, WH[3], 3, '#05040f', n);
         ptext(L2, 135 - textW(L2, 3) / 2, 160, AM[8], 3, '#05040f', n - L1.length);
       }
     },
-    ev: [[tRa, 'shelf', 1], [tAv, 'wrap', 1], [VOICE_END + 0.05, 'endCard', 1]],
+    ev: [[tRa, 'shelf', 1], [tAv, 'wrap', 1], [VOICE_END - 0.2, 'endCard', 1]],
   });
 }
