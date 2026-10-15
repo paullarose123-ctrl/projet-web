@@ -1,9 +1,11 @@
 """Montage de la voix enregistrée : des prises p01 … p18 (m4a, wav, mp3…) à build/voix.wav et build/timeline.json / timeline.js.
 
-    python montage.py DOSSIER_PRISES SORTIE_DIR [--silence silence.wav] [--gmax 0.75] [--choix choix.json]
+    python montage.py DOSSIER_PRISES SORTIE_DIR [--silence silence.wav] [--gmax 0.75] [--choix choix.json] [--retouches retouches.json]
 
 Ce que fait le montage, paragraphe par paragraphe (les paragraphes sont ceux de GROUPES dans voix.py) :
   1. chaque prise est décodée (mono, 48 kHz) et passée dans un filtre coupe-bas (75 Hz : grondements, souffle des « p ») ;
+  1 bis. les sons que l'auteur ne veut pas garder (un « mhhh » avant une phrase) sont listés dans voix-perso/retouches.json, avec leur intervalle
+     dans la prise brute : ils sont remplacés par l'ambiance de la pièce (le passage le plus calme de la même prise), sans rien décaler ;
   2. un reconnaisseur de parole (faster-whisper large-v3-turbo) relit la prise ; on retrouve chaque phrase du texte dans ce qui a été dit.
      Ce qui n'est pas dans le texte (« paragraphe cinq », un faux départ, une phrase reprise) est écarté ; si une phrase a été dite deux fois,
      on garde la dernière version qui convient. S'il y a plusieurs prises d'un paragraphe (p05, p05b…), on garde celle qui couvre le mieux le texte ;
@@ -98,9 +100,9 @@ def fusionne(ws):
 
 
 def prise_cache(path, x, cache_dir):
-    """Mots reconnus (avec temps) d'une prise ; gardés dans SORTIE/prises_cache pour ne pas relancer le reconnaisseur."""
+    """Mots reconnus (avec temps) d'une prise (après retouches) ; gardés dans SORTIE/prises_cache pour ne pas relancer le reconnaisseur."""
     os.makedirs(cache_dir, exist_ok=True)
-    h = hashlib.sha1(open(path, "rb").read()).hexdigest()[:12]
+    h = hashlib.sha1(open(path, "rb").read() + json.dumps(RET.get(os.path.basename(path), []), sort_keys=True).encode()).hexdigest()[:12]
     f = f"{cache_dir}/{os.path.basename(path)}.{h}.json"
     if os.path.exists(f):
         return json.load(open(f))
@@ -161,6 +163,46 @@ def affecte(unit_keys, H, saut=0.6):
 def decode(path):
     x = cm.charge(path)
     return sosfiltfilt(butter(2, 75, btype="highpass", fs=SR, output="sos"), x).astype(np.float32)
+
+
+RETOUCHES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "voix-perso", "retouches.json")
+RET = {}        # {"p09.m4a": [{"de": s, "a": s, "note": "…"}]} : rempli par main()
+
+
+def retouche(x, liste):
+    """Remplace par l'ambiance de la prise les sons à ne pas garder (liste de {"de", "a", "note"}, en secondes de la prise brute).
+    On remplace au lieu de couper : les temps du reste de la prise ne bougent pas, et le reconnaisseur comme la détection de voix ne voient
+    plus qu'une pièce calme à cet endroit. L'ambiance est le passage le plus calme de la même prise (même micro, même pièce, même niveau),
+    fondu sur 10 ms aux deux bouts."""
+    if not liste:
+        return x
+    x = x.copy()
+    lv, t = cm.niveaux(x.astype(np.float64))
+    bruit = float(np.percentile(lv, 10))
+    for r in liste:
+        a, b = int(round(r["de"] * SR)), int(round(r["a"] * SR))
+        n, f = b - a, int(0.010 * SR)
+        k = max(2, int(round(n / SR / 0.01)))                      # durée en trames de 10 ms
+        best, bt = None, None
+        for i in range(int(0.2 / 0.01), len(lv) - k):              # pas avant 0,2 s : l'encodeur y met parfois du silence numérique
+            s0 = t[i]
+            if s0 + n / SR > r["de"] - 0.05 and s0 < r["a"] + 0.05:
+                continue                                           # pas dans la zone retirée
+            seg = lv[i:i + k]
+            if seg.mean() < bruit - 8:
+                continue                                           # silence numérique
+            v = float(np.percentile(seg, 95))
+            if best is None or v < best:
+                best, bt = v, s0
+        if bt is None:
+            amb = np.random.default_rng(3).normal(0, 10 ** (bruit / 20), n)
+        else:
+            amb = x[int(bt * SR):int(bt * SR) + n].astype(np.float64)
+        w = np.ones(n)
+        w[:f] = np.linspace(0, 1, f)
+        w[-f:] = np.linspace(1, 0, f)
+        x[a:b] = (x[a:b] * (1 - w) + amb * w).astype(np.float32)
+    return x
 
 
 class Salle:
@@ -288,7 +330,7 @@ def paragraphe(gi, g, par_id, prises, cache, gmax):
     rap = {"gi": gi, "prises": []}
     meilleur = None
     for path in prises:
-        x = decode(path)
+        x = retouche(decode(path), RET.get(os.path.basename(path)))
         H = fusionne(prise_cache(path, x, cache))
         Hk = [cle(w["text"]) for w in H]
         aff, score = affecte(ukeys, Hk)
@@ -302,6 +344,7 @@ def paragraphe(gi, g, par_id, prises, cache, gmax):
     couv, moy, path, x, H, aff, info = meilleur
     rap["retenue_info"] = info
     rap["retenue"] = os.path.basename(path)
+    rap["retouches"] = [f"{r['de']:.2f}–{r['a']:.2f} s{' : ' + r['note'] if r.get('note') else ''}" for r in RET.get(os.path.basename(path), [])]
     rap["alertes"] = []
     runs, bruit = plages_voix(x)
     if not runs:
@@ -387,12 +430,14 @@ def main():
     ap.add_argument("--gmax", default="0.7,0.9,1.3", help="silence maximal (s) après un mot, après une fin de phrase, après « ... »")
     ap.add_argument("--seulement", default="", help="numéros de paragraphes à traiter (essai : « 1,2,3 »), tous par défaut")
     ap.add_argument("--choix", default=None, help="json {\"p05\": \"p05b.m4a\"} pour forcer une prise")
+    ap.add_argument("--retouches", default=RETOUCHES, help="json {\"p09.m4a\": [{\"de\": 1.6, \"a\": 2.08, \"note\": \"mhhh\"}]} : sons de la prise brute à remplacer par l'ambiance (par défaut voix-perso/retouches.json s'il existe ; \"\" pour aucune retouche)")
     a = ap.parse_args()
     gmax = [float(v) for v in a.gmax.split(",")]
     cache = f"{a.sortie}/prises_cache"
     sil = a.silence or next(iter(glob.glob(f"{a.prises}/silence.*")), None)
     salle = Salle(sil)
     choix = json.load(open(a.choix)) if a.choix else {}
+    RET.update(json.load(open(a.retouches, encoding="utf-8")) if a.retouches and os.path.exists(a.retouches) else {})
     par_id = {pid: (pause * voix.PAUSE_K, line) for pid, pause, line in voix.SCRIPT}
     fichiers = {}
     for f in sorted(glob.glob(f"{a.prises}/*")):
@@ -476,9 +521,9 @@ def main():
     open(f"{a.sortie}/timeline.js", "w").write("window.TL = " + json.dumps(tl, ensure_ascii=False) + ";\n")
     # rapport
     L = ["# Rapport de montage de la voix", "", f"Durée de la voix : {len(v48) / SR:.1f} s · niveau {lufs:.1f} → −19 LUFS (crête {20 * math.log10(max(crete_avant, 1e-9)):.1f} dBFS avant limiteur, {20 * math.log10(max(crete, 1e-9)):.1f} après)", "",
-         "| Paragraphe | Prise | Phrases retrouvées | Ressemblance texte/prise | Niveau (LUFS) | Gain (dB) | Silences raccourcis | Voix écartée | Alertes |", "|---|---|---|---|---|---|---|---|---|"]
+         "| Paragraphe | Prise | Phrases retrouvées | Ressemblance texte/prise | Niveau (LUFS) | Gain (dB) | Silences raccourcis | Voix écartée | Retouches | Alertes |", "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rapports:
-        L.append(f"| p{r['gi']:02d} | {r['retenue']} | {r['retenue_info']['phrases_trouvees']} | {r['retenue_info']['ressemblance']:.2f} | {r['lufs']} | {r['gain_db']} | {len(r['silences_raccourcis'])} | {'; '.join(r['ecartees']) or '-'} | {'; '.join(r['alertes']) or '-'} |")
+        L.append(f"| p{r['gi']:02d} | {r['retenue']} | {r['retenue_info']['phrases_trouvees']} | {r['retenue_info']['ressemblance']:.2f} | {r['lufs']} | {r['gain_db']} | {len(r['silences_raccourcis'])} | {'; '.join(r['ecartees']) or '-'} | {'; '.join(r['retouches']) or '-'} | {'; '.join(r['alertes']) or '-'} |")
     L += ["", "## Ce que le reconnaisseur a entendu", ""]
     for r in rapports:
         for pr in r["prises"]:

@@ -23,7 +23,7 @@ npm install                                   # puppeteer-core, police Nunito
 pip install numpy scipy soundfile pyloudnorm faster-whisper torch torchaudio
 # prises : p01.m4a … p18.m4a (un fichier par paragraphe, p05b.m4a = 2e prise du paragraphe 5) et silence.wav (10 s de silence dans la même pièce)
 python controle_micro.py prises/p01.m4a --silence prises/silence.wav --texte "…"     # facultatif : qualité d'une prise
-python montage.py prises build --silence prises/silence.wav                          # voix + temps des mots + rapport
+python montage.py prises build --silence prises/silence.wav                          # voix + temps des mots + rapport (retouches : voix-perso/retouches.json)
 node check.mjs                                # dessine tout le film sans rien écrire : doit afficher « erreurs : 0 »
 node bords.mjs                                # doit afficher « aucun texte hors cadre »
 VOIX=perso ./rendu.sh                         # bruitages, musique, rendu en 4 parties, mixage, −14 LUFS, encodage < 30 Mo
@@ -31,7 +31,7 @@ VOIX=perso ./rendu.sh                         # bruitages, musique, rendu en 4 p
 
 ### Ce que fait le montage (`montage.py`)
 
-1. Chaque prise est décodée (mono, 48 kHz) et passée dans un filtre coupe-bas à 75 Hz.
+1. Chaque prise est décodée (mono, 48 kHz) et passée dans un filtre coupe-bas à 75 Hz. Les sons que l'auteur ne veut pas garder (un « mhhh » avant une phrase) sont ensuite remplacés par l'ambiance de la pièce : `voix-perso/retouches.json` donne, par prise, le début et la fin du son en secondes dans la prise brute. On remplace au lieu de couper : le reste de la prise ne bouge pas, et le reconnaisseur ne voit plus qu'une pièce calme à cet endroit. L'ambiance est le passage le plus calme de la même prise (même micro, même niveau), fondu sur 10 ms aux deux bouts.
 2. Un reconnaisseur de parole (faster-whisper large-v3-turbo) relit la prise ; on retrouve chaque phrase du texte dans ce qui a été dit. Ce qui n'est pas dans le texte (« paragraphe cinq », un faux départ) est écarté, et une phrase reprise est remplacée par sa dernière version qui convient.
 3. Le texte connu est calé mot à mot sur le son (alignement forcé, images de 20 ms) : c'est ce qui donne les temps des sous-titres et des plans. L'alignement place le début d'un mot environ 80 ms trop tard par rapport aux temps du service Edge (mesuré sur 86 mots) : un décalage de 80 ms est corrigé (`BIAIS_DEBUT` dans `voix.py`). Contrôle sur le montage final : un second passage du reconnaisseur donne des débuts de mots à 0,03 s près (médiane), 0,11 s (90 % des mots).
 4. Les coupes se font dans les silences, jamais d'après les bords de mots du reconnaisseur (qui se trompe parfois sur un mot mal articulé : une première version coupait ainsi la fin de « Madagascar » et le début de « Sa soie »). La prise est découpée en plages de voix (au moins 0,22 s de calme entre deux plages) ; chaque phrase du texte retrouvée garde la plage entière qui la contient, plus 0,10 s d'ambiance avant et 0,15 s après. Les plages qui ne contiennent aucune phrase (annonce, faux départ) sont écartées et listées dans le rapport. Les silences de plus de 0,7 s (0,9 s après une fin de phrase, 1,3 s après « … ») sont raccourcis au milieu du silence, en gardant 0,15 s après un mot et 0,25 s avant le suivant : on ne coupe pas les respirations.
