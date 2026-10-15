@@ -99,7 +99,7 @@ function bloops(t0, span, n, o = {}) { const { gain = 0.05, lo = 250, hi = 900 }
 
 // ───────── harmonie : accords calés sur les phrases ─────────
 const ch = (a, b, notes, o) => ({ a, b, notes, o });
-const t = { surf: P.humain.t0, q: P.quetzal.t0, arg: P.argentino.t0, mega: P.megalodon.t0, fil: P.fillette.t0, ich: P.ichthyo.t0, mais: P.mais.t0, bal: P.baleine.t0, dbl: P.double.t0, ch: P.chasse.t0, rev: P.revient.t0, fin: P.fin.t0 };
+const t = { surf: P.humain.t0, q: P.quetzal.t0, arg: P.argentino.t0, mega: P.megalodon.t0, fil: P.fillette.t0, ich: P.ichthyo.t0, mais: P.mais.t0, bal: P.baleine.t0, dbl: P.poids.t0, ch: P.chasse.t0, rev: P.revient.t0, fin: P.fin.t0 };
 const CHORDS = [
   ch(t.surf - 0.3, t.q + 0.2, ['D3', 'F3', 'A3', 'E4']),
   ch(t.q - 0.2, t.q + 3.4, ['Bb2', 'D3', 'F3', 'A3']),
