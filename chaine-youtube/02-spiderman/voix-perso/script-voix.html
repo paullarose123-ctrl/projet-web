@@ -1,0 +1,176 @@
+<title>Script de voix Raisins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Plan : lecture à voix haute sur téléphone, grand texte lisible, une carte par paragraphe, ambiance grappe (violet profond + jaune du « ABONNEZ-VOUS »). */
+:root {
+  --bg: #f6f2fa;
+  --surface: #ffffff;
+  --fg: #1d1030;
+  --muted: #5c4d73;
+  --line: #ddd2ea;
+  --accent: #6605b8;
+  --accent-ink: #ffffff;
+  --note: #f3e9ff;
+  --yellow: #ffd84a;
+  --yellow-ink: #3a2c00;
+  --ok: #1f7a4d;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #130a22; --surface: #1d1233; --fg: #f4ecff; --muted: #b7a6d1; --line: #35254f;
+    --accent: #b92efa; --accent-ink: #14041f; --note: #2a1946; --yellow: #ffd84a; --yellow-ink: #2a2000; --ok: #6fd6a0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #130a22; --surface: #1d1233; --fg: #f4ecff; --muted: #b7a6d1; --line: #35254f;
+  --accent: #b92efa; --accent-ink: #14041f; --note: #2a1946; --yellow: #ffd84a; --yellow-ink: #2a2000; --ok: #6fd6a0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 18px/1.55 var(--font-body); padding-block: 20px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 720px; margin: 0 auto; }
+h1, h2 { font-family: var(--font-display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 8vw, 44px); letter-spacing: -0.01em; }
+h2 { font-size: 22px; }
+p { margin: 0; }
+.lead { color: var(--muted); margin-top: 10px; max-width: 60ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+button { font: inherit; font-weight: 700; border: 2px solid var(--accent); background: transparent; color: var(--accent); border-radius: 10px; padding: 10px 16px; min-height: 46px; cursor: pointer; }
+button.solid { background: var(--accent); color: var(--accent-ink); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+section { margin-top: 36px; }
+.steps { display: grid; gap: 12px; margin-top: 14px; padding: 0; list-style: none; }
+.steps li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.steps b { font-family: var(--font-display); }
+.tips { margin: 12px 0 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 14px; margin-top: 14px; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.tag { font: 700 13px/1 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.file { font: 13px/1 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+.say { font-size: 23px; line-height: 1.5; text-wrap: pretty; }
+.say .pause { display: inline-block; width: 0.9em; height: 0.12em; background: var(--yellow); vertical-align: middle; margin: 0 0.15em; border-radius: 2px; }
+.dir { margin-top: 12px; background: var(--note); border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--muted); }
+.dir b { color: var(--fg); }
+.done { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 16px; color: var(--muted); }
+.done input { width: 24px; height: 24px; accent-color: var(--accent); }
+.test .tag { color: var(--yellow-ink); background: var(--yellow); padding: 5px 8px; border-radius: 6px; }
+.legend { margin-top: 10px; font-size: 15px; color: var(--muted); }
+.legend .pause { display: inline-block; width: 0.9em; height: 0.12em; background: var(--yellow); vertical-align: middle; border-radius: 2px; }
+#focus { position: fixed; inset: 0; background: var(--bg); z-index: 5; display: flex; flex-direction: column; padding-block: max(14px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+#focus[hidden] { display: none; }
+#focus .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+#focus .big { flex: 1; overflow: auto; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding-block: 12px; }
+#focus .big .say { font-size: clamp(26px, 7.2vw, 40px); line-height: 1.45; }
+#focus .nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (prefers-reduced-motion: no-preference) { button { transition: background 0.15s, color 0.15s; } }
+</style>
+
+<main>
+  <h1>Script de voix</h1>
+  <p class="lead">« La toile de Spider-Man est-elle possible ? » · chaîne Raisins. 18 paragraphes à lire avec ta propre voix, comme si tu l'expliquais à un ami.</p>
+  <div class="bar">
+    <button class="solid" id="start">Lire en grand</button>
+    <button id="theme">Thème clair / sombre</button>
+  </div>
+  <p class="legend">Le trait <span class="pause"></span> marque un endroit où respirer. Rien n'est à jouer : parle naturellement, je règle les pauses au montage.</p>
+
+  <section>
+    <h2>Avant de commencer</h2>
+    <ol class="steps">
+      <li><b>Le lieu.</b> Une pièce qui ne résonne pas : un placard avec des vêtements, ou assis sous une couette. Évite la cuisine et la salle de bain.</li>
+      <li><b>Le téléphone.</b> L'application dictaphone, posé à 15 ou 20 cm de la bouche, un peu sur le côté pour que les « p » ne claquent pas. Pas d'écouteurs Bluetooth, pas de micro d'ordinateur portable. Sur iPhone, mets le format « sans perte » dans les réglages des Notes vocales.</li>
+      <li><b>Le même endroit pour tout.</b> Même pièce, même distance, idéalement le même jour.</li>
+      <li><b>Une prise par paragraphe.</b> Un fichier par carte ci-dessous, avec 1 ou 2 secondes de silence avant et après. Si tu te trompes, reste silencieux 2 secondes et reprends la phrase : je garde la bonne version. Deux prises par paragraphe si tu veux, mais ce n'est pas obligatoire.</li>
+      <li><b>Les noms de fichier.</b> <span class="file">test1</span>, <span class="file">test2</span>, <span class="file">test3</span>, <span class="file">silence</span>, puis <span class="file">p01</span> à <span class="file">p18</span> (et <span class="file">p05b</span> pour une deuxième prise). Le format n'a pas d'importance.</li>
+    </ol>
+  </section>
+
+  <section id="tests">
+    <h2>D'abord, le test (2 minutes)</h2>
+    <p class="lead">Je vérifie le niveau, le bruit et l'écho avant que tu lises tout. Lis ces trois phrases, puis garde le silence 10 secondes au même endroit.</p>
+    <div id="testCards"></div>
+  </section>
+
+  <section id="list">
+    <h2>Le texte</h2>
+    <p class="lead">Les chiffres sont écrits comme ils se disent. Dis « Spider-Man », « Kevlar » ou « Madagascar » à ta façon : l'important est de rester constant.</p>
+    <div id="cards"></div>
+  </section>
+
+  <section>
+    <h2>M'envoyer les fichiers</h2>
+    <p class="lead">Joins-les dans la conversation si l'application accepte l'audio. Sinon, dépose-les sur GitHub dans <span class="file">chaine-youtube/02-spiderman/voix-perso/</span>, sur la branche de travail (Add file, puis Upload files). Commence par les trois tests et le silence : je te réponds avant que tu fasses le reste.</p>
+  </section>
+</main>
+
+<div id="focus" hidden>
+  <div class="top"><span class="tag" id="fTag"></span><button id="fClose">Fermer</button></div>
+  <div class="big"><p class="say" id="fSay"></p><div class="dir" id="fDir"></div></div>
+  <div class="nav"><button id="fPrev">Précédent</button><button class="solid" id="fNext">Suivant</button></div>
+</div>
+
+<script>
+const NB = ' ';
+const TESTS = [
+  { file: 'test1', say: "Est-ce qu'un fil d'araignée pourrait vraiment retenir Spider-Man ?", dir: "<b>Ton :</b> question vive et curieuse, la voix monte un peu à la fin." },
+  { file: 'test2', say: "Un grand pouvoir implique... un très gros appétit.", dir: "<b>Ton :</b> le gag. Marque un temps après « implique… », puis dis « un très gros appétit » plus bas, avec le sourire." },
+  { file: 'test3', say: "Bon... je range mon échantillon, avant de finir moi-même en cocon.", dir: "<b>Ton :</b> détendu, amusé. « Bon… » comme un petit soupir, puis la chute." },
+];
+const PARAS = [
+  ["Est-ce qu'un fil d'araignée pourrait vraiment retenir Spider-Man ?", "Question vive et curieuse. La voix monte à la fin."],
+  ["Oui, le fil tiendrait, | mais trois choses ne marcheraient pas.", "Réponse posée. Respire après « tiendrait », puis « mais trois choses ne marcheraient pas » avec un demi-sourire. Marque une vraie pause à la fin."],
+  ["Commençons par le fil. | Quand Spider-Man se balance, c'est tout en bas que le fil tire le plus. | Un fil d'araignée à peine plus épais qu'un spaghetti suffirait, tout juste. | Pour avoir de la marge, disons un câble de chargeur.", "Ton tranquille d'explication. « Tout juste » en retrait. « Disons un câble de chargeur » : pince-sans-rire."],
+  ["Pourquoi ça tient ? | À épaisseur égale, la soie est à peu près aussi solide qu'un bon acier, mais six fois plus légère.", "Tu te poses la question, puis tu y réponds. Appuie un peu sur « six fois plus légère »."],
+  ["Et la toile encaisse les chocs. | Quand une mouche fonce dedans, le fil s'étire au lieu de casser.", "Une image simple : tu vois la mouche arriver. Sur « au lieu de casser », la voix se détend."],
+  ["La championne, c'est une araignée de Madagascar. | Sa soie encaisse les chocs jusqu'à dix fois mieux que le Kevlar des gilets pare-balles.", "Un peu d'émerveillement : c'est la révélation. Appuie sur « jusqu'à dix fois mieux »."],
+  ["Et le métro qu'il arrête dans Spider-Man deux ? | En deux mille treize, des étudiants ont fait le calcul, et avec la soie de cette championne, ça tiendrait.", "Une question, puis la réponse sûre de toi. Pose bien « ça tiendrait » à la fin."],
+  ["Côté fil, c'est crédible. | Ce sont plutôt les bras de Peter Parker qui m'inquiètent.", "Plus lent, un peu plus grave, pince-sans-rire. Respire avant « Ce sont plutôt… »."],
+  ["Où est le piège ? | Premier problème, la quantité. | Dans le film, la toile sort de son corps, et la soie, c'est de la protéine, comme la viande.", "Petit suspense sur « Où est le piège ? », puis un ton posé pour expliquer."],
+  ["Pour un seul balancement, il lui en faudrait plus que ce qu'un adulte doit manger en une journée.", "Dis le chiffre sur un ton d'évidence, comme si c'était absurde mais vrai."],
+  ["Un grand pouvoir implique... un très gros appétit.", "Le gag. Environ une seconde de pause après « implique… », puis « un très gros appétit » plus bas, avec le sourire."],
+  ["Deuxième problème, la fabrication. | Spider-Man lance sa toile, mais une vraie araignée l'étire.", "Ton neutre. Fais sentir le contraste entre « lance » et « l'étire »."],
+  ["Dans l'araignée, la soie est liquide, alors en jet, elle ferait juste des gouttes. | Pour devenir solide, il faut l'étirer.", "Explication calme en deux temps : elle est liquide, puis il faut l'étirer."],
+  ["Troisième problème, la pluie. | Quand elle est mouillée, la soie peut raccourcir de moitié. | Pour un super-héros en plein orage, c'est la galère.", "« C'est la galère » avec un soupir amusé."],
+  ["Verdict : la soie est assez solide pour faire du Spider-Man. | La fiction, c'est tout le reste.", "Conclusion : plus lent, plus grave. « La fiction, c'est tout le reste » sec, bien détaché."],
+  ["Dans les labos, on essaie de produire cette soie en masse. | Mais les araignées ne s'élèvent pas, elles se dévorent entre elles.", "Un regain d'énergie, plus informatif. « Elles se dévorent entre elles » avec une pointe d'humour noir."],
+  ["On fait plutôt travailler des bactéries, ou des vers à soie modifiés.", "Ton léger, presque en passant."],
+  ["Bon... je range mon échantillon, avant de finir moi-même en cocon.", "Détendu, amusé. « Bon… » comme un soupir, puis la chute."],
+];
+const pad = n => String(n).padStart(2, '0');
+const nbsp = s => s.replace(/ ([?:!;])/g, NB + '$1');
+const html = s => nbsp(s).replace(/ \| /g, ' <span class="pause" aria-hidden="true"></span> ');
+const plain = s => nbsp(s).replace(/ \| /g, ' ');
+let done = {};
+try { done = JSON.parse(localStorage.getItem('raisins-voix') || '{}'); } catch (e) { done = {}; }
+const save = () => { try { localStorage.setItem('raisins-voix', JSON.stringify(done)); } catch (e) {} };
+const card = (tag, file, say, dir, key, cls) =>
+  '<article class="card ' + cls + '"><div class="head"><span class="tag">' + tag + '</span><span class="file">' + file + '</span></div><p class="say">' + say + '</p><div class="dir">' + dir + '</div>' +
+  '<label class="done"><input type="checkbox" id="c-' + key + '"' + (done[key] ? ' checked' : '') + '> Enregistré</label></article>';
+document.getElementById('testCards').innerHTML = TESTS.map((t, i) => card('Test ' + (i + 1), t.file, html(t.say), t.dir, t.file, 'test')).join('') +
+  card('Silence', 'silence', 'Ne dis rien pendant 10 secondes, au même endroit, avec la même distance.', 'Ça me sert à mesurer le bruit de la pièce pour l\'enlever proprement.', 'silence', 'test');
+document.getElementById('cards').innerHTML = PARAS.map((p, i) => card('Paragraphe ' + (i + 1) + ' sur 18', 'p' + pad(i + 1), html(p[0]), '<b>Ton :</b> ' + p[1], 'p' + pad(i + 1), '')).join('');
+document.addEventListener('change', e => { if (e.target.id && e.target.id.startsWith('c-')) { done[e.target.id.slice(2)] = e.target.checked; save(); } });
+
+let cur = 0;
+const F = document.getElementById('focus');
+function show() {
+  const p = PARAS[cur];
+  document.getElementById('fTag').textContent = 'Paragraphe ' + (cur + 1) + ' sur 18 · p' + pad(cur + 1);
+  document.getElementById('fSay').innerHTML = html(p[0]);
+  document.getElementById('fDir').innerHTML = '<b>Ton :</b> ' + p[1];
+  document.getElementById('fPrev').disabled = cur === 0;
+  document.getElementById('fNext').textContent = cur === PARAS.length - 1 ? 'Terminé' : 'Suivant';
+}
+document.getElementById('start').onclick = () => { F.hidden = false; show(); };
+document.getElementById('fClose').onclick = () => { F.hidden = true; };
+document.getElementById('fPrev').onclick = () => { if (cur > 0) { cur--; show(); } };
+document.getElementById('fNext').onclick = () => { if (cur < PARAS.length - 1) { cur++; show(); } else F.hidden = true; };
+document.getElementById('theme').onclick = () => {
+  const r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' || (!r.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  r.setAttribute('data-theme', dark ? 'light' : 'dark');
+};
+</script>
