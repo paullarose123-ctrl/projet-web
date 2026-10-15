@@ -1116,8 +1116,8 @@ function drawLabels(t) {
 function fmtN(n) { const s = String(Math.round(n)); return s.length > 3 ? s.slice(0, -3) + ' ' + s.slice(-3) : s; }
 function drawInfographics(t) {
   // barres de masse : 70 t contre 190 t
-  const bA = bump(t, T.double - 0.1, T.double + 0.4, T.chasse - 0.2, T.chasse + 0.2);
-  if (bA > 0) {
+  const bA = bump(t, T.double - 0.1, T.double + 0.4, T.chasse - 0.5, T.chasse - 0.1);
+  if (bA > 0 && t < T.chasse - 0.1) {
     const g = eo(prog(t, T.double, T.double + 1.3)), x0 = 18, y0 = 22, full = 234;
     ptext('ARGENTINOSAURUS', x0, y0, '#ffffff', 1, '#05040f', Math.floor(bA * 20));
     L.fillStyle = '#05040f'; L.fillRect(x0 - 1, y0 + 10, Math.round(full * 70 / 190 * g) + 2, 8);
@@ -1134,11 +1134,12 @@ function drawInfographics(t) {
   if (cA > 0) {
     const k = eio(prog(t, T.chasse + 0.6, T.n360 + 0.3));
     const n = Math.exp(lerp(Math.log(239000), Math.log(360), k));
-    const year = Math.round(lerp(1928, 1973, k));
+    // seules les deux bornes sont des données (Branch et al. 2004) : pas d'années intermédiaires
+    const year = k < 0.02 ? 'AVANT 1928' : k > 0.98 ? 'EN 1973' : '';
     ptext("BALEINES BLEUES DE L'ANTARCTIQUE", 135 - textW("BALEINES BLEUES DE L'ANTARCTIQUE") / 2, 20, '#cfd8ff', 1, '#05040f', Math.floor((t - T.chasse) * 40));
     const s = fmtN(n); const red = k > 0.98 ? '#ff9ec8' : '#ffffff';
     ptext(s, 135 - textW(s, 4) / 2, 36, red, 4);
-    const ys = String(year); ptext(ys, 135 - textW(ys) / 2, 70, '#9fe0ff');
+    if (year) ptext(year, 135 - textW(year) / 2, 70, '#9fe0ff');
     if (t > T.revient) { const blink = Math.floor((t - T.revient) * 3) % 2 === 0 || t > T.revient + 1.5; if (blink) ptext('↑ EN HAUSSE', 135 - textW('↑ EN HAUSSE') / 2, 84, '#ffd27a', 1, '#05040f', Math.floor((t - T.revient) * 20)); }
   }
   // carton final
