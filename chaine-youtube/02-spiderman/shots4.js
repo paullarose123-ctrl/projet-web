@@ -324,7 +324,7 @@ function buildShots4() {
       vgrad(0, 400, LW, 80, [[0, WO[5]], [1, WO[1]]]); R(0, 400, LW, 1, WO[6]);
       const cx = 135, cy = 430, s = 1.55;
       const wrap = prog(t, tAv, tCo + 0.15);
-      drawScientist(cx, cy, s, t, { armUp: wrap < 0.1 ? 0.5 : 0, sway: 1 - wrap });
+      drawScientist(cx, cy, s, t, { armUp: wrap < 0.1 ? 0.5 : 0, sway: 1 - wrap, hairStyle: 'curlyFade' });
       // éprouvette à la main
       const vx = cx + 22 * s, vy = cy - 58 * s;
       if (wrap < 0.1) { R(vx - 2, vy - 16, 5, 18, CY[2]); R(vx - 2, vy - 16, 5, 3, ST[7]); R(vx - 1, vy - 10, 3, 10, CY[4]); }

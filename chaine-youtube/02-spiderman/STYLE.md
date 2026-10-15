@@ -37,6 +37,7 @@ Même chaîne, même moteur que la vidéo 1 (pixel art 270 × 480 agrandi ×4, p
 - **Pastilles ✓ / ✗** : cercle vert avec coche, cercle rouge avec croix. Elles s'alignent en haut à droite et forment le tableau du verdict.
 - **Compteur** : boîte sombre, chiffres rouges (comme « 299 948 » de la référence).
 - **Sous-titres** : mot à mot, blanc, Nunito Black 96 px, contour sombre (identiques à la vidéo 1).
+- **Le scientifique du plan final, c'est l'auteur** (« avant de finir moi-même en cocon ») : il porte sa coiffure, un dégradé (côtés ras qui fondent dans la peau, vers les oreilles) avec des boucles blond vénitien sur le dessus (`hairStyle: 'curlyFade'` dans `lab.js`, rampes de la palette : ambre et bois pour les ombres cuivrées, peau pour les parties claires). Les autres personnages (élèves, technicien des cuves) gardent la coiffure par défaut.
 
 ## Mouvement
 

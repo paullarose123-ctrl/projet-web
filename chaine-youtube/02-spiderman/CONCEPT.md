@@ -32,7 +32,7 @@
 | rainWindow, shrink, storm | « PROBLÈME 3 SUR 3 · LA PLUIE », fenêtre sous l'orage ; le fil mouillé raccourcit de 100 % à 50 % ; le héros trempé, ✗ | « Troisième problème, la pluie. Quand elle est mouillée, la soie peut raccourcir de moitié. Pour un super-héros en plein orage, c'est la galère. » |
 | verdict | VERDICT : la soie ✓, quantité / fabrication / météo ✗ ; tampon FICTION | « Verdict : la soie est assez solide pour faire du Spider-Man. La fiction, c'est tout le reste. » |
 | vats, fight, bacteria, silkworm | Cuves de production ; deux araignées dans un bocal, il en reste une ; bactéries ; ver à soie modifié (double hélice) | « Dans les labos, on essaie de produire cette soie en masse. Mais les araignées ne s'élèvent pas, elles se dévorent entre elles. On fait plutôt travailler des bactéries, ou des vers à soie modifiés. » |
-| cocoon | Le scientifique range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » | « Bon... je range mon échantillon, avant de finir moi-même en cocon. » |
+| cocoon | Le scientifique (l'auteur : dégradé et boucles blond vénitien) range l'échantillon ; le fil l'enroule en cocon ; carton « LE FIL TIENT. LE RESTE, NON. » | « Bon... je range mon échantillon, avant de finir moi-même en cocon. » |
 | outro | Logo (grappe), « RAISINS », « ABONNEZ-VOUS » en jaune | (rien : musique seule) |
 
 ## Faits vérifiés et sources
