@@ -16,7 +16,7 @@
 for u in https://speech.platform.bing.com https://huggingface.co https://cas-bridge.xethub.hf.co https://api.elevenlabs.io; do printf "%s " $u; curl -s -o /dev/null -m 12 -w "%{http_code}\n" $u; done
 ```
 
-`000` veut dire refusé par le proxy. Si les hôtes dont tu as besoin sont refusés, dis-le à l'utilisateur en nommant l'hôte (réglage : menu de l'environnement dans la barre de titre de la session, Edit, Network access : accès complet, ou Allowed domains avec « Allow package managers » coché). Ne contourne pas le blocage, ne passe pas par un miroir. Il a déjà été prévenu et a dit « on va faire la 2 ».
+`000` veut dire refusé par le proxy. Si les hôtes dont tu as besoin sont refusés, dis-le à l'utilisateur en nommant l'hôte (réglage : la petite flèche juste après le titre de la session, puis « Edit cloud environment », puis le champ « Network access » : None, Trusted, Full ou Custom avec Allowed domains et « Also include default list of common package managers » coché ; une session déjà ouverte suit le nouveau réglage en une minute environ, sans nouvelle session ; doc : https://code.claude.com/docs/en/cloud-environments#configure-your-environment). Ne contourne pas le blocage, ne passe pas par un miroir. Il a déjà été prévenu et a dit « on va faire la 2 ».
 
 ## 2. Mise en place (conteneur neuf)
 
