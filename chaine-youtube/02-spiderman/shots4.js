@@ -67,11 +67,10 @@ function buildShots4() {
     },
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'PROTÉINES', 'amber', 99);
-      if (t > tBal + 0.4) { ptextC('1 BALANCEMENT', 73, 340, CY[4], 1); ptextC('≈ 90 G', 73, 100, WH[3], 2); }
-      if (t > tBes + 0.4) { ptextC("BESOIN D'UNE JOURNÉE", 197, 340, AM[9], 1); ptextC('≈ 60 G', 197, 100, AM[10], 2); }
+      if (t > tBal + 0.4) { ptextC('1 BALANCEMENT', 73, 340, CY[4], 1); ptextC('ENVIRON', 73, 86, ST[7], 1); ptextC('90 G', 73, 100, WH[3], 2); }
+      if (t > tBes + 0.4) { ptextC("UN ADULTE : 1 JOUR", 197, 340, AM[9], 1); ptextC('ENVIRON', 197, 86, ST[7], 1); ptextC('60 G', 197, 100, AM[10], 2); }
       const p = prog(t, tEnt - 0.2, tEnt + 0.3);
-      if (p > 0) { ptextC('PLUS', 135, 168, RD[5], 2, '#05040f'); arrow(135, 188, 135, 208, RD[5], 1, 4); }
-      if (u > 0.8) ptextC('ORDRE DE GRANDEUR : 30 M DE FIL', 135, 440, AM[5], 1, '#05040f');
+      if (p > 0) ptextC('>', 135, 200, RD[5], 3, '#05040f');
       scoreTiles(t, { thread: 'yes' }, 'burger');
     },
     ev: [[tBal, 'liquid', 1], [tBes, 'liquid', 1], [tEnt, 'no', 1]],
@@ -108,26 +107,26 @@ function buildShots4() {
   shot('fabA', P.fabrication.t0 - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 280 });
-      R(0, 410, LW, 2, AM[4]); ditherRect(0, 412, LW, 68, AM[1], 0.5);
-      heroFront(100, 340, 2.2, t, { arms: 'out' });
+      R(0, 345, LW, 2, AM[4]); ditherRect(0, 347, LW, 133, AM[1], 0.5);
+      heroFront(112, 280, 2.2, t, { arms: 'out' });
       // jet : liquide continu puis gouttes
-      const x0 = 194, y0 = 289, t0 = tFab - 0.2;
+      const x0 = 204, y0 = 233, t0 = tFab - 0.2;
       const st = clamp((t - t0) / 0.3);
-      const pos = s => [x0 + 74 * s, y0 - 22 * s + 140 * s * s];
+      const pos = s => [x0 + 40 * s, y0 - 22 * s + 140 * s * s];
       for (let s = 0; s < st * 0.45; s += 0.012) { const [x, y] = pos(s); R(x, y - 1, 3, 3 - Math.round(s * 3), WH[3]); }
       for (let i = 0; i < 14; i++) {
-        const sp = ((t * 1.7 + i * 0.071) % 0.6) + 0.45, [x, y] = pos(sp); if (st < 0.5 || y > 408) continue;
+        const sp = ((t * 1.7 + i * 0.071) % 0.6) + 0.45, [x, y] = pos(sp); if (st < 0.5 || y > 343) continue;
         disc(x + Math.sin(i * 3.1) * 3, y + Math.cos(i * 2.3) * 2, 1 + (i % 2), i % 3 ? WH[3] : CY[4]);
       }
       // flaque qui s'étale
-      const fl = clamp((t - t0 - 0.9) / 1.5); if (fl > 0) ell(250, 409, Math.round(18 * fl), 3, WH[1]);
-      for (let i = 0; i < 6; i++) { const k = ((t * 2 + i * 0.3) % 1); if (fl > 0.2) px(236 + i * 5 + k * 4, 407 - Math.sin(k * 3.14) * 10, WH[3]); }
+      const fl = clamp((t - t0 - 0.9) / 1.5); if (fl > 0) ell(238, 344, Math.round(18 * fl), 3, WH[1]);
+      for (let i = 0; i < 6; i++) { const k = ((t * 2 + i * 0.3) % 1); if (fl > 0.2) px(224 + i * 5 + k * 4, 342 - Math.sin(k * 3.14) * 10, WH[3]); }
     },
     ui(u, t) {
       if (u > 0.4) tagBox(14, 16, 'PROBLÈME 2 SUR 3', 'red', Math.floor((u - 0.4) * 30));
       scoreTiles(t, { thread: 'yes', burger: 'no' }, 'spray');
       const p = prog(t, tFab - 0.05, tFab + 0.5); if (p > 0) ptextC('LA FABRICATION', 135, 100, WH[3], 2, '#05040f', Math.floor(p * 14));
-      if (t > tFab + 0.6) { tagBox(205, 230, 'JET DE LIQUIDE', 'red', Math.floor((t - tFab - 0.6) * 30), true); }
+      if (t > tFab + 0.6) { tagBox(135, 128, 'JET DE LIQUIDE', 'red', Math.floor((t - tFab - 0.6) * 30), true); }
     },
     ev: [[tFab - 0.2, 'spray', 1], [tFab, 'ding', 1]],
   });
@@ -135,7 +134,7 @@ function buildShots4() {
   const tEj = wt('fabrication', 'vraie'), tEtire = wt('fabrication', "l'étire.");
   shot('fabB', tUne2 - 0.1, {
     draw(u, t) {
-      drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
+      drawLabWall(t, { shelfY: 70, clockY: 100, dim: 0.62 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.45)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
       vgrad(0, 338, LW, 142, [[0, WO[5]], [0.06, WO[4]], [1, WO[1]]]); R(0, 338, LW, 1, WO[6]);
       const jx = 78, jy = 126, jw = 116, jh = 214;
@@ -148,8 +147,8 @@ function buildShots4() {
     },
     ui(u, t) {
       const p = prog(t, tEtire - 0.1, tEtire + 0.5);
-      arrow(214, 190, 214, 280, AM[9], 1, 4);
-      if (p > 0) tagBox(207, 176, "ELLE L'ÉTIRE", 'amber', Math.floor(p * 20), true);
+      arrow(100, 190, 100, 280, AM[9], 1, 4);
+      if (p > 0) tagBox(232, 176, "L'ÉTIRE", 'amber', Math.floor(p * 20), true);
       const q = prog(t, tEj - 0.05, tEj + 0.4); if (q > 0) { slot(18, 150, 'spray', 'no', q); ptext('PAS UN JET', 14, 182, RD[5], 1, '#05040f', Math.floor(q * 10)); }
       scoreTiles(t, { thread: 'yes', burger: 'no' }, 'spray');
     },
@@ -169,7 +168,7 @@ function buildShots4() {
     ui(u, t) {
       if (u > 0.4) tagBox(14, 16, 'PROBLÈME 3 SUR 3', 'red', Math.floor((u - 0.4) * 30));
       scoreTiles(t, { thread: 'yes', burger: 'no', spray: 'no' }, 'cloud');
-      const p = prog(t, tPl - 0.05, tPl + 0.5); if (p > 0) ptextC('LA PLUIE', 135, 36, WH[3], 2, '#05040f', Math.floor(p * 8));
+      const p = prog(t, tPl - 0.05, tPl + 0.5); if (p > 0) ptextC('LA PLUIE', 135, 50, WH[3], 2, '#05040f', Math.floor(p * 8));
     },
     ev: [[P.pluie.t0 - 0.1, 'rain', 1], [tPl - 0.2, 'thunder', 0.5]],
   });
@@ -178,7 +177,7 @@ function buildShots4() {
   shot('shrink', wt('pluie', 'quand') - 0.1, {
     draw(u, t) {
       plateBG(t, { glowY: 220 });
-      const k = eio(prog(t, tRet - 0.1, tMoi + 0.2)), len = 300 - 150 * k, hy = len;
+      const k = eio(prog(t, tRet - 0.1, tMoi + 0.2)), len = 250 - 125 * k, hy = len;
       // gouttes de pluie qui frappent le fil
       for (let i = 0; i < 18; i++) { const x = 100 + (i * 29) % 70, y = ((t * (200 + (i % 4) * 40) + i * 37) % 320) - 10; lineP(x, y, x - 1, y - 6, CY[3], 1); if (y > 20 && y < hy) { } }
       for (let i = 0; i < 7; i++) { const yy = 20 + ((t * 40 + i * 41) % Math.max(10, hy - 20)); ell(136, yy, 1, 2, CY[4]); }
@@ -187,14 +186,14 @@ function buildShots4() {
       for (let y = 0; y < hy; y++) { const x = 135 + Math.sin(y * 0.18 + t * 3) * 2.6 * k; R(x, y, 3, 1, wet > 0.5 ? CY[1] : CY[2]); R(x + 1, y, 1, 1, wet > 0.5 ? CY[4] : WH[3]); }
       heroDraw(137, hy, 0, 1.6, { legs: 0.1, armL: 0.4, wet: wet > 0.5 });
       // règle de longueur
-      lineP(60, 0, 60, 300, ST[4], 1); for (let y = 0; y <= 300; y += 30) R(56, y, 9, 1, ST[6]);
+      lineP(60, 0, 60, 250, ST[4], 1); for (let y = 0; y <= 250; y += 25) R(56, y, 9, 1, ST[6]);
       lineP(60, hy, 80, hy, AM[8], 1);
     },
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'FIL MOUILLÉ', 'blue', Math.floor((u - 0.3) * 30));
       const p = prog(t, tRet - 0.05, tRet + 0.5); if (p > 0) tagBox(190, 70, 'LE FIL RACCOURCIT', 'red', Math.floor(p * 30), true);
       if (t < tRet) ptext('100 %', 14, 100, AM[9], 2);
-      const q = prog(t, tMoi - 0.1, tMoi + 0.4); if (q > 0) { ptext('50 %', 14, 100, RD[5], 2); ptext('−50 %', 190, 96, RD[5], 2); arrow(30, 130, 30, 190, RD[5], 1, 4); }
+      const q = prog(t, tMoi - 0.1, tMoi + 0.4); if (q > 0) { ptext('50 %', 14, 100, RD[5], 2); ptext('-50 %', 190, 96, RD[5], 2); arrow(30, 130, 30, 190, RD[5], 1, 4); }
       scoreTiles(t, { thread: 'yes', burger: 'no', spray: 'no' }, 'cloud');
     },
     ev: [[tRet, 'creak', 1], [tMoi, 'no', 1]],
@@ -203,7 +202,7 @@ function buildShots4() {
   const tOr = wt('galere', 'orage...'), tGal = wt('galere', 'galère.');
   shot('storm', P.galere.t0 - 0.1, {
     draw(u, t) {
-      const A = 0.27 * (1 - sm(prog(u, 0.9, 1.8))), len = 350 - 70 * eio(prog(u, 1.0, 1.7));
+      const A = 0.2 * (1 - sm(prog(u, 0.9, 1.8))), len = 350 - 70 * eio(prog(u, 1.0, 1.7));
       const sw = (() => { const th = A * Math.sin(TAU / 3.6 * (t - P.galere.t0) + 0.5), ax = 150, ay = -150; return { th, om: 0, ax, ay, len, hx: ax + len * Math.sin(th), hy: ay + len * Math.cos(th) }; })();
       drawCityBG(sw.hx * 0.3, t, { moonDy: -20 });
       L.globalAlpha = 0.5; R(0, 0, LW, LH, NI[1]); L.globalAlpha = 1;
@@ -223,15 +222,15 @@ function buildShots4() {
     draw(u, t) { plateBG(t, { glowY: 200 }); },
     ui(u, t) {
       ptextC('VERDICT', 135, 22, WH[3], 3, '#05040f', Math.floor((t - tVe + 0.1) * 12));
-      const rows = [['thread', 'LA SOIE · SOLIDITÉ', 'yes', tSo], ['burger', 'LA QUANTITÉ', 'no', tFi + 0.15], ['spray', 'LA FABRICATION', 'no', tFi + 0.55], ['cloud', 'LA MÉTÉO', 'no', tFi + 0.95]];
+      const rows = [['thread', 'LA SOIE · SOLIDITÉ', 'yes', tSo], ['burger', 'LA QUANTITÉ', 'no', tFi + 0.15], ['spray', 'LA FABRICATION', 'no', tFi + 0.55], ['cloud', 'LA PLUIE', 'no', tFi + 0.95]];
       rows.forEach(([k, lab, st, tt], i) => {
-        const y = 66 + i * 52, p = prog(t, tt - 0.05, tt + 0.3); if (p <= 0) return;
+        const y = 66 + i * 52, p = prog(t, tt - 0.05, tt + 0.3);
         if (k === 'mask') { R(23, y - 1, 26, 26, '#05040f'); R(24, y, 24, 24, ST[3]); R(25, y + 1, 22, 22, NI[1]); iconMask(36, y + 12); } else slot(24, y, k, null, 1);
-        ptext(lab, 58, y + 9, st === 'yes' ? GR[5] : WH[2], 1, '#05040f', Math.floor(p * 26));
+        ptext(lab, 58, y + 9, p <= 0 ? ST[4] : st === 'yes' ? GR[5] : WH[2], 1, '#05040f');
         const q = prog(t, st === 'yes' ? tSl : tt + 0.15, (st === 'yes' ? tSl : tt + 0.15) + 0.35); if (q > 0) mark(236, y + 12, st, q, 10);
       });
       const f = prog(t, tRe - 0.05, tRe + 0.25);
-      if (f > 0) { ptextC('FICTION', 135, 330, RD[4], 4, '#05040f'); R(28, 318, 214, 2, RD[4]); R(28, 364, 214, 2, RD[4]); R(28, 318, 2, 48, RD[4]); R(240, 318, 2, 48, RD[4]); }
+      if (f > 0) { ptextC('FICTION', 135, 272, RD[4], 4, '#05040f'); R(28, 260, 214, 2, RD[4]); R(28, 306, 214, 2, RD[4]); R(28, 260, 2, 48, RD[4]); R(240, 260, 2, 48, RD[4]); }
     },
     ev: [[tSl, 'ding', 1], [tFi + 0.15, 'no', 1], [tFi + 0.55, 'no', 1], [tFi + 0.95, 'no', 1], [tRe, 'stamp', 1]],
   });
@@ -245,7 +244,7 @@ function buildShots4() {
       R(0, 330, LW, 2, ST[6]);
       drawVat(52, 335, 54, 160, t, 0); drawVat(135, 345, 70, 210, t, 1); drawVat(220, 335, 54, 150, t, 0);
       R(0, 96, LW, 3, ST[5]); for (let x = 10; x < LW; x += 40) R(x, 99, 3, 8, ST[4]);
-      drawScientist(88, 440, 0.9, t, { sway: 1 });
+      drawScientist(88, 345, 0.9, t, { sway: 1 });
       L.globalAlpha = 0.18; vgrad(0, 0, LW, LH, [[0, '#70d0e4'], [1, '#05040f']]); L.globalAlpha = 1;
     },
     ui(u, t) {
@@ -258,7 +257,7 @@ function buildShots4() {
   const tAr = wt('labos', 'araignées'), tEl = wt('labos', 'elles'), tDev = wt('labos', 'dévorent');
   shot('fight', wt('labos', 'mais') - 0.1, {
     draw(u, t) {
-      drawLabWall(t, { shelfY: 70, clockY: 40, dim: 0.62 });
+      drawLabWall(t, { shelfY: 70, clockY: 100, dim: 0.62 });
       rgrad(20, 160, 10, 240, [[0, 'rgba(255,200,74,0.45)'], [1, 'rgba(255,200,74,0)']], 1, 'lighter');
       vgrad(0, 338, LW, 142, [[0, WO[5]], [0.06, WO[4]], [1, WO[1]]]); R(0, 338, LW, 1, WO[6]);
       const jx = 62, jy = 126, jw = 146, jh = 214; drawJar(jx, jy, jw, jh - 10, t);
@@ -275,8 +274,8 @@ function buildShots4() {
       vignette(0.55, 120, 290);
     },
     ui(u, t) {
-      const p = prog(t, tAr - 0.05, tAr + 0.4); if (p > 0) tagBox(14, 16, 'TERRITORIALES', 'red', Math.floor(p * 26));
-      const q = prog(t, tDev + 0.3, tDev + 0.8); if (q > 0) tagBox(135, 60, 'IL EN RESTE UNE', 'amber', Math.floor(q * 28), true);
+      const p = prog(t, tAr - 0.05, tAr + 0.4); if (p > 0) tagBox(14, 16, 'MÊME BOCAL', 'red', Math.floor(p * 26));
+      const q = prog(t, tDev + 0.3, tDev + 0.8); if (q > 0) tagBox(135, 98, 'IL EN RESTE UNE', 'amber', Math.floor(q * 28), true);
     },
     ev: [[tDev, 'chomp', 1]],
   });
@@ -289,13 +288,13 @@ function buildShots4() {
       for (let i = 0; i < 12; i++) {
         const bx = 36 + r() * 200 + Math.sin(t * 0.8 + i) * 8, by = 100 + r() * 200 + Math.cos(t * 0.7 + i * 1.3) * 8, ang = r() * TAU + Math.sin(t * 0.6 + i) * 0.5;
         drawBacterium(bx, by, ang, 1.25, t, i);
-        const k = ((t * 0.9 + i * 0.37) % 1); const ex = bx + Math.cos(ang + 1.57) * 6, ey = by + Math.sin(ang + 1.57) * 6;
-        lineP(ex, ey, ex + (r() - 0.5) * 6, ey - 8 - k * 26, WH[3], 1); px(ex, ey - 8 - k * 26, CY[4]);
+        const k = ((t * 0.9 + i * 0.37) % 1); const ex = bx + Math.cos(ang) * 7, ey = by + Math.sin(ang) * 7, jx = (r() - 0.5) * 6;
+        lineP(ex + 1, ey, ex + 1 + jx, ey - 10 - k * 28, CY[2], 1); lineP(ex, ey, ex + jx, ey - 10 - k * 28, WH[3], 1); px(ex + jx, ey - 10 - k * 28, CY[4]);
       }
       viewportMask();
     },
     ui(u, t) {
-      tagBox(135, 350, 'ZOOM ×2 000 · BACTÉRIES', 'blue', 99, true);
+      tagBox(135, 333, 'AU MICROSCOPE', 'blue', 99, true);
       const p = prog(t, tBa - 0.05, tBa + 0.5); if (p > 0) { tagBox(14, 16, 'BACTÉRIES', 'green', Math.floor(p * 20)); ptext('SOIE ↑', 14, 34, WH[3], 1, '#05040f', Math.floor(p * 8)); }
     },
     ev: [[tBa, 'label', 1]],
@@ -334,7 +333,7 @@ function buildShots4() {
       drawCocoon(cx, cy, s, wrap, t);
       // les lunettes dépassent
       if (wrap > 0.9) { const hy = cy - 76 * s; R(cx - 11, hy - 3, 22, 7, '#05040f'); R(cx - 9, hy - 2, 7, 5, CY[4]); R(cx + 2, hy - 2, 7, 5, CY[4]); px(cx - 7, hy - 1, WH[3]); px(cx + 4, hy - 1, WH[3]); }
-      { const k = clamp((t - VOICE_END + 0.25) / 0.5); if (k > 0) { L.globalAlpha = 0.62 * k; R(0, 0, LW, LH, '#05040f'); L.globalAlpha = 1; } }
+      { const k = clamp((t - VOICE_END + 0.25) / 0.5); if (k > 0) { L.globalAlpha = 0.8 * k; R(0, 0, LW, LH, '#05040f'); L.globalAlpha = 1; } }
       
     },
     ui(u, t) {

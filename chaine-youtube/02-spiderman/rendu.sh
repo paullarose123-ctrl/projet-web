@@ -7,6 +7,15 @@ set -euo pipefail
 cd "$(dirname "$0")"
 OUT="${1:-la-toile-de-spider-man.mp4}"
 PY="${PY:-python}"
+# VOIX=perso ./rendu.sh : voix enregistrée par l'auteur (montage.py). Pas d'égalisation corrective (elle compensait le côté brillant d'une voix
+# de synthèse), compression un peu plus franche pour lisser une voix parlée, ambiance de pièce plus discrète.
+if [ "${VOIX:-edge}" = "perso" ]; then
+  VCHAIN="aresample=48000,highpass=f=70,acompressor=threshold=0.12:ratio=2:attack=12:release=220:makeup=1.4"
+  ROOM_ARGS="--humide -21"
+else
+  VCHAIN="aresample=48000,highpass=f=70,bass=g=2:f=160:w=0.8,equalizer=f=2200:t=q:w=1:g=-2,equalizer=f=4800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.16:ratio=1.5:attack=10:release=200:makeup=1.1"
+  ROOM_ARGS=""
+fi
 mkdir -p build/parts
 if [ -z "${SKIP_RENDER:-}" ]; then rm -f build/parts/*.mp4 build/parts/log*.txt; fi
 
@@ -14,7 +23,7 @@ D=$(node -e "const e=require('./build/events.json');console.log(e.dur.toFixed(3)
 if [ -z "${SKIP_RENDER:-}" ]; then      # SKIP_RENDER=1 ./rendu.sh : refait seulement le mixage et l'encodage
 node render.mjs piece.html --events
 node score.mjs build/score.wav
-"$PY" room.py build/voix.wav build/voix_piece.wav
+"$PY" room.py build/voix.wav build/voix_piece.wav $ROOM_ARGS
 
 D=$(node -e "const e=require('./build/events.json');console.log(e.dur.toFixed(3))")
 echo "durée de la vidéo : $D s"
@@ -29,7 +38,7 @@ fi
 
 # mixage : voix un peu égalisée (un peu de corps vers 160 Hz, moins de « nasal » vers 2 kHz et de dureté vers 5 kHz : la voix de synthèse est plus brillante qu'une voix enregistrée), musique baissée sous la voix, bruitages ; puis niveau −14 LUFS (deux passes)
 ffmpeg -y -loglevel error -i build/voix_piece.wav -i build/score_music.wav -i build/score_sfx.wav -filter_complex \
-  "[0:a]aresample=48000,highpass=f=70,bass=g=2:f=160:w=0.8,equalizer=f=2200:t=q:w=1:g=-2,equalizer=f=4800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.16:ratio=1.5:attack=10:release=200:makeup=1.1,apad=whole_dur=$D,pan=stereo|c0=c0|c1=c0,asplit=3[vo][key][key2];\
+  "[0:a]${VCHAIN},apad=whole_dur=$D,pan=stereo|c0=c0|c1=c0,asplit=3[vo][key][key2];\
 [1:a]volume=0.7[mu];[mu][key]sidechaincompress=threshold=0.03:ratio=2.2:attack=30:release=450[mud];[2:a]volume=0.6[fx0];[fx0][key2]sidechaincompress=threshold=0.04:ratio=2.5:attack=15:release=250[fx];\
 [vo][mud][fx]amix=inputs=3:normalize=0:duration=longest,volume=3.6dB,alimiter=limit=0.7:attack=3:release=60:level=false[a]" \
   -map "[a]" -ar 48000 -c:a pcm_s16le build/mix_lim.wav

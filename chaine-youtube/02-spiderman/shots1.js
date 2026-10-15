@@ -13,7 +13,7 @@ function buildShots1() {
     draw(u, t) {
       drawCityBG(0, t, { moonDy: 40, farDy: 70, midDy: 100, nearDy: 150 });
       vignette(0.55, 60, 260);
-      const sway = 0.035 * Math.sin(t * 2.2), hx = 135 + 230 * Math.sin(sway), hy = 232 + 3 * Math.sin(t * 4.4);
+      const sway = 0.035 * Math.sin(t * 2.2), hx = 135 + 230 * Math.sin(sway), hy = 205 + 3 * Math.sin(t * 4.4);
       const e = silkWave(135, -10, hx, hy, t, 1.6, 6, 1.1, P.oui.t0 - 0.1);
       heroDraw(hx, hy, -sway, 2.5, { legs: 0.05, armL: 0.2, lean: 0 });
     },
@@ -21,7 +21,7 @@ function buildShots1() {
       const v = 0.34 + 0.06 * Math.sin(t * 6) * Math.exp(-(t - P.oui.t0) * 0.9);
       gauge(10, 14, v, 'TENSION', { style: 'red' });
       const p = prog(t, tTient - 0.05, tTient + 0.35);
-      if (p > 0) { mark(160, 118, 'yes', p, 11); tagBox(176, 112, 'LE FIL TIENT', 'green', Math.floor(p * 40)); }
+      if (p > 0) { mark(28, 120, 'yes', p, 11); tagBox(44, 114, 'LE FIL TIENT', 'green', Math.floor(p * 40)); }
     },
     ev: [[tTient, 'ding', 1]],
   });
@@ -75,7 +75,7 @@ function buildShots1() {
     ui(u, t) {
       if (u > 0.4) tagBox(14, 16, "DANS L'ARAIGNÉE", 'amber', Math.floor((u - 0.4) * 30));
       const p2 = prog(t, tLiq - 0.05, tLiq + 0.5);
-      if (p2 > 0) { lineP(150, 190, 170, 160, AM[8]); lineP(170, 160, 176, 160, AM[8]); tagBox(178, 153, 'SOIE LIQUIDE', 'amber', Math.floor(p2 * 14)); }
+      if (p2 > 0) { lineP(160, 150, 190, 90, AM[8]); tagBox(186, 74, 'SOIE LIQUIDE', 'amber', Math.floor(p2 * 14)); }
     },
     ev: [[tLiq, 'label', 1]],
   });
@@ -122,7 +122,7 @@ function buildShots1() {
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'GROS PLAN', 'amber', Math.floor((u - 0.3) * 30));
       const pl = prog(t, tDev - 0.05, tDev + 0.5);
-      if (pl > 0) { lineP(152, 380, 190, 396, AM[8]); tagBox(194, 389, 'LIQUIDE', 'amber', Math.floor(pl * 14)); }
+      if (pl > 0) { lineP(150, 300, 182, 312, AM[8]); tagBox(186, 306, 'LIQUIDE', 'amber', Math.floor(pl * 14)); }
       const ps = prog(t, tSolide - 0.1, tSolide + 0.5);
       if (ps > 0) { tagBox(150, 60, 'FIL SOLIDE', 'blue', Math.floor(ps * 12)); }
       const pe = prog(t, tEtire - 0.05, tEtire + 0.5);
@@ -136,18 +136,18 @@ function buildShots1() {
   shot('jetDrops', tJetW - 0.15, {
     draw(u, t) {
       plateBG(t, { glowY: 250 });
-      R(0, 410, LW, 2, AM[4]); ditherRect(0, 412, LW, 68, AM[1], 0.5);
+      R(0, 340, LW, 2, AM[4]); ditherRect(0, 342, LW, 138, AM[1], 0.5);
       // buse en haut à gauche ; le jet part en continu, se brise en gouttes qui tombent et s'étalent en flaque
       R(20, 140, 52, 18, ST[4]); R(20, 140, 52, 3, ST[6]); R(66, 144, 14, 10, ST[3]);
       const x0 = 80, y0 = 150, st = clamp((u - 0.15) / 0.3);
       const pos = s => [x0 + 120 * s, y0 - 10 * s + 230 * s * s];
       for (let s = 0; s < st * 0.5; s += 0.01) { const [x, y] = pos(s); R(x, y - 1, 3, Math.max(1, 3 - Math.round(s * 4)), WH[3]); }
-      for (let i = 0; i < 18; i++) { const sp = ((t * 1.6 + i * 0.058) % 0.55) + 0.5, [x, y] = pos(sp); if (st < 0.5 || y > 408) continue; disc(x + Math.sin(i * 3.1) * 3, y + Math.cos(i * 2.3) * 2, 1 + (i % 2), i % 3 ? WH[3] : CY[4]); }
-      const fl = clamp((u - 0.9) / 1.2); if (fl > 0) ell(214, 409, Math.round(26 * fl), 3, WH[1]);
+      for (let i = 0; i < 18; i++) { const sp = ((t * 1.6 + i * 0.058) % 0.55) + 0.5, [x, y] = pos(sp); if (st < 0.5 || y > 338) continue; disc(x + Math.sin(i * 3.1) * 3, y + Math.cos(i * 2.3) * 2, 1 + (i % 2), i % 3 ? WH[3] : CY[4]); }
+      const fl = clamp((u - 0.9) / 1.2); if (fl > 0) ell(200, 339, Math.round(26 * fl), 3, WH[1]);
     },
     ui(u, t) {
       if (u > 0.3) tagBox(14, 16, 'EN JET', 'red', Math.floor((u - 0.3) * 30));
-      const p = prog(t, tGou - 0.1, tGou + 0.35); if (p > 0) { mark(190, 300, 'no', p, 11); tagBox(190, 322, 'DES GOUTTES', 'red', Math.floor(p * 20), true); }
+      const p = prog(t, tGou - 0.1, tGou + 0.35); if (p > 0) { mark(32, 250, 'no', p, 11); tagBox(48, 244, 'DES GOUTTES', 'red', Math.floor(p * 20)); }
     },
     ev: [[tJetW, 'spray', 1], [tGou, 'no', 1]],
   });

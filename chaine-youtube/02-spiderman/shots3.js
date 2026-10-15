@@ -2,8 +2,8 @@
 // ───────────────────────── plans 16 à 22 : le point le plus bas, spaghetti et câble, métro, étudiants, bras ─────────────────────────
 function buildShots3() {
   // 16. le point le plus bas du balancement
-  const tPt = wt('bas', 'bas'), tB = tPt + 0.25;
-  const swB = t => { const th = 0.27 * Math.sin(TAU / 3.6 * (t - tB)), om = 0.27 * TAU / 3.6 * Math.cos(TAU / 3.6 * (t - tB)); return { th, om, ax: 150, ay: -150, len: 350, hx: 150 + 350 * Math.sin(th), hy: -150 + 350 * Math.cos(th) }; };
+  const tPt = wt('bas', 'bas'), tPlus = wt('bas', 'plus'), tB = (tPt + tPlus) / 2, AB = 0.22;      // le héros passe en bas pendant « tire le plus »
+  const swB = t => { const th = AB * Math.sin(TAU / 3.6 * (t - tB)), om = AB * TAU / 3.6 * Math.cos(TAU / 3.6 * (t - tB)); return { th, om, ax: 150, ay: -150, len: 350, hx: 150 + 350 * Math.sin(th), hy: -150 + 350 * Math.cos(th) }; };
   shot('lowPoint', P.bas.t0 - 0.1, {
     draw(u, t) {
       const sw = swB(t); drawCityBG(sw.hx * 0.35, t);
@@ -12,10 +12,11 @@ function buildShots3() {
       vignette(0.3, 150, 330);
     },
     ui(u, t) {
-      const sw = swB(t), v = 0.26 + 0.6 * Math.pow(Math.max(0, 1 - Math.abs(sw.th) / 0.27), 1.4);
+      const sw = swB(t), hold = prog(t, tPt - 0.3, tPt) * (1 - prog(t, tPlus + 0.2, tPlus + 0.6));
+      const v = Math.max(0.26 + 0.6 * Math.pow(Math.max(0, 1 - Math.abs(sw.th) / AB), 1.4), 0.26 + 0.62 * hold);
       gauge(10, 14, v, 'TENSION');
       const p = prog(t, tPt - 0.05, tPt + 0.5);
-      if (p > 0) { arrow(96, 300, 134, 262, AM[9], 1, 4); tagBox(12, 302, 'POINT LE PLUS BAS', 'amber', Math.floor(p * 30), false); }
+      if (p > 0) { arrow(70, 292, sw.hx - 16, sw.hy + 34, AM[9], 1, 4); tagBox(12, 296, 'POINT LE PLUS BAS', 'amber', Math.floor(p * 30), false); }
     },
     ev: [[tB, 'swoosh', 1]],
   });
@@ -26,20 +27,20 @@ function buildShots3() {
       plateBG(t, { glowY: 220 });
       const y1 = 292, h = 150, pxmm = 12, x0 = 15;
       const gF = eo(prog(t, tFil - 0.05, tFil + 0.5)), gS = eo(prog(t, tSp - 0.2, tSp + 0.5)), gC = eo(prog(t, tCab - 0.2, tCab + 0.6));
-      silkV(x0 + 4 * pxmm, y1, h, 20, gF, t);
-      spaghettiV(x0 + 8 * pxmm + 6, y1, h, 24, gS, t);
+      silkV(x0 + 4 * pxmm, y1, h, 26, gF, t);
+      spaghettiV(x0 + 8 * pxmm + 6, y1, h, 22, gS, t);
       chargerV(x0 + 13 * pxmm, y1, h + 40, 46, gC, t);
       rulerH(x0, y1, 20, pxmm, t);
     },
     ui(u, t) {
-      if (u > 0.3) tagBox(14, 16, 'MÊME RÈGLE', 'amber', 99);
+      if (u > 0.3) tagBox(14, 16, 'MÊME ÉCHELLE', 'amber', 99);
       if (t > tFil) tagBox(15 + 4 * 12 + 10, 118, 'FIL DE SOIE', 'blue', Math.floor((t - tFil) * 30), true);
       if (t > tSp + 0.2) tagBox(15 + 8 * 12 + 18, 98, 'SPAGHETTI', 'amber', Math.floor((t - tSp - 0.2) * 30), true);
       const pj = prog(t, tJuste - 0.05, tJuste + 0.4);
-      if (pj > 0) tagBox(135, 70, 'TOUT JUSTE', 'amber', Math.floor(pj * 16), true);
+      if (pj > 0) tagBox(73, 84, 'TOUT JUSTE', 'amber', Math.floor(pj * 16), true);
       const pm = prog(t, tMarge - 0.05, tMarge + 0.4);
-      if (pm > 0) tagBox(135, 44, 'AVEC DE LA MARGE', 'green', Math.floor(pm * 24), true);
-      if (t > tCab + 0.4) tagBox(15 + 13 * 12 + 23 + 20, 142, 'CÂBLE DE CHARGEUR', 'white', Math.floor((t - tCab - 0.4) * 30), true);
+      if (pm > 0) tagBox(180, 66, 'AVEC DE LA MARGE', 'green', Math.floor(pm * 24), true);
+      if (t > tCab + 0.4) tagBox(194, 86, 'CHARGEUR', 'white', Math.floor((t - tCab - 0.4) * 30), true);
     },
     ev: [[tFil, 'label', 1], [tSp, 'label', 1], [tJuste, 'blip', 1], [tMarge, 'blip', 1], [tCab, 'label', 1]],
   });
@@ -76,8 +77,8 @@ function buildShots3() {
       for (let i = 0; i < 5; i++) ch(42 + i * 16, 100, 10, 12); ch(34, 118, 90, 1); disc(50, 134, 3, WH[1]); disc(106, 134, 3, WH[1]);
       for (const [y0, y1] of [[60, 98], [76, 106], [96, 122]]) lineP(126, 110, 236, y0 + (y1 - y0), WH[1], 1);
       lineP(200, 56, 236, 150, WH[1], 1); lineP(232, 56, 232, 150, WH[1], 1); lineP(126, 110, 200, 60, WH[1], 1);
-      const typed = Math.floor(clamp((t - tCalc + 0.3) / 0.7) * 14);
-      ptext('F ≈ 300 000 N', 34, 168, WH[3], 2, GR[0], typed);
+      const typed = Math.floor(clamp((t - tCalc + 0.3) / 0.7) * 17);
+      ptext('FORCE : 30 TONNES', 34, 168, WH[3], 2, GR[0], typed);
       // trois étudiants
       const stu = [[52, [BL[3], BL[2], BL[4]], WO[0], WO[2]], [135, [RD[3], RD[2], RD[4]], AM[6], AM[7]], [218, [GR[4], GR[3], GR[5]], WO[4], WO[5]]];
       stu.forEach(([x, coat, hair, hl], i) => drawScientist(x, 372, 1.05, t + i, { coat, hair, hairL: hl, armUp: i === 1 ? 0.6 * Math.max(0, Math.sin(t * 3)) : 0 }));
@@ -85,7 +86,7 @@ function buildShots3() {
     ui(u, t) {
       if (t > t2013 - 0.1) tagBox(135, 16, 'UNIVERSITÉ DE LEICESTER · 2013', 'blue', Math.floor((t - t2013 + 0.1) * 30), true);
       const p = prog(t, tTien - 0.05, tTien + 0.35);
-      if (p > 0) { mark(135, 120, 'yes', p, 20); tagBox(135, 150, 'ÇA TIENT', 'green', Math.floor(p * 20), true); }
+      if (p > 0) { mark(70, 205, 'yes', p, 16); tagBox(100, 199, 'ÇA TIENT', 'green', Math.floor(p * 20)); }
     },
     ev: [[t2013, 'label', 1], [tCalc, 'blip', 1], [tTien, 'ding', 1]],
   });
@@ -106,7 +107,8 @@ function buildShots3() {
     draw(u, t) {
       plateBG(t, { glowY: 300 });
       const trem = 0.9 * Math.min(1, u / 0.5), cy = 346;
-      lineP(136, -2, 136, 150, CY[2], 3); lineP(135, -2, 135, 150, WH[3], 1);
+      lineP(136, -2, 136, 160, CY[2], 3); lineP(135, -2, 135, 160, WH[3], 1);
+      for (const [fx, fy] of [[124, 177], [148, 177]]) { lineP(136, 160, fx + 1, fy, CY[2], 3); lineP(135, 160, fx, fy, WH[3], 1); }
       const T = heroFront(135, cy, 2.55, t, { arms: 'up', trem });
       // gouttes de sueur
       for (let i = 0; i < 6; i++) { const k = ((t * 1.6 + i * 0.37) % 1), sd = i % 2 ? 1 : -1, x = 135 + sd * (30 + 22 * k + i * 3), y = cy - 100 + 70 * k * k - 20 * (1 - k); disc(x, y, 2, CY[4]); px(x, y - 3, CY[3]); }
@@ -115,9 +117,9 @@ function buildShots3() {
       const v = 0.86 + 0.07 * Math.sin(t * 40);
       gauge(10, 14, v, 'FORCE DES BRAS', { style: 'red', redFrom: 0.5 });
       const p = prog(t, tBras - 0.05, tBras + 0.4);
-      if (p > 0) tagBox(135, 70, 'BRAS DE PETER PARKER', 'red', Math.floor(p * 30), true);
+      if (p > 0) { tagBox(14, 130, 'BRAS DE PETER PARKER', 'red', Math.floor(p * 30)); lineP(62, 143, 104, 218, RD[4]); }
       const q = prog(t, tParker + 0.2, tParker + 0.6);
-      if (q > 0) { ptextC('???', 135, 88, RD[5], 2, '#05040f', Math.floor(q * 4)); }
+      if (q > 0) { ptextC('???', 215, 205, RD[5], 2, '#05040f', Math.floor(q * 4)); }
       mark(204, 130, 'yes', prog(t, T21 + 0.5, T21 + 0.9), 8); tagBox(218, 124, 'FIL OK', 'green', 99);
     },
     ev: [[tBras, 'strain', 1]],

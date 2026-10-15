@@ -274,10 +274,11 @@ function mark(cx, cy, kind, p = 1, r = 9) {
   if (p <= 0) return;
   const k = eob(clamp(p)), rr = Math.max(1, rd(r * k));
   const col = kind === 'yes' ? GR[5] : kind === 'no' ? RD[4] : AM[8], dark = kind === 'yes' ? GR[1] : kind === 'no' ? RD[0] : AM[1];
-  disc(cx, cy, rr + 1, '#05040f'); disc(cx, cy, rr, col); disc(cx, cy, Math.max(0, rr - 2), dark);
+  disc(cx, cy, rr + 1, '#05040f'); disc(cx, cy, rr, col);
+  if (kind !== 'no') disc(cx, cy, Math.max(0, rr - 2), dark);
   const s = rr * 0.5;
   if (kind === 'yes') { lineP(cx - s, cy, cx - s * 0.3, cy + s * 0.8, col, 2); lineP(cx - s * 0.3, cy + s * 0.8, cx + s, cy - s * 0.7, col, 2); }
-  else if (kind === 'no') { lineP(cx - s, cy - s, cx + s, cy + s, col, 2); lineP(cx - s, cy + s, cx + s, cy - s, col, 2); }
+  else if (kind === 'no') { const q = Math.max(2, rr * 0.42); lineP(cx - q, cy - q, cx + q, cy + q, WH[3], rr >= 9 ? 2 : 1); lineP(cx - q, cy + q, cx + q, cy - q, WH[3], rr >= 9 ? 2 : 1); }
   else ptextC('?', cx, cy - 3, col, 1, null);
 }
 // compteur à chiffres rouges

@@ -20,7 +20,7 @@ function buildShots2() {
       R(30, 0, 210, 12, ST[2]); R(30, 10, 210, 2, ST[4]); R(30, 0, 210, 1, ST[5]); for (let x = 36; x < 240; x += 14) px(x, 5, ST[4]);
       const drop = eo(prog(u, 0.2, 0.7)), y1 = 12 + drop * 188;
       cable(75, 12, y1, 7, 'steel', t); cable(195, 12, y1, 7, 'silk', t);
-      if (u > 0.7) { weightBlock(75, y1, 46, 40, 'MÊME CHARGE', 0); weightBlock(195, y1, 46, 40, 'MÊME CHARGE', 0); }
+      if (u > 0.7) { weightBlock(75, y1, 72, 40, 'MÊME CHARGE', 0); weightBlock(195, y1, 72, 40, 'MÊME CHARGE', 0); }
       const pc = prog(t, tEp - 0.05, tEp + 0.4);
       if (pc > 0) { crossSection(75, 330, 20, 'steel', t); crossSection(195, 330, 20, 'silk', t); lineP(75, 304, 75, 262, ST[5]); lineP(195, 304, 195, 262, CY[3]); }
     },
@@ -28,9 +28,9 @@ function buildShots2() {
       if (u > 0.4) tagBox(135, 22, 'À ÉPAISSEUR ÉGALE', 'amber', 99, true);
       if (u > 1.2) { ptextC('ACIER', 75, 262, WH[2], 1); ptextC('SOIE', 195, 262, CY[4], 1); }
       const pc = prog(t, tEp - 0.05, tEp + 0.4);
-      if (pc > 0) { const y = 330; arrow(135, y, 103, y, AM[8], 1, 3); arrow(135, y, 167, y, AM[8], 1, 3); ptextC('MÊME', 135, y - 18, AM[9], 1); ptextC('Ø', 135, y - 8, AM[9], 1); }
+      if (pc > 0) { const y = 330; arrow(135, y, 103, y, AM[8], 1, 3); arrow(135, y, 167, y, AM[8], 1, 3); ptextC('MÊME', 135, y - 21, AM[9], 1); ptextC('ÉPAISSEUR', 135, y - 11, AM[9], 1); }
       const pp = prog(t, tPar - 0.05, tPar + 0.4);
-      if (pp > 0) { approx(135, 135, 26, YE[3]); mark(75, 292, 'yes', pp, 7); mark(195, 292, 'yes', pp, 7); }
+      if (pp > 0) { approx(135, 292, 22, YE[3]); mark(75, 292, 'yes', pp, 7); mark(195, 292, 'yes', pp, 7); }
     },
     ev: [[P.acier.t0 + 0.7, 'clank', 1], [tEp, 'label', 1], [tPar, 'ding', 1]],
   });
@@ -44,7 +44,7 @@ function buildShots2() {
     },
     ui(u, t) {
       if (u > 0.3) tagBox(51, 292, '1 CUBE D\'ACIER', 'white', 99, true);
-      if (u > 0.9) tagBox(213, 292, '6 CUBES DE SOIE', 'blue', 99, true);
+      if (u > 0.9) tagBox(195, 292, '6 CUBES DE SOIE', 'blue', 99, true);
       if (u > 1.0) counter(135, 58, '6× PLUS LÉGÈRE', 2);
     },
     ev: [[tSix, 'blip', 1], [tMais + 0.8, 'ding', 1]],
@@ -64,13 +64,13 @@ function buildShots2() {
       drawFly(fx, fy, t, { s: 1.9 });
       vignette(0.35, 150, 330);
     },
-    ui(u, t) { if (u > 0.4) tagBox(14, 16, 'AUBE · UNE TOILE', 'blue', Math.floor((u - 0.4) * 30)); },
+    ui(u, t) { if (u > 0.4) tagBox(14, 16, 'LA TOILE', 'blue', Math.floor((u - 0.4) * 30)); },
     ev: [[P.chocs.t0 + 0.6, 'fly', 1]],
   });
   // 11. vue de côté : la toile encaisse le choc, « boing »
   const T11 = tUne - 0.12, uH = 0.62, tE = wt('chocs', "s'étire");
   const off = tau => tau < 0 ? 0 : 26 * (1 - Math.exp(-6 * tau)) + 46 * Math.exp(-3.0 * tau) * Math.sin(8 * tau);
-  const strand = (x0, k, o, y0 = 96, y1 = 384, yh = 240) => {          // brin déformé : forme en V arrondie
+  const strand = (x0, k, o, y0 = 84, y1 = 346, yh = 215) => {          // brin déformé : forme en V arrondie
     const pts = []; for (let y = y0; y <= y1; y += 4) { const d = Math.abs(y - yh) / (y < yh ? yh - y0 : y1 - yh); pts.push([x0 + o * k * Math.pow(Math.max(0, 1 - d), 1.7), y]); }
     for (let i = 0; i + 1 < pts.length; i++) { lineP(pts[i][0] + 1, pts[i][1], pts[i + 1][0] + 1, pts[i + 1][1], CY[2], 3); }
     for (let i = 0; i + 1 < pts.length; i++) { lineP(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], WH[3], 2); }
@@ -79,19 +79,18 @@ function buildShots2() {
     draw(u, t) {
       plateBG(t, { glowY: 240 });
       const o = off(u - uH);
-      R(100, 90, 140, 8, WO[2]); R(100, 90, 140, 2, WO[5]); R(100, 384, 140, 8, WO[2]); R(100, 384, 140, 2, WO[5]);
+      R(100, 78, 140, 8, WO[2]); R(100, 78, 140, 2, WO[5]); R(100, 346, 140, 8, WO[2]); R(100, 346, 140, 2, WO[5]);
       for (const [x, k] of [[126, 0.18], [148, 0.5], [170, 1], [192, 0.5], [214, 0.18]]) strand(x, k, o);
       let fx, fy;
-      if (u < uH) { const k = u / uH; fx = lerp(-12, 164, Math.pow(k, 1.5)); fy = 240 + Math.sin(k * 30) * 6 * (1 - k); for (let i = 1; i <= 6; i++) lineP(fx - 8 - i * 8, fy, fx - 14 - i * 8, fy, i < 4 ? CY[3] : CY[2], 1); }
-      else { fx = 170 + o - 5; fy = 240; }
+      if (u < uH) { const k = u / uH; fx = lerp(-12, 164, Math.pow(k, 1.5)); fy = 215 + Math.sin(k * 30) * 6 * (1 - k); for (let i = 1; i <= 6; i++) lineP(fx - 8 - i * 8, fy, fx - 14 - i * 8, fy, i < 4 ? CY[3] : CY[2], 1); }
+      else { fx = 170 + o - 5; fy = 215; }
       drawFly(fx, fy, u < uH + 0.5 ? t : 0, { s: 2.2 });
     },
     ui(u, t) {
-      if (u > 0.2) tagBox(14, 16, 'VUE DE CÔTÉ', 'amber', Math.floor((u - 0.2) * 30));
       const e = clamp((u - uH) / 0.55);
-      if (u > uH) { ptext('ÉNERGIE ABSORBÉE', 40, 40, AM[9], 1); barH(40, 52, 190, 8, e, CY[3]); }
+      if (u > uH) { ptext('LA TOILE ENCAISSE', 40, 22, AM[9], 1); barH(40, 34, 190, 8, e, CY[3]); }
       const ps = prog(t, tE - 0.05, tE + 0.4);
-      if (ps > 0) { arrow(214, 300, 246, 300, AM[9], 1, 3); ptextR("S'ÉTIRE", 250, 310, AM[9], 1, '#05040f', Math.floor(ps * 8)); }
+      if (ps > 0) tagBox(135, 52, "S'ÉTIRE", 'amber', Math.floor(ps * 10), true);
     },
     ev: [[T11 + uH, 'boing', 1], [tE, 'blip', 1]],
   });
@@ -155,7 +154,6 @@ function buildShots2() {
       const pd = prog(t, tDix - 0.05, tDix + 0.4);
       if (pd > 0) { ptext("JUSQU'À ×10", 150, 209, '#05040f', 1, null); }
       if (pd > 0) { const k = eob(pd); counter(135, 270, '×10', 4); ptextC('PLUS RÉSISTANTE QUE LE KEVLAR', 135, 330, AM[9], 1); }
-      if (u > 1.0) ptextC('SOURCE : PLOS ONE · 2010', 135, 432, AM[5], 1, '#05040f');
     },
     ev: [[tJus, 'bars', 1], [tDix, 'ding', 1]],
   });

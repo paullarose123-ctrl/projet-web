@@ -83,9 +83,7 @@ function buildOutro() {
       // « abonnez-vous », en jaune
       const ns = Math.floor((u - O.sub) * O.subRate), s = 'ABONNEZ-VOUS';
       if (ns > 0) {
-        const lit = Math.floor((u - O.sub) * 2.5) % 2 === 0;
-        ptext(s, O.cx - textW(s, 3) / 2, O.subY, lit ? YE[2] : YE[3], 3, '#05040f', ns);
-        if (ns < s.length) R(O.cx - textW(s, 3) / 2 + textW(s.slice(0, ns), 3) + 3, O.subY, 3, 21, Math.floor(t * 6) % 2 ? WH[3] : YE[1]);
+        ptext(s, O.cx - textW(s, 3) / 2, O.subY, YE[2], 3, '#05040f', ns);
       }
     },
     ev: [[T0 + O.land, 'logo', 1], [T0 + O.name, 'letters', 1], [T0 + O.sub, 'label', 1]],

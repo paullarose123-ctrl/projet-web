@@ -109,26 +109,20 @@ def ronflement(x, silence, voix_mask):
 
 
 def echo(lv, t, bruit, parole):
-    """Durée de réverbération estimée d'après la façon dont le niveau retombe à la fin des phrases : après chaque fin de voix
-    suivie d'au moins 0,4 s sans voix, on ajuste une droite (dB par seconde) sur la chute, de 8 dB sous la parole jusqu'à 30 dB plus bas
-    (ou jusqu'au bruit de fond), et on en tire le temps de chute de 60 dB. Mesure grossière, calibrée sur une voix sèche et sur la même voix
-    convoluée avec des pièces simulées : une pièce sèche donne 0,2 à 0,5 s, 0,7 s de réverbération réelle donne 0,6 à 0,85 s, 1 s donne 0,8 à 1,0 s."""
+    """Écho de pièce, mesuré au plus simple : après chaque fin de phrase suivie d'au moins 0,4 s sans voix, temps mis par le niveau pour
+    retomber à 10 dB au-dessus du bruit de fond. Une pièce sèche (placard) retombe en moins de 0,3 s ; une pièce qui sonne (salle de bain,
+    cuisine) laisse une queue audible, de 0,4 s et plus. Mesure grossière : elle ne voit que les échos plus longs que la chute naturelle de la voix."""
     n, mesures = len(lv), []
-    seuil = parole - 8
+    seuil, cible = parole - 8, bruit + 10
     for i in range(2, n - 42):
         if lv[i - 1] >= seuil and lv[i] < seuil and (lv[i:i + 40] < seuil).all():
-            plancher = max(bruit + 8, float(lv[i - 1]) - 30)
             j = i
-            while j < n - 1 and lv[j] > plancher:
+            while j < n - 1 and lv[j] > cible:
                 j += 1
-            if j - i < 3:
-                mesures.append(0.12)                                  # chute trop rapide pour être mesurée : pièce très sèche
-                continue
-            pente = np.polyfit(t[i - 1:j], lv[i - 1:j], 1)[0]
-            mesures.append(60 / max(1e-6, -pente))
-    if len(mesures) < 2:
+            mesures.append((j - i) * 0.01)
+    if not mesures:
         return None
-    return {"rt60_s": round(float(np.median(mesures)), 2), "mesures": len(mesures)}
+    return {"retombee_s": round(float(np.median(mesures)), 2), "pire_s": round(float(max(mesures)), 2), "mesures": len(mesures)}
 
 
 def bande_passante(x, v2):
@@ -137,11 +131,16 @@ def bande_passante(x, v2):
     return float(f[np.where(d > d.max() - 70)[0].max()])
 
 
+_MODELE = None
+
+
 def asr(x, texte):
+    global _MODELE
     from faster_whisper import WhisperModel
     from scipy.signal import resample_poly as rp
-    root = os.environ.get("FW_ROOT")
-    mod = WhisperModel("large-v3-turbo", device="cpu", compute_type="int8", download_root=root, cpu_threads=4)
+    if _MODELE is None:
+        _MODELE = WhisperModel("large-v3-turbo", device="cpu", compute_type="int8", download_root=os.environ.get("FW_ROOT"), cpu_threads=4)
+    mod = _MODELE
     a16 = rp(x, 1, 3).astype(np.float32)
     segs, _ = mod.transcribe(a16, language="fr", beam_size=5, temperature=0, condition_on_previous_text=False, word_timestamps=True,
                              initial_prompt="Vidéo de vulgarisation scientifique sur la toile de Spider-Man, la soie d'araignée, le Kevlar.")
@@ -217,8 +216,8 @@ def controle(path, texte=None, silence_path=None, avec_asr=True):
     snr = r["rapport_signal_bruit_db"]
     j.append(("Voix par rapport au bruit", f"{snr} dB", juge("s", -snr, [-40, -30, -22], ["excellent", "bon", "acceptable", "faible"]).replace("faible", "faible : le nettoyage abîmerait la voix")))
     if r["echo"]:
-        e = r["echo"]["rt60_s"]
-        j.append(("Écho de la pièce", f"≈ {e} s ({r['echo']['mesures']} fins de phrase, mesure grossière)", juge("e", e, [0.55, 0.8], ["pas d'écho gênant", "écho de pièce notable (je peux l'atténuer un peu)", "écho marqué : la voix sonnera « salle de bain »"])))
+        e, pire = r["echo"]["retombee_s"], r["echo"]["pire_s"]
+        j.append(("Écho de la pièce", f"le son retombe au bruit de fond en {e} s (au pire {pire} s) après la fin des phrases", juge("e", max(e, pire * 0.6), [0.35, 0.6], ["pas d'écho gênant", "légère queue de pièce (je peux l'atténuer un peu)", "écho marqué : la voix sonnera « salle de bain »"])))
     else:
         j.append(("Écho de la pièce", "non mesurable (pas assez de silence après les phrases)", "laisse 1 à 2 s de silence après chaque phrase pour que je puisse le mesurer"))
     rs = r["ronflement_souffle"]
