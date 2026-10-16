@@ -28,10 +28,10 @@ const sh=document.getElementById('shadows'),fr=document.getElementById('fronts')
 const defs=document.querySelector('defs'),pen=document.getElementById('pen');
 
 const CFG={
- title:{speed:4000,K:12,dmax:13,sw:3.2,swLit:5.5,strokeLit:[255,236,140],fill:[255,213,26],edge:[17,17,17],shadowC:'#e8202c',penR:7,linkSpeed:2200},
- sub:{speed:2500,K:6,dmax:6,sw:2,swLit:3.4,strokeLit:[255,246,214],fill:[255,243,200],edge:[17,17,17],shadowC:'#e8202c',penR:4.5,linkSpeed:1400}
+ title:{speed:6500,K:12,dmax:13,sw:3.2,swLit:12,strokeLit:[255,236,140],fill:[255,213,26],edge:[17,17,17],shadowC:'#e8202c',penR:13,linkSpeed:3500},
+ sub:{speed:4200,K:6,dmax:6,sw:2,swLit:6.5,strokeLit:[255,246,214],fill:[255,243,200],edge:[17,17,17],shadowC:'#e8202c',penR:7.5,linkSpeed:2200}
 };
-const FILL_AT=0.75, FILL_DUR=0.45, SH_DELAY=0.35, SH_DUR=0.5;
+const FILL_AT=0.75, FILL_DUR=0.38, SH_DELAY=0.28, SH_DUR=0.4;
 const glyphs=[];
 ['title','sub'].forEach(kind=>{
   const c=CFG[kind];
@@ -56,7 +56,7 @@ const glyphs=[];
 // ---- single-pen timeline -------------------------------------------------
 let cur=0.45;
 glyphs.forEach((o,k)=>{
-  o.s=cur; o.dur=Math.max(o.kind==='sub'?0.1:0.16,o.sumL/o.c.speed); o.e=o.s+o.dur;
+  o.s=cur; o.dur=Math.max(o.kind==='sub'?0.07:0.11,o.sumL/o.c.speed); o.e=o.s+o.dur;
   const nxt=glyphs[k+1];
   if(nxt){
     const last=o.parts[o.parts.length-1], a=last.p.getPointAtLength(last.L);
@@ -64,20 +64,20 @@ glyphs.forEach((o,k)=>{
     const dist=Math.hypot(b.x-a.x,b.y-a.y);
     const sameLine=nxt.kind===o.kind&&nxt.line===o.line;
     o.nextLink={a,b,dist,draw:sameLine};
-    o.linkDur=sameLine?Math.max(0.05,dist/o.c.linkSpeed):(nxt.kind!==o.kind?0.55:0.4);
+    o.linkDur=sameLine?Math.max(0.035,dist/o.c.linkSpeed):(nxt.kind!==o.kind?0.4:0.28);
     if(sameLine){
       const nx=-(b.y-a.y),ny=(b.x-a.x),n=Math.hypot(nx,ny)||1,off=Math.min(26,dist*0.22);
       const mxp=(a.x+b.x)/2+nx/n*off,myp=(a.y+b.y)/2+ny/n*off;
-      const lp=mk('path',{d:`M${a.x} ${a.y} Q${mxp} ${myp} ${b.x} ${b.y}`,fill:'none',stroke:mix(o.c.strokeLit,o.c.strokeLit,0),'stroke-width':o.c.sw+1.2,'stroke-linecap':'round',opacity:0},links);
+      const lp=mk('path',{d:`M${a.x} ${a.y} Q${mxp} ${myp} ${b.x} ${b.y}`,fill:'none',stroke:mix(o.c.strokeLit,o.c.strokeLit,0),'stroke-width':o.c.swLit*0.75,'stroke-linecap':'round',opacity:0},links);
       const L=lp.getTotalLength();lp.setAttribute('stroke-dasharray',L+' '+(L+5));lp.setAttribute('stroke-dashoffset',L);
       o.link={lp,L};
     }
     cur=o.e+o.linkDur;
   } else cur=o.e;
 });
-glyphs.forEach(o=>{ o.fs=o.e+0.14; o.ss=o.fs+SH_DELAY; });
+glyphs.forEach(o=>{ o.fs=o.e+0.1; o.ss=o.fs+SH_DELAY; });
 const TD=Math.max(...glyphs.map(o=>o.ss+SH_DUR));
-const GLINT_T=TD+0.1, GLINT_D=0.9, FADE_T=GLINT_T+GLINT_D+0.7;
+const GLINT_T=TD+0.1, GLINT_D=0.8, FADE_T=GLINT_T+GLINT_D+0.6;
 window.TOTAL=FADE_T+0.7;
 
 function penPos(t){
