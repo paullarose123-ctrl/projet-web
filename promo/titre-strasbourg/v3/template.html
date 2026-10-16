@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Titre Strasbourg v3</title>
+<style>
+html,body{margin:0;background:#000;width:1920px;height:1080px;overflow:hidden}
+svg{display:block}
+#pen{filter:drop-shadow(0 0 5px #ffd51a) drop-shadow(0 0 12px #ff9d1a)}
+</style></head><body>
+<svg id="svg" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+ </linearGradient>
+ <mask id="titleMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080"><g id="maskG" fill="#fff"></g></mask>
+</defs>
+<g id="cam"><g id="shadows"></g><g id="fronts"></g><g id="links"></g>
+ <g mask="url(#titleMask)"><rect id="glint" x="0" y="150" width="170" height="760" fill="url(#gl)" transform="skewX(-20)"/></g>
+ <circle id="pen" r="7" fill="#fff6c8" opacity="0"/>
+</g></svg>
+<script>
+const G=/*GLYPHS*/;
+const NS='http://www.w3.org/2000/svg';
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);(p||document.getElementById('svg')).appendChild(e);return e};
+const clamp=x=>Math.max(0,Math.min(1,x));
+const eOut=x=>1-Math.pow(1-x,3), eIO=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const mix=(c1,c2,t)=>'rgb('+c1.map((v,i)=>Math.round(lerp(v,c2[i],t))).join(',')+')';
+const sh=document.getElementById('shadows'),fr=document.getElementById('fronts'),links=document.getElementById('links'),maskG=document.getElementById('maskG');
+const defs=document.querySelector('defs'),pen=document.getElementById('pen');
+
+const CFG={
+ title:{speed:4000,K:12,dmax:13,sw:3.2,swLit:5.5,strokeLit:[255,236,140],fill:[255,213,26],edge:[17,17,17],shadowC:'#e8202c',penR:7,linkSpeed:2200},
+ sub:{speed:2500,K:6,dmax:6,sw:2,swLit:3.4,strokeLit:[255,246,214],fill:[255,243,200],edge:[17,17,17],shadowC:'#e8202c',penR:4.5,linkSpeed:1400}
+};
+const FILL_AT=0.75, FILL_DUR=0.45, SH_DELAY=0.35, SH_DUR=0.5;
+const glyphs=[];
+['title','sub'].forEach(kind=>{
+  const c=CFG[kind];
+  G[kind].forEach((g,i)=>{
+    const id=kind+i,[x1,y1,x2,y2]=g.bb;
+    const cp=mk('clipPath',{id:'cp'+id,clipPathUnits:'userSpaceOnUse'},defs);
+    const rect=mk('rect',{x:x1-20,width:x2-x1+40,y:y2+20,height:0},cp);
+    const shadows=[];
+    for(let k=c.K;k>=1;k--) shadows.push(mk('path',{d:g.d,fill:c.shadowC,stroke:c.shadowC,'stroke-width':c.sw,'stroke-linejoin':'round',opacity:0},sh));
+    const fillP=mk('path',{d:g.d,fill:mix(c.fill,c.fill,0),'clip-path':'url(#cp'+id+')'},fr);
+    // one outline per contour so the pen really traces a single line, contour after contour
+    const parts=g.d.split(/(?=M)/).filter(s=>s.trim()).map(d=>{
+      const p=mk('path',{d,fill:'none','stroke-linejoin':'round','stroke-linecap':'round','stroke-width':c.swLit,stroke:mix(c.strokeLit,c.strokeLit,0),opacity:0},fr);
+      const L=p.getTotalLength();p.setAttribute('stroke-dasharray',L+' '+(L+5));p.setAttribute('stroke-dashoffset',L);
+      return {p,L};
+    });
+    if(kind==='title') mk('path',{d:g.d},maskG);
+    const sumL=parts.reduce((a,b)=>a+b.L,0);
+    glyphs.push({kind,i,c,g,rect,shadows,fillP,parts,sumL,line:g.line,y2,link:null});
+  });
+});
+// ---- single-pen timeline -------------------------------------------------
+let cur=0.45;
+glyphs.forEach((o,k)=>{
+  o.s=cur; o.dur=Math.max(o.kind==='sub'?0.1:0.16,o.sumL/o.c.speed); o.e=o.s+o.dur;
+  const nxt=glyphs[k+1];
+  if(nxt){
+    const last=o.parts[o.parts.length-1], a=last.p.getPointAtLength(last.L);
+    const b=nxt.parts[0].p.getPointAtLength(0);
+    const dist=Math.hypot(b.x-a.x,b.y-a.y);
+    const sameLine=nxt.kind===o.kind&&nxt.line===o.line;
+    o.nextLink={a,b,dist,draw:sameLine};
+    o.linkDur=sameLine?Math.max(0.05,dist/o.c.linkSpeed):(nxt.kind!==o.kind?0.55:0.4);
+    if(sameLine){
+      const nx=-(b.y-a.y),ny=(b.x-a.x),n=Math.hypot(nx,ny)||1,off=Math.min(26,dist*0.22);
+      const mxp=(a.x+b.x)/2+nx/n*off,myp=(a.y+b.y)/2+ny/n*off;
+      const lp=mk('path',{d:`M${a.x} ${a.y} Q${mxp} ${myp} ${b.x} ${b.y}`,fill:'none',stroke:mix(o.c.strokeLit,o.c.strokeLit,0),'stroke-width':o.c.sw+1.2,'stroke-linecap':'round',opacity:0},links);
+      const L=lp.getTotalLength();lp.setAttribute('stroke-dasharray',L+' '+(L+5));lp.setAttribute('stroke-dashoffset',L);
+      o.link={lp,L};
+    }
+    cur=o.e+o.linkDur;
+  } else cur=o.e;
+});
+glyphs.forEach(o=>{ o.fs=o.e+0.14; o.ss=o.fs+SH_DELAY; });
+const TD=Math.max(...glyphs.map(o=>o.ss+SH_DUR));
+const GLINT_T=TD+0.1, GLINT_D=0.9, FADE_T=GLINT_T+GLINT_D+0.7;
+window.TOTAL=FADE_T+0.7;
+
+function penPos(t){
+  for(let k=0;k<glyphs.length;k++){
+    const o=glyphs[k];
+    if(t>=o.s&&t<=o.e){
+      let d=clamp((t-o.s)/o.dur)*o.sumL;
+      for(const pt of o.parts){ if(d<=pt.L||pt===o.parts[o.parts.length-1]) return {pt:pt.p.getPointAtLength(Math.min(d,pt.L)),o,part:pt,d:Math.min(d,pt.L)}; d-=pt.L; }
+    }
+    if(o.nextLink&&t>o.e&&t<o.e+o.linkDur){
+      const u=eIO((t-o.e)/o.linkDur),{a,b}=o.nextLink;
+      if(o.link){ const q=o.link.lp.getPointAtLength(u*o.link.L); return {pt:q}; }
+      return {pt:{x:lerp(a.x,b.x,u),y:lerp(a.y,b.y,u)}};
+    }
+  }
+  return null;
+}
+window.setT=function(t){
+  document.getElementById('cam').setAttribute('transform','translate(960 540) scale('+(1+0.035*clamp(t/TOTAL))+') translate(-960 -540)');
+  glyphs.forEach(o=>{
+    const c=o.c;
+    // contour drawing: contours one after another at constant pen speed
+    let d=clamp((t-o.s)/o.dur)*o.sumL;
+    o.parts.forEach(pt=>{
+      const vis=clamp(d/pt.L); d=Math.max(0,d-pt.L);
+      pt.p.setAttribute('stroke-dashoffset',pt.L*(1-vis));
+      pt.p.setAttribute('opacity',vis>0?1:0);
+    });
+    // fill wipe bottom -> top
+    const pf=eOut(clamp((t-o.fs)/FILL_DUR)), bb=o.g.bb, H=(bb[3]-bb[1])+40;
+    o.rect.setAttribute('y',bb[3]+20-H*pf);o.rect.setAttribute('height',H*pf);
+    // bright pen stroke turns into the dark edge only once the fill has almost caught up
+    const pk=eOut(clamp(((t-o.fs)/FILL_DUR-0.55)/0.45));
+    o.parts.forEach(pt=>{pt.p.setAttribute('stroke',mix(c.strokeLit,c.edge,pk));pt.p.setAttribute('stroke-width',lerp(c.swLit,c.sw,pk));});
+    // red shadow extrudes
+    const ps=eOut(clamp((t-o.ss)/SH_DUR));
+    o.shadows.forEach((p,j)=>{
+      const k=c.K-j, dd=c.dmax*ps*k/c.K;
+      p.setAttribute('transform','translate('+dd+' '+dd+')');
+      p.setAttribute('opacity',clamp(ps*6));
+    });
+    if(o.link){
+      const lp=o.link.lp, ls=o.e, u=clamp((t-ls)/o.linkDur);
+      lp.setAttribute('stroke-dashoffset',o.link.L*(1-eIO(u)));
+      lp.setAttribute('stroke',mix(c.strokeLit,c.strokeLit,0));
+      lp.setAttribute('opacity',t>ls?1-clamp((t-ls-o.linkDur)/0.45):0);
+    }
+  });
+  // the single pen
+  const pp=penPos(t), first=glyphs[0], lastG=glyphs[glyphs.length-1];
+  if(pp){
+    const o=pp.o||null;
+    pen.setAttribute('cx',pp.pt.x);pen.setAttribute('cy',pp.pt.y);
+    let kind=(pp.o?pp.o.kind:'title'); if(!pp.o){ const g=glyphs.find(x=>x.nextLink&&t>x.e&&t<x.e+x.linkDur); if(g)kind=g.kind; }
+    const rr=CFG[kind].penR;
+    const appear=clamp((t-first.s)/0.12);
+    pen.setAttribute('r',rr*appear);pen.setAttribute('opacity',1);
+  } else {
+    const gone=t>lastG.e?clamp(1-(t-lastG.e)/0.25):0;
+    if(gone>0){pen.setAttribute('r',CFG.sub.penR*gone);pen.setAttribute('opacity',1);} else pen.setAttribute('opacity',0);
+  }
+  const gx=lerp(250,2300,eIO(clamp((t-GLINT_T)/GLINT_D)));
+  document.getElementById('glint').setAttribute('x',gx);
+  document.getElementById('svg').style.opacity=1-clamp((t-FADE_T)/0.6);
+};
+setT(0);
+</script></body></html>
