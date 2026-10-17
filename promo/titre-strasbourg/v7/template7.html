@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Titre Strasbourg mot par mot</title>
+<style>html,body{margin:0;background:#000;width:1920px;height:1080px;overflow:hidden}svg{display:block}</style></head><body>
+<svg id="svg" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><g id="root"></g></svg>
+<script>
+const G=/*GLYPHS*/;
+const NS='http://www.w3.org/2000/svg';
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const clamp=x=>Math.max(0,Math.min(1,x)), eOut=x=>1-Math.pow(1-x,3);
+const eBack=x=>{const c1=1.4,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const CFG={title:{K:12,d:13,sw:3.2,fill:'#ffd51a'},sub:{K:6,d:6,sw:2,fill:'#fff3c8'}};
+const root=document.getElementById('root');
+// one group per word; every word is complete (fill + dark outline + red shadow) from its first visible frame
+const words=[];
+['title','sub'].forEach(kind=>{
+  const c=CFG[kind], map=new Map();
+  G[kind].forEach(o=>{const key=o.line+'-'+o.word;if(!map.has(key))map.set(key,[]);map.get(key).push(o);});
+  [...map.values()].forEach(list=>{
+    const grp=mk('g',{opacity:0},root);
+    for(let k=c.K;k>=1;k--){const d=c.d*k/c.K;const sg=mk('g',{transform:`translate(${d} ${d})`},grp);
+      list.forEach(o=>mk('path',{d:o.d,fill:'#e8202c',stroke:'#e8202c','stroke-width':c.sw,'stroke-linejoin':'round'},sg));}
+    list.forEach(o=>mk('path',{d:o.d,fill:c.fill,stroke:'#111','stroke-width':c.sw,'stroke-linejoin':'round'},grp));
+    const x1=Math.min(...list.map(o=>o.bb[0])),x2=Math.max(...list.map(o=>o.bb[2])),y1=Math.min(...list.map(o=>o.bb[1])),y2=Math.max(...list.map(o=>o.bb[3]));
+    words.push({grp,kind,cx:(x1+x2)/2,cy:(y1+y2)/2});
+  });
+});
+// timing: title words, short pause, then subtitle words
+const T0=0.35,STEP=0.5,DUR=0.45;
+const starts=[T0,T0+STEP,T0+2*STEP,T0+3*STEP, T0+3*STEP+0.85, T0+3*STEP+0.85+0.45];
+words.forEach((w,i)=>w.s=starts[i]);
+const END=words[words.length-1].s+DUR;
+window.TOTAL=END+1.6+0.6;
+window.setT=function(t){
+  words.forEach(w=>{
+    const u=clamp((t-w.s)/DUR), a=eOut(clamp(u*1.4)), s=0.9+0.1*eBack(u), dy=(1-eOut(u))*26;
+    w.grp.setAttribute('opacity',a);
+    w.grp.setAttribute('transform',`translate(${w.cx} ${w.cy+dy}) scale(${s}) translate(${-w.cx} ${-w.cy})`);
+  });
+  document.getElementById('svg').style.opacity=1-clamp((t-(END+1.6))/0.6);
+};
+setT(0);
+</script></body></html>
