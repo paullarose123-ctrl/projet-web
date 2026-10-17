@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Titre Strasbourg simple</title>
+<style>html,body{margin:0;background:#000;width:1920px;height:1080px;overflow:hidden}svg{display:block}</style></head><body>
+<svg id="svg" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<g id="title"><g id="tsh"></g><g id="tfr"></g></g>
+<g id="sub"><g id="ssh"></g><g id="sfr"></g></g>
+</svg>
+<script>
+const G=/*GLYPHS*/;
+const NS='http://www.w3.org/2000/svg';
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const clamp=x=>Math.max(0,Math.min(1,x)), eOut=x=>1-Math.pow(1-x,3);
+const CFG={title:{K:12,dmax:13,sw:3.2,fill:'#ffd51a',sh:'tsh',fr:'tfr'},sub:{K:6,dmax:6,sw:2,fill:'#fff3c8',sh:'ssh',fr:'sfr'}};
+const shadows={title:[],sub:[]};
+for(const kind of ['title','sub']){const c=CFG[kind];
+  for(let k=c.K;k>=1;k--){const g=document.getElementById(c.sh);const grp=mk('g',{},g);
+    G[kind].forEach(o=>mk('path',{d:o.d,fill:'#e8202c',stroke:'#e8202c','stroke-width':c.sw,'stroke-linejoin':'round'},grp));shadows[kind].push(grp);}
+  G[kind].forEach(o=>mk('path',{d:o.d,fill:c.fill,stroke:'#111','stroke-width':c.sw,'stroke-linejoin':'round'},document.getElementById(c.fr)));
+}
+window.TOTAL=5.2;
+window.setT=function(t){
+  // title: soft fade-in + small rise, then red shadow slides out
+  const a=eOut(clamp((t-0.3)/1.1));
+  const T=document.getElementById('title');T.setAttribute('opacity',a);
+  T.setAttribute('transform','translate(0 '+(1-a)*28+')');
+  const ps=eOut(clamp((t-1.1)/0.7));
+  shadows.title.forEach((g,j)=>{const k=CFG.title.K-j,d=CFG.title.dmax*ps*k/CFG.title.K;g.setAttribute('transform','translate('+d+' '+d+')');});
+  // subtitle follows
+  const b=eOut(clamp((t-1.9)/0.9));
+  const S=document.getElementById('sub');S.setAttribute('opacity',b);S.setAttribute('transform','translate(0 '+(1-b)*16+')');
+  const ss=eOut(clamp((t-2.3)/0.5));
+  shadows.sub.forEach((g,j)=>{const k=CFG.sub.K-j,d=CFG.sub.dmax*ss*k/CFG.sub.K;g.setAttribute('transform','translate('+d+' '+d+')');});
+  document.getElementById('svg').style.opacity=1-clamp((t-4.6)/0.5);
+};
+setT(0);
+</script></body></html>
