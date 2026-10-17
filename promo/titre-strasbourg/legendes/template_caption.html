@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Légende</title>
+<style>html,body{margin:0;background:transparent;width:/*W*/px;height:/*H*/px;overflow:hidden}svg{display:block}</style></head><body>
+<svg id="svg" width="/*W*/" height="/*H*/" viewBox="/*VB*/" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+ </linearGradient>
+ <mask id="glyphMask" maskUnits="userSpaceOnUse" x="-5000" y="-5000" width="10000" height="10000"><g id="maskG" fill="#fff"></g></mask>
+</defs>
+<g id="root"></g>
+<g mask="url(#glyphMask)"><rect id="glint" x="0" y="0" width="1" height="1" fill="url(#gl)"/></g></svg>
+<script>
+const G=/*GLYPHS*/, S=/*S*/, VB="/*VB*/".split(' ').map(Number);
+const NS='http://www.w3.org/2000/svg';
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const lerp=(a,b,t)=>a+(b-a)*t, eIO=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const clamp=x=>Math.max(0,Math.min(1,x)), eOut=x=>1-Math.pow(1-x,3);
+const eBack=x=>{const c1=1.4,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const K=12,DM=13*S,SW=3.2*S,FILL='#ffd51a';
+const root=document.getElementById('root');
+const letters=G.map((o,i)=>{
+  const grp=mk('g',{opacity:0},root);
+  for(let k=K;k>=1;k--){const d=DM*k/K;mk('path',{d:o.d,fill:'#e8202c',stroke:'#e8202c','stroke-width':SW,'stroke-linejoin':'round',transform:`translate(${d} ${d})`},grp);}
+  mk('path',{d:o.d,fill:FILL,stroke:'#111','stroke-width':SW,'stroke-linejoin':'round'},grp);
+  mk('path',{d:o.d},document.getElementById('maskG'));
+  return {grp,i,cx:(o.bb[0]+o.bb[2])/2,cy:(o.bb[1]+o.bb[3])/2,s:0.25+i*0.055};
+});
+const DUR=0.4, END=Math.max(...letters.map(l=>l.s))+DUR;
+const GLINT_T=END+0.2, GLINT_D=0.7, FADE_T=GLINT_T+GLINT_D+0.9;
+window.TOTAL=FADE_T+0.45;
+const gl=document.getElementById('glint');
+const [vx,vy,vw,vh]=VB, gw=170*S, skew=Math.tan(20*Math.PI/180);
+gl.setAttribute('y',vy);gl.setAttribute('width',gw);gl.setAttribute('height',vh);
+gl.setAttribute('transform',`skewX(-20)`);
+window.setT=function(t){
+  letters.forEach(l=>{
+    const u=clamp((t-l.s)/DUR), a=eOut(clamp(u*1.6)), sc=0.8+0.2*eBack(u), dy=(1-eOut(u))*22*S;
+    l.grp.setAttribute('opacity',a);
+    l.grp.setAttribute('transform',`translate(${l.cx} ${l.cy+dy}) scale(${sc}) translate(${-l.cx} ${-l.cy})`);
+  });
+  // skewX(-20) moves a point at y by -tan(20)*y: compensate so the band sweeps the full width
+  const x0=vx-gw-skew*vh, x1=vx+vw+skew*Math.abs(vy)+gw+skew*vh;
+  gl.setAttribute('x',lerp(x0,x1,eIO(clamp((t-GLINT_T)/GLINT_D))));
+  document.getElementById('svg').style.opacity=1-clamp((t-FADE_T)/0.45);
+};
+setT(0);
+</script></body></html>
