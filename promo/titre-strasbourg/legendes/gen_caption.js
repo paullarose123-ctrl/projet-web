@@ -10,8 +10,12 @@ const glyphs=items.filter(it=>it.ch!==' ').map(it=>{const p=it.g.getPath(it.x,ba
 const pad=Math.ceil(13*s+3*s+10);
 const x1=Math.min(...glyphs.map(g=>g.bb[0]))-pad,x2=Math.max(...glyphs.map(g=>g.bb[2]))+pad;
 const y1=Math.min(...glyphs.map(g=>g.bb[1]))-pad,y2=Math.max(...glyphs.map(g=>g.bb[3]))+pad;
-const W=Math.ceil((x2-x1)/2)*2,H=Math.ceil((y2-y1)/2)*2;
-const vb=[Math.floor(x1),Math.floor(y1),W,H];
+const W=Math.ceil((x2-x1)/2)*2;
+// fixed vertical frame so every caption shares the same baseline and letter height
+const FIX_Y=0,FIX_H=240;
+if(y1<FIX_Y||y2>FIX_Y+FIX_H) throw new Error('text does not fit fixed frame: '+y1+' '+y2);
+const H=FIX_H;
+const vb=[Math.floor(x1),FIX_Y,W,H];
 let t=fs.readFileSync('template_caption.html','utf8');
 t=t.replace('/*GLYPHS*/',JSON.stringify(glyphs)).replace(/\/\*VB\*\//g,vb.join(' ')).replace('/*W*/',W).replace('/*H*/',H).replace('/*S*/',s);
 fs.writeFileSync(out+'.html',t);
