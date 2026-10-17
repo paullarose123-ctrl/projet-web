@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Titre Strasbourg lettre par lettre</title>
+<style>html,body{margin:0;background:#000;width:1920px;height:1080px;overflow:hidden}svg{display:block}</style></head><body>
+<svg id="svg" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><defs>
+ <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+ </linearGradient>
+ <mask id="glyphMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080"><g id="maskG" fill="#fff"></g></mask>
+</defs>
+<g id="root"></g>
+<g mask="url(#glyphMask)"><rect id="glint" x="0" y="150" width="170" height="760" fill="url(#gl)" transform="skewX(-20)"/></g></svg>
+<script>
+const G=/*GLYPHS*/;
+const NS='http://www.w3.org/2000/svg';
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const lerp=(a,b,t)=>a+(b-a)*t, eIO=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const clamp=x=>Math.max(0,Math.min(1,x)), eOut=x=>1-Math.pow(1-x,3);
+const eBack=x=>{const c1=1.4,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const CFG={title:{K:12,d:13,sw:3.2,fill:'#ffd51a'},sub:{K:6,d:6,sw:2,fill:'#fff3c8'}};
+const root=document.getElementById('root');
+// one group per letter; every letter is complete (fill + dark outline + red shadow) from its first visible frame
+const letters=[];
+['title','sub'].forEach(kind=>{
+  const c=CFG[kind];
+  G[kind].forEach((o,i)=>{
+    const grp=mk('g',{opacity:0},root);
+    for(let k=c.K;k>=1;k--){const d=c.d*k/c.K;mk('path',{d:o.d,fill:'#e8202c',stroke:'#e8202c','stroke-width':c.sw,'stroke-linejoin':'round',transform:`translate(${d} ${d})`},grp);}
+    mk('path',{d:o.d,fill:c.fill,stroke:'#111','stroke-width':c.sw,'stroke-linejoin':'round'},grp);
+    mk('path',{d:o.d},document.getElementById('maskG'));
+    letters.push({grp,kind,i,cx:(o.bb[0]+o.bb[2])/2,cy:(o.bb[1]+o.bb[3])/2});
+  });
+});
+const STAG={title:0.07,sub:0.05}, DUR=0.4, T0=0.3, SUB0=2.2;
+letters.forEach(l=>l.s=(l.kind==='title'?T0:SUB0)+l.i*STAG[l.kind]);
+const END=Math.max(...letters.map(l=>l.s))+DUR;
+const GLINT_T=END+0.3, GLINT_D=0.9, FADE_T=GLINT_T+GLINT_D+0.6;
+window.TOTAL=FADE_T+0.6;
+window.setT=function(t){
+  letters.forEach(l=>{
+    const u=clamp((t-l.s)/DUR), a=eOut(clamp(u*1.6)), sc=0.8+0.2*eBack(u), dy=(1-eOut(u))*22;
+    l.grp.setAttribute('opacity',a);
+    l.grp.setAttribute('transform',`translate(${l.cx} ${l.cy+dy}) scale(${sc}) translate(${-l.cx} ${-l.cy})`);
+  });
+  document.getElementById('glint').setAttribute('x',lerp(250,2300,eIO(clamp((t-GLINT_T)/GLINT_D))));
+  document.getElementById('svg').style.opacity=1-clamp((t-FADE_T)/0.6);
+};
+setT(0);
+</script></body></html>
