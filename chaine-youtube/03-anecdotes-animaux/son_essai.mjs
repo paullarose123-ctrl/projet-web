@@ -42,5 +42,5 @@ a(T0 + 0.48, 'logo'); a(T0 + 0.98, 'letters'); a(T0 + 1.8, 'label');
 E.sort((x, y) => x.t - y.t);
 fs.writeFileSync('build/test/events_reel.json', JSON.stringify({ dur: DUR, fps: 30, events: E, shots }, null, 1));
 // ─ un événement seul, par type (mesure du début / de la fin, sans musique)
-const seen = new Set(); for (const [type, v] of types) { if (seen.has(type) || type === 'bogus') continue; seen.add(type); fs.writeFileSync(`build/test/solo_${type}.json`, JSON.stringify({ dur: 12, fps: 30, events: [{ t: 1, type, v: v ?? 1 }, { t: 11, type: 'logo', v: 1 }], shots }, null, 1)); }
+types.push(['step']); const seen = new Set(); for (const [type, v] of types) { if (seen.has(type) || type === 'bogus') continue; seen.add(type); fs.writeFileSync(`build/test/solo_${type}.json`, JSON.stringify({ dur: 12, fps: 30, events: [{ t: 1, type, v: v ?? 1 }, { t: 11, type: 'logo', v: 1 }], shots }, null, 1)); }
 console.log('events_test.json', ev.length, 'événements, durée', (endT + 6).toFixed(1), '| events_reel.json', E.length, 'événements, durée', DUR.toFixed(2), '| solos', seen.size);
