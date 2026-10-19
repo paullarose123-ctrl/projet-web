@@ -94,8 +94,8 @@ const k_prep = stops => stops.map(s => [s[0], s[1], k_u32(s[1])]);
 const K_SKY = {
   alaskaDusk: {
     h: 250, light: -1, stars: 34, mist: '#9aa4d6', rim: '#ffd9d2', warm: '#f090a4', sub: 'cold',
-    stops: [[0, NI[2]], [.10, NI[3]], [.23, NI[4]], [.37, NI[5]], [.50, NI[6]], [.62, NI[7]], [.73, NI[8]], [.82, NI[9]], [.90, '#d6b8e0'], [.955, DU[7]], [1, SK[4]]],
-    glow: { gx: 0.18, gy: 1.0, sx: 150, sy: 80, k: 0.3 },
+    stops: [[0, NI[2]], [.10, NI[3]], [.23, NI[4]], [.37, NI[5]], [.50, NI[6]], [.61, NI[7]], [.71, NI[8]], [.79, NI[9]], [.86, ST[7]], [.915, '#e8b8d8'], [.96, DU[7]], [1, SK[4]]],
+    glow: { gx: 0.16, gy: 1.0, sx: 150, sy: 70, k: 0.17 },
   },
   alaskaNight: {
     h: 260, light: -1, stars: 170, mist: '#2c3c84', rim: '#8ae0c0', warm: '#3aa8c4', sub: 'cold',
@@ -254,52 +254,71 @@ function k_glow(x, y, r, col = '70,210,150', a = 0.2, o = {}) { rgrad(k_sx(x, o,
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 3. NUAGES (sprites ombrés à 5 tons, mis en cache ; dérive en monde, teintés par le ciel)
 // ════════════════════════════════════════════════════════════════════════════════════════
-// tons : [liseré, éclairé, corps, ombre, dessous] ; light : direction DE la lumière [lx, ly] (ly > 0 : éclairé par en dessous, coucher de soleil)
+// tons : [liseré, éclairé, corps, ombre, dessous] (du plus clair au plus sombre) ; mode 'above' : lumière venue d'en haut (jour : dessus clair, dessous gris-bleu),
+// mode 'below' : soleil rasant sous les nuages (crépuscule, aube : dessus sombre, ventre doré) ; light : direction DE la lumière [lx, ly] (pour les cumulus de jour)
 const K_CLOUD = {
-  alaskaDusk: { tones: [NE[3], NI[9], NI[8], NI[6], NI[4]], light: [-0.8, -0.5] },
-  alaskaNight: { tones: [NI[7], NI[5], NI[4], NI[3], NI[2]], light: [0.5, -0.8] },
-  alaskaSpring: { tones: [WH[3], WH[2], NE[3], NE[1], NE[0]], light: [0.7, -0.6] },
-  desertDusk: { tones: [YE[3], AM[8], RD[4], DU[5], DU[3]], light: [0.9, 0.55] },
-  savannaDawn: { tones: [AM[10], AM[9], RD[5], DU[6], DU[4]], light: [0.8, 0.6] },
+  alaskaDusk: { mode: 'above', tones: ['#ffe4ea', '#d8cdec', NI[9], NI[7], NI[5]], light: [-0.8, -0.35], rim: '#ffd9d2' },
+  alaskaNight: { mode: 'above', tones: [NI[8], NI[6], NI[5], NI[4], NI[3]], light: [0.5, -0.8], rim: NI[8] },
+  alaskaSpring: { mode: 'above', tones: [WH[3], WH[2], NE[3], '#b4c6e4', '#8aa4cc'], light: [0.7, -0.6], rim: WH[3] },
+  desertDusk: { mode: 'below', tones: [AM[10], AM[8], '#f2625a', DU[6], DU[3]], light: [0.9, 0.55], rim: AM[9] },
+  savannaDawn: { mode: 'below', tones: [AM[10], AM[9], '#ffa896', DU[6], DU[4]], light: [0.8, 0.6], rim: AM[10] },
 };
-// nuage = union de sphères (cumulus) ou d'ellipsoïdes aplatis (bancs) : chaque pixel prend la normale de la sphère la plus proche de l'œil
+// cumulus : union de sphères posées sur une base plate ; bancs : strates allongées (haut irrégulier, ventre plat) ; filaments : traînées fines
 function k_cloudShape(kind, w, h, seed) {
   const r = rng(seed), blobs = [];            // [cx, cy, rx, ry]
-  if (kind === 'puff') {
-    const base = h * 0.8, n = 4 + Math.floor(w / 26);
-    for (let i = 0; i < n; i++) {
-      const f = (i + 0.5) / n, e = Math.sin(f * Math.PI), rad = h * (0.2 + 0.3 * e * (0.5 + 0.5 * r())) + 2;
-      blobs.push([w * (0.1 + 0.8 * f) + (r() - 0.5) * 5, base - rad * (0.6 + 0.45 * r()), rad, rad]);
-    }
-    for (let i = 0; i < 3; i++) { const f = 0.3 + r() * 0.4, rad = h * (0.2 + 0.15 * r()); blobs.push([w * f, base - h * 0.5 - r() * h * 0.1, rad, rad]); }
-    return { blobs, base };
+  const base = h * 0.8, n = 4 + Math.floor(w / 26);
+  for (let i = 0; i < n; i++) {
+    const f = (i + 0.5) / n, e = Math.sin(f * Math.PI), rad = h * (0.2 + 0.3 * e * (0.5 + 0.5 * r())) + 2;
+    blobs.push([w * (0.1 + 0.8 * f) + (r() - 0.5) * 5, base - rad * (0.6 + 0.45 * r()), rad, rad]);
   }
-  if (kind === 'bank') {
-    const base = h * 0.74, n = 7 + Math.floor(w / 18);
-    for (let i = 0; i < n; i++) {
-      const f = (i + 0.5) / n, e = Math.pow(Math.sin(f * Math.PI), 0.7), ry = h * (0.14 + 0.24 * e * (0.4 + 0.6 * r())) + 1.5, rx = w / n * (0.9 + 0.9 * r()) + 3;
-      blobs.push([w * (0.04 + 0.92 * f) + (r() - 0.5) * 4, base - ry * (0.55 + 0.3 * r()), rx, ry]);
-    }
-    return { blobs, base };
+  for (let i = 0; i < 3; i++) { const f = 0.3 + r() * 0.4, rad = h * (0.2 + 0.15 * r()); blobs.push([w * f, base - h * 0.5 - r() * h * 0.1, rad, rad]); }
+  return { blobs, base };
+}
+// strate : enveloppe haut/bas par colonne, tons selon la hauteur dans l'épaisseur (+ ondulation de strates), bord tramé
+function k_cloudBank(C, w, h, seed, im) {
+  const T = C.tones.map(k_u32), below = C.mode === 'below', r = rng(seed * 3 + 1), ph = r() * 90, ph2 = r() * 90;
+  const stops = (below ? [[0, 0, T[4]], [0.3, 0, T[3]], [0.58, 0, T[2]], [0.82, 0, T[1]], [1, 0, T[0]]] : [[0, 0, T[0]], [0.22, 0, T[1]], [0.5, 0, T[2]], [0.78, 0, T[3]], [1, 0, T[4]]]);
+  const base = h * (below ? 0.58 : 0.66), top = new Float32Array(w), bot = new Float32Array(w);
+  for (let x = 0; x < w; x++) {
+    const e = Math.pow(Math.sin(Math.PI * (x + 0.5) / w), 0.6);
+    const lump = 0.5 * k_n1(x * 0.045 + ph, 3) + 0.32 * k_n1(x * 0.12 + ph, 4) + 0.18 * k_n1(x * 0.33 + ph, 5);
+    top[x] = base - h * (below ? 0.78 : 0.95) * e * (0.2 + 0.8 * lump);
+    bot[x] = base + h * (below ? 0.34 : 0.3) * e * (0.45 + 0.55 * k_n1(x * 0.04 + ph2, 6)) + 0.7 * Math.sin(x * 0.4 + seed);
   }
-  return { blobs, base: h };                   // 'wisp' : traité à part
+  for (let x = 0; x < w; x++) {
+    const y0 = Math.floor(top[x]), y1 = Math.ceil(bot[x]), th = Math.max(2, bot[x] - top[x]);
+    for (let y = Math.max(0, y0); y <= y1 && y < h; y++) {
+      let s = (y - top[x]) / th;
+      const stk = k_n2(x * 0.06 + ph, y * 0.7, 9 + seed), gr = k_n2(x * 0.16, y * 0.4, 12 + seed);
+      s = clamp(s + (stk - 0.5) * 0.42 + (below ? 0.12 * (gr - 0.5) : 0));
+      if (below) s = clamp(s * 0.9 + 0.1 * Math.pow(s, 3));
+      let c = k_ramp(stops, s, x, y, 3.4);
+      const edgeTop = y - top[x], edgeBot = bot[x] - y;
+      if (edgeTop < 1.2 && k_bay(x, y) > 0.55 + edgeTop * 0.3) continue;              // bord supérieur effiloché
+      if (edgeBot < 2 && k_bay(x + 1, y) > 0.5 + edgeBot * 0.3) continue;
+      if (below && edgeBot < 1.6) c = T[0]; else if (!below && edgeTop < 1.1) c = T[0];
+      im.d[y * w + x] = c;
+    }
+  }
 }
 function k_cloudSprite(preset, kind, w, h, seed) {
   return k_cache(`cl|${preset}|${kind}|${w}|${h}|${seed}`, () => {
-    const C = K_CLOUD[preset] || K_CLOUD.alaskaDusk, im = k_img(w, h), T = C.tones.map(k_u32), r = rng(seed + 5);
-    const [lx0, ly0] = C.light, lz = 0.55, ln = Math.hypot(lx0, ly0, lz), lx = lx0 / ln, ly = ly0 / ln, lzn = lz / ln;
+    const C = K_CLOUD[preset] || K_CLOUD.alaskaDusk, im = k_img(w, h), T = C.tones.map(k_u32), r = rng(seed + 5), below = C.mode === 'below';
     if (kind === 'wisp') {                                             // filaments : 4 à 6 traînées fines, dégradé tramé
       const n = 3 + Math.floor(h / 6);
       for (let i = 0; i < n; i++) {
         const y0 = 2 + r() * (h - 6), len = w * (0.35 + 0.6 * r()), x0 = (w - len) * r(), sl = (r() - 0.5) * 0.12, th = 1 + (r() < 0.4 ? 1 : 0), ph = r() * 9;
         for (let x = 0; x < len; x++) {
           const e = Math.sin(x / len * Math.PI), y = Math.round(y0 + sl * x + 1.4 * Math.sin(x * 0.09 + ph));
-          for (let j = 0; j < th; j++) { const yy = y + j; if (yy < 0 || yy >= h || k_bay(x, yy) > e * 1.1 - 0.12) continue; im.d[yy * w + Math.round(x0 + x)] = (j === 0 && C.light[1] <= 0) || (j === th - 1 && C.light[1] > 0) ? T[0] : T[1 + (k_bay(x + 3, yy) < 0.4 ? 1 : 0)]; }
+          for (let j = 0; j < th; j++) { const yy = y + j; if (yy < 0 || yy >= h || k_bay(x, yy) > e * 1.1 - 0.12) continue; im.d[yy * w + Math.round(x0 + x)] = (j === 0 && !below) || (j === th - 1 && below) ? T[0] : T[1 + (k_bay(x + 3, yy) < 0.4 ? 1 : 0)]; }
         }
       }
       im.x.putImageData(im.id, 0, 0); return im.c;
     }
-    const { blobs, base } = k_cloudShape(kind, w, h, seed);
+    if (kind === 'bank') { k_cloudBank(C, w, h, seed, im); im.x.putImageData(im.id, 0, 0); return im.c; }
+    const [lx0, ly0] = C.light, lz = 0.55, ln = Math.hypot(lx0, ly0, lz), lx = lx0 / ln, ly = ly0 / ln, lzn = lz / ln;
+    const { blobs, base } = k_cloudShape(kind, w, h, seed), colTop = new Float32Array(w).fill(1e9);
+    const hit = new Float32Array(w * h).fill(-1), nxs = new Float32Array(w * h), nys = new Float32Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       let best = -1, nx = 0, ny = 0;
       for (const b of blobs) {
@@ -308,10 +327,22 @@ function k_cloudSprite(preset, kind, w, h, seed) {
       }
       const yb = base + 1.2 * Math.sin(x * 0.3 + seed) + 0.7 * Math.sin(x * 0.77);
       if (best < 0 || y > yb) continue;
-      let I = nx * lx + ny * ly + best * lzn;
-      I += (ly0 > 0 ? 0 : -0.5) * clamp((y - base * 0.55) / (base * 0.45));          // le dessous est plus sombre (sauf éclairage rasant par en dessous)
-      I += (k_bay(x, y) - 0.5) * 0.16;
-      const tn = I > 0.78 ? 0 : I > 0.42 ? 1 : I > 0.0 ? 2 : I > -0.42 ? 3 : 4;
+      hit[y * w + x] = best; nxs[y * w + x] = nx; nys[y * w + x] = ny; if (y < colTop[x]) colTop[x] = y;
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const best = hit[y * w + x]; if (best < 0) continue;
+      const nx = nxs[y * w + x], ny = nys[y * w + x], yb = base + 1.2 * Math.sin(x * 0.3 + seed) + 0.7 * Math.sin(x * 0.77), sv = clamp((y - colTop[x]) / Math.max(3, yb - colTop[x]));
+      let tn;
+      if (below) {                                                    // ventre éclairé : tons selon la hauteur, la bosse la plus basse accroche la lumière
+        const I = sv * 0.95 + 0.25 * (nx * Math.sign(lx0) * 0.5 + ny * 0.5) + (k_bay(x, y) - 0.5) * 0.1;
+        tn = I > 0.86 ? 0 : I > 0.66 ? 1 : I > 0.44 ? 2 : I > 0.2 ? 3 : 4;
+        if (y > yb - 1.6) tn = 0;
+      } else {
+        let I = nx * lx + ny * ly + best * lzn;
+        I += -0.5 * clamp((y - base * 0.55) / (base * 0.45));          // le dessous est plus sombre
+        I += (k_bay(x, y) - 0.5) * 0.16;
+        tn = I > 0.78 ? 0 : I > 0.42 ? 1 : I > 0.0 ? 2 : I > -0.42 ? 3 : 4;
+      }
       im.d[y * w + x] = T[tn];
     }
     im.x.putImageData(im.id, 0, 0); return im.c;
@@ -395,39 +426,40 @@ function k_buildRidge(p) {
   }
   const sl = new Float32Array(per);
   for (let x2 = 0; x2 < per; x2++) sl[x2] = (top[wrap(x2 + 4)] - top[wrap(x2 - 4)]) / 8;
+  // boucle chaude : tout en nombres (pas de tableaux alloués par pixel), termes qui ne dépendent que de la ligne précalculés
+  const rockR = rockT.map(k_rgb), snowR = snowT.map(k_rgb), hillR = hillT.map(k_rgb), c3 = new Float64Array(3);
+  const toneTo = (arr, f) => { f = f < 0 ? 0 : f > arr.length - 1.001 ? arr.length - 1.001 : f; const i = f | 0, fr = f - i, a_ = arr[i], b_ = arr[i + 1]; c3[0] = a_[0] + (b_[0] - a_[0]) * fr; c3[1] = a_[1] + (b_[1] - a_[1]) * fr; c3[2] = a_[2] + (b_[2] - a_[2]) * fr; };
+  const mixTo = (c, m) => { c3[0] += (c[0] - c3[0]) * m; c3[1] += (c[1] - c3[1]) * m; c3[2] += (c[2] - c3[2]) * m; };
+  toneTo(alp ? rockR : hillR, alp ? 1.5 : 0.8); const foot = [c3[0], c3[1], c3[2]];
+  const fY = new Float32Array(hh), contrY = new Float32Array(hh), hzY = new Float32Array(hh), footY = new Float32Array(hh), ditY = new Float32Array(hh);
+  for (let y = 0; y < hh; y++) { const f = clamp((y - (y0r - amp * 0.2)) / (amp * 1.0 + 14)); fY[y] = f; contrY[y] = (1 - Math.pow(f, 1.25)) * (1 - 0.25 * p.haze); hzY[y] = clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.1)); footY[y] = f > 0.5 ? k_sstep(0.5, 1.0, f) : 0; ditY[y] = f > 0.97 ? 0 : (p.dither ?? 17); }
+  const wigT = alp ? new Float32Array(peaks.length * (hh + 2)).fill(NaN) : null, snowTop = (1 - p.snow) - 0.2, fxs = fx(0.05), pxs = pxn(0.05), fxh = fx(0.12), pxh = pxn(0.12);
   for (let x = 0; x < per; x++) {
-    const tx = Math.round(top[x]), pk = alp ? peaks[owner[x]] : null, dxp = alp ? wd(x - pk.c) : 0;
+    const tx = Math.round(top[x]), ow = owner[x], pk = alp ? peaks[ow] : null, dxp = alp ? wd(x - pk.c) : 0, litH = alp ? 0 : clamp(0.5 + sl[x] * light * 3.4);
     for (let y = Math.max(0, tx); y < hh; y++) {
-      const d = Math.max(0, y - top[x]);
-      const f = clamp((y - (y0r - amp * 0.2)) / (amp * 1.0 + 14)), contr = (1 - Math.pow(f, 1.25)) * (1 - 0.25 * p.haze);
-      const hz = clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.1)) * 1;
-      let col;
+      const d = Math.max(0, y - top[x]), contr = contrY[y], f = fY[y];
       if (alp) {
-        const wig = (k_n1(d * 0.12 + owner[x] * 7.3, 21 + p.seed, 4096) - 0.5) * 6.5 + (k_n1(d * 0.04 + owner[x] * 3.1, 22 + p.seed, 4096) - 0.5) * 8;
-        const u = dxp - wig * Math.min(1, d / 6), au = Math.abs(u), side = u >= 0 ? 1 : -1, lit = side * light > 0;
+        const di = Math.min(hh + 1, Math.round(d)), wi = ow * (hh + 2) + di; let wig = wigT[wi];
+        if (wig !== wig) wig = wigT[wi] = (k_n1(di * 0.12 + ow * 7.3, 21 + p.seed, 4096) - 0.5) * 6.5 + (k_n1(di * 0.04 + ow * 3.1, 22 + p.seed, 4096) - 0.5) * 8;
+        const u = dxp - wig * Math.min(1, d / 6), au = Math.abs(u), lit = (u >= 0 ? 1 : -1) * light > 0;
         const spx = 2 + pk.ks * Math.pow(d, 0.97), inner = au < spx;
-        const q = au - pk.ks * d * 0.9, gn = k_n1(q * 0.42 + owner[x] * 5, 31 + p.seed, 4096), gull = gn > 0.76 ? 1 : 0, fine = k_h(x * 31 + y * 17, p.seed);
+        const q = au - pk.ks * d * 0.9, gn = k_n1(q * 0.42 + ow * 5, 31 + p.seed, 4096), gull = gn > 0.76 ? 1 : 0, fine = k_h(x * 31 + y * 17, p.seed);
         let tn = lit ? (inner ? 3.1 : 2.4) : (inner ? 1.6 : 0.8);
         tn = 1.7 + contr * (tn - 1.7) - contr * 0.9 * gull + 0.1 * (fine - 0.5);
-        const alt = (y0r - y) / amp, sg = k_n2(x * fx(0.05), y * 0.07, 41 + p.seed, pxn(0.05));
-        const snowLine = (1 - p.snow) - 0.11 * (sg - 0.5) * 2 - 0.07 * gull + (inner ? 0 : 0.03);
-        if (p.snow > 0 && alt > snowLine) {
-          let sn = lit ? (inner ? 3.0 : 2.4) : (inner ? 1.35 : 0.7);
-          sn = 1.8 + (0.35 + 0.65 * contr) * (sn - 1.8) - 0.55 * gull * contr + 0.1 * (fine - 0.5);
-          col = k_tone(snowT, clamp(sn, 0, 3));
-        } else col = k_tone(rockT, tn);
-        if (d < 1.2 && lit) col = k_mix(col, rimC, 0.85 * (1 - p.haze * 0.6));
-        else if (d < 2.2 && lit && inner) col = k_mix(col, rimC, 0.3);
+        const alt = (y0r - y) / amp; let isSnow = false;
+        if (p.snow > 0 && alt > snowTop) { const sg = k_n2(x * fxs, y * 0.07, 41 + p.seed, pxs); isSnow = alt > (1 - p.snow) - 0.11 * (sg - 0.5) * 2 - 0.07 * gull + (inner ? 0 : 0.03); }
+        if (isSnow) { let sn = lit ? (inner ? 3.0 : 2.4) : (inner ? 1.35 : 0.7); sn = 1.8 + (0.35 + 0.65 * contr) * (sn - 1.8) - 0.55 * gull * contr + 0.1 * (fine - 0.5); toneTo(snowR, clamp(sn, 0, 3)); } else toneTo(rockR, tn);
+        if (d < 1.2 && lit) mixTo(rimC, 0.85 * (1 - p.haze * 0.6)); else if (d < 2.2 && lit && inner) mixTo(rimC, 0.3);
       } else {
-        const facing = sl[x] * light, lit = clamp(0.5 + facing * 3.4);
-        const gn = k_n2(x * fx(0.12), y * 0.12, 61 + p.seed, pxn(0.12)), fine = k_h(x * 31 + y * 17, p.seed);
-        const tn = 0.9 + contr * (1.3 * (lit - 0.5) + 0.6 * (gn - 0.5)) + 0.3 * (fine - 0.5) + (lit > 0.45 ? 0.5 * Math.pow(clamp(1 - d / 8), 2) : 0);
-        col = k_tone(hillT, tn);
-        if (d < 1.1 && lit > 0.4) col = k_mix(col, rimC, 0.7);
-        if (p.snowy && d < p.snowy * (0.5 + 0.9 * gn)) col = k_tone(snowT, clamp(0.5 + 2.2 * lit + 0.5 * (fine - 0.5), 0, 3));
+        const gn = k_n2(x * fxh, y * 0.12, 61 + p.seed, pxh), fine = k_h(x * 31 + y * 17, p.seed);
+        const tn = 0.9 + contr * (1.3 * (litH - 0.5) + 0.6 * (gn - 0.5)) + 0.3 * (fine - 0.5) + (litH > 0.45 ? 0.5 * Math.pow(clamp(1 - d / 8), 2) : 0);
+        toneTo(hillR, tn);
+        if (d < 1.1 && litH > 0.4) mixTo(rimC, 0.7);
+        if (p.snowy && d < p.snowy * (0.5 + 0.9 * gn)) toneTo(snowR, clamp(0.5 + 2.2 * litH + 0.5 * (fine - 0.5), 0, 3));
       }
-      col = k_mix(k_foot(col, k_tone(alp ? rockT : hillT, alp ? 1.5 : 0.8), f), mist, hz);
-      im.d[y * per + x] = k_snap(sub, col[0], col[1], col[2], x, y, f > 0.97 ? 0 : (p.dither ?? 17));
+      if (footY[y] > 0) mixTo(foot, footY[y]);
+      mixTo(mist, hzY[y]);
+      im.d[y * per + x] = k_snap(sub, c3[0], c3[1], c3[2], x, y, ditY[y]);
     }
   }
   if (p.trees > 0) {                                                   // épicéas / acacias lointains posés sur la crête
@@ -447,15 +479,30 @@ function k_buildRidge(p) {
 }
 // rampes par plan (tier 0 lointain, 1 moyen, 2 proche) : couleurs de palette du sombre au clair ; mist = couleur exacte de la brume qui monte au pied du relief
 const K_TIERS = {
+  alaskaDusk: [
+    { ramp: [NI[5], NI[6], NI[7], NI[8], NI[9]], mist: NI[8], rim: '#ffe4ea' },
+    { ramp: [NI[4], NI[5], ST[4], ST[5], ST[6], NE[2], NE[3]], mist: NI[8], rim: WH[3] },
+    { ramp: [NI[3], NI[5], ST[4], ST[5], NE[0], NE[1], NE[2], NE[3], NE[4]], mist: ST[6], rim: WH[3] },
+  ],
+  alaskaNight: [
+    { ramp: [NI[2], NI[3], NI[4], NI[5], NI[6]], mist: NI[5], rim: NI[8] },
+    { ramp: [NI[1], NI[2], NI[3], NI[4], NI[5], NI[6], NI[7]], mist: NI[5], rim: NI[8] },
+    { ramp: [NI[0], NI[1], NI[2], NI[3], NI[4], NI[5], NI[6], NI[7], NI[8]], mist: NI[4], rim: NI[9] },
+  ],
+  alaskaSpring: [
+    { ramp: [ST[5], ST[6], NE[0], NE[1], NE[2]], mist: NE[3], rim: WH[3] },
+    { ramp: [ST[3], ST[4], ST[5], NE[0], NE[1], NE[2], NE[3]], mist: NE[3], rim: WH[3] },
+    { ramp: [ST[2], ST[3], ST[4], ST[5], NE[0], NE[1], NE[2], NE[3], NE[4], WH[3]], mist: NE[2], rim: WH[3] },
+  ],
   desertDusk: [
     { ramp: [DU[3], DU[4], DU[5], DU[6]], mist: DU[6], rim: AM[8] },
-    { ramp: [DU[1], DU[2], DU[3], DU[4], DU[5], '#d85a7a'], mist: DU[5], rim: AM[8] },
-    { ramp: [DU[0], DU[1], '#6e1226', RD[2], OC[3], OC[4], AM[7], AM[8]], mist: DU[3], rim: AM[9] },
+    { ramp: [DU[1], DU[2], DU[3], DU[4], DU[5], DU[6]], mist: DU[5], rim: AM[8] },
+    { ramp: [DU[0], DU[1], RD[0], RD[1], OC[1], OC[2], OC[3], OC[4], OC[5], AM[8]], mist: DU[3], rim: AM[9] },
   ],
   savannaDawn: [
     { ramp: [DU[4], DU[5], DU[6], DU[7], RD[5]], mist: RD[5], rim: AM[10] },
     { ramp: [DU[1], DU[3], DU[4], DU[5], DU[6]], mist: DU[6], rim: AM[9] },
-    { ramp: [DU[0], DU[1], WO[1], OC[2], OC[3], AM[6], AM[7], AM[8]], mist: DU[4], rim: AM[9] },
+    { ramp: [DU[0], DU[1], RD[0], RD[1], OC[1], OC[2], OC[3], OC[4], AM[7], AM[8]], mist: DU[4], rim: AM[9] },
   ],
 };
 const k_hzFoot = (hz, hb, f) => { const e = Math.round(hb), w = k_sstep(0.82, 1.0, f); return hz + (e - hz) * w; };       // brume au pied : tend vers 0 ou 1 exactement (pas de motif tramé dans l'aplat prolongé)
@@ -467,50 +514,54 @@ function k_pickT(st, mistU, v, hz, x, y) {
   return k_ramp(st, clamp(v), x, y, 2.4);
 }
 function k_tier(p) { const T = K_TIERS[p.preset] || K_TIERS.desertDusk, t = T[Math.max(0, Math.min(2, p.tier ?? 1))]; return { ramp: t.ramp, st: k_stops(t.ramp), mistU: k_u32(t.mist), rimU: k_u32(t.rim), n: t.ramp.length }; }
-// ── mesas : buttes à parois striées, éboulis, liseré de soleil
+// ── mesas : buttes à parois striées, corniches, aiguilles à chapeau, éboulis, liseré de soleil ; la brume du fond (tier 0) tend vers la couleur du ciel
 function k_buildMesa(p) {
-  const S = K_SKY[p.preset], per = p.span, amp = p.amp, hh = amp + 8 + p.depth, y0r = amp + 4, light = p.light ?? S.light, TR = k_tier(p);
+  const S = K_SKY[p.preset], per = p.span, amp = p.amp, hh = amp + 8 + p.depth, y0r = amp + 4, light = p.light ?? S.light, TR = k_tier(p), tier = Math.max(0, Math.min(2, p.tier ?? 1));
   const top = new Float32Array(per), im = k_img(per, hh), own = new Int16Array(per), wrap = v => ((v % per) + per) % per, wd = v => { v = wrap(v); return v > per / 2 ? v - per : v; };
   const r = rng(p.seed * 17 + 3), ms = [];
   let x = r() * p.freq * 0.3;
   while (x < per) {
-    const k = r(); let hw, H;
-    if (k < 0.16) { hw = 2 + r() * 2.5; H = amp * (0.6 + 0.4 * r()); }                       // aiguille
-    else if (k < 0.5) { hw = 7 + r() * 9; H = amp * (0.5 + 0.45 * r()); }                    // butte
-    else { hw = 20 + r() * p.freq * 0.3; H = amp * (0.38 + 0.4 * r()); }                     // mesa
-    const step = hw > 12 && r() < 0.6 ? { x: (r() - 0.5) * hw * 1.2, d: H * (0.1 + 0.12 * r()) * (r() < 0.5 ? -1 : 1) } : null;
-    ms.push({ c: x, hw, H, Ht: H * (0.28 + 0.12 * r()), cw: 1.5 + r() * 2.5, tw: H * (0.5 + 0.5 * r()), sd: r() * 50, step });
-    x += hw * 2 + p.freq * (0.4 + 0.9 * r());
+    const k = r(); let hw, H, kind;
+    if (k < 0.15) { kind = 'spire'; hw = 2 + r() * 1.8; H = amp * (0.6 + 0.4 * r()); }                  // aiguille à chapeau (hoodoo)
+    else if (k < 0.5) { kind = 'butte'; hw = 7 + r() * 8; H = amp * (0.55 + 0.4 * r()); }
+    else { kind = 'mesa'; hw = 20 + r() * p.freq * 0.28; H = amp * (0.4 + 0.4 * r()); }
+    const ledges = []; if (kind !== 'spire') for (const sd of [-1, 1]) if (r() < 0.55) ledges.push({ sd, x0: hw * (0.4 + 0.45 * r()), d: H * (0.1 + 0.12 * r()) });
+    ms.push({ c: x, kind, hw, hwe: kind === 'spire' ? hw * 1.3 : hw, H, Ht: H * (0.2 + 0.1 * r()), cw: 1.2 + r() * 2.4, tw: H * (kind === 'mesa' ? 0.42 + 0.4 * r() : 0.22 + 0.2 * r()), sd: r() * 50, ledges });
+    x += hw * 2 + p.freq * (0.35 + 0.8 * r());
   }
+  const hOf = (m, dx) => {
+    const a = Math.abs(dx), sd = dx < 0 ? -1 : 1; let Hp = m.H;
+    for (const l of m.ledges) if (l.sd === sd && a > l.x0) Hp = Math.min(Hp, m.H - l.d);
+    if (a < m.hwe) return Hp;
+    if (a < m.hwe + m.cw) return Hp + (m.Ht - Hp) * (a - m.hwe) / m.cw;
+    const q = (a - m.hwe - m.cw) / m.tw; return q < 1 ? m.Ht * Math.pow(1 - q, 1.5) : 0;
+  };
   for (let x2 = 0; x2 < per; x2++) {
     let best = 0, bi = -1;
-    for (let i = 0; i < ms.length; i++) {
-      const m = ms[i], sdx = wd(x2 - m.c), dx = Math.abs(sdx); let v = 0;
-      const HH = m.H + (m.step && sdx > m.step.x ? m.step.d : 0);
-      if (dx < m.hw) v = HH; else if (dx < m.hw + m.cw) { const He = m.H + (m.step && sdx > 0 ? m.step.d : 0); v = He + (m.Ht - He) * (dx - m.hw) / m.cw; } else if (dx < m.hw + m.cw + m.tw) v = m.Ht * Math.pow(1 - (dx - m.hw - m.cw) / m.tw, 1.4);
-      if (v > best) { best = v; bi = i; }
-    }
+    for (let i = 0; i < ms.length; i++) { const m = ms[i], v = hOf(m, wd(x2 - m.c)); if (v > best) { best = v; bi = i; } }
     const c3 = Math.round(per / 3);
-    top[x2] = y0r - best - (best > 2 ? (k_n1(x2 / per * c3, 4 + p.seed, c3) - 0.5) * 2 : 0); own[x2] = best > 1 ? bi : -1;
+    top[x2] = y0r - best - (best > 2 ? (k_n1(x2 / per * c3, 4 + p.seed, c3) - 0.5) * 1.8 : 0); own[x2] = best > 1 ? bi : -1;
   }
-  const vFoot = k_vOf(TR.ramp, 1);
+  const vFoot = k_vOf(TR.ramp, 1), baseWall = [0.4, 0.3, 0.2][tier], baseTal = [0.42, 0.36, 0.3][tier], bandVar = [0.03, 0.07, 0.11][tier];
+  const hwAt = (m, alt) => alt > m.H * 0.8 ? m.hwe : m.hw * (0.62 + 0.3 * (1 - alt / (m.H * 0.8)));
   for (let x2 = 0; x2 < per; x2++) {
     const tx = Math.round(top[x2]), m = own[x2] >= 0 ? ms[own[x2]] : null;
     for (let y = Math.max(0, tx); y < hh; y++) {
       const d = y - top[x2], alt = y0r - y, f = clamp((y - (y0r - amp * 0.1)) / (amp * 0.9 + 10)), hz = k_hzFoot(clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.2)), p.hazeBase, f);
-      let v = vFoot, fine = k_h(x2 * 13 + y * 7, p.seed), rim = false;
+      let v = vFoot, rim = false;
       if (m) {
-        const dx = wd(x2 - m.c), u = dx / (m.hw + m.cw), onWall = Math.abs(dx) < m.hw + m.cw && alt > m.Ht - 1;
-        if (onWall) {
-          const bh = Math.max(4, amp * 0.1), aw = alt + m.sd + 1.5 * Math.sin(x2 * 0.13 + m.sd) + 0.8 * Math.sin(x2 * 0.41), b = Math.floor(aw / bh), seam = (aw % bh) < 1;
-          const gn = k_n2(x2 * 0.38, alt * 0.035, 8 + p.seed);
-          let lf = k_sstep(0.25, 1.05, u * light) * 0.95;
-          if (Math.abs(u) > 0.9) lf = u * light > 0 ? 1 : 0;
-          v = 0.14 + 0.3 * k_h(b, p.seed + 5) + (lf - 0.3) * 0.5 + (gn > 0.7 ? -0.13 : 0) + (seam ? -0.1 : 0) + (fine - 0.5) * 0.06;
-          if (d < 1.3) { v = 0.5 + 0.5 * lf; rim = lf > 0.4; }
-        } else {
-          const facing = (dx > 0 ? 1 : -1) * light;
-          v = 0.3 + (facing > 0 ? 0.28 : -0.05) + (fine - 0.5) * 0.14;
+        const dx = wd(x2 - m.c), a = Math.abs(dx), facing = (dx > 0 ? 1 : -1) * light, wallEdge = m.hwe + m.cw;
+        if (m.kind === 'spire' && alt > m.Ht + 1 && a > hwAt(m, alt) + 0.4) continue;                       // le cou de l'aiguille est plus étroit que son chapeau
+        if (a < wallEdge && alt > m.Ht - 1) {                                                              // paroi
+          const es = wallEdge - dx * light + (k_n1(alt * 0.22 + m.sd, 77 + p.seed) - 0.5) * 3.2, sw = clamp(wallEdge * 0.3, 1.5, 6);
+          const lt = es < sw ? 1 : (es < sw + 2.5 ? (k_bay(x2, y) < 0.5 ? 1 : 0) : 0);
+          const bh = Math.max(4, amp * 0.1), aw = alt + m.sd + 1.4 * Math.sin(x2 * 0.13 + m.sd) + 0.7 * Math.sin(x2 * 0.41) + 1.5 * (k_n1(x2 * 0.08, 12 + p.seed) - 0.5), b = Math.floor(aw / bh), seam = (aw % bh) < 1;
+          const flute = k_n2(x2 * 0.75 + m.sd, alt * 0.03, 8 + p.seed) > 0.68 ? -0.05 - 0.04 * tier : 0;                    // cannelures verticales de ruissellement
+          v = baseWall + (k_h(b, p.seed + 5) - 0.5) * 2 * bandVar + (lt ? 0.36 : 0) + flute + (seam && tier > 0 ? -0.07 : 0) + 0.1 * clamp((alt - m.Ht) / Math.max(1, m.H - m.Ht));
+          if (d < 2.2 && m.kind !== 'spire') v = Math.max(v, lt ? 0.8 : 0.58);                              // dessus du plateau : accroche la lumière
+          if (d < 1.3 && lt) rim = true;
+        } else {                                                                                            // éboulis
+          v = baseTal + (facing > 0 ? 0.2 : -0.03) + (k_h(x2 * 13 + y * 7, p.seed) - 0.5) * 0.05 * (tier + 1) / 2 + 0.08 * Math.pow(clamp(1 - d / Math.max(3, m.Ht)), 2);
           if (d < 1.3 && facing > 0) rim = true;
         }
       }
@@ -535,14 +586,16 @@ function k_buildDune(p) {
   const sl = new Float32Array(per); for (let x2 = 0; x2 < per; x2++) sl[x2] = (top[wrap(x2 + 2)] - top[wrap(x2 - 2)]) / 4;
   const vFoot = k_vOf(TR.ramp, 1);
   for (let x2 = 0; x2 < per; x2++) {
-    const tx = Math.round(top[x2]), facing = sl[x2] * light;
+    const tx = Math.round(top[x2]);
     for (let y = Math.max(0, tx); y < hh; y++) {
       const d = y - top[x2], f = clamp((y - (y0r - amp * 0.15)) / (amp * 0.9 + 8)), hz = k_hzFoot(clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.2)), p.hazeBase, f), fine = k_h(x2 * 13 + y * 7, p.seed);
+      const facing = sl[wrap(x2 + Math.round(d * 0.42 * light))] * light;                // la ligne d'ombre de la crête descend en biais (perspective), pas à la verticale
       let v, rim = false;
       if (facing > 0.04) {
         const rip = (((d + 1.6 * Math.sin(x2 * 0.19 + p.seed) + 0.8 * Math.sin(x2 * 0.43)) % 3.6) + 3.6) % 3.6 < 0.9;
-        v = 0.78 - d / 90 + 0.1 * (fine - 0.5) - (rip ? 0.1 : 0); if (d < 1.2) rim = true;
-      } else v = 0.3 + 0.15 * clamp(d / 30) + 0.1 * (fine - 0.5) - (facing < -0.15 && fine < 0.1 ? 0.07 : 0);
+        v = 0.78 - d / 90 + 0.05 * (fine - 0.5) - (rip ? 0.08 : 0); if (d < 1.2) rim = true;
+      } else v = 0.3 + 0.15 * clamp(d / 30) + 0.05 * (fine - 0.5) - (facing < -0.15 && fine < 0.1 ? 0.05 : 0);
+      v = 0.46 + (v - 0.46) * Math.exp(-d / 24);                                          // la lumière de la pente s'estompe avec la profondeur : pas de coupure verticale sous la crête
       const sf = k_sstep(0.5, 1.0, f); v = v + (vFoot - v) * sf;
       im.d[y * per + x2] = (rim && f < 0.5 && hz < 0.6) ? TR.rimU : k_pickT(TR.st, TR.mistU, v, hz, x2, y);
     }
@@ -565,23 +618,28 @@ function k_baobab(im, per, hh, cx, base, h, col, rimCol, light) {
   for (let k = -3; k <= 3; k++) { const ex = cx + k * Math.max(2, h * 0.14), ey = by - Math.round(h * (0.22 - Math.abs(k) * 0.03)); for (let s = 0; s <= 6; s++) set(cx + (ex - cx) * s / 6, by + (ey - by) * s / 6, col); for (let i = -1; i <= 1; i++) set(ex + i, ey - 1, col); }
 }
 function k_buildSavanna(p) {
-  const S = K_SKY[p.preset], per = p.span, amp = p.amp, hh = amp + 14 + p.depth, y0r = amp + 10, light = p.light ?? S.light, TR = k_tier(p);
+  const S = K_SKY[p.preset], per = p.span, amp = p.amp, hh = amp + 14 + p.depth, y0r = amp + 10, light = p.light ?? S.light, TR = k_tier(p), tier = Math.max(0, Math.min(2, p.tier ?? 1));
   const top = new Float32Array(per), im = k_img(per, hh), wrap = v => ((v % per) + per) % per, r = rng(p.seed * 23 + 9);
   const cells = Math.max(2, Math.round(per / p.freq) & ~1);
   for (let x = 0; x < per; x++) { const u = x / per * cells; top[x] = y0r - amp * (0.55 * k_n1(u, 1 + p.seed, cells) + 0.3 * k_n1(u * 2, 2 + p.seed, cells * 2) + 0.15 * k_n1(u * 4, 3 + p.seed, cells * 4)); }
-  const vFoot = k_vOf(TR.ramp, 1);
+  if (tier >= 1) {                                                    // touffes d'herbe haute qui dentellent la ligne d'horizon (plus grandes au premier plan)
+    const nb = new Float32Array(per); let x = r() * 4;
+    while (x < per) { const hgt = (1.5 + 2.6 * r()) * (0.5 + 0.25 * tier), w = 1 + Math.floor(r() * 2.5); for (let i = -w; i <= w; i++) { const xx = wrap(Math.round(x) + i); nb[xx] = Math.max(nb[xx], hgt * (1 - Math.abs(i) / (w + 1))); } x += 2 + r() * 7; }
+    for (let x2 = 0; x2 < per; x2++) top[x2] -= nb[x2];
+  }
+  const vFoot = k_vOf(TR.ramp, 1), v0 = [0.58, 0.5, 0.46][tier], dec = [0.05, 0.05, 0.04][tier];
   for (let x = 0; x < per; x++) {
     const tx = Math.round(top[x]);
     for (let y = Math.max(0, tx); y < hh; y++) {
-      const d = y - top[x], f = clamp((y - y0r + amp * 0.6) / (amp * 0.6 + p.depth * 0.7)), hz = k_hzFoot(clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.1)), p.hazeBase, f), fine = k_h(x * 13 + y * 7, p.seed);
-      const sg = k_n2(x * 0.5, y * 0.3, 77 + p.seed), blade = k_n2(x * 0.9, y * 0.18, 79 + p.seed);
-      let v = 0.22 + 0.5 * Math.pow(clamp(1 - d / 10), 1.2) + 0.12 * (sg - 0.5) + (blade > 0.74 && d < 14 ? 0.1 : 0) + 0.05 * (fine - 0.5);
+      const d = y - top[x], f = clamp((y - y0r + amp * 0.6) / (amp * 0.6 + p.depth * 0.7)), hz = k_hzFoot(clamp(p.haze + (p.hazeBase - p.haze) * Math.pow(f, 1.1)), p.hazeBase, f);
+      const st = k_n2(x * 0.1, y * 0.85, 77 + p.seed), st2 = k_n2(x * 0.03 + 9, y * 0.4, 79 + p.seed);              // longues stries horizontales d'herbe vue en enfilade
+      let v = v0 - dec * Math.min(d, 9) - (d > 9 ? 0.012 * (d - 9) : 0) + (st - 0.5) * 0.14 + (st2 - 0.5) * 0.1 + (tier > 0 && st > 0.8 && d < 18 ? 0.2 * (1 - d / 18) : 0);
+      v = Math.max(v, vFoot);
       const sf = k_sstep(0.5, 1.0, f); v = v + (vFoot - v) * sf;
       im.d[y * per + x] = (d < 1.2 && hz < 0.7) ? TR.rimU : k_pickT(TR.st, TR.mistU, v, hz, x, y);
     }
   }
-  const tcol = k_u32(TR.ramp[1]), cL = TR.rimU, cT = hz0(TR);
-  function hz0(T) { return p.haze > 0.5 ? T.st[1][2] : T.st[0][2]; }
+  const cT = tier === 0 ? TR.st[1][2] : TR.st[0][2], cL = TR.rimU;
   let x = r() * 30;
   while (x < per) {
     const k = r(), h = Math.round(p.treeH * (0.7 + 0.6 * r())), by = Math.round(top[wrap(Math.round(x))]) + 1;
@@ -590,13 +648,16 @@ function k_buildSavanna(p) {
   }
   im.x.putImageData(im.id, 0, 0); return { c: im.c, top, y0r, hh, per };
 }
-// couche de relief générique. o : preset, kind 'alpine'|'hills', y (ligne de crête moyenne à l'écran), amp, freq, seed, par, cam, haze (brume en haut) / hazeBase (en bas), snow, depth, trees…
-function k_ridge(preset, t, o = {}) {
-  const p = {
+// couche de relief générique. o : preset, kind 'alpine'|'hills'|'mesa'|'dune'|'savanna', y (ligne de crête moyenne à l'écran), amp, freq, seed, par (parallaxe : 0 = fixe, 1 = colle au décor), cam, haze (brume en haut) / hazeBase (en bas), snow, depth, trees…
+function k_ridgeParams(preset, o) {
+  return {
     preset, kind: o.kind || 'alpine', seed: o.seed ?? 1, amp: Math.round(o.amp ?? 70), freq: o.freq ?? 70, span: o.span ?? 720, depth: Math.round(o.depth ?? 130),
     haze: o.haze ?? 0.5, hazeBase: o.hazeBase ?? 1, snow: o.snow ?? 0.6, snowy: o.snowy ?? 0, trees: o.trees ?? 0, treeH: o.treeH ?? 9, treeCol: o.treeCol, rim: o.rim, light: o.light, dither: o.dither, sub: o.sub, wide: o.wide ?? 1, baobab: o.baobab ?? 0.15, tier: o.tier ?? 1,
   };
-  const key = 'ridge|' + Object.values(p).join('|'), R_ = k_cache(key, () => ({ mesa: k_buildMesa, dune: k_buildDune, savanna: k_buildSavanna }[p.kind] || k_buildRidge)(p));
+}
+function k_ridgeGet(p) { return k_cache('ridge|' + Object.values(p).join('|'), () => ({ mesa: k_buildMesa, dune: k_buildDune, savanna: k_buildSavanna }[p.kind] || k_buildRidge)(p)); }
+function k_ridge(preset, t, o = {}) {
+  const p = k_ridgeParams(preset, o), R_ = k_ridgeGet(p);
   const par = o.par ?? 0.2, ox = Math.round(((o.cam || 0) * par) % p.span), y = Math.round(k_sy(o.y ?? 220, o, par) - R_.y0r);
   L.setTransform(1, 0, 0, 1, 0, 0); L.globalAlpha = o.alpha ?? 1;
   for (let k = -1; k <= 1; k++) { const x = k * p.span - ox + Math.round(o.dx || 0); if (x < LW && x + p.span > 0) L.drawImage(R_.c, x, y); }
@@ -604,44 +665,55 @@ function k_ridge(preset, t, o = {}) {
   if (bottom > yb) for (let k = -1; k <= 1; k++) { const x = k * p.span - ox + Math.round(o.dx || 0); if (x < LW && x + p.span > 0) L.drawImage(R_.c, 0, R_.hh - 1, p.span, 1, x, yb, p.span, bottom - yb); }
   L.globalAlpha = 1;
 }
-// chaîne de montagnes enneigées de l'Alaska : 3 à 4 plans qui se fondent dans la brume du ciel. o : y (ligne de crête du premier plan), amp, snow, layers, cam, seed
-function k_mountains(preset, t, o = {}) {
-  const y = o.y ?? 230, a = o.amp ?? 1, n = o.layers ?? 4, cam = o.cam, sd = o.seed ?? 1, lay = [
+// les couches de chaque famille de reliefs (une description par plan, du plus lointain au plus proche)
+function k_mountainLayers(o) {
+  const y = o.y ?? 230, a = o.amp ?? 1, n = o.layers ?? 4, sd = o.seed ?? 1;
+  return [
     { y: y - 22, amp: 56 * a, freq: 150, wide: 1.5, par: 0.08, haze: 0.62, hazeBase: 1, snow: 0.97, depth: 60, seed: sd * 3 + 1 },
     { y: y - 6, amp: 86 * a, freq: 112, wide: 1.0, par: 0.16, haze: 0.4, hazeBase: 1, snow: 0.85, depth: 70, seed: sd * 3 + 2 },
     { y: y + 10, amp: 62 * a, freq: 92, wide: 1.15, par: 0.28, haze: 0.2, hazeBase: 0.95, snow: 0.75, depth: 80, seed: sd * 3 + 3 },
     { y: y + 24, amp: 42 * a, freq: 70, wide: 0.9, par: 0.42, haze: 0.04, hazeBase: 0.9, snow: 0.55, depth: 90, seed: sd * 3 + 4 },
-  ].slice(4 - n);
-  for (const l of lay) k_ridge(preset, t, { ...l, cam, kind: 'alpine', snow: (o.snow ?? 1) * l.snow, base: o.base });
+  ].slice(4 - n).map(l => ({ ...l, kind: 'alpine', snow: (o.snow ?? 1) * l.snow }));
 }
-// collines douces (option : trees > 0 → forêt d'épicéas lointains). o : y, amp, par, haze, trees (0..1), treeH, snowy
-function k_hills(preset, t, o = {}) { k_ridge(preset, t, { kind: 'hills', amp: 26, freq: 60, haze: 0.4, par: 0.35, depth: 60, ...o }); }
-
-// buttes et mesas du désert (strates rouges, éboulis), 3 plans par défaut. o : y, amp, layers, cam, seed
-function k_mesas(preset, t, o = {}) {
-  const y = o.y ?? 250, a = o.amp ?? 1, n = o.layers ?? 3, cam = o.cam, sd = o.seed ?? 1, lay = [
+function k_mesaLayers(o) {
+  const y = o.y ?? 250, a = o.amp ?? 1, n = o.layers ?? 3, sd = o.seed ?? 1;
+  return [
     { y: y - 8, amp: 40 * a, freq: 120, par: 0.1, haze: 0, hazeBase: 0.4, depth: 50, seed: sd * 3 + 1, tier: 0 },
     { y: y + 8, amp: 52 * a, freq: 140, par: 0.2, haze: 0, hazeBase: 0.5, depth: 60, seed: sd * 3 + 2, tier: 1 },
     { y: y + 26, amp: 60 * a, freq: 190, par: 0.34, haze: 0, hazeBase: 0.4, depth: 70, seed: sd * 3 + 3, tier: 2 },
-  ].slice(3 - n);
-  for (const l of lay) k_ridge(preset, t, { ...l, cam, kind: 'mesa', base: o.base });
+  ].slice(3 - n).map(l => ({ ...l, kind: 'mesa' }));
 }
-// dunes (sable éclairé / face d'ombre). o : y, amp, layers, cam, seed
-function k_dunes(preset, t, o = {}) {
-  const y = o.y ?? 290, a = o.amp ?? 1, n = o.layers ?? 2, cam = o.cam, sd = o.seed ?? 1, lay = [
+function k_duneLayers(o) {
+  const y = o.y ?? 290, a = o.amp ?? 1, n = o.layers ?? 2, sd = o.seed ?? 1;
+  return [
     { y: y, amp: 26 * a, freq: 120, par: 0.4, haze: 0, hazeBase: 0.5, depth: 50, seed: sd * 3 + 1, tier: 1 },
     { y: y + 26, amp: 34 * a, freq: 150, par: 0.7, haze: 0, hazeBase: 0.3, depth: 60, seed: sd * 3 + 2, tier: 2 },
-  ].slice(2 - n);
-  for (const l of lay) k_ridge(preset, t, { ...l, cam, kind: 'dune', base: o.base });
+  ].slice(2 - n).map(l => ({ ...l, kind: 'dune' }));
 }
-// horizon de savane : herbe dorée à contre-jour, acacias et baobabs lointains, 2 plans. o : y, layers, trees (0..1), cam, seed
-function k_horizon(preset, t, o = {}) {
-  const y = o.y ?? 262, n = o.layers ?? 2, cam = o.cam, sd = o.seed ?? 1, tr = o.trees ?? 0.7, lay = [
-    { y: y, amp: 10, freq: 150, par: 0.12, haze: 0, hazeBase: 0.5, depth: 40, seed: sd * 3 + 1, treeH: 9, trees: tr * 0.8, baobab: 0.2, tier: 0 },
-    { y: y + 18, amp: 14, freq: 110, par: 0.3, haze: 0, hazeBase: 0.4, depth: 60, seed: sd * 3 + 2, treeH: 16, trees: tr, baobab: 0.12, tier: 2 },
-  ].slice(2 - n);
-  for (const l of lay) k_ridge(preset, t, { ...l, cam, kind: 'savanna', base: o.base });
+function k_horizonLayers(o) {
+  const y = o.y ?? 262, n = o.layers ?? 2, sd = o.seed ?? 1, tr = o.trees ?? 0.7;
+  return [
+    { y: y, amp: 10, freq: 150, par: 0.12, haze: 0.1, hazeBase: 0.7, depth: 40, seed: sd * 3 + 1, treeH: 9, trees: tr * 0.8, baobab: 0.2, tier: 0 },
+    { y: y + 18, amp: 14, freq: 110, par: 0.3, haze: 0, hazeBase: 0, depth: 60, seed: sd * 3 + 2, treeH: 16, trees: tr, baobab: 0.12, tier: 2 },
+  ].slice(2 - n).map(l => ({ ...l, kind: 'savanna' }));
 }
+// chaîne de montagnes enneigées de l'Alaska : 3 à 4 plans qui se fondent dans la brume du ciel. o : y (ligne de crête du premier plan), amp, snow, layers (4), cam, seed, base (ligne où le relief s'arrête vers le bas)
+function k_mountains(preset, t, o = {}) { for (const l of k_mountainLayers(o)) k_ridge(preset, t, { ...l, cam: o.cam, base: o.base }); }
+// collines douces (option : trees > 0 → forêt d'épicéas lointains ; en savane : acacias). o : y, amp, par, haze, trees (0..1), treeH, snowy, seed, cam, base
+function k_hills(preset, t, o = {}) { k_ridge(preset, t, preset === 'savannaDawn' ? { kind: 'savanna', amp: 16, freq: 90, haze: 0.1, hazeBase: 0, par: 0.3, depth: 60, tier: 1, treeH: 13, trees: o.trees ?? 0.6, ...o } : { kind: 'hills', amp: 26, freq: 60, haze: 0.4, par: 0.35, depth: 60, ...o }); }
+// buttes et mesas du désert (strates rouges, éboulis, aiguilles), 3 plans par défaut. o : y, amp, layers, cam, seed, base
+function k_mesas(preset, t, o = {}) { for (const l of k_mesaLayers(o)) k_ridge(preset, t, { ...l, cam: o.cam, base: o.base }); }
+// dunes (sable éclairé / face d'ombre ; en Alaska : congères de neige). o : y, amp, layers, cam, seed, base
+function k_dunes(preset, t, o = {}) { for (const l of k_duneLayers(o)) k_ridge(preset, t, { ...l, cam: o.cam, base: o.base }); }
+// horizon de savane : herbe dorée à contre-jour, acacias et baobabs lointains, 2 plans. o : y, layers, trees (0..1), cam, seed, base
+function k_horizon(preset, t, o = {}) { for (const l of k_horizonLayers(o)) k_ridge(preset, t, { ...l, cam: o.cam, base: o.base }); }
+// préparation des reliefs aux réglages par défaut (coût unique avant le premier plan : le plan qui les utilise ne paie pas la construction)
+INITS.push(() => {
+  for (const P of ['alaskaDusk', 'alaskaNight', 'alaskaSpring']) for (const l of k_mountainLayers({})) k_ridgeGet(k_ridgeParams(P, l));
+  for (const l of k_mesaLayers({})) k_ridgeGet(k_ridgeParams('desertDusk', l));
+  for (const l of k_duneLayers({})) k_ridgeGet(k_ridgeParams('desertDusk', l));
+  for (const l of k_horizonLayers({})) k_ridgeGet(k_ridgeParams('savannaDawn', l));
+});
 
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 5. ATMOSPHÈRE : brume tramée, rayons de lumière, vignette, vent, caméra
@@ -857,34 +929,63 @@ function k_drips(x, y, t, o = {}) {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 7. GLACE : givre qui gagne, bloc de glace translucide fissuré, fonte de la neige
 // ════════════════════════════════════════════════════════════════════════════════════════
-// givre : cristaux (fougères) + voile granuleux qui gagnent une zone de 0 à 1. (x, y, w, h) = zone ; p = avancement 0..1.
-// o : from 'edge' (du contour vers l'intérieur) | 'bottom' | 'top' | 'left' | 'right' | 'center' | [dx, dy] ; shape 'rect'|'ellipse' ; mask (px, py) → bool (silhouette du sujet) ; seed ; density ; t (scintillement) ; ferns (0..1)
+// givre : voile granuleux, aiguilles de glace (fougères) et liseré blanc qui gagnent un sujet ou une zone, de p = 0 (rien) à 1 (tout recouvert). (x, y, w, h) = zone ; p = avancement 0..1.
+// o : from 'edge' (du contour vers l'intérieur : épouse la silhouette si mask est donné) | 'bottom' | 'top' | 'left' | 'right' | 'center' | [dx, dy] (direction de progression) ; shape 'rect'|'ellipse' ;
+// mask (px, py) → bool (silhouette du sujet, coordonnées de l'écran) ; seed ; density (1) ; t (scintillement) ; ferns (0..1, quantité d'aiguilles) ; reach (px sur lesquels le voile s'épaissit après le front, 8)
 function k_frost(x, y, w, h, p, o = {}) {
   if (p <= 0.001) return;
   x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
-  const t = o.t ?? 0, seed = o.seed ?? 9, from = o.from || 'edge', mask = o.mask, ell = o.shape === 'ellipse', dens = o.density ?? 1, front = p * 1.3 - 0.15;
-  const cx = w / 2, cy = h / 2, md = o.reach ?? Math.min(w, h) / 2;
-  const arr = (i, j) => {
-    if (from === 'edge') return ell ? (1 - Math.sqrt(((i - cx) / cx) ** 2 + ((j - cy) / cy) ** 2)) * Math.min(cx, cy) / md : Math.min(i, w - 1 - i, j, h - 1 - j) / md;
-    if (from === 'bottom') return (h - 1 - j) / h; if (from === 'top') return j / h; if (from === 'left') return i / w; if (from === 'right') return (w - 1 - i) / w;
-    if (from === 'center') return Math.hypot((i - cx) / cx, (j - cy) / cy) / 1.2;
-    const n = Math.hypot(from[0], from[1]) || 1; return clamp(((i - cx) * from[0] + (j - cy) * from[1]) / n / Math.max(w, h) + 0.5);
-  };
-  const inside = (i, j) => (!ell || ((i - cx) / cx) ** 2 + ((j - cy) / cy) ** 2 <= 1) && (!mask || mask(x + i, y + j));
-  const b = k_tmp('frost', w, h), cW = k_u32(WH[3]), cN4 = k_u32(NE[4]), cN3 = k_u32(NE[3]), cC = k_u32(CY[4]), cC3 = k_u32(CY[3]);
-  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    if (!inside(i, j)) continue;
-    const a = arr(i, j) + (k_n2(i * 0.11, j * 0.11, seed) - 0.5) * 0.34; if (a >= front) continue;
-    const depth = front - a, cov = clamp(depth / 0.28) * 0.9 * dens, hs = k_h(i * 7 + j * 13, seed), th = 0.5 * k_bay(x + i, y + j) + 0.5 * k_h(i * 3 + j * 5, seed + 1);
-    if (th >= cov) continue;
-    const q = k_h(i * 11 + j * 3, seed + 2);
-    b.d[j * w + i] = depth < 0.1 ? (q > 0.5 ? cC : cN4) : q > 0.8 ? cW : q > 0.42 ? cN4 : q > 0.14 ? cN3 : cC3;
+  const M = 3, W2 = w + 2 * M, H2 = h + 2 * M;                                          // marge : le liseré déborde de 1 px de la silhouette
+  const t = o.t ?? 0, seed = o.seed ?? 9, from = o.from || 'edge', mask = o.mask, ell = o.shape === 'ellipse', dens = o.density ?? 1, reach = o.reach ?? 8;
+  const cx = W2 / 2, cy = H2 / 2, ins = new Uint8Array(W2 * H2), D = new Float32Array(W2 * H2);
+  for (let j = 0; j < H2; j++) for (let i = 0; i < W2; i++) {
+    const ii = i - M, jj = j - M; if (ii < 0 || jj < 0 || ii >= w || jj >= h) continue;
+    if (ell && ((ii - w / 2) / (w / 2)) ** 2 + ((jj - h / 2) / (h / 2)) ** 2 > 1) continue;
+    if (mask && !mask(x + ii, y + jj)) continue;
+    ins[j * W2 + i] = 1;
   }
-  // fougères de givre : tiges et branches qui s'allongent quand le front passe
-  const nF = Math.round(Math.min(90, w * h / 90) * (o.ferns ?? 1)), r = rng(seed * 5 + 3);
-  const put = (px_, py_, c) => { const i = Math.round(px_), j = Math.round(py_); if (i >= 0 && j >= 0 && i < w && j < h && inside(i, j)) b.d[j * w + i] = c; };
+  const big = 1e4;                                                                      // distance au bord de la silhouette (transformée en distance à 2 passes)
+  for (let j = 0; j < H2; j++) for (let i = 0; i < W2; i++) { const q = j * W2 + i; D[q] = ins[q] ? big : 0; }
+  for (let j = 1; j < H2 - 1; j++) for (let i = 1; i < W2 - 1; i++) { const q = j * W2 + i; if (!ins[q]) continue; D[q] = Math.min(D[q], D[q - 1] + 1, D[q - W2] + 1, D[q - W2 - 1] + 1.4, D[q - W2 + 1] + 1.4); }
+  for (let j = H2 - 2; j > 0; j--) for (let i = W2 - 2; i > 0; i--) { const q = j * W2 + i; if (!ins[q]) continue; D[q] = Math.min(D[q], D[q + 1] + 1, D[q + W2] + 1, D[q + W2 + 1] + 1.4, D[q + W2 - 1] + 1.4); }
+  let Dm = 1; for (let q = 0; q < D.length; q++) if (ins[q] && D[q] < big && D[q] > Dm) Dm = D[q];
+  const span = Dm + 3, dir = Array.isArray(from) ? from : null, dn = dir ? Math.hypot(dir[0], dir[1]) || 1 : 1;
+  const arr = (i, j) => {                                                               // « heure d'arrivée » du front en px : plus petit = gelé plus tôt
+    const ii = i - M, jj = j - M;
+    let a;
+    if (from === 'edge') a = D[j * W2 + i];
+    else if (from === 'bottom') a = (h - 1 - jj) / h * span; else if (from === 'top') a = jj / h * span; else if (from === 'left') a = ii / w * span; else if (from === 'right') a = (w - 1 - ii) / w * span;
+    else if (from === 'center') a = Math.hypot((ii - w / 2) / (w / 2), (jj - h / 2) / (h / 2)) / 1.2 * span;
+    else a = clamp(((ii - w / 2) * dir[0] + (jj - h / 2) * dir[1]) / dn / Math.max(w, h) + 0.5) * span;
+    return a + (k_n2(i * 0.11, j * 0.11, seed) - 0.5) * 3.4;
+  };
+  const front = p * (span + reach * 0.6) - reach * 0.25;
+  const b = k_tmp('frost', W2, H2), cW = k_u32(WH[3]), cN4 = k_u32(NE[4]), cN3 = k_u32(NE[3]), cN2 = k_u32(NE[2]), cC = k_u32(CY[4]), cC3 = k_u32(CY[3]);
+  for (let j = 0; j < H2; j++) for (let i = 0; i < W2; i++) {
+    const q = j * W2 + i; if (!ins[q]) continue;
+    const a = arr(i, j); if (a >= front) continue;
+    const depth = front - a, cov = clamp(depth / reach) * 0.92 * dens, hs = k_h(i * 7 + j * 13, seed), th = 0.5 * k_bay(x + i, y + j) + 0.5 * k_h(i * 3 + j * 5, seed + 1);
+    if (th >= cov && depth > 1.3) continue;
+    const qq = k_h(i * 11 + j * 3, seed + 2);
+    b.d[q] = depth < 1.3 ? (qq > 0.45 ? cW : cC) : qq > 0.82 ? cW : qq > 0.5 ? cN4 : qq > 0.2 ? cN3 : cN2;
+  }
+  // liseré blanc autour de la silhouette (pixels extérieurs voisins d'un pixel gelé)
+  if (mask || ell) for (let j = 1; j < H2 - 1; j++) for (let i = 1; i < W2 - 1; i++) {
+    const q = j * W2 + i; if (ins[q]) continue;
+    const nb = ins[q - 1] ? q - 1 : ins[q + 1] ? q + 1 : ins[q - W2] ? q - W2 : ins[q + W2] ? q + W2 : -1; if (nb < 0 || !b.d[nb]) continue;
+    if (k_h(i * 5 + j * 9, seed + 6) < 0.75) b.d[q] = k_h(i + j * 3, seed + 7) < 0.4 ? cC : cW;
+  }
+  // aiguilles de glace : tiges qui rentrent depuis le front, branches en V qui raccourcissent
+  const nF = Math.round(Math.min(110, w * h / 80) * (o.ferns ?? 1)), r = rng(seed * 5 + 3);
+  const put = (px_, py_, c) => { const i = Math.round(px_) + M, j = Math.round(py_) + M; if (i >= 0 && j >= 0 && i < W2 && j < H2 && ins[j * W2 + i]) b.d[j * W2 + i] = c; };
   for (let f = 0; f < nF; f++) {
-    const sx = r() * w, sy = r() * h, ang0 = r() * TAU, ml = 5 + r() * 7, a = arr(sx | 0, sy | 0), g = clamp((front - a) / 0.45); if (g <= 0 || !inside(sx | 0, sy | 0)) continue;
+    let sx = r() * w, sy = r() * h, ang0 = r() * TAU; const ml = 5 + r() * 8;
+    if (from === 'edge') {                                                              // départ près du bord, direction vers l'intérieur
+      let tries = 0; while (tries++ < 12) { sx = r() * w; sy = r() * h; const dd = D[(Math.round(sy) + M) * W2 + Math.round(sx) + M]; if (dd > 0 && dd < 5) break; }
+      const ci = Math.round(sx) + M, cj = Math.round(sy) + M, gx = D[cj * W2 + Math.min(W2 - 1, ci + 1)] - D[cj * W2 + Math.max(0, ci - 1)], gy = D[Math.min(H2 - 1, cj + 1) * W2 + ci] - D[Math.max(0, cj - 1) * W2 + ci];
+      ang0 = Math.atan2(gy, gx) + (r() - 0.5) * 1.3;
+    }
+    const a = arr(Math.round(sx) + M, Math.round(sy) + M), g = clamp((front - a) / (reach * 1.1)); if (g <= 0 || !ins[(Math.round(sy) + M) * W2 + Math.round(sx) + M]) continue;
     const len = ml * g, dx = Math.cos(ang0), dy = Math.sin(ang0);
     for (let s = 0; s <= len; s++) {
       put(sx + dx * s, sy + dy * s, cW);
@@ -896,10 +997,10 @@ function k_frost(x, y, w, h, p, o = {}) {
   }
   // scintillements
   for (let k = 0; k < 6; k++) {
-    const gx = (k_h(k, seed + 7) * w) | 0, gy = (k_h(k, seed + 8) * h) | 0, v = Math.sin(t * 2.3 + k * 2.1 + seed);
-    if (v > 0.75 && inside(gx, gy) && arr(gx, gy) < front - 0.1) { put(gx, gy, cW); put(gx - 1, gy, cN4); put(gx + 1, gy, cN4); put(gx, gy - 1, cN4); put(gx, gy + 1, cN4); if (v > 0.93) { put(gx - 2, gy, cC); put(gx + 2, gy, cC); put(gx, gy - 2, cC); put(gx, gy + 2, cC); } }
+    const gx = (k_h(k, seed + 7) * w) | 0, gy = (k_h(k, seed + 8) * h) | 0, v = Math.sin(t * 2.3 + k * 2.1 + seed), gq = (gy + M) * W2 + gx + M;
+    if (v > 0.75 && ins[gq] && b.d[gq]) { put(gx, gy, cW); put(gx - 1, gy, cN4); put(gx + 1, gy, cN4); put(gx, gy - 1, cN4); put(gx, gy + 1, cN4); if (v > 0.93) { put(gx - 2, gy, cC); put(gx + 2, gy, cC); put(gx, gy - 2, cC); put(gx, gy + 2, cC); } }
   }
-  k_blit(b, x, y);
+  k_blit(b, x - M, y - M);
 }
 function k_polyExt(pts, y0, y1) {
   const out = [];
@@ -926,64 +1027,98 @@ function k_crackPaths(w, h, seed, ox, oy) {
   let tot = 0; for (const p of paths) tot = Math.max(tot, p.start + p.cum[p.cum.length - 1]);
   return { paths, tot };
 }
-// bloc de glace translucide. À appeler APRÈS avoir dessiné le sujet : le voile de glace passe par-dessus (réfraction, teinte, reflets, bulles, givre, fissures).
-// (x, y) = coin haut-gauche de la face avant, (w, h) = taille. o : t, seed, alpha (opacité du voile, 0.5), crack 0..1 (progression des fissures), crackAt [fx, fy], frost 0..1, melt 0..1 (fonte : face supérieure plus mince, gouttes, reflets mouillés),
-// warm 0..1 (lueur chaude du dégel au centre qui bat : beatHz), warmAt [x, y], sparkle 0..1, mode 'veil' (défaut, sujet derrière) | 'solid' (glace opaque sans sujet), preset (teinte du ciel reflété)
+// bloc de glace translucide en 3/4 : face avant (le voile : réfraction, teinte, givre intérieur, bulles, fissures), dessus clair, flanc droit sombre, ombre au sol.
+// À appeler APRÈS avoir dessiné le sujet : le voile de glace passe par-dessus et laisse voir le sujet à travers.
+// (x, y) = coin haut-gauche de la face avant, (w, h) = taille. o : t, seed, alpha (opacité du voile, 0.56), window [fx, fy, frx, fry] (ellipse en fractions de la face où le voile s'éclaircit : le sujet y reste net), crack 0..1 (progression des fissures), crackAt [fx, fy] (origine, fractions de la face), frost 0..1 (givre du pourtour),
+// melt 0..1 (fonte : dessus et flanc plus minces, reflets mouillés, filets d'eau, gouttes, flaque au pied), warm 0..1 (lueur chaude du dégel au centre qui bat : beatHz), warmAt [x, y],
+// sparkle 0..1 (éclats), side (largeur du flanc en px, 6 % de w), shadow (ombre au sol, true), mode 'veil' (défaut, sujet derrière) | 'solid' (glace opaque sans sujet), preset (teinte du ciel reflété sur le dessus)
 function k_iceBlock(x, y, w, h, o = {}) {
-  const t = o.t ?? 0, seed = o.seed ?? 5, crack = clamp(o.crack ?? 0), melt = clamp(o.melt ?? 0), solid = o.mode === 'solid', vA = (o.alpha ?? 0.5) * (1 - 0.35 * melt) * (solid ? 1.8 : 1), frost = o.frost ?? 0.6, spark = o.sparkle ?? 1;
+  const t = o.t ?? 0, seed = o.seed ?? 5, crack = clamp(o.crack ?? 0), melt = clamp(o.melt ?? 0), solid = o.mode === 'solid', vA = (o.alpha ?? 0.56) * (1 - 0.35 * melt) * (solid ? 1.8 : 1), frost = o.frost ?? 0.6, spark = o.sparkle ?? 1, win = o.window;
   x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
-  const th = Math.max(3, Math.round(h * 0.12 * (1 - 0.5 * melt))), r = rng(seed * 31 + 7), c1 = 4 + Math.round(r() * 4), c2 = 5 + Math.round(r() * 5), c4 = 5 + Math.round(r() * 5), c5 = 4 + Math.round(r() * 4);
-  const pts = [[c1 + 4, -th], [w - c2 - 4, -th], [w - c2, 0], [w, c2], [w, h - c4], [w - c4, h], [c5, h], [0, h - c5], [0, c1], [c1, 0]];
-  const ext = k_polyExt(pts, -th, h - 1);
+  const th = Math.max(4, Math.round(h * 0.1 * (1 - 0.5 * melt))), sd = Math.max(4, Math.round((o.side ?? w * 0.06) * (1 - 0.3 * melt)));
+  const r = rng(seed * 31 + 7), c1 = 4 + Math.round(r() * 4), c2 = 5 + Math.round(r() * 5), c4 = 5 + Math.round(r() * 5), c5 = 4 + Math.round(r() * 4);
+  const F = [[c1, 0], [w - c2, 0], [w, c2], [w, h - c4], [w - c4, h], [c5, h], [0, h - c5], [0, c1]], Tp = [[c1, 0], [w - c2, 0], [w - c2 + sd, -th], [c1 + sd, -th]];
+  const Sp = [[w - c2, 0], [w - c2 + sd, -th], [w + sd, c2 - th], [w + sd, h - c4 - th], [w, h - c4], [w, c2]];
+  const eF = k_polyExt(F, 0, h - 1), eT = k_polyExt(Tp, -th, -1), eS = k_polyExt(Sp, -th, h - 1);
+  const face = (i, j) => {
+    if (j >= 0) { const e = eF[j]; if (e && i >= e[0] && i <= e[1]) return 1; } else { const e = eT[j + th]; if (e && i >= e[0] && i <= e[1]) return 2; }
+    if (j >= -th && j < h) { const e = eS[j + th]; if (e && i >= e[0] && i <= e[1]) return 3; }
+    return 0;
+  };
   const skyc = o.preset ? k_skyColor(o.preset, 0.8) : [200, 224, 255];
+  // ombre au sol, flaque de fonte
+  if (o.shadow !== false) { L.save(); L.fillStyle = 'rgba(5,4,15,0.38)'; L.beginPath(); L.ellipse(x + (w + sd) / 2, y + h - th * 0.3 + 2, (w + sd) / 2 + 7, th * 0.5 + 5, 0, 0, TAU); L.fill(); L.restore(); }
+  if (melt > 0.04) {
+    const pr = w * (0.36 + 0.22 * melt), py = y + h + 3 + 2 * melt, pxx = x + (w + sd) / 2, pry = 2 + 5 * melt;
+    L.save(); L.fillStyle = `rgba(58,168,196,${0.5 + 0.2 * melt})`; L.beginPath(); L.ellipse(pxx, py, pr, pry, 0, 0, TAU); L.fill(); L.restore();
+    for (let i = 0; i < 7; i++) { const a = k_h(i, seed + 40) * pr * 1.6 - pr * 0.8, yy = py + Math.round((k_h(i, seed + 41) - 0.5) * pry * 1.2); if (Math.abs(a) < pr * 0.85 * Math.sqrt(Math.max(0, 1 - Math.pow((yy - py) / pry, 2)))) R(pxx + a + Math.sin(t * 1.5 + i) * 2, yy, 2 + (i % 3), 1, i % 2 ? WH[3] : CY[4]); }
+  }
   // lueur chaude sous le voile (le sujet qui revient à la vie)
   if (o.warm > 0) {
     const bt = 0.5 + 0.5 * Math.sin(t * TAU * (o.beatHz ?? 1.1)), g = o.warmAt || [x + w * 0.5, y + h * 0.55];
-    rgrad(g[0], g[1], 2, w * 0.7, [[0, 'rgba(255,196,96,0.8)'], [0.45, 'rgba(255,140,60,0.32)'], [1, 'rgba(255,120,60,0)']], clamp(o.warm * (0.5 + 0.5 * bt)), 'lighter');
+    L.save(); L.beginPath(); L.rect(x, y, w, h); L.clip();
+    rgrad(g[0], g[1], 2, w * 0.7, [[0, 'rgba(255,196,96,0.7)'], [0.45, 'rgba(255,140,60,0.28)'], [1, 'rgba(255,120,60,0)']], clamp(o.warm * (0.5 + 0.5 * bt)), 'lighter');
+    L.restore();
   }
-  const bx = x - 2, by = y - th - 2, bw = w + 4, bh = h + th + 4;
+  const bx = x - 2, by = y - th - 2, bw = w + sd + 4, bh = h + th + 4;
   const cx0 = Math.max(0, bx), cy0 = Math.max(0, by), cx1 = Math.min(LW, bx + bw), cy1 = Math.min(LH, by + bh); if (cx1 <= cx0 || cy1 <= cy0) return;
   const gw = cx1 - cx0, gh = cy1 - cy0, id = L.getImageData(cx0, cy0, gw, gh), d = id.data, src = new Uint8ClampedArray(d);
-  const at = (ix, iy) => { ix = clamp(ix, 0, gw - 1); iy = clamp(iy, 0, gh - 1); const q = (iy * gw + ix) * 4; return [src[q], src[q + 1], src[q + 2]]; };
-  const lit = [255, 255, 255], deepc = [18, 74, 102], light = k_rgb(NE[4]);
+  const LIT = [255, 255, 255], LIGHT = [196, 236, 250], DEEP = [30, 112, 146], EDGE_D = [14, 62, 92], BEV = [226, 246, 255];
   const streaks = [w * 0.62, w * 0.78 + 6];
-  for (let j = -th; j < h; j++) {
-    const e = ext[j + th]; if (!e) continue;
-    for (let i = e[0]; i <= e[1]; i++) {
-      const ax = x + i, ay = y + j; if (ax < cx0 || ay < cy0 || ax >= cx1 || ay >= cy1) continue;
-      const q = ((ay - cy0) * gw + (ax - cx0)) * 4, edge = Math.min(i - e[0], e[1] - i, j + th, h - 1 - j), ef = 1 - clamp(edge / 12), nz = k_n2(i * 0.12, j * 0.12, seed);
-      let rgb;
-      if (j < 0) {                                                                  // face supérieure : reflet du ciel
-        const f = (j + th) / th, tc = k_mix([255, 255, 255], skyc.map(v => v * 0.35 + 255 * 0.65), f);
-        const s0 = at(ax - cx0, ay - cy0); rgb = k_mix(s0, tc, solid ? 0.95 : 0.8);
-        if (j === -th || edge < 1) rgb = lit;
-      } else {
-        const rdx = Math.round(1.6 * Math.sin(j * 0.21 + seed) * (1 - ef * 0.5)), rdy = Math.round(0.9 * Math.sin(i * 0.17 + seed * 2));
-        const s0 = solid ? [60, 120, 160] : at(ax - cx0 + rdx, ay - cy0 + rdy), gd = clamp(0.12 + 0.42 * (i / w) + 0.62 * (j / h)), ic = k_mix([196, 236, 250], [30, 112, 146], Math.pow(gd, 1.25));
-        const a = clamp(vA * (0.6 + 1.0 * ef * ef * ef) + 0.12 * (nz - 0.5) + (j < 9 ? 0.2 * (1 - j / 9) : 0), 0.16, 0.9);
-        rgb = k_mix(s0, ic, a);
-        const lx = i - e[0];
-        if (lx >= 3 && lx <= 4 && j > 5 && j < h - 7 && k_bay(ax, ay) < 0.75) rgb = k_mix(rgb, lit, 0.45);                       // bande de reflet à gauche
-        for (const sk of streaks) { const dd = Math.abs((i - 0.55 * j) - sk * 0.5); if (dd < 1.2 && j > 6 && j < h * 0.6) rgb = k_mix(rgb, lit, 0.7 - dd * 0.3); }
-        if (j > h - 6) rgb = k_mix(rgb, deepc, 0.12 * (j - (h - 6)));
-        if (e[1] - i < 3) rgb = k_mix(rgb, deepc, 0.25);
-        if (melt > 0 && j > h - 4 - melt * 4 && k_bay(ax, ay) < 0.7) rgb = k_mix(rgb, lit, 0.5);                                 // reflet mouillé
-        if (edge < 1) rgb = (i - e[0] < 1 || j < 1) ? light : deepc;                                                              // contour : liseré clair en haut à gauche, sombre en bas à droite
-      }
-      d[q] = rgb[0]; d[q + 1] = rgb[1]; d[q + 2] = rgb[2]; d[q + 3] = 255;
+  for (let j = -th; j < h; j++) for (let i = -1; i <= w + sd; i++) {
+    const fc = face(i, j); if (!fc) continue;
+    const ax = x + i, ay = y + j; if (ax < cx0 || ay < cy0 || ax >= cx1 || ay >= cy1) continue;
+    const q = ((ay - cy0) * gw + (ax - cx0)) * 4;
+    const sxp = (dx, dy) => { const ix = clamp(ax - cx0 + dx, 0, gw - 1), iy = clamp(ay - cy0 + dy, 0, gh - 1), qq = (iy * gw + ix) * 4; return qq; };
+    let rr, gg, bb;
+    const up = face(i, j - 1), lf = face(i - 1, j), dn = face(i, j + 1), rt = face(i + 1, j);
+    if (fc === 1) {
+      const e = eF[j], edge = Math.min(i - e[0], e[1] - i, j, h - 1 - j), ef = 1 - clamp(edge / 12), nz = k_n2(i * 0.12, j * 0.12, seed);
+      const rdx = Math.round(1.6 * Math.sin(j * 0.21 + seed) * (1 - ef * 0.5)), rdy = Math.round(0.9 * Math.sin(i * 0.17 + seed * 2)), qs = sxp(rdx, rdy);
+      let r0 = solid ? 60 : src[qs], g0 = solid ? 120 : src[qs + 1], b0 = solid ? 160 : src[qs + 2];
+      const gd = Math.pow(clamp(0.12 + 0.42 * (i / w) + 0.62 * (j / h)), 1.25), ir = LIGHT[0] + (DEEP[0] - LIGHT[0]) * gd, ig = LIGHT[1] + (DEEP[1] - LIGHT[1]) * gd, ib = LIGHT[2] + (DEEP[2] - LIGHT[2]) * gd;
+      let a = clamp(vA * (0.6 + 1.0 * ef * ef * ef) + 0.12 * (nz - 0.5) + (j < 9 ? 0.2 * (1 - j / 9) : 0), 0.16, 0.9);
+      if (win) { const wd2 = Math.hypot((i / w - win[0]) / win[2], (j / h - win[1]) / win[3]); a *= 1 - 0.6 * k_sstep(1.0, 0.35, wd2); }
+      rr = r0 + (ir - r0) * a; gg = g0 + (ig - g0) * a; bb = b0 + (ib - b0) * a;
+      const cl = k_n2(i * 0.06 + j * 0.1 + seed * 3, j * 0.07, seed + 3);                         // air gelé : nuages blancs surtout au pied et sur les bords
+      if (cl > 0.62) { const qd = clamp((cl - 0.62) * 3.2) * (0.3 + 0.7 * ef + 0.4 * (j / h)); if (k_bay(ax, ay) < qd) { rr += (238 - rr) * 0.66; gg += (250 - gg) * 0.66; bb += (255 - bb) * 0.66; } }
+      const lx = i - e[0];
+      if (lx >= 3 && lx <= 4 && j > 5 && j < h - 7 && k_bay(ax, ay) < 0.75) { rr += (255 - rr) * 0.45; gg += (255 - gg) * 0.45; bb += (255 - bb) * 0.45; }       // bande de reflet à gauche
+      for (const sk of streaks) { const dd = Math.abs((i - 0.55 * j) - sk * 0.5); if (dd < 1.2 && j > 6 && j < h * 0.6) { const m = 0.7 - dd * 0.3; rr += (255 - rr) * m; gg += (255 - gg) * m; bb += (255 - bb) * m; } }
+      if (j > h - 6) { const m = 0.12 * (j - (h - 6)); rr += (DEEP[0] * 0.6 - rr) * m; gg += (DEEP[1] * 0.6 - gg) * m; bb += (DEEP[2] * 0.6 - bb) * m; }
+      if (melt > 0 && j > h - 4 - melt * 4 && k_bay(ax, ay) < 0.7) { rr += (255 - rr) * 0.5; gg += (255 - gg) * 0.5; bb += (255 - bb) * 0.5; }
+      if (up === 2) { rr = BEV[0]; gg = BEV[1]; bb = BEV[2]; }                                  // arête avant du dessus : liseré clair
+      else if (rt === 3) { rr += (BEV[0] - rr) * 0.55; gg += (BEV[1] - gg) * 0.55; bb += (BEV[2] - bb) * 0.55; }
+    } else if (fc === 2) {                                                                        // dessus : reflet du ciel, légèrement rayé
+      const f = (j + th) / th, k = f * 0.35, tr = 255 * (1 - k) + (skyc[0] * 0.35 + 165) * k, tg = 255 * (1 - k) + (skyc[1] * 0.35 + 165) * k, tb = 255 * (1 - k) + (skyc[2] * 0.35 + 165) * k;
+      const qs = sxp(0, 0), m = solid ? 0.95 : 0.8; rr = src[qs] + (tr - src[qs]) * m; gg = src[qs + 1] + (tg - src[qs + 1]) * m; bb = src[qs + 2] + (tb - src[qs + 2]) * m;
+      if (k_h(i * 7 + j * 3, seed + 5) < 0.05) { rr = 200; gg = 238; bb = 252; }
+      if (f > 0.8) { rr -= 14; gg -= 8; }
+      if (melt > 0 && k_bay(ax, ay) < 0.35 * melt) { rr = 255; gg = 255; bb = 255; }
+    } else {                                                                                      // flanc droit : sombre, bleu, vertical
+      const row = eS[j + th], u = clamp((i - row[0]) / Math.max(1, sd)), vv = 0.15 + 0.55 * u + 0.25 * (j / h);
+      rr = 104 + (30 - 104) * vv; gg = 156 + (62 - 156) * vv; bb = 210 + (118 - 210) * vv;
+      const sk = k_n2(i * 0.6, j * 0.05, seed + 8); if (sk > 0.62) { rr += 34; gg += 36; bb += 26; }
+      const qs = sxp(-2, 0); rr += (src[qs] - rr) * 0.12; gg += (src[qs + 1] - gg) * 0.12; bb += (src[qs + 2] - bb) * 0.12;
+      if (lf === 1) { rr += (BEV[0] - rr) * 0.3; gg += (BEV[1] - gg) * 0.3; bb += (BEV[2] - bb) * 0.3; }
     }
+    if (!up || !lf) { rr = LIT[0]; gg = LIT[1]; bb = LIT[2]; if (fc === 1 && k_bay(ax, ay) < 0.25) { rr = 196; gg = 240; bb = 252; } }           // contour : liseré clair en haut à gauche
+    else if (!dn || !rt) { rr = EDGE_D[0]; gg = EDGE_D[1]; bb = EDGE_D[2]; }                                                                   // et sombre en bas à droite
+    d[q] = rr; d[q + 1] = gg; d[q + 2] = bb; d[q + 3] = 255;
   }
   L.putImageData(id, cx0, cy0);
-  // bulles figées
+  if (o.warm > 0) { const bt = 0.5 + 0.5 * Math.sin(t * TAU * (o.beatHz ?? 1.1)), g = o.warmAt || [x + w * 0.5, y + h * 0.55]; rgrad(g[0], g[1], 2, w * 0.42, [[0, 'rgba(255,170,70,0.55)'], [0.6, 'rgba(255,130,50,0.2)'], [1, 'rgba(255,120,60,0)']], clamp(o.warm * (0.4 + 0.6 * bt)), 'lighter'); }
+  // bulles figées (quelques grosses, des chapelets de petites)
   const nb = Math.round(w * h / 520), rb = rng(seed * 11 + 1);
   for (let k = 0; k < nb; k++) {
-    const bxx = x + 7 + rb() * (w - 14), byy = y + 6 + rb() * (h - 14), big = rb() < 0.35, ee = ext[Math.round(byy - y) + th]; if (!ee || bxx - x < ee[0] + 4 || bxx - x > ee[1] - 4) continue;
-    const X = Math.round(bxx), Y = Math.round(byy);
+    const bxx = x + 7 + rb() * (w - 14), byy = y + 6 + rb() * (h - 14), big = rb() < 0.3, X = Math.round(bxx), Y = Math.round(byy);
+    if (face(X - x - 4, Y - y) !== 1 || face(X - x + 4, Y - y) !== 1) continue;
     if (big) { px(X - 1, Y, WH[3]); px(X + 1, Y, NE[3]); px(X, Y - 1, WH[3]); px(X, Y + 1, CY[2]); px(X, Y, CY[3]); px(X - 2, Y, NE[2]); px(X + 2, Y, CY[1]); } else { px(X, Y, WH[3]); px(X + 1, Y + 1, CY[1]); }
   }
+  for (let c = 0; c < 2; c++) { const cx = x + w * (0.2 + 0.55 * k_h(c, seed + 60)), cy0b = y + h * 0.88; for (let k = 0; k < 7; k++) { const yy = Math.round(cy0b - k * (h * 0.09) - k * k * 0.6), xx = Math.round(cx + Math.sin(k * 1.3 + c * 2) * 2); if (face(xx - x, yy - y) === 1) px(xx, yy, k % 3 === 0 ? WH[3] : NE[3]); } }
   // givre sur le pourtour
-  if (frost > 0) k_frost(x - 1, y - th - 1, w + 2, h + th + 2, frost * 0.7, { from: 'edge', reach: 11, seed: seed + 3, t, mask: (px_, py_) => { const rr = py_ - y + th, ee = ext[rr]; return !!ee && px_ - x >= ee[0] && px_ - x <= ee[1]; }, ferns: 0.7, density: 0.7 });
-  // fissures : une ligne sombre + un reflet clair, qui court de l'origine vers les bords
+  if (frost > 0) k_frost(x - 1, y - th - 1, w + sd + 2, h + th + 2, frost * 0.7, { from: 'edge', reach: 11, seed: seed + 3, t, mask: (px_, py_) => face(px_ - x, py_ - y) !== 0, ferns: 0.7, density: 0.7 });
+  // fissures : un trait sombre + un reflet clair, qui court de l'origine vers les bords, poudre blanche autour des plus avancées
   if (crack > 0) {
     const ca = o.crackAt || [0.58, 0.02], cp = k_crackPaths(w, h, seed * 7 + 2, ca[0] * w, ca[1] * h), Lg = crack * cp.tot * 1.02;
     for (const pa of cp.paths) {
@@ -995,6 +1130,7 @@ function k_iceBlock(x, y, w, h, o = {}) {
           const thick = pa.depth === 0 && (pa.start + pa.cum[i]) < 18 ? 2 : 1;
           lineP(x + prev[0] + 1, y + prev[1], x + X + 1, y + Y, WH[3], 1);
           lineP(x + prev[0], y + prev[1], x + X, y + Y, CY[0], thick);
+          if (crack > 0.45) for (let s = 0; s < 3; s++) { const f = s / 3, qx = x + prev[0] + (X - prev[0]) * f, qy = y + prev[1] + (Y - prev[1]) * f, hq = k_h(Math.round(qx * 7 + qy), seed + 70); if (hq < 0.5 * crack) px(qx + Math.round((hq - 0.25) * 8), qy + Math.round(((hq * 7.3) % 1 - 0.5) * 4), NE[3]); }
         }
         prev = [X, Y]; if (lenHere > Lg) break;
       }
@@ -1005,7 +1141,13 @@ function k_iceBlock(x, y, w, h, o = {}) {
     const gx = x + [c1 + 1, w * 0.78, 3, w * 0.4][k], gy = y + [-th + 1, -th + 1, h * 0.55, 1][k], v = Math.sin(t * 2.2 + k * 2.4 + seed) * spark;
     if (v > 0.72) { px(gx, gy, WH[3]); px(gx - 1, gy, NE[4]); px(gx + 1, gy, NE[4]); px(gx, gy - 1, NE[4]); px(gx, gy + 1, NE[4]); if (v > 0.92) { px(gx - 2, gy, CY[4]); px(gx + 2, gy, CY[4]); px(gx, gy - 2, CY[4]); px(gx, gy + 2, CY[4]); } }
   }
-  if (melt > 0.05) k_drips(x + w * 0.5, y + h, t, { n: 3, spread: w * 0.32, fall: 16 + 12 * melt, period: 1.5 - 0.5 * melt, seed: seed + 9 });
+  if (melt > 0.05) {
+    for (let k = 0; k < 4; k++) {                                                                  // filets d'eau qui courent sur la face avant
+      const sx = x + w * (0.14 + 0.24 * k) + Math.round((k_h(k, seed + 50) - 0.5) * 8), sp = 5 + 5 * k_h(k, seed + 51), len = 6 + 8 * melt, hd = ((t * sp * melt + k_h(k, seed + 52) * h) % (h * 0.8)) + 2;
+      for (let s = 0; s < len; s++) { const yy = Math.round(y + hd - s); if (yy < y + 2 || yy > y + h - 3 || face(sx - x, yy - y) !== 1) continue; px(sx, yy, s === 0 ? WH[3] : s < 3 ? NE[4] : CY[4]); }
+    }
+    k_drips(x + w * 0.5, y + h, t, { n: 3, spread: w * 0.32, fall: 16 + 12 * melt, period: 1.5 - 0.5 * melt, seed: seed + 9 });
+  }
 }
 // fonte de la neige : un manteau de neige sur la zone (x0, y0)–(x1, y1) recule de p = 0 (tout recouvert) à 1 (presque fondu), en laissant un bord mouillé sombre et luisant.
 // Dessiner d'abord le sol nu (litière, herbe) : la neige se pose par-dessus. o : seed, from 'bottom'|'top'|'left'|'right'|{x, y} (où ça fond d'abord), light (−1/+1), t, cam
