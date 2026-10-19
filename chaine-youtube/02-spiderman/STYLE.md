@@ -45,7 +45,7 @@ Coupes toutes les 2 à 4 s (rythme des références), chaque plan bouge en conti
 
 ## Son
 
-Voix off d'homme (même voix que la vidéo 1), nappe douce avec petite mélodie en cloches et pizzicato, un bruit pour chaque action (aucun bruit sur les coupes) : vent entre les gratte-ciel, bourdonnement de mouche et « boing » élastique, crissement de freins de métro, pluie et tonnerre, bips d'étiquettes, « ding » pour ✓ et buzz grave pour ✗.
+Voix off d'homme (synthèse neuronale Kyutai TTS, voix de référence « fabieng » ; la vidéo 1 garde la sienne), nappe douce avec petite mélodie en cloches et pizzicato, un bruit pour chaque action (aucun bruit sur les coupes) : vent entre les gratte-ciel, bourdonnement de mouche et « boing » élastique, crissement de freins de métro, pluie et tonnerre, bips d'étiquettes, « ding » pour ✓ et buzz grave pour ✗.
 
 ## Plan de sortie (marque de la chaîne)
 

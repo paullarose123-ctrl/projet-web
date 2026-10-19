@@ -8,7 +8,7 @@
 
 **Fil conducteur** : les coupes sont franches (pas de fil ni de transition entre les plans, pas de bruit de toile). Un repère revient à chaque épreuve : le **tableau des trois cases** en haut à droite (la bobine de fil ✓, puis le hamburger, le jet et le nuage), qui se remplit de ✗ et sert de verdict. Les bras de Peter Parker sont une blague, pas une quatrième case.
 
-**Format** : 1080 × 1920, 30 i/s, 1 min 49 (108,7 s : voix de l'auteur 102,5 s, carton « LE FIL TIENT. LE RESTE, NON. » 2 s, plan de sortie 4,2 s). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, barres).
+**Format** : 1080 × 1920, 30 i/s, 2 min 14 (133,7 s : voix 127,5 s, carton « LE FIL TIENT. LE RESTE, NON. » 2 s, plan de sortie 4,2 s ; avec la voix enregistrée de l'auteur, plus rapide, c'était 1 min 49). Deux registres comme dans les références : vignettes en couleur (ville, labo, aube sur la rivière) et planches ambre sur noir avec instruments (jauge de tension, étiquettes, règle, balance, barres).
 
 **Plan de sortie (demandé par l'auteur)** : le logo de la chaîne (grappe de raisin en pixel art, sprite à l'échelle du film, `../marque/`), le nom « RAISINS » et « ABONNEZ-VOUS » en jaune, sur fond nuit violette ; ni bouton, ni curseur, ni cloche. Bruitage : petite harmonie de cloches à l'atterrissage du logo.
 
@@ -51,7 +51,7 @@
 
 **Précautions**
 - *Spider-Man* est une marque de Marvel / Sony : le personnage est ici un dessin pixel art stylisé, pour un propos de vulgarisation ; à vérifier si la chaîne est monétisée.
-- La voix est celle de l'auteur, enregistrée au téléphone et montée par `montage.py` : aucune licence de voix à vérifier. (Le service de lecture d'Edge, non officiel, n'est plus utilisé ; il reste disponible dans `voix.py`.)
+- La voix est une **voix de synthèse** : Kyutai TTS 1.6B (poids CC-BY 4.0) lit le texte avec la voix de référence « fabieng » du dépôt `kyutai/tts-voices` (enregistrement de l'équipe Kyutai, publié en CC0). Mentionner « voix de synthèse » dans la description et activer l'étiquette « contenu généré par IA » de la plateforme. Les voix `expresso` et `ears` du même dépôt sont réservées à un usage non commercial. Détail, mesures et licences : `voix-ia/LISEZ-MOI.md`. (La voix enregistrée par l'auteur, montée par `montage.py`, reste une variante ; le service de lecture d'Edge, non officiel, n'est plus utilisé.)
 
 **Réserves d'exactitude (relecture)**
 - « Aussi solide que l'acier » n'est vrai qu'avec « à peu près » et « un bon acier » : l'acier va de 0,4 GPa (de construction) à 3 GPa (corde à piano).

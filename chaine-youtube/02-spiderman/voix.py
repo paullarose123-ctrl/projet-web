@@ -22,9 +22,10 @@ Chaque phrase est une liste de paires [affiché, prononcé] : l'affiché est le 
 est ce que lit la voix (« [2013|deux mille treize] »).
 
 Autre moteur (--moteur) : n'importe quel programme `synth.py --groups g.json --outdir D [--seed N]` qui écrit D/<id>.wav pour
-chaque {id, text} de g.json. Les temps des mots sont alors relus par faster-whisper (large-v3-turbo, mots horodatés)
-puis associés aux mots attendus (même alignement que pour les temps du service). Le débit et la hauteur de GROUPES
-ne s'appliquent qu'au service Edge.
+chaque {id, text} de g.json (voir voix-ia/ : la voix IA du film est lue par Kyutai TTS, plusieurs prises par paragraphe, la meilleure
+retenue par des mesures ; `--moteur true` reprend des prises déjà faites). Les temps des mots sont l'alignement forcé du texte sur le son
+(MMS_FA), les paragraphes sont ramenés vers le même volume (--nivelle) et un limiteur rabote les pointes. Le débit et la hauteur de GROUPES
+ne s'appliquent qu'au service Edge (voix-ia/preparer.py en tire un débit relatif par paragraphe pour Kyutai).
 
 Accès réseau : le service est un accès gratuit non officiel à la voix de lecture d'Edge. Pour une chaîne
 monétisée, la même voix existe dans Azure Speech (licence commerciale, clé à créer).
@@ -311,6 +312,8 @@ def main():
     ap.add_argument("--graine", type=int, default=1, help="graine du moteur externe")
     ap.add_argument("--etiquette", default="ext", help="nom du dossier de cache du moteur externe")
     ap.add_argument("--decale", default="+4%", help="ajoute ce débit à celui de chaque paragraphe (par ex. -5% pour ralentir tout)")
+    ap.add_argument("--fin", type=float, default=0.01, help="moteur externe : le paragraphe est coupé là où le volume passe sous cette part de son maximum (0,01 = −40 dB) ; plus haut, on coupe aussi la queue de souffle ou le « e » final lu « euh », mais on avale des syllabes finales douces (à 0,03 : « appétit » devenait « apé »)")
+    ap.add_argument("--nivelle", type=float, default=0.7, help="moteur externe : part de l'écart de volume d'un paragraphe à la médiane qu'on corrige (0 : aucune, 1 : tous au même volume), au plus 6 dB ; une voix de synthèse a des paragraphes tantôt plus forts, tantôt plus doux sans raison")
     a = ap.parse_args()
     cache = f"{a.sortie}/edge/{a.voix}" if not a.moteur else f"{a.sortie}/ext/{a.etiquette}"
     os.makedirs(cache, exist_ok=True)
@@ -318,7 +321,7 @@ def main():
     par_id = {pid: (pause * PAUSE_K, line) for pid, pause, line in SCRIPT}
     assert sorted(i for g in GROUPES for i in g["ids"]) == sorted(par_id), "chaque phrase doit être dans un paragraphe"
     sr = 24000
-    pieces, phrases = [], []
+    pieces, phrases, idx_par, lufs_par = [], [], [], []
     if a.moteur:
         textes = {}
         for gi, g in enumerate(GROUPES, 1):
@@ -348,14 +351,24 @@ def main():
             audio, _ = decode(mp3, sr)
         tm = aligne(attendus, events)
         # silence de début et de fin du paragraphe
-        env = np.abs(audio)
-        loud = np.where(env > 0.01 * env.max())[0]
-        lead = max(0, loud[0] - int(0.04 * sr))
-        end = min(len(audio), loud[-1] + int(0.12 * sr))
+        if a.moteur:         # enveloppe lissée (10 ms) : début à 1 % (on garde le souffle d'attaque), fin à --fin du maximum
+            w10 = int(0.01 * sr)
+            env = np.sqrt(np.convolve(audio ** 2, np.ones(w10) / w10, mode="same"))
+            loud = np.where(env > 0.01 * env.max())[0]
+            fin = np.where(env > a.fin * env.max())[0]
+            lead = max(0, loud[0] - int(0.04 * sr))
+            end = min(len(audio), fin[-1] + int(0.08 * sr))
+            fade_fin = int(0.03 * sr)
+        else:
+            env = np.abs(audio)
+            loud = np.where(env > 0.01 * env.max())[0]
+            lead = max(0, loud[0] - int(0.04 * sr))
+            end = min(len(audio), loud[-1] + int(0.12 * sr))
+            fade_fin = int(0.01 * sr)
         audio = audio[lead:end].copy()
         fade = int(0.01 * sr)
         audio[:fade] *= np.linspace(0, 1, fade)
-        audio[-fade:] *= np.linspace(1, 0, fade)
+        audio[-fade_fin:] *= np.linspace(1, 0, fade_fin)
         tm = [(x0 - lead / sr, x1 - lead / sr) for x0, x1 in tm]
         # mots de chaque phrase du paragraphe
         k, recs = 0, []
@@ -384,9 +397,23 @@ def main():
             ws = [{"w": w, "t0": round(START + t + dec(x0), 3), "t1": round(START + t + dec(x1), 3)} for w, x0, x1 in words]
             phrases.append({"id": pid, "t0": ws[0]["t0"], "t1": ws[-1]["t1"], "words": ws, "text": par_id[pid][1]})
         print(f"g{gi:<2d} {START + t:6.2f} → {START + t + len(audio2) / sr:6.2f}  {debit:>4s} {g['pitch']:>5s}  {texte[:84]}")
-        pause = par_id[ids[-1]][0] + (ENTRE if gi < len(GROUPES) else 0.0)
+        pause = par_id[ids[-1]][0] + (ENTRE if gi < len(GROUPES) else 0.0) + (0.04 if a.moteur else 0.0)      # moteur externe : la queue gardée après le dernier mot est de 0,08 s au lieu de 0,12 s : même pause perçue
+        idx_par.append(len(pieces))
         pieces += [audio2, np.zeros(int(pause * sr), np.float32)]
         t += len(audio2) / sr + pause
+        if a.moteur and a.nivelle > 0:
+            import pyloudnorm as pyln
+            try:
+                lufs_par.append(float(pyln.Meter(sr).integrated_loudness(audio2.astype(np.float64))))
+            except Exception:
+                lufs_par.append(None)
+    if a.moteur and a.nivelle > 0:                 # volumes des paragraphes rapprochés de leur médiane (les durées ne changent pas)
+        valides = [l for l in lufs_par if l is not None and math.isfinite(l)]
+        med = float(np.median(valides))
+        for i, l in zip(idx_par, lufs_par):
+            if l is not None and math.isfinite(l):
+                pieces[i] = (pieces[i] * 10 ** (float(np.clip(a.nivelle * (med - l), -6, 6)) / 20)).astype(np.float32)
+        print(f"volumes des paragraphes : {min(valides):.1f} à {max(valides):.1f} LUFS, médiane {med:.1f} (correction {a.nivelle:.0%})")
     voice = np.concatenate([np.zeros(int(START * sr), np.float32)] + pieces)
     gcd = math.gcd(OUT_SR, sr)
     v48 = resample_poly(voice, OUT_SR // gcd, sr // gcd).astype(np.float32)
@@ -394,7 +421,15 @@ def main():
     # un seul réglage de niveau pour tout le texte (pas de normalisation phrase par phrase) : −19 LUFS
     p = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", f"{a.sortie}/voix_brut.wav", "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True)
     lufs = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", p.stderr)[-1])
-    v48 = np.clip(v48 * 10 ** ((-19.0 - lufs) / 20), -0.97, 0.97)
+    v48 = v48 * 10 ** ((-19.0 - lufs) / 20)
+    if a.moteur:        # limiteur à −0,9 dBFS avec anticipation : rabote les rares pointes sans écrêter
+        sf.write(f"{a.sortie}/voix_niveau.wav", v48.astype(np.float32), OUT_SR, subtype="FLOAT")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f"{a.sortie}/voix_niveau.wav", "-af", "alimiter=limit=0.9:attack=3:release=40:level=false", "-c:a", "pcm_f32le", f"{a.sortie}/voix_limitee.wav"], check=True)
+        v48, _ = sf.read(f"{a.sortie}/voix_limitee.wav", dtype="float32")
+        os.remove(f"{a.sortie}/voix_niveau.wav")
+        os.remove(f"{a.sortie}/voix_limitee.wav")
+    else:
+        v48 = np.clip(v48, -0.97, 0.97)
     sf.write(f"{a.sortie}/voix.wav", v48, OUT_SR)
     tl = {"duration": round(len(v48) / OUT_SR, 3), "voix": a.voix if not a.moteur else a.etiquette, "phrases": phrases}
     json.dump(tl, open(f"{a.sortie}/timeline.json", "w"), ensure_ascii=False, indent=1)

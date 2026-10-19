@@ -1,22 +1,40 @@
 # Vidéo 2 — « La toile de Spider-Man est-elle possible ? »
 
-Short vertical (1080 × 1920, 30 i/s, environ 1 min 50) en pixel art, chaîne **Raisins**. Chaque image est dessinée en code (canvas), la voix off est celle de l'auteur (enregistrée au téléphone, montée par `montage.py`), la musique et les bruitages sont synthétisés.
+Short vertical (1080 × 1920, 30 i/s, environ 2 min 14) en pixel art, chaîne **Raisins**. Chaque image est dessinée en code (canvas), la voix off est une voix de synthèse neuronale (Kyutai TTS, voir `voix-ia/`) ; la voix enregistrée de l'auteur reste possible (`montage.py`). La musique et les bruitages sont synthétisés.
 
 - `CONCEPT.md` : idée, découpage plan par plan, faits vérifiés et sources, réserves d'exactitude.
 - `STYLE.md` : palette, rendu, éléments récurrents, plan de sortie, et ce qu'on n'a pas copié des références.
 - `narration.txt` : le texte à lire (une ligne par paragraphe enregistré). `voix-perso/script-voix.html` : la même chose en page de lecture pour téléphone, avec une consigne de ton par paragraphe.
-- `voix.py` : le texte de la voix (liste `SCRIPT`), le découpage en 18 paragraphes (`GROUPES`), les pauses voulues et les outils communs (alignement du texte sur le son). Peut aussi lire le texte avec une voix de synthèse (Edge, ou un autre moteur) si on n'a pas d'enregistrement.
+- `voix.py` : le texte de la voix (liste `SCRIPT`), le découpage en 18 paragraphes (`GROUPES`), les pauses voulues et les outils communs (alignement du texte sur le son, volumes des paragraphes, limiteur). Fait lire le texte par un moteur de synthèse (`--moteur`, voir `voix-ia/`) ou par le service Edge (ancienne voix, jugée trop « IA »).
+- `voix-ia/` : la voix IA. `preparer.py` (les paragraphes à lire), `synth_kyutai.py` (le moteur Kyutai TTS, plusieurs prises par paragraphe), `choisir_prises.py` (choix de la meilleure prise par des mesures), `LISEZ-MOI.md` (recette, comparaison des moteurs essayés, licences).
 - `controle_micro.py` : contrôle d'un enregistrement avant le montage (niveau, bruit de fond, écho de pièce, écrêtage, relecture du texte).
-- `montage.py` : le montage de la voix enregistrée (voir plus bas). Écrit `build/voix.wav`, `build/timeline.json` / `timeline.js` et `build/montage_rapport.md`.
+- `montage.py` : le montage de la voix enregistrée par l'auteur (variante, voir plus bas). Écrit `build/voix.wav`, `build/timeline.json` / `timeline.js` et `build/montage_rapport.md`.
 - `piece.html` + `engine.js`, `city.js`, `lab.js`, `nature.js`, `plates.js`, `props.js`, `props2.js`, `shots.js`, `shots1.js` … `shots4.js`, `outro.js`, `piece.js` : l'animation. `render(f)` dessine l'image `f` à partir du temps seul ; chaque plan lit ses temps dans la voix (`wt('phrase', 'mot')`). Ouvert dans un navigateur, la page joue en boucle. Les coupes sont franches.
 - `../marque/` : le logo de la chaîne (grappe de raisin) et `logo_pixel.py`, qui le réduit à l'échelle des pixels du film (`logo.js`).
 - `render.mjs` : rend la vidéo avec Chrome ou Chromium (puppeteer-core) et ffmpeg.
 - `score.mjs` : musique et bruitages, calés sur les mêmes temps (`build/events.json`).
 - `room.py` : ajoute à la voix un soupçon de pièce (réverbération courte) avant le mixage.
-- `rendu.sh` : tout le reste, du texte à la vidéo finale.
+- `rendu.sh` : tout le reste, du texte à la vidéo finale (`VOIX=ia` pour la voix de synthèse Kyutai, `VOIX=perso` pour la voix enregistrée).
 - `check.mjs`, `bords.mjs`, `sheet.mjs`, `strip.mjs` : outils de contrôle (erreurs de dessin sur tout le film, textes hors cadre, une image par plan, bande d'images d'un plan).
 
-## Refaire la vidéo avec la voix enregistrée
+## Refaire la vidéo avec la voix IA (par défaut)
+
+```bash
+npm install                                   # puppeteer-core, police Nunito
+pip install numpy scipy soundfile pyloudnorm faster-whisper torch torchaudio praat-parselmouth
+# le moteur Kyutai a son propre environnement (paquet `moshi`, voir voix-ia/synth_kyutai.py) : « kyu/bin/python » ci-dessous
+python voix-ia/preparer.py build/groupes.json                                                                  # les paragraphes à lire
+kyu/bin/python voix-ia/synth_kyutai.py --groups build/groupes.json --outdir build/ext/kyutai --takes 3          # 3 prises par paragraphe (environ 12 min)
+python voix-ia/choisir_prises.py --groups build/groupes.json --dir build/ext/kyutai --cible 2.8                 # la meilleure prise de chaque paragraphe
+python voix.py build --moteur true --etiquette kyutai                                                          # calage mot à mot, pauses, volumes : voix.wav + timeline
+node check.mjs                                # dessine tout le film sans rien écrire : doit afficher « erreurs : 0 »
+node bords.mjs                                # doit afficher « aucun texte hors cadre »
+VOIX=ia ./rendu.sh                            # bruitages, musique, rendu en 4 parties, mixage, −14 LUFS, encodage (< 30 Mo : le débit s'adapte à la durée)
+```
+
+Les paragraphes lus, les réglages et la comparaison avec les autres moteurs essayés (VoxCPM2, Edge, autres voix Kyutai) sont dans `voix-ia/LISEZ-MOI.md`. Pour changer de voix, `--voice` (une voix du dépôt `kyutai/tts-voices`).
+
+## Variante : la voix enregistrée par l'auteur
 
 ```bash
 npm install                                   # puppeteer-core, police Nunito
@@ -47,13 +65,13 @@ Rien de tout cela ne dit comment la voix sonne à l'oreille : seul l'auteur peut
 
 Voir `voix-perso/script-voix.html` : pièce qui ne résonne pas (placard avec des vêtements), téléphone à 15 ou 20 cm de la bouche, un fichier par paragraphe, 1 à 2 secondes de silence avant et après, un fichier de 10 secondes de silence dans la même pièce.
 
-## Voix de synthèse (si besoin)
+## Ancienne voix de synthèse (Edge)
 
-`python voix.py build` lit le texte avec la voix Rémy du service de lecture à voix haute d'Edge (accès gratuit mais **non officiel** : pour une chaîne monétisée, le même type de voix existe dans Azure Speech, licence commerciale) ; `--moteur "PYTHON synth.py"` branche un autre moteur. Les temps des mots viennent alors du service ou de l'alignement forcé. `./rendu.sh` (sans `VOIX=perso`) applique l'égalisation corrective d'une voix de synthèse.
+Cette voix a été jugée « saccadée » et « trop IA » par l'auteur. `python voix.py build` lit le texte avec la voix Rémy du service de lecture à voix haute d'Edge (accès gratuit mais **non officiel** : pour une chaîne monétisée, le même type de voix existe dans Azure Speech, licence commerciale) ; `--moteur "PYTHON synth.py"` branche un autre moteur (c'est ce que fait la voix IA ci-dessus). Les temps des mots viennent alors du service ou de l'alignement forcé. `./rendu.sh` (sans `VOIX=perso`) applique l'égalisation corrective d'une voix de synthèse.
 
 ## Encodage
 
-Le pixel art tramé est un cas difficile pour la vidéo : `-tune animation` active un filtre anti-blocs qui efface le tramage. Mesuré sur 20 s de ce film à 1,7 Mbit/s : réglages par défaut du vidéo 1 (`-tune animation`) SSIM 0,87 ; sans filtre anti-blocs (`no-deblock=1:aq-mode=2:psy-rd=0.6,0`, preset `veryslow`) SSIM 0,996. `rendu.sh` utilise ces derniers à 1 750 kbit/s, ce qui fait environ 25 Mo (l'envoi de fichiers est limité à 30 Mo).
+Le pixel art tramé est un cas difficile pour la vidéo : `-tune animation` active un filtre anti-blocs qui efface le tramage. Mesuré sur 20 s de ce film à 1,7 Mbit/s : réglages par défaut du vidéo 1 (`-tune animation`) SSIM 0,87 ; sans filtre anti-blocs (`no-deblock=1:aq-mode=2:psy-rd=0.6,0`, preset `veryslow`) SSIM 0,996. `rendu.sh` utilise ces derniers à 1 750 kbit/s au plus, réduit pour que le fichier tienne dans 29 Mo (l'envoi de fichiers est limité à 30 Mo) : environ 1 610 kbit/s pour 2 min 14 (et l'audio à 192 kbit/s : à 160, l'encodeur AAC dépassait 0 dBFS).
 
 ## Changer le texte
 
