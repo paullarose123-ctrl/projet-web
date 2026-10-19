@@ -113,6 +113,7 @@ PAGE=solo_gre.html node sheet.mjs 0.55 build/gre/sheet                    # une 
 PAGE=solo_gre.html node sheet.mjs 0.15 build/gre/sheet_debut              # idem au début des plans (pour juger l'arrivée de l'image)
 PAGE=solo_gre.html OUT=build/gre node strip.mjs g2_gel 8 0.25             # 8 images d'un plan, une toutes les 0,25 s : build/gre/strip_g2_gel.png (mouvement)
 node render.mjs solo_gre.html --stills 12.5 14                            # images précises (build/stills/ ou $OUT/stills/)
+node valide.mjs gre                                                       # tableau des plans + contrôles : début du segment, durées, coupes sur les mots, événements connus
 ```
 
 - **Regarder les images** (outil de lecture d'images) : un plan n'est pas fini tant qu'on ne l'a pas vu en image **au début, au milieu et à la fin**, et en bande de mouvement pour tout ce qui bouge. Comparer à la vignette réduite (le sujet se lit-il à 1/4 de taille ?).

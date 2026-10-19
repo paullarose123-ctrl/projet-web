@@ -8,8 +8,11 @@ const seg = process.argv[2];
 if (!FICHIER[seg]) { console.error('segment inconnu : ' + seg + ' (intro, gre, lez, lyc, fin, kit, flore)'); process.exit(1); }
 const h = fs.readFileSync('piece.html', 'utf8');
 const gardes = ['build/timeline.js', 'engine.js', 'scientist.js', 'cadre.js', 'kit.js', 'flore.js', FICHIER[seg], 'shots.js', 'piece.js'];
+// (indices : 0 à 5 = timeline, moteur, scientifique, cadre, kit, flore ; 6 = fichier du segment ; 7 et 8 = shots.js, piece.js)
 const extra = fs.readdirSync('.').filter(f => new RegExp('^' + FICHIER[seg].replace('.js', '') + '_.+\\.js$').test(f)).sort();   // sc_lezard_2.js…
-const tags = [...gardes.slice(0, 7), ...extra, ...gardes.slice(7)].map(f => `<script src="${f}"></script>`);
+// l'accroche et la finale utilisent les animaux des trois autres segments : leurs fichiers de sprites sont chargés aussi
+const SPR = ['intro', 'fin'].includes(seg) ? ['sc_grenouille_sprites.js', 'sc_lezard_sprites.js', 'sc_lycaon_sprites.js'].filter(f => fs.existsSync(f)) : [];
+const tags = [...gardes.slice(0, 6), ...SPR, gardes[6], ...extra, ...gardes.slice(7)].map(f => `<script src="${f}"></script>`);
 tags.splice(1, 0, `<script>window.SOLO='${seg}'</script>`);
 const out = h.replace(/<script src[\s\S]*<\/body>/, tags.join('\n') + '\n</body>');
 fs.writeFileSync(`solo_${seg}.html`, out);

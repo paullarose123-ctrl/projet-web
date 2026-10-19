@@ -39,7 +39,11 @@ Chaque segment est dessiné dans son fichier (voir `GUIDE.md`) ; le premier plan
 
 ## Faits et réserves
 
-Voir `faits.md` (vérifiés par recherche, avec sources). Écarts entre le texte de l'auteur et les sources : voir la section « Réserves » de ce fichier, remplie après vérification.
+Détail, chiffres et sources : `faits.md` (recherche web, résumés d'articles ; aucun texte intégral lu : les chiffres lus dans la presse ou un résumé sont marqués « moyen »). Le texte de l'auteur n'est pas corrigé : voici ce qu'il simplifie ou dépasse, à signaler dans la description si on veut être irréprochable.
+
+- **Lycaons** : « voter » est la métaphore des chercheurs (Walker et al. 2017, delta de l'Okavango au Botswana, 5 meutes, 68 rassemblements) ; le seuil d'éternuements dépend de qui lance le rassemblement (≈ 3 si c'est un dominant, ≈ 10 sinon), donc le « vote » est inégal ; « littéralement » dépasse ce que l'étude établit, et rien ne prouve que toutes les populations d'Afrique le font. Le film ne fixe donc pas de seuil unique à l'écran (« DE 3 À 10 ÉTERNUEMENTS »).
+- **Grenouille des bois** : ≈ 65 à 70 % de l'eau du corps devient de la glace, hors des cellules (pas « gelée à cœur ») ; le cœur ne s'arrête pas d'un coup mais ralentit pendant des heures (arrêt ≈ 20 h après le début du gel en laboratoire), d'où un compteur qui descend progressivement ; le glucose est le principal antigel mais pas le seul (urée, glycolipides) ; en Alaska elle reste gelée ≈ 6 mois (193 ± 11 jours, minimum moyen −14,6 °C, 18 grenouilles sur 18 ont survécu) ; au dégel le cœur repart en premier, mais nage et saut sont diminués pendant un à deux jours.
+- **Lézard à cornes** : le sang vient des sinus autour des yeux (coin de l'œil), pas du globe oculaire ; c'est un dernier recours, déclenché surtout par un canidé qui touche le lézard (≈ 5 % seulement face aux humains) ; la portée citée va de ≈ 0,9 à 1,5 m sans mesure primaire (« presque un mètre » est la valeur prudente) ; les prédateurs gênés sont les canidés (coyotes, renards, chiens), pas prouvé pour les oiseaux ; le composé n'est pas identifié ; les expériences viennent du lézard du Texas aux États-Unis (le film dessine le lézard royal de Sonora, avec ses saguaros).
 
 ## Précautions
 
