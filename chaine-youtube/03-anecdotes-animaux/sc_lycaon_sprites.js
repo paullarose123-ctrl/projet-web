@@ -1,1 +1,446 @@
 'use strict';
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   sc_lycaon_sprites.js — le LYCAON (Lycaon pictus), la meute et les accessoires du vote (segment Afrique). Préfixe ly_.
+   Tout se dessine sur L (270 × 480) dans draw(u, t) (AVANT le tramage), sauf ly_atchoum et ICONES[2] (dans ui(), pixels nets). Fonctions pures du temps : aucun Math.random ni Date (hasard = graine).
+
+   ly_dog(cx, cy, s, t, o)     un lycaon de profil, tourné vers la DROITE (o.flip : vers la gauche). (cx, cy) = sol sous le centre du tronc ; s = 1 → ≈ 145 px du museau au bout de la queue, 79 px au garrot
+                               (60 à 78 cm), ≈ 108 px oreilles comprises ; s = 0,36 → 50 px (meute au loin), s = 1,5 → 218 px (gros plan).
+                               o.pose   'stand' | 'lie' (couché, tête relevée ; o.rest 0..1 pose la tête sur les pattes, yeux fermés) | 'sit' | 'look' (tête haute, oreilles pointées) | 'sneeze' | 'greet' (tête basse à hauteur d'épaule, oreilles
+                                        rabattues, queue qui bat, gueule entrouverte) | 'walk' | 'trot' | 'run' (galop). Une posture d'attitude (stand, look, sneeze, greet) devient mobile avec o.gait 'walk' | 'trot' | 'run'.
+                               o.ph     phase de marche (cycles ; 0 à 1) — les pieds ne glissent pas si cx avance de ly_gait(…).x × s ; sans o.ph, la phase vient de t.
+                               o.seed   individu : dispose les taches noires / fauves / blanches, la couleur du bas des pattes, de la queue et du cou (déterministe) ; chaque graine = un motif différent.
+                               o.flip, o.rim (0..1 : liseré de contre-jour, 1), o.light (±1 : côté du soleil, défaut selon o.env), o.shadow (0..1 : ombre au sol, 1), o.env ('savannaDawn'), o.fog (0..1 : fondu vers la brume : individus lointains),
+                               o.sil (0..1 : contre-jour, tout vire à la silhouette violette), o.outline (couleur du contour, défaut sombre ; null = pas de contour),
+                               o.ear (−1 oreilles couchées … 0 repos … 1 dressées/pointées ; défaut selon la pose + petits mouvements) , o.tail (0..1 : amplitude du battement, défaut selon la pose), o.sneeze (−0,5..1 : inspiration puis saccade ;
+                               voir ly_sneezeEnv(u)), o.mouth (0..1 gueule ouverte), o.eye (0 fermé … 1 ouvert ; défaut : cligne tout seul), o.look (−1..1 : tête plus basse / plus haute), o.t0 (début d'un éternuement automatique).
+                               Renvoie { T(x, y) → [x, y] écran d'un point du repère (x vers l'avant, y vers le bas, sol en y = 0), nose, mouth, eye, head, ear, tail, back, w, dir }.
+   ly_gait(t, o)               { ph, x, f, A, d } : o.gait 'walk' | 'trot' | 'run' ; x = distance parcourue en px à s = 1 depuis o.t0 (cx = x0 + sens × x × s).
+   ly_sneezeEnv(u)             enveloppe d'un éternuement (u = secondes depuis le départ de la saccade, négatif avant) : −0,4 (inspiration) → 1 → 0.
+   ly_pack(t, o) / ly_packLayout(o)   place N lycaons (profondeur, tailles, motifs, poses) de façon déterministe : voir l'en-tête de la fonction.
+   ly_ballot(cx, cy, s, t, o)  urne de vote (fente, pan de bois, étiquette) et bulletin « OUI » qui tombe dans la fente (o.fall 0..1).
+   ly_nose(cx, cy, s, t, o)    gros plan du museau de face : truffe noire humide et ses reflets, narines qui se plissent, moustaches, éternuement (o.sneeze), bulletin collé (o.ballot).
+   ly_sneezeFx(x, y, t0, t, o) petit nuage de gouttelettes dans la lumière rasante de l'aube (draw) ; ly_atchoum(x, y, p, o) le texte « ATCHOUM » en pixels nets (ui).
+   ICONES[2]                   icône 17 × 17 du carnet (tête de lycaon de face).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+// ───────────────────────── outils ─────────────────────────
+const ly_rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const ly_hex = r => '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+function ly_snap(h) { const r = ly_rgb(h); return PAL_HEX[LUT[((r[0] >> 3) << 10) | ((r[1] >> 3) << 5) | (r[2] >> 3)]]; }
+function ly_mix(a, b, k) { const A = ly_rgb(a), B = ly_rgb(b); return ly_snap(ly_hex(A.map((v, i) => v + (B[i] - v) * k))); }
+const ly_mixRaw = (a, b, k) => { const A = ly_rgb(a), B = ly_rgb(b); return ly_hex(A.map((v, i) => v + (B[i] - v) * k)); };
+function ly_h(i, s = 0) { let h = Math.imul(i | 0, 374761393) + Math.imul(s | 0, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+const ly_norm = v => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+const ly_frac = v => v - Math.floor(v);
+const ly_scr = mkCanvas(), ly_S = ly_scr.getContext('2d', { willReadFrequently: true });
+let ly_BB = [0, 0, LW, LH];                                          // zone de travail (pixels écran) : limite le coût du calque et des croissants
+
+function ly_layerBegin() { Y.setTransform(1, 0, 0, 1, 0, 0); Y.globalAlpha = 1; Y.globalCompositeOperation = 'source-over'; Y.filter = 'none'; const B = ly_BB; Y.clearRect(B[0] - 2, B[1] - 2, B[2] - B[0] + 4, B[3] - B[1] + 4); }
+function ly_layerEnd(o = {}) {
+  const B = ly_BB, x0 = Math.max(0, B[0] - 1), y0 = Math.max(0, B[1] - 1), x1 = Math.min(LW, B[2] + 1), y1 = Math.min(LH, B[3] + 1), w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return;
+  const id = Y.getImageData(x0, y0, w, h), d = id.data;
+  for (let i = 3; i < d.length; i += 4) { const a = d[i]; if (a) d[i] = a >= 128 ? 255 : 0; }
+  if (o.outline) {
+    const oc = ly_rgb(o.outline), add = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = y * w + x; if (d[p * 4 + 3]) continue; if ((x > 0 && d[(p - 1) * 4 + 3]) || (x < w - 1 && d[(p + 1) * 4 + 3]) || (y > 0 && d[(p - w) * 4 + 3]) || (y < h - 1 && d[(p + w) * 4 + 3])) add.push(p); }
+    for (const p of add) { d[p * 4] = oc[0]; d[p * 4 + 1] = oc[1]; d[p * 4 + 2] = oc[2]; d[p * 4 + 3] = 255; }
+  }
+  Y.putImageData(id, x0, y0);
+  L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(lay, x0, y0, w, h, x0, y0, w, h);
+}
+// croissant : la partie de path qui n'est PAS couverte par path décalé de (dx, dy) (donc du côté opposé au décalage), floutée de blur px et bornée à path
+function ly_cres(c, path, col, dx, dy, blur = 0, alpha = 1) {
+  const S = ly_S, B = ly_BB, w = B[2] - B[0], h = B[3] - B[1];
+  S.setTransform(1, 0, 0, 1, 0, 0); S.globalCompositeOperation = 'source-over'; S.filter = 'none'; S.globalAlpha = 1; S.clearRect(B[0], B[1], w, h);
+  S.setTransform(c.getTransform());
+  S.fillStyle = col; S.fill(path);
+  S.globalCompositeOperation = 'destination-out'; S.translate(dx, dy); S.fill(path);
+  S.globalCompositeOperation = 'source-over'; S.setTransform(1, 0, 0, 1, 0, 0);
+  c.save(); c.clip(path); c.setTransform(1, 0, 0, 1, 0, 0);
+  if (blur > 0.85) c.filter = `blur(${blur.toFixed(2)}px)`;
+  c.globalAlpha = alpha; c.drawImage(ly_scr, B[0], B[1], w, h, B[0], B[1], w, h);
+  c.restore();
+}
+// courbe de Catmull-Rom FERMÉE passant par tous les points
+function ly_spline(pts) {
+  const p = new Path2D(), n = pts.length; p.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    p.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
+  }
+  p.closePath(); return p;
+}
+// courbe fermée lisse passant près des points (passage par les milieux : plus ronde, sans surépaisseur)
+function ly_smooth(pts) {
+  const p = new Path2D(), n = pts.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], m0 = mid(pts[n - 1], pts[0]);
+  p.moveTo(m0[0], m0[1]);
+  for (let i = 0; i < n; i++) { const a = pts[i], m = mid(a, pts[(i + 1) % n]); p.quadraticCurveTo(a[0], a[1], m[0], m[1]); }
+  p.closePath(); return p;
+}
+function ly_cr(pts, n = 5) {                                                      // points interpolés (Catmull-Rom ouvert) : n points par intervalle
+  const out = [], m = pts.length;
+  for (let i = 0; i < m - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(m - 1, i + 2)];
+    for (let k = 0; k < n; k++) { const f = k / n, f2 = f * f, f3 = f2 * f; out.push([0, 1].map(j => 0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * f + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * f2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * f3))); }
+  }
+  out.push(pts[m - 1].slice()); return out;
+}
+function ly_limb(pts, ws, n = 5) {                                                // patte / queue à contour lisse : ligne médiane et largeurs interpolées
+  const cp = ly_cr(pts, n), wp = ly_cr(ws.map((w, i) => [i, w]), n).map(q => Math.max(0.3, q[1]));
+  return polyPath(limb(cp, wp));
+}
+const ly_ell = (cx, cy, rx, ry, rot = 0) => { const p = new Path2D(); p.ellipse(cx, cy, Math.max(0.01, rx), Math.max(0.01, ry), rot, 0, TAU); return p; };
+function ly_ik(a, b, l1, l2, bend) {                                              // deux os : renvoie l'articulation intermédiaire (bend ±1 : de quel côté elle plie)
+  const dx = b[0] - a[0], dy = b[1] - a[1], dd = Math.hypot(dx, dy) || 0.001, d = Math.max(0.001, Math.min(dd, l1 + l2 - 0.05)), k = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - k * k)), ux = dx / dd, uy = dy / dd;
+  return [a[0] + ux * k - uy * h * bend, a[1] + uy * k + ux * h * bend];
+}
+const ly_rot = (p, pv, a) => { const dx = p[0] - pv[0], dy = p[1] - pv[1], cs = Math.cos(a), sn = Math.sin(a); return [pv[0] + dx * cs - dy * sn, pv[1] + dx * sn + dy * cs]; };
+
+// ───────────────────────── couleurs : tout est ramené d'avance à la palette ─────────────────────────
+// trois pelages (fauve = jaune-brun, noir, blanc) × tons (lumière, milieu, ombre, creux) ; teintés par la lumière et l'ombre de l'ambiance, fondus dans la brume (fog) ou vers la silhouette (sil)
+const ly_palM = new Map();
+function ly_pal(env, fog = 0, sil = 0) {
+  const fq = Math.round(clamp(fog) * 20) / 20, sq = Math.round(clamp(sil) * 20) / 20, key = env + '|' + fq + '|' + sq;
+  let C = ly_palM.get(key); if (C) return C;
+  const E = fl_env({ env }), sh = E.shadow, lit = E.lit, mist = E.mist, sc = sq > 0 ? ly_mix(ly_mixRaw(sh, '#05040f', 0.55), WO[0], 0.2) : null;
+  const T = (c, k = 0) => {                                                         // k : 0 neutre, > 0 vers la lumière, < 0 vers l'ombre
+    let r = c; if (k > 0) r = ly_mix(r, lit, k); else if (k < 0) r = ly_mix(r, sh, -k);
+    if (fq > 0) r = ly_mix(r, mist, fq * 0.8);
+    if (sq > 0) r = ly_mix(r, sc, sq);
+    return r;
+  };
+  C = {
+    env, E, fq, sq,
+    tan: { hi: T(WO[6], 0.42), mid: T(WO[6], 0), lo: T(WO[4], -0.12), deep: T(WO[3], -0.32) },
+    blk: { hi: T(WO[3], 0.1), mid: T(WO[1], 0), lo: T(WO[0], -0.1), deep: T('#05040f', 0) },
+    wht: { hi: T(WH[2], 0.3), mid: T(WH[1], 0), lo: T(ST[6], -0.3), deep: T(ST[5], -0.45) },
+    brn: { hi: T(WO[5], 0.3), mid: T(WO[4], 0), lo: T(WO[3], -0.2), deep: T(WO[1], -0.2) },      // face et oreilles : brun
+    earIn: T(SK[2], 0), mouth: T(RD[1], 0), tongue: T(RD[4], 0), tongueLo: T(RD[2], 0), teeth: T(WH[2], 0),
+    line: T('#05040f', 0), rim: T(E.rim, 0), shadowCol: ly_mixRaw(sh, '#05040f', 0.35), litCol: lit,
+    sh: T(sh, 0),
+  };
+  ly_palM.set(key, C); return C;
+}
+const LY_KEYS = { t: 'tan', k: 'blk', w: 'wht', b: 'brn' };
+
+// ───────────────────────── pelage : un motif par individu (graine) ─────────────────────────
+// blobs : taches irrégulières dans le repère du tronc debout (x vers l'avant, sol en y = 0) ; neck : taches dans le repère du cou ; legs : haut, chaussette, bande ; tail ; head
+const ly_coatM = new Map();
+function ly_blob(r, cx, cy, rx, ry, rot, n = 9) {                                  // polygone irrégulier (rayons modulés) à lisser
+  const pts = []; for (let i = 0; i < n; i++) { const a = i / n * TAU, k = 0.72 + 0.5 * r(), x = Math.cos(a) * rx * k, y = Math.sin(a) * ry * k; pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]); }
+  return pts;
+}
+function ly_coat(seed) {
+  if (ly_coatM.has(seed)) return ly_coatM.get(seed);
+  const r = rng(seed * 7919 + 13), roll = r(), base = roll < 0.46 ? 't' : roll < 0.74 ? 'k' : 'w';
+  const other = c => { const q = r(); if (c === 't') return q < 0.62 ? 'k' : 'w'; if (c === 'k') return q < 0.55 ? 't' : 'w'; return q < 0.5 ? 'k' : 't'; };
+  const blobs = [];
+  const xs = [-33, -20, -7, 6, 19, 31], ys = [-69, -55, -43];
+  for (let j = 0; j < ys.length; j++) for (let i = 0; i < xs.length; i++) {
+    if (r() < 0.34) continue;
+    const col = r() < 0.74 ? other(base) : (base === 'k' ? 'w' : 'k');
+    const cx = xs[i] + (r() - 0.5) * 9, cy = ys[j] + (r() - 0.5) * 7, rx = 6 + r() * 8, ry = 5 + r() * 6.5, rot = (r() - 0.5) * 1.3;
+    blobs.push({ col, pts: ly_blob(r, cx, cy, rx, ry, rot, 9) });
+  }
+  const nroll = r(), nbase = nroll < 0.5 ? 'k' : nroll < 0.82 ? 't' : 'w';
+  const neck = { base: nbase, blobs: [] };
+  for (let i = 0; i < 3; i++) { const col = nbase === 'k' ? (r() < 0.6 ? 't' : 'w') : nbase === 't' ? (r() < 0.7 ? 'k' : 'w') : 'k'; neck.blobs.push({ col, pts: ly_blob(r, 3 + i * 8 + (r() - 0.5) * 4, (r() - 0.5) * 10, 4.5 + r() * 4, 4 + r() * 5, r() * 1.5, 8) }); }
+  const pickTop = () => { const q = r(); return q < 0.45 ? 't' : q < 0.7 ? 'k' : 'w'; }, pickSock = () => { const q = r(); return q < 0.5 ? 'w' : q < 0.75 ? 't' : 'k'; };
+  const legs = [0, 1, 2, 3].map(() => ({ top: pickTop(), sock: pickSock(), sockAt: 0.5 + r() * 0.22, blob: r() < 0.45 ? other('t') : null, stripe: r() < 0.3 }));
+  const tq = r(), tail = { base: tq < 0.55 ? 't' : 'k', band: 'k', bandOn: r() < 0.82, f1: 0.3 + r() * 0.08, f2: 0.62 + r() * 0.1 };
+  const head = { cheek: r() < 0.72 ? 'b' : 't', throat: r() < 0.4 ? 'w' : (r() < 0.5 ? 't' : 'k'), chin: r() < 0.35, earIn: r() < 0.5 ? 'p' : 'w' };
+  const o = { seed, base, blobs, neck, legs, tail, head }; ly_coatM.set(seed, o); return o;
+}
+
+// ───────────────────────── attitudes (tête, oreilles, queue, gueule) et allures ─────────────────────────
+// an : angle du cou (0 = horizontal vers l'avant, < 0 = vers le haut) ; nl : longueur du cou ; ah : tangage de la tête (> 0 : museau vers le bas) ; ear : −1 couchées … 1 pointées ;
+// ta, tc : angle de départ et courbure de la queue (ta = π : horizontale vers l'arrière ; ta ≈ 2,5 : pendante) ; wag : battement ; mouth : gueule ; dip, hdip : avant / arrière abaissés ; eye : ouverture.
+const LY_ATT = {
+  stand: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.50, tc: -0.85, wag: 0.12, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  look: { an: -0.92, nl: 21, ah: -0.16, ear: 1.0, ta: 2.80, tc: -0.55, wag: 0.0, mouth: 0, dip: -1.5, hdip: 0, eye: 1 },
+  sneeze: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.50, tc: -0.85, wag: 0.0, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  greet: { an: 0.30, nl: 21, ah: 0.52, ear: -0.9, ta: 3.30, tc: -0.35, wag: 1.0, mouth: 0.28, dip: 5, hdip: -1, eye: 0.8 },
+  walk: { an: -0.22, nl: 20, ah: 0.14, ear: 0.3, ta: 2.55, tc: -0.8, wag: 0.1, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  trot: { an: -0.34, nl: 20, ah: 0.08, ear: 0.2, ta: 2.9, tc: -0.55, wag: 0.1, mouth: 0.1, dip: 0, hdip: 0, eye: 1 },
+  run: { an: -0.10, nl: 21, ah: 0.22, ear: -0.55, ta: 3.14, tc: 0.12, wag: 0.0, mouth: 0.5, dip: 0, hdip: 0, eye: 1 },
+  lie: { an: -0.72, nl: 20, ah: 0.04, ear: 0.4, ta: 1.2, tc: 0.0, wag: 0.05, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  sit: { an: -0.62, nl: 20, ah: 0.0, ear: 0.55, ta: 1.3, tc: 0.0, wag: 0.0, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+};
+// allures : f = cycles par seconde, A = demi-amplitude des pas (px à s = 1), d = part d'appui, lift = hauteur de levée, ph = décalage d'attaque de chaque patte (nF/nH : côté visible, fF/fH : côté éloigné)
+const LY_GAITS = {
+  walk: { f: 0.9, A: 15, d: 0.68, lift: 7, rF: 1, rH: 0, ph: { nH: 0, nF: 0.25, fH: 0.5, fF: 0.75 } },
+  trot: { f: 1.75, A: 22, d: 0.42, lift: 11, rF: 2, rH: 0, ph: { nH: 0, fF: 0, nF: 0.5, fH: 0.5 } },
+  run: { f: 2.7, A: 19, d: 0.31, lift: 18, rF: 9, rH: 3, ph: { fH: 0, nH: 0.12, fF: 0.4, nF: 0.52 }, gallop: true },
+};
+for (const k in LY_GAITS) LY_GAITS[k].D = 2 * LY_GAITS[k].A / LY_GAITS[k].d;
+function ly_gait(t, o = {}) {
+  const g = LY_GAITS[o.gait || 'trot'] || LY_GAITS.trot, ph = (t - (o.t0 || 0)) * g.f * (o.speed ?? 1);
+  return { ph, x: ph * g.D, f: g.f, A: g.A, d: g.d, D: g.D };
+}
+function ly_foot(g, ph, phi, x0) {                                                  // [x, levée (≤ 0), balancement 0..1] : appui puis oscillation arrondie
+  const u = ly_frac(ph + phi), d = g.d;
+  if (u < d) return [x0 + g.A * (1 - 2 * u / d), 0, 0];
+  const q = (u - d) / (1 - d), e = eio(q), l = Math.pow(Math.sin(Math.PI * q), 0.85);
+  return [x0 + g.A * (-1 + 2 * e), -g.lift * l, l];
+}
+// enveloppe d'un éternuement : inspiration (−0,4, la tête se relève) pendant 0,3 s, saccade (1) en 0,07 s, maintien bref, retombée en 0,5 s avec un petit rebond
+function ly_sneezeEnv(u) {
+  if (u < -0.45) return 0;
+  if (u < 0) return -0.4 * sm(clamp((u + 0.45) / 0.3));
+  if (u < 0.07) return lerp(-0.4, 1, sm(u / 0.07));
+  if (u < 0.2) return 1;
+  if (u < 0.7) { const q = (u - 0.2) / 0.5; return (1 - eio(q)) * (1 + 0.06 * Math.sin(q * 9)); }
+  return 0;
+}
+
+// torse debout (repère du modèle : x vers l'avant, y vers le bas, sol en y = 0 ; garrot à 79 px) : croupe → garrot, puis (cou) puis sternum → arrière
+const LY_TOP = [[-42, -63], [-38, -72], [-30, -76.5], [-17, -76], [-3, -75], [10, -76.5], [21, -80]];
+const LY_BOT = [[37.5, -57], [35.5, -46], [27, -40], [16, -38.5], [5, -40.5], [-4, -45], [-13, -49.5], [-24, -52.5], [-35, -54.5]];
+
+// tête dans son repère (origine au centre du crâne, museau vers +x, y vers le bas)
+const LY_HEAD_UP = [[-11.8, -0.5], [-9.8, -6.4], [-4.2, -9.8], [2.8, -9.4], [8.2, -6.8], [13.5, -5.3], [18.2, -4.2], [20.8, -2.4], [21.4, 0.2], [20, 2.3], [15, 2.8], [9, 3.2], [3, 4.4], [-3, 6.3], [-9, 5.2], [-11.5, 2.6]];
+const LY_HEAD_JAW = [[3, 3.6], [10, 3.2], [16, 2.9], [19.6, 3.0], [18.8, 5.0], [14, 6.4], [8, 7.8], [2, 9.0], [-3.5, 8.0], [-5, 5.4]];
+const LY_EAR = [[-5.4, 0.5], [-6.8, -5], [-6.6, -11], [-3.8, -16.4], [0.8, -18.2], [5, -15.6], [6.6, -9.6], [6, -4], [4.4, 0.5]];
+
+// ───────────────────────── le lycaon ─────────────────────────
+// queue : chaîne de points depuis la base, angle ta (π = vers l'arrière à l'horizontale), courbure tc, battement
+function ly_tail(B, ta, tc, wag, tt, o = {}) {
+  const n = 9, Lt = o.len ?? 40, pts = [B]; let p = B;
+  for (let i = 1; i <= n; i++) {
+    const f = i / n, a = ta + tc * Math.pow(f, 1.4) + wag * 0.55 * Math.sin(TAU * (o.hz ?? 2.6) * tt - f * 1.4) * f;
+    p = [p[0] + Math.cos(a) * Lt / n, p[1] + Math.sin(a) * Lt / n]; if (o.ground != null && p[1] > o.ground) p = [p[0], o.ground]; pts.push(p);
+  }
+  return { pts, ws: [5.5, 9, 11.5, 12.8, 12.8, 11.8, 10, 7.5, 4.6, 1.8] };
+}
+// polygone « fourrure » : bords en touffes le long de la ligne médiane
+function ly_fur(pts, ws, amp, ph = 0) {
+  const Lp = [], Rp = [], n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+    const tf = k => amp * (0.55 + 0.45 * Math.sin(i * 2.9 + ph + k)) * (i === 0 || i === n - 1 ? 0.3 : 1) * (i % 2 ? 1 : 0.4);
+    Lp.push([pts[i][0] - ty * (ws[i] / 2 + tf(0)), pts[i][1] + tx * (ws[i] / 2 + tf(0))]); Rp.push([pts[i][0] + ty * (ws[i] / 2 + tf(2)), pts[i][1] - tx * (ws[i] / 2 + tf(2))]);
+  }
+  return Lp.concat(Rp.reverse());
+}
+// bande de queue entre les indices i0 et i1 de la chaîne (rectangle large, à recadrer par le contour de la queue)
+function ly_band(pts, i0, i1, ext = 0) {
+  const a = pts[i0], b = pts[i1], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, nx = -uy, ny = ux, W = 18;
+  const e0 = [a[0] - ux * 0.0, a[1] - uy * 0.0], e1 = [b[0] + ux * ext, b[1] + uy * ext];
+  const mids = []; for (let i = i0; i <= i1; i++) mids.push(pts[i]);
+  const Lp = mids.map(p => [p[0] + nx * W, p[1] + ny * W]), Rp = mids.map(p => [p[0] - nx * W, p[1] - ny * W]).reverse();
+  const poly = Lp.concat([[e1[0] + nx * W, e1[1] + ny * W], [e1[0] - nx * W, e1[1] - ny * W]], Rp);
+  return polyPath(poly);
+}
+
+function ly_dog(cx, cy, s, t, o = {}) {
+  const pose = o.pose || 'stand', seed = o.seed ?? 1, fl = o.flip ? -1 : 1, envName = o.env || 'savannaDawn';
+  const C = ly_pal(envName, o.fog || 0, o.sil || 0), coat = ly_coat(seed), E = C.E;
+  const lightX = o.light ?? E.light, rimK = clamp(o.rim ?? 1) * (1 - 0.3 * clamp(o.fog || 0)), shK = clamp(o.shadow ?? 1);
+  const A = { ...(LY_ATT[pose] || LY_ATT.stand) };
+  const gname = o.gait || (LY_GAITS[pose] ? pose : null), G = gname ? LY_GAITS[gname] : null, tt = t + seed * 1.3;
+  const ph = o.ph != null ? o.ph : (G ? (t - (o.t0 || 0)) * G.f : 0);
+  const lie = pose === 'lie', sit = pose === 'sit', rest = lie ? clamp(o.rest ?? 0) : 0;
+  const outCol = o.outline === undefined ? ly_mix('#05040f', C.E.shadow, 0.2 + 0.4 * clamp(o.fog || 0)) : o.outline;
+  // ── éternuement : sn < 0 inspiration, sn > 0 saccade ──
+  let sn = o.sneeze; if (sn == null && pose === 'sneeze') { const per = 2.6, u = ((t - (o.t0 || 0)) % per + per) % per - 0.75; sn = ly_sneezeEnv(u); }
+  sn = sn || 0; const inh = Math.max(0, -sn), ex = Math.max(0, sn);
+  if (o.look != null) { A.an -= 0.4 * o.look; A.ah -= 0.12 * o.look; }
+  if (o.mouth != null) A.mouth = o.mouth;
+  A.an += -0.5 * inh + 0.95 * ex; A.ah += -0.3 * inh + 0.62 * ex; A.dip += 4.5 * ex - 1 * inh; A.ear = o.ear != null ? o.ear : A.ear + 0.3 * inh - 1.5 * ex;
+  A.eye = (o.eye != null ? o.eye : A.eye) * (1 - 1.15 * clamp(ex));
+  const wag = clamp(o.tail ?? A.wag), wk = clamp(ex * 1.2);
+  // ── allure : appuis, rebond, flexion de l'échine ──
+  const F = { nF: [28, 0, 0], fF: [28, 0, 0], nH: [-30, 0, 0], fH: [-30, 0, 0] };
+  let bob = 0, pF = 0, pB = 0, recoil = -3 * ex;
+  if (G && !lie && !sit) {
+    F.nF = ly_foot(G, ph, G.ph.nF, 28 + G.rF); F.fF = ly_foot(G, ph, G.ph.fF, 28 + G.rF); F.nH = ly_foot(G, ph, G.ph.nH, -30 + G.rH); F.fH = ly_foot(G, ph, G.ph.fH, -30 + G.rH);
+    if (gname === 'walk') { bob = -0.9 * (0.5 - 0.5 * Math.cos(4 * Math.PI * ph)); pF = 0.015 * Math.sin(TAU * ph); pB = -pF * 0.6; }
+    else if (gname === 'trot') { bob = -3.2 * (0.5 + 0.5 * Math.cos(4 * Math.PI * (ph - 0.46))); pF = 0.02 * Math.sin(4 * Math.PI * ph); pB = -pF; }
+    else { const a = 0.5 + 0.5 * Math.cos(TAU * (ph - 0.9)), b = Math.cos(TAU * (ph - 0.35)); bob = -6 * a; pF = 0.09 * b + 0.05; pB = -0.06 * b - 0.03; }
+  }
+  const breath = 0.5 + 0.5 * Math.sin(tt * (A.mouth > 0.3 && !G ? 5 : 2.7)) + 1.4 * inh;
+  const sinkF = A.dip + (rest ? 6 * rest : 0), sinkB = A.hdip;
+  const PV = [-2, -60];
+  let bodyT;
+  if (lie) bodyT = (x, y) => [x, y + 33 + (rest ? 2.5 * rest * clamp((x + 5) / 40) : 0)];
+  else if (sit) { const th = -0.84, pv = [-38, -54]; bodyT = (x, y) => { const q = ly_rot([x, y], pv, th); return [q[0] - 1, q[1] + 47.5]; }; }
+  else bodyT = (x, y) => { const w = sm(clamp((x + 24) / 52)), q = ly_rot([x, y], PV, lerp(pB, pF, w)); return [q[0] + recoil * w, q[1] + bob + lerp(sinkB, sinkF, w)]; };
+  const top = LY_TOP.map(p => bodyT(p[0], p[1])), bot = LY_BOT.map(p => bodyT(p[0], p[1]));
+  top.forEach((p, i) => { if (i >= 1 && i <= 5) p[1] += -0.5 * breath; }); bot.forEach((p, i) => { if (i >= 1 && i <= 4) p[1] += 0.9 * breath; });
+  // ── cou et tête ──
+  const N0 = bodyT(30, -73), sway = Math.sin(tt * 0.8) * 0.025, an = A.an + sway + (G ? 0.03 * Math.sin(TAU * ph * (gname === 'walk' ? 2 : 1)) : 0);
+  const nl = A.nl + (rest ? 12 * rest : 0), anR = lerp(an, 0.95, rest);
+  const H = [N0[0] + nl * Math.cos(anR), N0[1] + nl * Math.sin(anR)], aH = lerp(A.ah + 0.02 * Math.sin(tt * 1.1 + 1), 0.28, rest), hc = Math.cos(aH), hs = Math.sin(aH);
+  const Th = (x, y) => [H[0] + x * hc - y * hs, H[1] + x * hs + y * hc];
+  const Tb = (x, y) => [cx + fl * s * x, cy + s * y], Ts = (x, y) => Tb(...Th(x, y));
+  const ex0 = 105 * s + 8; ly_BB = [Math.max(0, Math.floor(cx - ex0)), Math.max(0, Math.floor(cy - 125 * s)), Math.min(LW, Math.ceil(cx + ex0)), Math.min(LH, Math.ceil(cy + 10 * s + 6))];
+  // ── ombre au sol ──
+  if (shK > 0 && o.fog !== 1) { const a = 0.5 * shK * (1 - 0.4 * clamp(o.fog || 0)), rx = (sit ? 38 : lie ? 56 : 60) * s, off = -lightX * (sit ? 8 : 16) * s; if (typeof k_shadow === 'function') k_shadow(cx + off, cy + 0.5 * s, rx, Math.max(2, 5.5 * s), a, { col: '46,26,86' }); else ell(cx + off, cy, rx, 5 * s, 'rgba(46,26,86,0.4)'); }
+
+  ly_layerBegin();
+  const c = Y; c.setTransform(s * fl, 0, 0, s, cx, cy); c.lineJoin = 'round';
+  const ll = ly_norm([lightX * fl * 0.92, -0.45]), mn = u => Math.max(u, 1.05 / s), bl = u => Math.max(0.5, u * s);
+  const mk = lv => ({
+    dark: (path, off = 3.5, blur = 1.2, a = 0.5, col = C.shadowCol) => ly_cres(c, path, col, lv[0] * mn(off), lv[1] * mn(off), bl(blur), a),
+    lite: (path, off = 2, blur = 0.8, a = 0.32, col = C.litCol) => ly_cres(c, path, col, -lv[0] * mn(off), -lv[1] * mn(off), bl(blur), a),
+    rimL: (path, w = 0.9, a = 1) => { if (rimK > 0) ly_cres(c, path, C.rim, -lv[0] * mn(w), -lv[1] * mn(w), 0, rimK * a); },
+  });
+  const { dark, lite, rimL } = mk(ll);
+  const halo = (path, col = C.line, w = 1.1) => { c.lineWidth = mn(w); c.strokeStyle = col; c.lineJoin = 'round'; c.stroke(path); };
+  const tone = (key, k = 'mid') => C[LY_KEYS[key]][k];
+  const far = col => ly_mix(col, C.sh, 0.38);
+  const rnd = rng(seed * 131 + 7);
+
+  // ── pattes : géométrie ──
+  const legGeom = (kind, f, side, farSide) => {                                           // kind 'F' | 'H' ; f = [x, levée, balancement]
+    const Fx = f[0] + (farSide ? (kind === 'F' ? 4 : 3) : 0), Fy = f[1] - (farSide ? 0.6 : 0), sw = f[2];
+    if (kind === 'F') {
+      const S = bodyT(30 + (farSide ? 3 : 0), -52 + (farSide ? 1 : 0)), W = [Fx - 1.2 - 2 * sw, Fy - 9.5 - 1.5 * sw], E = ly_ik(S, W, 20.5, 30.5, -1), heel = [Fx - 0.8, Fy - 3.4];
+      return { pts: [S, E, W, heel], ws: [10, 6.8, 4.9, 4.5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], W, S };
+    }
+    const Hj = bodyT(-30 + (farSide ? 2 : 0), -57 + (farSide ? 1 : 0)), Hk = [Fx - 4.5, Fy - 17.5 - 2 * sw], K = ly_ik(Hj, Hk, 22, 27, 1), heel = [Fx - 1.8, Fy - 3.2];
+    return { pts: [Hj, K, Hk, heel], ws: [12, 8.2, 5.2, 4.4], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], Hj, K, Hk };
+  };
+  let Lg;
+  if (lie || sit) {
+    const sh = lie ? bodyT(30, -52) : bodyT(30, -52), gy = 0;
+    const fS = lie ? sh : sh;
+    if (lie) {
+      const e = [14, -6], w = [32 + 2 * rest, -4.2], hl = [40 + 2 * rest, -3.4];
+      Lg = {
+        nF: { pts: [fS, e, w, hl], ws: [10, 6.8, 5.2, 4.8], paw: [46 + 2 * rest, -2, 5.2, 2.5, 0] },
+        fF: { pts: [[fS[0] + 3, fS[1] + 1], [18, -5], [40 + 2 * rest, -3.6], [48 + 2 * rest, -3]], ws: [10, 6.4, 5, 4.6], paw: [53 + 2 * rest, -2, 5.2, 2.5, 0] },
+        nH: { pts: [bodyT(-28, -57), [-14, -15], [-42, -8], [-31, -3.6], [-14, -2.6]], ws: [12, 9.5, 6, 4.8, 4.6], paw: [-11, -2.1, 4.6, 2.3, 0], Hj: bodyT(-28, -57), K: [-14, -15] },
+        fH: { pts: [bodyT(-26, -57), [-6, -12], [-30, -6], [-20, -3], [-4, -2]], ws: [10, 8, 5.4, 4.4, 4.2], paw: [-1, -2, 4.4, 2.2, 0] },
+      };
+    } else {
+      const S = bodyT(30, -52), p = [S[0] + 5, 0];
+      Lg = {
+        nF: { pts: [S, [S[0] - 1.5, S[1] * 0.55], [p[0] - 1, -10.5], [p[0], -3.4]], ws: [10, 6.4, 4.8, 4.5], paw: [p[0] + 2.4, -1.7, 4.8, 2.4, 0] },
+        fF: { pts: [[S[0] + 3, S[1] + 1], [S[0] + 2.5, S[1] * 0.55], [p[0] + 6, -10.5], [p[0] + 7, -3.4]], ws: [10, 6.2, 4.6, 4.3], paw: [p[0] + 9.4, -1.7, 4.6, 2.3, 0] },
+        nH: { pts: [bodyT(-28, -57), [-12, -17], [-40, -8], [-29, -3.6], [-12, -2.6]], ws: [12, 9.5, 6, 4.8, 4.6], paw: [-9, -2.1, 4.6, 2.3, 0], Hj: bodyT(-28, -57), K: [-12, -17] },
+        fH: { pts: [bodyT(-26, -57), [-4, -14], [-30, -6], [-18, -3], [-2, -2]], ws: [10, 8, 5.4, 4.4, 4.2], paw: [1, -2, 4.4, 2.2, 0] },
+      };
+    }
+  } else Lg = { nF: legGeom('F', F.nF, 1, false), fF: legGeom('F', F.fF, -1, true), nH: legGeom('H', F.nH, 1, false), fH: legGeom('H', F.fH, -1, true) };
+  // cuisse (près de la hanche) : ellipse le long de la cuisse
+  const Hn = Lg.nH.Hj || bodyT(-30, -57), Kn = Lg.nH.K || bodyT(-18, -40), thc = [(Hn[0] + Kn[0]) / 2 - 2.5, (Hn[1] + Kn[1]) / 2 - 1.5], thl = Math.hypot(Kn[0] - Hn[0], Kn[1] - Hn[1]), thr = -Math.atan2(Kn[0] - Hn[0], Kn[1] - Hn[1]);
+  const thigh = ly_ell(thc[0], thc[1], 12.5, thl * 0.5 + 9, thr);
+
+  // ── paint des pattes ──
+  const paintLeg = (L, idx, farSide) => {
+    const co = coat.legs[idx], path = ly_limb(L.pts, L.ws, 5), paw = ly_ell(L.paw[0], L.paw[1], L.paw[2], L.paw[3], L.paw[4]);
+    const col = k => { const q = tone(k, 'mid'); return farSide ? far(q) : q; };
+    if (!farSide) { halo(path); halo(paw, C.line, 1.0); }
+    c.fillStyle = col(co.top); c.fill(path);
+    c.save(); c.clip(path);
+    const n = L.pts.length, W = L.pts[n - 2], hl = L.pts[n - 1], d = ly_norm([hl[0] - W[0], hl[1] - W[1] + 0.001]), nx = -d[1], ny = d[0], k0 = co.sockAt;
+    const P0 = [lerp(L.pts[n - 3][0], W[0], k0), lerp(L.pts[n - 3][1], W[1], k0)];
+    c.fillStyle = col(co.sock); c.beginPath(); c.moveTo(P0[0] + nx * 14 - d[0] * 1, P0[1] + ny * 14 - d[1] * 1); c.lineTo(P0[0] + nx * 3 + d[0] * 1.5, P0[1] + ny * 3 + d[1] * 1.5); c.lineTo(P0[0] - nx * 3, P0[1] - ny * 3);
+    c.lineTo(P0[0] - nx * 14 - d[0] * 1.5, P0[1] - ny * 14 - d[1] * 1.5); c.lineTo(P0[0] - nx * 14 + d[0] * 30, P0[1] - ny * 14 + d[1] * 30); c.lineTo(P0[0] + nx * 14 + d[0] * 30, P0[1] + ny * 14 + d[1] * 30); c.closePath(); c.fill();
+    if (co.blob && !farSide) { const m = L.pts[1]; c.fillStyle = col(co.blob); c.fill(ly_smooth(ly_blob(rnd, m[0], m[1], 6, 5, 0.5, 8))); }
+    c.restore();
+    c.fillStyle = col(co.sock === 'k' ? 'k' : co.sock); c.fill(paw);
+    if (!farSide) { dark(path, 2.2, 0.9, 0.5); lite(path, 1.4, 0.6, 0.3); dark(paw, 1.2, 0.5, 0.45); rimL(path, 0.9, 0.85); rimL(paw, 0.8, 0.6); }
+    else { c.fillStyle = 'rgba(46,26,86,0.22)'; c.fill(path); c.fill(paw); }
+  };
+  // far side first
+  paintLeg(Lg.fH, 3, true); paintLeg(Lg.fF, 2, true);
+
+  // ── queue ──
+  { const B = bodyT(-40, -67);
+    const tailA = lie ? 2.4 : sit ? 2.5 : A.ta + 0.3 * ex, tcc = lie || sit ? -0.3 : A.tc, tl = ly_tail(B, tailA, tcc, wag, tt, { ground: lie || sit ? -2.6 : null, hz: 2.6 + 1.2 * wag });
+    Lg.tail = tl;
+    const tp = polyPath(ly_fur(tl.pts, tl.ws, 1.4, seed)), t0 = coat.tail;
+    halo(tp, C.line, 1.2); c.fillStyle = tone(t0.base, 'mid'); c.fill(tp);
+    c.save(); c.clip(tp);
+    const i1 = Math.round(t0.f1 * 9), i2 = Math.round(t0.f2 * 9);
+    if (t0.bandOn) { c.fillStyle = tone('k', 'mid'); c.fill(ly_band(tl.pts, i1, i2, 0)); }
+    c.fillStyle = tone('w', 'mid'); c.fill(ly_band(tl.pts, i2, 9, 10));
+    c.restore();
+    dark(tp, 3, 1.1, 0.5); lite(tp, 2, 0.7, 0.28); rimL(tp, 0.9, 0.85); }
+  Lg.tailB = bodyT(-40, -67);
+
+  // ── tronc et cou : un seul contour ──
+  const nape = Th(-9.5, -7), thr_ = Th(-6, 7.5);
+  const nkTop = [(top[6][0] + nape[0]) / 2, (top[6][1] + nape[1]) / 2 - 2.2], nkBot = [(thr_[0] + bot[0][0]) / 2 - 1, (thr_[1] + bot[0][1]) / 2 + 2.4];
+  const tpts = top.concat([nkTop, nape, thr_, nkBot], bot);
+  const torso = ly_spline(tpts);
+  c.fillStyle = tone(coat.base, 'mid'); c.fill(torso);
+  c.save(); c.clip(torso);
+  for (const b of coat.blobs) { c.fillStyle = tone(b.col, 'mid'); c.fill(ly_smooth(b.pts.map(p => bodyT(p[0], p[1])))); }
+  { const dn = [Math.cos(anR), Math.sin(anR)], nc = [N0[0] + dn[0] * 9, N0[1] + dn[1] * 9];
+    c.fillStyle = tone(coat.neck.base, 'mid'); c.fill(ly_smooth(ly_blob(rnd, nc[0], nc[1], 17, 15.5, anR, 12).map(p => p)));
+    for (const b of coat.neck.blobs) { const q = b.pts.map(p => { const r = ly_rot([N0[0] + p[0], N0[1] + p[1]], N0, anR); return r; }); c.fillStyle = tone(b.col, 'mid'); c.fill(ly_smooth(q)); } }
+  c.restore();
+  dark(torso, 4.2, 1.5, 0.5); lite(torso, 2.6, 1.0, 0.3); rimL(torso, 1.0);
+
+  // ── cuisse et patte arrière proche ──
+  paintLeg(Lg.nH, 1, false);
+  c.save(); c.fillStyle = tone(coat.base, 'mid'); c.fill(thigh); c.clip(thigh);
+  for (const b of coat.blobs) { c.fillStyle = tone(b.col, 'mid'); c.fill(ly_smooth(b.pts.map(p => bodyT(p[0], p[1])))); }
+  c.restore();
+  { const arc = new Path2D(); for (let i = 0; i <= 12; i++) { const a = -1.35 + 2.7 * i / 12, x = Math.cos(a) * 12.5, y = Math.sin(a) * (thl * 0.5 + 9), q = ly_rot([thc[0] + x * Math.cos(thr) - y * Math.sin(thr), thc[1] + x * Math.sin(thr) + y * Math.cos(thr)], thc, 0); i ? arc.lineTo(q[0], q[1]) : arc.moveTo(q[0], q[1]); }
+    c.save(); c.globalAlpha = 0.55; halo(arc, C.line, 0.9); c.restore(); }
+  dark(thigh, 3.2, 1.2, 0.42); lite(thigh, 2, 0.8, 0.28); rimL(thigh, 0.9, 0.7);
+  // ── patte avant proche ──
+  paintLeg(Lg.nF, 0, false);
+  { const S = Lg.nF.pts[0], sp = ly_ell(S[0] - 5, S[1] - 7, 8.5, 12.5, 0.2); lite(sp, 2.4, 0.9, 0.22); }
+
+  // ── tête ──
+  const llH = ly_rot(ll, [0, 0], -aH), H0 = mk(llH);
+  c.save(); c.translate(H[0], H[1]); c.rotate(aH);
+  const earE = A.ear, earAng = earE > 0 ? lerp(0, 0.3, earE) : earE * 1.25, flick = k => { const P = 3.4, x = (tt + k * 0.9) / P, id = Math.floor(x), pp = (x - id) * P; return pp < 0.3 && ly_h(id, seed + k * 7) < 0.55 ? Math.sin(pp / 0.3 * Math.PI) * 0.34 * (ly_h(id, seed + k) < 0.5 ? 1 : -1) : 0; };
+  const earPath = (base, ang, sy) => ly_spline(LY_EAR.map(p => { const q = ly_rot([p[0], p[1] * sy], [0, 0], ang); return [base[0] + q[0], base[1] + q[1]]; }));
+  const flat = clamp(-earE), sy = 1 - 0.18 * flat;
+  { const pF = earPath([-0.5, -8.6], earAng * 0.9 + 0.1 + flick(2) * 0.8, sy), pFi = earPath([-0.5, -8.6 - 0.3], earAng * 0.9 + 0.1 + flick(2) * 0.8, sy);
+    c.save(); c.beginPath(); halo(pF, C.line, 1.0); c.fillStyle = far(tone('b', 'mid')); c.fill(pF);
+    c.save(); c.clip(pF); const inn = ly_limb([[-0.5 + 0.6, -9.5], [0.2, -13], [0.4, -16]], [8, 8, 4.5]); c.save(); c.translate(-0.5, -8.6); c.rotate(earAng * 0.9 + 0.1 + flick(2) * 0.8); c.translate(0.5, 8.6); c.fillStyle = far(C.earIn); c.fill(inn); c.restore(); c.restore();
+    H0.dark(pF, 2, 0.7, 0.45); c.restore(); }
+  // mâchoire et gueule
+  const jawA = clamp(A.mouth) * 0.55, jc = Math.cos(jawA), jsn = Math.sin(jawA), jh = [-0.5, 5.2], rj = p => { const dx = p[0] - jh[0], dy = p[1] - jh[1]; return [jh[0] + dx * jc - dy * jsn, jh[1] + dx * jsn + dy * jc]; };
+  const jaw = ly_spline(LY_HEAD_JAW.map(rj));
+  if (A.mouth > 0.12) { c.fillStyle = C.mouth; c.fill(polyPath([[3, 3.4], [10, 3], [16, 2.7], [19.5, 2.8], rj([19.2, 4.4]), rj([12, 6.6]), rj([4, 7.6])])); }
+  halo(jaw, C.line, 1.0);
+  c.fillStyle = tone('k', 'mid'); c.fill(jaw);
+  c.save(); c.clip(jaw); c.fillStyle = tone(coat.head.throat, 'mid'); c.fill(polyPath([[-12, 0], [3, 2], [8, 5].map(v => v), [7, 12], [-12, 12]].map(p => p))); c.restore();
+  if (A.mouth > 0.22) { c.fillStyle = C.teeth; c.fill(polyPath([rj([17.6, 3.0]), rj([18.8, 3.0]), rj([18.4, 5.4])])); }
+  if (A.mouth > 0.3) {                                                                  // langue qui pend sur le côté
+    const tl0 = 3.5 + 6 * clamp(A.mouth - 0.3) / 0.7 + (gname === 'run' ? 2.5 * Math.sin(TAU * ph * 2) : 0), tpts_ = [rj([11, 4.6]), rj([14.5, 7.4]), rj([15.5, 9 + tl0]), rj([14.8, 10.5 + tl0])];
+    const tg = ly_limb(tpts_, [4.4, 5.6, 5.8, 3.6], 3); halo(tg, C.line, 0.8); c.fillStyle = C.tongue; c.fill(tg); dark(tg, 1.3, 0.5, 0.5, C.tongueLo); }
+  // crâne et museau
+  const up = LY_HEAD_UP.map((p, i) => i >= 5 && i <= 10 ? [p[0] - 1.5 * wk * (i / 10), p[1] - 1.9 * wk * (i / 10)] : p), upper = ly_spline(up);
+  halo(upper, C.line, 1.1);
+  c.fillStyle = tone(coat.head.cheek, 'mid'); c.fill(upper);
+  c.save(); c.clip(upper);
+  c.fillStyle = tone('k', 'mid'); c.fill(polyPath([[8.6, -10], [9.8, -6.5], [7.8, -1.5], [6.2, 5], [26, 6], [26, -10]]));              // museau noir
+  c.fillStyle = tone('k', 'mid'); c.fill(polyPath([[-8, -11], [3, -11.5], [10.5, -8.2], [9.6, -6.6], [3.2, -8.6], [-7, -8.4]]));          // raie noire du front
+  c.fillStyle = tone('k', 'lo'); c.fill(ly_ell(4.8, -3.0, 4.1, 3.2, 0.1));                                                              // masque autour de l'œil
+  c.fillStyle = tone(coat.head.throat, 'mid'); c.fill(polyPath([[-13, 1.2], [-4, 2.6], [2, 4.4], [8, 6], [8, 12], [-13, 12]]));        // joue claire / gorge
+  c.restore();
+  H0.dark(upper, 2.6, 1.0, 0.45); H0.lite(upper, 1.6, 0.6, 0.3); H0.rimL(upper, 0.9, 0.95);
+  c.fillStyle = C.blk.deep; c.fill(ly_ell(21.2 - 1.2 * wk, -1.5 - 1.6 * wk, 2.8, 2.6, 0.2));                                           // truffe
+  H0.lite(jaw, 1.0, 0.4, 0.28);
+  // oreille proche
+  { const pN = earPath([-5.5, -8.4], earAng + flick(1), sy);
+    halo(pN, C.line, 1.1); c.fillStyle = tone('b', 'lo'); c.fill(pN);
+    c.save(); c.clip(pN); c.fillStyle = tone('k', 'mid'); c.fill(ly_ell(-5.5 + Math.sin(earAng + flick(1)) * 9, -8.4 - 10, 8, 9, 0)); c.restore();
+    H0.dark(pN, 2.2, 0.8, 0.4); H0.lite(pN, 1.4, 0.5, 0.3); H0.rimL(pN, 0.9, 0.95); }
+  c.restore();
+  ly_layerEnd({ outline: outCol });
+
+  // ── détails nets : œil, narine, plis, moustaches ──
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const eS = Ts(5.2, -3.1), exx = Math.round(eS[0]), eyy = Math.round(eS[1]), er = Math.max(1, Math.round(1.9 * s));
+  const blinkT = (tt * 0.27) % 1, blink = blinkT > 0.965 ? Math.sin((blinkT - 0.965) / 0.035 * Math.PI) : 0, open = (o.eye != null ? clamp(o.eye) : A.eye) * (1 - blink) * (rest > 0.5 ? 0 : 1);
+  const hx = fl * hc, hy = hs;
+  if (open > 0.45) {
+    if (er >= 2) { disc(exx, eyy, er, ly_mix(AM[6], '#48291a', 0.35)); disc(exx, eyy, Math.max(1, er - 1), '#12100c'); px(exx - fl, eyy - 1, WH[3]); }
+    else px(exx, eyy, '#12100c');
+  } else { const a = Math.max(1, Math.round(er * 1.1)); lineP(exx - a * fl, eyy + (ex > 0.3 ? 1 : 0), exx + a * fl, eyy, '#05040f', 1); if (ex > 0.3) lineP(exx - a * fl, eyy - 1, exx, eyy + 1, '#05040f', 1); }
+  if (wk > 0.12 && s >= 0.45) for (let k = 0; k < 3; k++) { const a = Ts(11.5 + k * 2.6, -5.6 + k * 0.3), b = Ts(12.4 + k * 2.6, -2.4 + k * 0.2); lineP(a[0], a[1], b[0], b[1], C.brn.hi, 1); }
+  const nose = Ts(22.2, -1.6);
+  if (s >= 0.5) px(nose[0] - fl * 0.5, nose[1] - 1, ly_mix(ST[5], C.sh, 0.2));
+  return { T: Tb, Th: Ts, nose, mouth: Ts(19, 4.4), eye: eS, head: Ts(2, -1), ear: Ts(-5, -26), tail: Tb(...(Lg.tail.pts[9])), back: Tb(0, -80), chest: Tb(34, -50), w: 145 * s, dir: fl, ex, inh, N0: Tb(N0[0], N0[1]) };
+}
