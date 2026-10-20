@@ -12,7 +12,10 @@
        ROCHERS  fl_rock(x, y, w, h, kind, seed, o) · fl_log(x, y, w, h, o) · fl_moss(x, y, w, o) · fl_tumbleweed(x, y, t, o)   (statiques ou temps explicite).
    · Options communes (toutes facultatives) :
        x, y      pied de l'objet ; l'écran affiche x − cam·par.                 seed   entier : change la forme (chaque graine = un individu, mis en cache).
-       depth     0 = premier plan (plus sombre, plus contrasté, contour sombre) … 1 = lointain (fondu dans la brume par tramage).  Défaut 0,4.
+       depth     0 = premier plan (plus sombre, plus contrasté, contour sombre) … 1 = lointain (fondu dans la brume par tramage). Défauts réels :
+                 0,4 épicéa, bouleau, saguaro, figuier, agave, ocotillo, cholla, buisson sec, acacia, baobab, termitière, buisson · 0,3 branches mortes, mousse, fougères, fleurs, rocher du désert
+                 · 0,25 tronc couché, rocher (fl_rock, fl_boulders) · 0,12 sols (neige, boue, sable, terre rouge), litière, herbe neuve · 0,85 → 0,35 forêt (lointain → proche)
+                 · 0,7 → 0,05 herbes de savane · 0 fixe pour fl_grassFg et fl_branchFg. À partir de depth ≈ 0,5 la brume domine : pour une silhouette à contre-jour passer sil: true.
        cam       déplacement de caméra en pixels ; l'objet se décale de cam·par. par = parallaxe (défaut 1,1 − 0,85·depth : proche 1,1 → lointain 0,25).
                  Les sols acceptent |cam·par| ≤ 100 px ; les bandes de forêt / d'herbe ≤ 110 px. Au-delà, la bande se fige.
        wind      amplitude du vent (1 par défaut, 0 = air immobile, 2 = tempête). Toutes les plantes partagent la même oscillation
@@ -21,9 +24,15 @@
                  · 'desertDusk' (couchant, soleil à droite) · 'savannaDawn' (lever, soleil à droite). L'ambiance teinte les ombres, la lumière, la brume et le liseré.
                  Surcharges : o.light (−1 soleil à gauche, +1 à droite), o.mist ('#rrggbb' couleur de la brume), o.rim (couleur du liseré de lumière).
        snow, moss  0 à 1 : couche de neige / de mousse sur le dessus (rochers, buissons, troncs, bouleaux, branches).
+       PARAMÈTRES ANIMABLES (snow, moss, frost, leaf, unfurl, fruit, stalk, bloom, grow, fog, melt…) : arrondis au dixième (melt au quarantième, snow de fl_leafLitter au vingtième) AVANT d'entrer
+                 dans un sprite en cache : un paramètre qui varie en continu change donc par paliers (11 sprites au plus par paramètre), et le sprite d'une case ne dépend jamais de l'ordre
+                 des appels (render(f) pur, vérifié : build/flore/det.mjs et qunit.mjs). Une valeur donnée est arrondie ; le défaut (constante) est pris tel quel.
+       tracks    [{x0, y0, x1, y1, kind, step}] (fl_snowGround, fl_sand, fl_mudGround, fl_savannaSoil) : coordonnées ÉCRAN à cam = 0 ; la piste est figée dans le sprite du sol et suit donc
+                 le sol (cam·par) ; elle serpente légèrement et son pas est irrégulier (déterministe). 'lizard' : queue qui serpente et paires d'empreintes ; 'paw', 'boot', 'hop' : pas alternés.
    · Chaque plante : 3 à 5 tons dans la palette, lumière du haut et du côté soleil (liseré clair), masse sombre cohérente ; contour sombre « sélectif » au premier plan.
    · Premiers appels : un sprite se construit une fois (1 à 100 ms) puis se recopie (< 0,1 ms) ; seuls les cisaillements du vent sont recalculés à chaque image.
      Les sols à fonte (fl_snowGround avec melt qui change) coûtent ≈ 40 ms par palier de 1/40. Un plan complet : ≈ 200 ms à la première image (démo la plus chargée), 10 à 30 ms ensuite.
+     Avec le préchauffage de flore_demo.js (fd_warm, INITS), le premier appel de chaque plan de la démo tombe à 8 à 50 ms (fd_premier : 105 à 170 ms par image à cause des herbes de premier plan, indépendamment du cache).
 
    ── ALASKA ET PRINTEMPS ──────────────────────────────────────────────────────────────────────────────────────────
    fl_spruce(t, o)                 Épicéa chargé de neige : étages de branches retombantes, paquets de neige arrondis (lumière côté soleil, creux bleutés), ombre de l'étage du dessus.
@@ -57,8 +66,9 @@
    fl_boulders(x, y, w, o)         Groupe de rochers (fl_rock). o : n (4), mat, seed. 0,03 ms.
 
    ── AFRIQUE ─────────────────────────────────────────────────────────────────────────────────────────────────────
-   fl_acacia(t, o)                 Acacia en parasol : tronc qui se divise, canopée plate en bouquets, dessous sombre. o : x, y, h (90), cw largeur de canopée (2,3·h), kind 'tortilis' | 'lean' | 'twin' | 'round',
-                                   sil true (silhouette à contre-jour, liseré chaud), seed, depth. 0,01 ms.
+   fl_acacia(t, o)                 Acacia en parasol : tronc qui se divise, canopée plate en bouquets (vert sombre GR[0..2], un peu de LM clair côté soleil), dessous deux tons plus sombre. o : x, y, h (90), cw largeur
+                                   de canopée (2,3·h), kind 'tortilis' | 'lean' | 'twin' | 'round', sil true (silhouette à contre-jour, liseré chaud), seed, depth. La brume du feuillage est plafonnée à 0,45 : il reste vert
+                                   jusqu'à depth ≈ 0,6 ; plus loin passer sil: true (silhouette violette fondue dans le ciel). 0,01 ms.
    fl_baobab(t, o)                 Baobab : tronc en bouteille, branches courtes, touffes de feuilles. o : x, y, h (100), sil, leaf 0..1, seed. 0,01 ms.
    fl_savannaGrass(y0, y1, o)      Hautes herbes dorées à épis, plusieurs plans qui ploient en vagues. o : bands (3), h (hauteur du plan proche, 46), sweep (amplitude, 4,6), green (herbe verte), depth (plan lointain, 0,7),
                                    depthNear, seed, t, cam. ≈ 1 ms pour 3 plans.
@@ -67,9 +77,13 @@
    fl_bush(t, o)                   Buisson en bouquets : kind 'olive' (savane) | 'green' (printemps) | 'dry' | 'winter' (persistant sous la neige). o : x, y, w (34), h, snow, seed. 0,02 ms.
 
    ── PREMIER PLAN ────────────────────────────────────────────────────────────────────────────────────────────────
-   fl_grassFg(t, o)                Grandes lames d'herbe qui encadrent le bas de l'image (deux rangs, côté soleil clair, ombre sombre, épis). o : kind 'green' | 'spring' | 'dry' | 'gold', side 'bottom' | 'left' | 'right' | 'both',
-                                   h (80), n (40), dip (0,6 : creux au centre), y (ligne de pied, LH+3), cam, par (1,3), wind, seed. Dessinée à chaque image : ≈ 19 ms.
+   fl_grassFg(t, o)                Grandes lames d'herbe qui encadrent le bas de l'image (deux rangs, côté soleil clair, ombre sombre, épis). o : kind 'green' | 'spring' | 'dry' | 'gold' (dry et gold : lames fines et
+                                   recourbées, côté ombre brun, pas de contour marine), side 'bottom' | 'left' | 'right' | 'both', h (80), n (40), dip (0,6 : creux au centre), y (ligne de pied, LH+3), cam, par (1,3),
+                                   wind, seed. Dessinée à chaque image : ≈ 15 à 30 ms. TENUE DES BORDS : des brins débordent des deux bords de l'écran, donc aucun trou au bord pour |cam·par| ≤ 110 px (au-delà,
+                                   le bord opposé se dégarnit).
    fl_branchFg(t, o)               Branche de premier plan qui encadre un coin. o : corner 'tl' | 'tr' | 'bl' | 'br', kind 'leafy' | 'spruce' | 'dead' | 'acacia', len (130), snow, blossom (fleurs), seed, cam. 0,03 ms.
+                                   TENUE DES BORDS : le gros bout du tronc continue de 26 px hors cadre (sprite plus large côté ancré) et le décalage de caméra est borné à ±10 px : la branche reste accrochée au
+                                   bord quel que soit cam (contrôlé à cam = ±100 dans les quatre coins), jamais de branche flottante coupée en plein cadre.
    fl_rock(x, y, w, h, kind, seed, o)  Rocher à contour irrégulier et pans coupés, 5 tons, fissures, liseré de lumière : kind 'round' | 'flat' | 'tall' | 'slab' | 'pebble' ;
                                    o : mat 'stone' | 'dark' | 'red' | 'sand' | 'warm', snow, moss, grass ('green' | 'dry' : brins au pied), depth, cam. 0,01 ms.
 
@@ -77,7 +91,11 @@
    fl_wind(t, x, o)                Vent partagé, environ −1 … 1 (× o.wind) : pour faire bouger un animal ou un accessoire dans le même souffle que l'herbe (ex. poils : fl_wind(t, x) * 1,5).
    fl_env(o)                       { name, light, mist, rim, … } de l'ambiance (utile pour aligner une ombre ou une lueur sur le côté du soleil : light = −1 gauche, +1 droite).
    Précalcul : tout sprite est construit à la première demande puis mis en cache. Pour qu'aucune image ne porte ce coût, appeler une fois les mêmes fonctions avec les mêmes options
-   dans INITS.push(() => { … }) de son fichier (les graines et tailles identiques donnent le même cache) ; le résultat de ce premier dessin est simplement effacé.
+   dans INITS.push(() => { … }) de son fichier (les graines et tailles identiques donnent le même cache) ; le résultat de ce premier dessin est simplement effacé. Recette (3 lignes, voir fd_warm
+   dans flore_demo.js ; les sprites sont déterministes, le préchauffage ne change aucun pixel) :
+       const mesPlans = { g1_alaska(u, t) { fl_spruce(t, { x: 50, y: 300, h: 100 }); } };      // draw(u, t) de chaque plan, au niveau du fichier
+       INITS.push(() => { for (const id in mesPlans) mesPlans[id](0.85, 3); clearL(); });
+       function buildMonSegment(S) { shot('g1_alaska', S.t0, { draw: mesPlans.g1_alaska }); }
 
    ── ORDRE DE DESSIN CONSEILLÉ ───────────────────────────────────────────────────────────────────────────────────
    ciel (kit) → reliefs lointains (kit) → forêts/silhouettes lointaines → sol (fl_snowGround, fl_sand…) → plantes du plan moyen du fond vers l'avant (y croissant) → plantes proches
@@ -106,6 +124,12 @@ function fl_fbm(x, y, s = 0, oct = 3) {
   return a / tot;
 }
 const fl_cl = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
+// QUANTIFICATION des paramètres animables (neige, givre, feuillage, fruits, fleurs, pousse…). Règle d'or de tout sprite en cache : la clé du cache et
+// le constructeur reçoivent la MÊME valeur (déjà arrondie par la fonction publique) ; sinon le sprite d'une case dépend de la première valeur brute
+// rencontrée dans le processus et render(f) n'est plus une fonction pure du temps (4 processus de rendu démarrent chacun à un quart du film).
+const fl_q = v => Math.round(v * 10) / 10;                          // au dixième : 11 sprites au plus pour un paramètre qui va de 0 à 1
+const fl_q2 = v => Math.round(v * 100) / 100;                       // au centième (réglages fixes : gap, spread)
+const fl_qd = (v, d) => v == null ? d : fl_q(v);                    // valeur donnée arrondie, sinon le défaut tel quel (constante, même hors grille)
 const fl_ss = (a, b, x) => { const t = fl_cl((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const fl_bay = (x, y) => BAYER[((y & 3) << 2) | (x & 3)];
 
@@ -244,7 +268,7 @@ const fl_sx = (x, o) => x - ((o && o.cam) || 0) * fl_par(o);
 const fl_sy = (y, o) => y - ((o && o.camY) || 0) * fl_par(o);
 // rampe de couleurs (du sombre au clair) → tons en u32 : teintée par la lumière de l'ambiance, fondue dans la brume selon la profondeur, ramenée à la palette
 function fl_tones(ramp, o, fam) {
-  const E = fl_env(o), d = Math.round((o && o.depth != null ? o.depth : 0.4) * 10) / 10, k = ramp.join('') + '|' + E.name + E.mist + '|' + d + '|' + (o && o.fogK || 1) + '|' + (fam || '');
+  const E = fl_env(o), d = Math.round((o && o.depth != null ? o.depth : 0.4) * 10) / 10, k = ramp.join('') + '|' + E.name + E.mist + '|' + d + '|' + (o && o.fogK || 1) + '|' + (fam || '') + (o && o.keepFam ? '|k' : '');
   return fl_memo('tn|' + k, () => {
     const fg = fl_fog(d) * ((o && o.fogK) ?? 1), n = ramp.length;
     return ramp.map((c, i) => {
@@ -252,7 +276,7 @@ function fl_tones(ramp, o, fam) {
       const sk = fam === 'snow' ? 0.5 : 1; r = fl_mix(r, E.cast, E.castK * sk); r = fl_mix(r, E.shadow, E.shK * sk * (1 - f) * (1 - f)); r = fl_mix(r, E.lit, E.liK * f * f);
       if (d < 0.15) r = fl_mix(r, [5, 4, 15], 0.14 * (1 - f));
       r = fl_mix(r, E.mist, fg * (0.55 + 0.45 * f * 0.4 + 0.2 * (1 - f)));
-      return fl_us(r, fg > 0.5 ? null : fam);
+      return fl_us(r, fg > 0.5 && !(o && o.keepFam) ? null : fam);      // keepFam : même au loin, la couleur reste dans la famille (pas de rochers mi-bruns mi-violets)
     });
   });
 }
@@ -326,7 +350,7 @@ function fl_rim(b, light, rimU, o = {}) {
   const w = b.w, h = b.h, d = b.d, upper = o.top ?? true, add = [], skip = o.skip || null;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x, c = d[i]; if (!c || (skip && skip(c))) continue;
-    const xs = x - light, sideEmpty = xs < 0 || xs >= w || !d[i - light], topEmpty = y === 0 || !d[i - w];
+    const xs = x + light, sideEmpty = xs < 0 || xs >= w || !d[i + light], topEmpty = y === 0 || !d[i - w];   // bord du côté du soleil (light = +1 : le voisin de droite est vide)
     if (sideEmpty || (upper && topEmpty && fl_h2(x, y, 3) < (o.topP ?? 0.7))) add.push(i);
   }
   for (const i of add) d[i] = rimU;
@@ -396,7 +420,7 @@ function fl_paste(dst, src, x, y) {
 // sprite d'épicéa : étages de branches retombantes ; neige en paquets arrondis sur chaque étage (lumière côté soleil, creux bleutés), ombre portée de l'étage du dessus
 function fl_spruceSpr(h, seed, snow, o) {
   const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.4) * 10) / 10, slim = o.slim ?? 0.17;
-  const key = `spr2|${h}|${seed}|${Math.round(snow * 10)}|${E.name}|${E.mist}|${light}|${dep}|${slim}|${o.green || ''}`;
+  const key = `spr2|${h}|${seed}|${snow}|${E.name}|${E.mist}|${light}|${dep}|${slim}|${o.green || ''}`;
   const hw = Math.max(5, Math.round(h * slim)), W = hw * 2 + 14, H = h + 5;
   return fl_spr(key, W, H, W >> 1, H - 3, b => {
     const g = fl_tones(o.green || fl_GRN, o, 'conifer'), s = fl_tones(fl_SNW, o, 'snow'), wd0 = fl_tones([WO[0], WO[1], WO[2], WO[3]], o, 'wood'), r = fl_rng(seed), wd = dep > 0.5 ? [g[0], g[0], g[1], g[1]] : wd0;
@@ -461,7 +485,7 @@ function fl_spruceSpr(h, seed, snow, o) {
 }
 // épicéa : x, y = pied, h = hauteur (px) ; snow 0..1 ; sway minuscule
 function fl_spruce(t, o = {}) {
-  const p = fl_o(o), h = Math.round(o.h ?? 100), snow = o.snow ?? 0.85, spr = fl_spruceSpr(h, (o.seed ?? 1) | 0, snow, { ...o, depth: p.depth });
+  const p = fl_o(o), h = Math.round(o.h ?? 100), snow = fl_qd(o.snow, 0.85), spr = fl_spruceSpr(h, (o.seed ?? 1) | 0, snow, { ...o, depth: p.depth });
   const x = fl_sx(p.x, o), y = fl_sy(p.y, o);
   fl_blitSway(spr, x, y, 1.2 * fl_wind(t, p.x, o) * Math.min(1.6, h / 90), { pow: 2 });
 }
@@ -482,17 +506,19 @@ function fl_forestBand(key, o, hMean, depth, seed, y0) {
       const spr = fl_spruceSpr(tr.hh, 100 + (tr.i % 7), o.snow ?? 0.8, { ...o, depth }), px = Math.round(M + tr.x - spr.ox), py = H - 2 - spr.oy + (tr.hh < hMean * 0.8 ? -1 : 0);
       fl_paste(b, spr.b, px, py);
     }
-    // sous-bois : une masse sombre au pied des arbres (pas de trouées de ciel au ras du sol)
-    { const T0 = fl_tones(fl_GRN, { ...o, depth }, 'conifer'), th = Math.round(H * 0.3);
+    // sous-bois : une masse sombre au pied des arbres, au sommet irrégulier (pas de trouées de ciel au ras du sol : le ciel d'horizon, rose au couchant,
+    // apparaissait sinon en petits motifs en flamme au creux entre deux arbres)
+    { const T0 = fl_tones(fl_GRN, { ...o, depth }, 'conifer'), th = Math.round(H * 0.42);
       for (let x = 0; x < W; x++) { const top = H - 2 - Math.round(th * (0.55 + 0.45 * fl_n1(x * 0.21, seed))); for (let y = top; y < H - 1; y++) if (!b.d[y * W + x]) b.d[y * W + x] = T0[fl_bay(x, y) < 0.35 ? 1 : 0]; } }
     // brume basse : les pieds des arbres se fondent dans le brouillard
-    const fogK = o.fog ?? 0.55;
-    if (fogK > 0) for (let y = 0; y < H; y++) { const f = fl_ss(H * 0.35, H - 1, y) * fogK; if (f <= 0) continue; for (let xx = 0; xx < W; xx++) { const c = b.d[y * W + xx]; if (c && fl_bay(xx, y) < f) b.d[y * W + xx] = mistU; } }
+    const fogK = o.fog ?? 0.55;                                   // (la trame de brume ne démarre qu'à 12 % : pas de pixels de brume isolés à l'amorce)
+    if (fogK > 0) for (let y = 0; y < H; y++) { const f = (fl_ss(H * 0.35, H - 1, y) * fogK - 0.12) / 0.88; if (f <= 0) continue; for (let xx = 0; xx < W; xx++) { const c = b.d[y * W + xx]; if (c && fl_bay(xx, y) < f) b.d[y * W + xx] = mistU; } }
   });
 }
 // forêt à plusieurs plans : o.y = ligne de sol du plan le plus proche ; o.bands = nombre de plans (3) ; o.h = hauteur moyenne des arbres du plan proche
 // o.depth = profondeur du plan le plus lointain (0,85) ; o.depthNear = celle du plan proche (0,4)
 function fl_spruceForest(t, o = {}) {
+  o = { ...o, snow: fl_qd(o.snow, 0.8), fog: fl_qd(o.fog, 0.55), gap: o.gap == null ? 0.55 : fl_q2(o.gap), spread: o.spread == null ? 0.62 : fl_q2(o.spread) };   // quantifiés : clés de cache = valeurs lues par le constructeur
   const n = o.bands ?? 3, hN = o.h ?? 70, dF = o.depth ?? 0.85, dN = o.depthNear ?? Math.max(0.25, dF - 0.5), step = o.step ?? 9, E = fl_env(o);
   for (let k = 0; k < n; k++) {                                     // du plus lointain au plus proche
     const f = n > 1 ? k / (n - 1) : 1, depth = dF + (dN - dF) * f, hk = hN * (0.5 + 0.5 * f), yk = (o.y ?? 300) - (n - 1 - k) * step;
@@ -560,27 +586,47 @@ const fl_clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
 // empreintes de pas dans la neige ou le sable : o.tracks = [{ x0, y0, x1, y1, kind: 'paw' | 'boot' | 'hop' | 'lizard', step }]
 function fl_stampTracks(b, y0, y1, hz, tracks, tones, light, M) {
   const [dk, md, lt] = tones;
-  for (const tr of tracks) {
-    const len = Math.hypot(tr.x1 - tr.x0, tr.y1 - tr.y0), step = tr.step ?? 8, n = Math.max(1, Math.floor(len / step)), kind = tr.kind || 'paw';
-    if (kind === 'lizard') {                                      // piste de lézard : ligne de queue sinueuse et petites pattes
-      for (let k = 0; k <= len; k++) { const f = k / len, x = tr.x0 + (tr.x1 - tr.x0) * f, y = tr.y0 + (tr.y1 - tr.y0) * f + Math.sin(f * 14) * 1.5 * fl_gs(y0 + (tr.y0 + (tr.y1 - tr.y0) * f - y0), y1, hz); b.set(Math.round(x + M), Math.round(y - y0), k % 2 ? dk : md); }
-      for (let k = 0; k < n; k++) { const f = k / n, x = tr.x0 + (tr.x1 - tr.x0) * f, y = tr.y0 + (tr.y1 - tr.y0) * f; for (const sd of [-1, 1]) { b.set(Math.round(x + M + sd * 2), Math.round(y - y0 + sd), dk); b.set(Math.round(x + M + sd * 3), Math.round(y - y0 + sd * 2), md); } }
-      continue;
+  tracks.forEach((tr, ti) => {
+    const dx = tr.x1 - tr.x0, dy = tr.y1 - tr.y0, len = Math.hypot(dx, dy) || 1, step = tr.step ?? 8, kind = tr.kind || 'paw', ang = Math.atan2(dy, dx), nxp = -Math.sin(ang), nyp = Math.cos(ang);
+    const sd = Math.round(tr.x0 * 7 + tr.y0 * 13 + ti * 101), ph = fl_h(sd, 1) * TAU;      // graine de la piste : son tracé ne dépend que de ses coordonnées
+    // point du chemin à l'abscisse curviligne d (px) : la droite des deux extrémités + un déport latéral sinueux (réduit par la perspective)
+    const at = (d, amp, per) => { const f = d / len, s = fl_gs(tr.y0 + dy * f, y1, hz), lat = Math.sin(d / per * TAU + ph) * amp * s; return [tr.x0 + dx * f + nxp * lat, tr.y0 + dy * f + nyp * lat, s]; };
+    const P = (x, y) => [Math.round(x + M), Math.round(y - y0)];
+    if (kind === 'lizard') {                                      // piste de lézard : queue qui serpente (1 px) et paires d'empreintes 2 x 1 px de chaque côté
+      const per = step * 3, amp = tr.amp ?? 3.6;
+      let prev = null;
+      for (let d = 0; d <= len; d += 0.5) {
+        const [x, y] = at(d, amp, per), [X, Y] = P(x, y);
+        if (prev && (prev[0] !== X || prev[1] !== Y)) { b.line(prev[0], prev[1], X, Y, Math.floor(d / 1.5) % 3 ? md : dk); }
+        else if (!prev) b.set(X, Y, md);
+        prev = [X, Y];
+      }
+      const n = Math.max(1, Math.floor(len / step));
+      for (let k = 0; k < n; k++) {
+        const d = (k + 0.5) * step + (fl_h(k, sd + 2) - 0.5) * 1.6;
+        for (const side of [-1, 1]) {                                // une patte avant et une patte arrière, décalées d'un demi-pas : démarche en diagonale
+          const dd = d + side * step * 0.22, [x, y, s] = at(dd, amp, per), off = side * (2.2 * s + 1.1), [X, Y] = P(x + nxp * off, y + nyp * off);
+          b.set(X, Y, dk); b.set(X + 1, Y, dk); b.set(X + (side > 0 ? 2 : -1), Y + (side > 0 ? 1 : -1), md);       // empreinte 2 x 1 et un doigt qui dépasse
+          if (s > 0.55) b.set(X - light, Y - 1, lt);                  // lèvre éclairée du côté du soleil
+        }
+      }
+      return;
     }
+    const n = Math.max(1, Math.floor(len / step));
     for (let k = 0; k < n; k++) {
-      const f = (k + 0.5) / n, x = tr.x0 + (tr.x1 - tr.x0) * f, y = tr.y0 + (tr.y1 - tr.y0) * f, s = fl_gs(y, y1, hz), side = k % 2 ? 1 : -1;
-      const ang = Math.atan2(tr.y1 - tr.y0, tr.x1 - tr.x0), ox = -Math.sin(ang) * side * 2.2 * s * (tr.spread ?? 1), oy = Math.cos(ang) * side * 1.2 * s * (tr.spread ?? 1);
-      const cx = Math.round(x + ox + M), cy = Math.round(y + oy - y0), sz = (tr.size ?? 1) * s;
+      const d = (k + 0.5) * step + (fl_h(k, sd + 3) - 0.5) * 2, side = k % 2 ? 1 : -1;     // pas irrégulier (± 1 px), pattes alternées
+      const [px_, py_, s] = at(d, 2.6, step * 5), lat = side * (1.5 + (fl_h(k, sd + 4) - 0.5)) * (tr.spread ?? 1) * Math.max(0.5, s) * 1.4;
+      const cx = Math.round(px_ + nxp * lat + M + (fl_h(k, sd + 5) - 0.5) * 1.6), cy = Math.round(py_ + nyp * lat - y0 + (fl_h(k, sd + 6) - 0.5) * 1.2), sz = (tr.size ?? 1) * s;
       if (kind === 'boot') { const rx = Math.max(1, Math.round(2.2 * sz)), ry = Math.max(1, Math.round(1.4 * sz)); b.ell(cx, cy, rx, ry, dk); b.ell(cx - light, cy - 1, Math.max(0, rx - 1), Math.max(0, ry - 1), md); b.set(cx + light * rx, cy, lt); b.set(cx + light * rx, cy + 1, lt); }
       else if (kind === 'hop') { b.set(cx, cy, dk); b.set(cx + 1, cy, md); b.set(cx - 1, cy + 1, dk); b.set(cx + light, cy - 1, lt); }
       else {                                                         // empreinte de patte : coussinet et quatre doigts
-        const k = Math.max(2, Math.round(sz * 2.4));
-        b.ell(cx, cy + 1, k, Math.max(1, Math.round(k * 0.7)), dk); b.set(cx - light * k, cy + 1, md);
-        for (const dx of [-1.5, -0.5, 0.5, 1.5]) { const X = cx + Math.round(dx * k * 0.9), Y = cy - Math.round(k * (1.6 - Math.abs(dx) * 0.3)); b.set(X, Y, dk); if (k > 1) b.set(X, Y - 1, md); }
-        b.set(cx + light * (k + 1), cy + 1, lt); b.set(cx + light * k, cy, lt);
+        const k2 = Math.max(2, Math.round(sz * 2.4));
+        b.ell(cx, cy + 1, k2, Math.max(1, Math.round(k2 * 0.7)), dk); b.set(cx - light * k2, cy + 1, md);
+        for (const dx_ of [-1.5, -0.5, 0.5, 1.5]) { const X = cx + Math.round(dx_ * k2 * 0.9), Y = cy - Math.round(k2 * (1.6 - Math.abs(dx_) * 0.3)); b.set(X, Y, dk); if (k2 > 1) b.set(X, Y - 1, md); }
+        b.set(cx + light * (k2 + 1), cy + 1, lt); b.set(cx + light * k2, cy, lt);
       }
     }
-  }
+  });
 }
 
 // ───────────── neige ─────────────
@@ -845,7 +891,7 @@ const fl_LEAFR = [LM[0], LM[1], LM[2], LM[3], LM[4], LM[5]];
 function fl_birchSpr(h, seed, leaf, snow, stems, o) {
   const frost = o.frost ?? 0;
   const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.4) * 10) / 10;
-  const key = `bi3|${h}|${seed}|${Math.round(leaf * 10)}|${Math.round(snow * 10)}|${Math.round(frost * 10)}|${stems}|${E.name}|${E.mist}|${light}|${dep}`;
+  const key = `bi3|${h}|${seed}|${leaf}|${snow}|${frost}|${stems}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 0.8) + 24, H = h + 6;
   return fl_spr(key, W, H, W >> 1, H - 3, b => {
     const r = fl_rng(seed), T = fl_tones(fl_BARK, o, 'snow'), dark = fl_tones([NI[0], ST[0], ST[1], ST[2]], o, 'conifer'), twg = fl_tones([DU[0], DU[1], WO[1], WO[2], WO[3]], o, 'wood'), lv = fl_tones(fl_LEAFR, o, 'leaf'), sn = fl_tones(fl_SNW, o, 'snow');
@@ -904,14 +950,14 @@ function fl_birchSpr(h, seed, leaf, snow, stems, o) {
 }
 // bouleau : x, y = pied, h hauteur, leaf 0 (nu) à 1 (feuillu), snow, stems 1 à 3
 function fl_birch(t, o = {}) {
-  const p = fl_o(o), h = Math.round(o.h ?? 120), spr = fl_birchSpr(h, (o.seed ?? 1) | 0, o.leaf ?? 0.5, o.snow ?? 0, o.stems ?? 1, { ...o, depth: p.depth });
+  const p = fl_o(o), h = Math.round(o.h ?? 120), spr = fl_birchSpr(h, (o.seed ?? 1) | 0, fl_q(o.leaf ?? 0.5), fl_q(o.snow ?? 0), o.stems ?? 1, { ...o, depth: p.depth, frost: fl_q(o.frost ?? 0) });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 2.2 * fl_wind(t, p.x, o) * Math.min(1.5, h / 100), { pow: 1.5 });
 }
 
 // ───────────── branches mortes ─────────────
 // o.kind : 'standing' (broussaille morte dressée) ou 'fallen' (brindilles au sol) ; o.n : nombre de tiges ; o.h hauteur ; o.snow
 function fl_deadSpr(h, n, seed, snow, kind, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `dd2|${h}|${n}|${seed}|${Math.round(snow * 10)}|${kind}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `dd2|${h}|${n}|${seed}|${snow}|${kind}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 1.0) + 14, H = h + 6;
   return fl_spr(key, W, H, W >> 1, H - 3, b => {
     const r = fl_rng(seed), T = fl_tones([WO[0], ST[1], ST[3], ST[4], ST[6]], o, 'stone'), sn = fl_tones(fl_SNW, o, 'snow'), cx = W >> 1, base = H - 3;
@@ -932,7 +978,7 @@ function fl_deadSpr(h, n, seed, snow, kind, o) {
   });
 }
 function fl_deadBranches(t, o = {}) {
-  const p = fl_o(o), h = Math.round(o.h ?? 40), spr = fl_deadSpr(h, o.n ?? 4, (o.seed ?? 1) | 0, o.snow ?? 0, o.kind || 'standing', { ...o, depth: o.depth ?? 0.3 });
+  const p = fl_o(o), h = Math.round(o.h ?? 40), spr = fl_deadSpr(h, o.n ?? 4, (o.seed ?? 1) | 0, fl_q(o.snow ?? 0), o.kind || 'standing', { ...o, depth: o.depth ?? 0.3 });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 0.7 * fl_wind(t, p.x, o), { pow: 2 });
 }
 
@@ -961,7 +1007,7 @@ function fl_moss(x, y, w, o = {}) {
 // ───────────── tronc moussu ─────────────
 // tronc couché : x, y = bas du tronc, w longueur, h diamètre ; o.moss 0..1 ; o.snow 0..1 ; o.end 'left' | 'right' | 'none' ; o.tilt (px de dénivelé)
 function fl_logSpr(w, h, seed, moss, snow, end, tilt, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.25) * 10) / 10, key = `lg|${w}|${h}|${seed}|${Math.round(moss * 10)}|${Math.round(snow * 10)}|${end}|${tilt}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.25) * 10) / 10, key = `lg|${w}|${h}|${seed}|${moss}|${snow}|${end}|${tilt}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = w + 16, H = h + 18 + Math.abs(tilt);
   return fl_spr(key, W, H, 8, H - 4, b => {
     const r = fl_rng(seed), T = fl_tones([WO[0], WO[1], WO[2], WO[3], WO[4], WO[5]], o, 'wood'), M_ = fl_tones(fl_LEAFR, o, 'leaf'), sn = fl_tones(fl_SNW, o, 'snow'), cut = fl_tones([WO[3], WO[4], WO[5], WO[6], SK[3]], o, 'wood');
@@ -1002,13 +1048,13 @@ function fl_logSpr(w, h, seed, moss, snow, end, tilt, o) {
   });
 }
 function fl_log(x, y, w, h, o = {}) {
-  const spr = fl_logSpr(Math.round(w), Math.round(h), (o.seed ?? 1) | 0, o.moss ?? 0.6, o.snow ?? 0, o.end ?? 'left', o.tilt ?? 0, { ...o, depth: o.depth ?? 0.25 });
+  const spr = fl_logSpr(Math.round(w), Math.round(h), (o.seed ?? 1) | 0, fl_q(o.moss ?? 0.6), fl_q(o.snow ?? 0), o.end ?? 'left', o.tilt ?? 0, { ...o, depth: o.depth ?? 0.25 });
   fl_blit(spr, fl_sx(x, o), fl_sy(y, o), 1);
 }
 
 // ───────────── fougères ─────────────
 function fl_fernSpr(h, n, seed, unfurl, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `fe2|${h}|${n}|${seed}|${Math.round(unfurl * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `fe2|${h}|${n}|${seed}|${unfurl}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 1.7) + 12, H = h + 10;
   return fl_spr(key, W, H, W >> 1, H - 3, b => {
     const r = fl_rng(seed), T = fl_tones([GR[0], GR[1], GR[2], LM[2], LM[3], LM[4], LM[5]], o, 'leaf'), cx = W >> 1, base = H - 4;
@@ -1036,7 +1082,7 @@ function fl_fernSpr(h, n, seed, unfurl, o) {
 }
 // touffe de fougères : x, y = pied, h hauteur, n frondes, unfurl 0..1 (crosses non déroulées)
 function fl_ferns(t, o = {}) {
-  const p = fl_o(o), h = Math.round(o.h ?? 26), spr = fl_fernSpr(h, o.n ?? 6, (o.seed ?? 1) | 0, o.unfurl ?? 0.3, { ...o, depth: o.depth ?? 0.3 });
+  const p = fl_o(o), h = Math.round(o.h ?? 26), spr = fl_fernSpr(h, o.n ?? 6, (o.seed ?? 1) | 0, fl_q(o.unfurl ?? 0.3), { ...o, depth: o.depth ?? 0.3 });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 1.5 * fl_wind(t, p.x, o), { pow: 1.3 });
 }
 
@@ -1128,6 +1174,7 @@ function fl_grassSpring(y0, y1, o = {}) {
   const t = o.t ?? 0, E = fl_env(o), seed = (o.seed ?? 1) | 0, grow = fl_cl(o.grow ?? 1), dens = o.density ?? 1, par = fl_par({ ...o, depth: o.depth ?? 0.12 }), cam = (o.cam || 0) * par, hN = o.h ?? 14;
   if (o.base !== false) {                                           // fond : terre qui verdit
     const baseSpr = fl_memo(`gsb2|${y0}|${y1}|${seed}|${E.name}|${E.mist}|${E.light}|${Math.round(grow * 10)}|${o.depth ?? ''}`, () => {
+      const grow = Math.round(fl_cl(o.grow ?? 1) * 10) / 10;           // le fond ne lit que la valeur arrondie de sa clé (la hauteur des touffes garde grow brut)
       const w = LW + 2 * fl_GM, h = y1 - y0 + 4, b = new fl_Buf(w, h), gS = fl_toneSets([LM[0], LM[1], LM[2], LM[3]], o, 'leaf', 4), mS = fl_toneSets([WO[0], WO[1], WO[2], WO[3]], o, 'wood', 4);
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const yn = y / h, top = 2 + (fl_n1(x * 0.17, seed) - 0.5) * 3 + (fl_n1(x * 0.5, seed + 3) - 0.5) * 2; if (y < top) continue;
@@ -1139,14 +1186,18 @@ function fl_grassSpring(y0, y1, o = {}) {
     });
     fl_blit(baseSpr, -fl_cl(cam, -fl_GM, fl_GM), y0 - 2, 1);
   }
+  // touffes : chaque rangée a ses propres hachages (rr entre dans tous) et un espacement apériodique ; la hauteur est modulée par un bruit lent (pas de quadrillage)
   const rows = Math.max(2, Math.round((y1 - y0) / 5)), list = [];
   for (let rr = 0; rr < rows; rr++) {
     const yn = (rr + 0.5) / rows, y = y0 + yn * (y1 - y0), sc = 0.4 + 0.8 * yn, spacing = Math.max(5, 15 * sc / dens);
-    for (let x = -30 - ((rr * 37) % spacing); x < LW + 60; x += spacing * (0.7 + 0.6 * fl_h(rr + Math.floor(x), seed))) list.push({ x: x, y: y + (fl_h(Math.floor(x), seed + rr) - 0.5) * 3, sc, yn });
+    for (let x = -30 - ((rr * 37) % spacing); x < LW + 60; x += spacing * (0.55 + 0.9 * fl_h(Math.floor(x) + rr * 211, seed + 9))) list.push({ x: x, y: y + (fl_h(Math.floor(x) + rr * 57, seed + rr) - 0.5) * 3.4, sc, yn, rr });
   }
   for (const tf of list) {
-    const h = Math.max(2, Math.round(hN * tf.sc * grow * (0.75 + 0.5 * fl_h(Math.floor(tf.x * 7), seed + 2)))); if (grow < 0.1 && h < 3) continue;
-    const key = Math.floor(fl_h(Math.floor(tf.x * 3), seed + 4) * 5), pn = fl_fbm((tf.x + cam) / 55, tf.y / 14, seed + 77, 2), sh = pn < 0.42 ? 0 : pn > 0.58 ? 2 : 1, spr = fl_tuftSpr(h, 4 + Math.round(grow * 3), 10 + key, { ...o, depth: (o.depth ?? 0.12) + (0.55 - (o.depth ?? 0.12)) * Math.pow(1 - tf.yn, 1.5), dry: 0, sh });
+    const fx = Math.floor(tf.x), patch = fl_fbm(tf.x / 30, tf.y / 8, seed + 51, 2);
+    if (grow < 0.95 && patch < (1 - grow) * 0.7) continue;                      // plages où rien n'a encore poussé (herbe neuve : par plaques)
+    const hv = 0.75 + 0.5 * fl_h(fx * 7 + tf.rr * 131, seed + 2), hm = 0.62 + 0.76 * fl_fbm(tf.x / 20, tf.y / 6, seed + 31, 2);
+    const h = Math.max(2, Math.round(hN * tf.sc * grow * hv * hm)); if (grow < 0.1 && h < 3) continue;
+    const key = Math.floor(fl_h(fx * 3 + tf.rr * 77, seed + 4) * 8), pn = fl_fbm((tf.x + cam) / 55, tf.y / 14, seed + 77, 2), sh = pn < 0.42 ? 0 : pn > 0.58 ? 2 : 1, spr = fl_tuftSpr(h, 4 + Math.round(grow * 3), 10 + key, { ...o, depth: (o.depth ?? 0.12) + (0.55 - (o.depth ?? 0.12)) * Math.pow(1 - tf.yn, 1.5), dry: 0, sh });
     fl_blitSway(spr, tf.x - cam, tf.y, 1.6 * fl_wind(t, tf.x, o) * (h / 12), { pow: 1.3 });
   }
 }
@@ -1244,7 +1295,11 @@ function fl_desertRockSpr(w, h, kind, seed, o) {
   const E = fl_env(o), light = E.light || 1, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `dr|${w}|${h}|${kind}|${seed}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = w + 14, H = h + 10;
   return fl_spr(key, W, H, W >> 1, H - 4, b => {
-    const r = fl_rng(seed), T = fl_tones([OC[0], OC[1], OC[2], OC[3], OC[4], OC[5]], o, 'warm'), cx = W / 2, yb = H - 4, rimU = fl_us(E.rim);
+    const r = fl_rng(seed), T = fl_tones([OC[0], OC[1], OC[2], OC[3], OC[4], OC[5]], { ...o, keepFam: true }, 'warm'), cx = W / 2, yb = H - 4, rimU = fl_us(E.rim);
+    if (dep >= 0.5) {                                                // perspective atmosphérique : tous les tons (face éclairée comme face sombre) se rapprochent du même ton moyen avec la distance
+      const rg = u => [u & 255, (u >>> 8) & 255, (u >>> 16) & 255], mid = fl_mix(rg(T[2]), rg(T[3]), 0.5), kk = fl_cl((dep - 0.35) * 1.4, 0, 0.7);
+      for (let i = 0; i < T.length; i++) T[i] = fl_us(fl_mix(rg(T[i]), mid, kk), 'warm');
+    }
     const tiers = kind === 'spire' ? [{ w: w * 0.46, h: h * 0.5 }, { w: w * 0.3, h: h * 0.5 }] : kind === 'ledge' ? [{ w: w, h: h * 0.7 }, { w: w * 0.7, h: h * 0.3 }] : [{ w: w * 0.96, h: h * 0.42 }, { w: w * 0.76, h: h * 0.34 }, { w: w * 0.52, h: h * 0.24 }];
     let yTop = yb; const prof = [];
     for (let ti = 0; ti < tiers.length; ti++) { const t = tiers[ti], y1 = yTop, y0 = yTop - t.h, off = (r() - 0.5) * w * 0.08; prof.push({ y0, y1, w: t.w, off }); yTop = y0; }
@@ -1274,10 +1329,10 @@ function fl_desertRockSpr(w, h, kind, seed, o) {
     // éboulis au pied : pente de pierres tramée
     const wb = prof[0].w / 2 * 1.18;
     for (let y = yb - 6; y <= yb; y++) for (let x = Math.round(cx - wb - 4); x <= Math.round(cx + wb + 4); x++) {
-      const dx = Math.abs(x - cx) / (wb + 4), lim = (y - (yb - 6)) / 6; if (dx > 1 - lim * 0.9 + (fl_h2(x, y, seed) - 0.5) * 0.3 || b.get(x, y)) continue;
+      const dx = Math.abs(x - cx) / (wb + 4), lim = (y - (yb - 6)) / 6; if (dx > 0.62 + lim * 0.38 + (fl_h2(x, y, seed) - 0.5) * 0.3 || b.get(x, y)) continue;      // talus collé au pied : étroit en haut, large en bas
       if (fl_bay(x, y) < 0.35 + lim * 0.7) b.set(x, y, T[(light > 0 ? x > cx : x < cx) ? 2 + (fl_h2(x, y, 5) < 0.3 ? 1 : 0) : 1]);
     }
-    for (let k = 0; k < 8; k++) { const x = Math.round(cx + (r() - 0.5) * wb * 2.2), y = yb - Math.round(r() * 3); if (!b.get(x, y)) { b.set(x, y, T[3]); b.set(x - 1, y, T[1]); b.set(x, y + 1, T[0]); } }
+    for (let k = 0; k < 8; k++) { const x = Math.round(cx + (r() - 0.5) * wb * 2.2), y = yb - Math.round(r() * 3); if (!b.get(x, y) && (b.get(x - 1, y) || b.get(x + 1, y) || b.get(x, y - 1))) { b.set(x, y, T[3]); b.set(x - 1, y, T[1]); b.set(x, y + 1, T[0]); } }    // cailloux seulement au contact du rocher ou du talus
     if (dep < 0.6) fl_selout(b, 0.6);
   });
 }
@@ -1315,7 +1370,7 @@ function fl_capDome(b, x, y, w, T, light) {
 // ───────────── saguaro ─────────────
 function fl_saguaroSpr(h, arms, seed, bloom, o) {
   const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10;
-  const key = `sg|${h}|${arms}|${seed}|${bloom}|${E.name}|${E.mist}|${light}|${dep}|${o.flip || 0}`;
+  const key = `sga|${h}|${arms}|${seed}|${bloom}|${E.name}|${E.mist}|${light}|${dep}|${o.flip || 0}`;
   const W = Math.round(h * 0.95) + 18, H = h + 10;
   return fl_spr(key, W, H, W >> 1, H - 4, b => {
     const r = fl_rng(seed), T = fl_tones(fl_CACT, o, 'leaf'), spine = fl_us(E.name === 'desertDusk' ? AM[9] : WH[1]), rimU = fl_us(E.rim);
@@ -1349,7 +1404,7 @@ function fl_saguaroSpr(h, arms, seed, bloom, o) {
 }
 // saguaro : x, y = pied, h hauteur, arms 0 à 3, bloom 0..1 (fleurs blanches)
 function fl_saguaro(t, o = {}) {
-  const p = fl_o(o), spr = fl_saguaroSpr(Math.round(o.h ?? 120), o.arms ?? 2, (o.seed ?? 1) | 0, o.bloom ?? 0, { ...o, depth: p.depth });
+  const p = fl_o(o), spr = fl_saguaroSpr(Math.round(o.h ?? 120), o.arms ?? 2, (o.seed ?? 1) | 0, fl_q(o.bloom ?? 0), { ...o, depth: p.depth });
   fl_blit(spr, fl_sx(p.x, o), fl_sy(p.y, o));
 }
 
@@ -1370,7 +1425,7 @@ function fl_pad(b, cx, cy, rx, ry, ang, T, light, seed, fruit, spineU, fruitT, d
   }
 }
 function fl_prickleSpr(h, seed, fruit, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `pp|${h}|${seed}|${Math.round(fruit * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `pp|${h}|${seed}|${fruit}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 1.5) + 14, H = h + 12;
   return fl_spr(key, W, H, W >> 1, H - 4, b => {
     const r = fl_rng(seed), T = fl_tones([GR[0], GR[1], GR[2], GR[3], GR[4]], o, 'leaf'), F = fl_tones([RD[0], RD[1], RD[2], RD[3], RD[4], RD[5]], { ...o, fogK: 0.5 }, 'warm'), spine = fl_us(E.name === 'desertDusk' ? AM[9] : WH[1]), cx = W >> 1, base = H - 5;
@@ -1394,13 +1449,13 @@ function fl_prickleSpr(h, seed, fruit, o) {
 }
 // figuier de Barbarie : raquettes en bleu-vert, fruits rouges (fruit 0..1)
 function fl_prickly(t, o = {}) {
-  const p = fl_o(o), spr = fl_prickleSpr(Math.round(o.h ?? 50), (o.seed ?? 1) | 0, o.fruit ?? 0.8, { ...o, depth: p.depth });
+  const p = fl_o(o), spr = fl_prickleSpr(Math.round(o.h ?? 50), (o.seed ?? 1) | 0, fl_q(o.fruit ?? 0.8), { ...o, depth: p.depth });
   fl_blit(spr, fl_sx(p.x, o), fl_sy(p.y, o));
 }
 
 // ───────────── agave ─────────────
 function fl_agaveSpr(h, n, seed, stalk, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `ag|${h}|${n}|${seed}|${Math.round(stalk * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `ag|${h}|${n}|${seed}|${stalk}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 1.9) + 14, H = h + Math.round(stalk * h * 1.4) + 12;
   return fl_spr(key, W, H, W >> 1, H - 5, b => {
     const r = fl_rng(seed), T = fl_tones([GR[0], GR[1], GR[2], GR[3], GR[4], CY[3]], o, 'leaf'), cx = W >> 1, base = H - 6, tipU = fl_us(WO[1]), rimU = fl_us(E.rim);
@@ -1433,13 +1488,13 @@ function fl_agaveSpr(h, n, seed, stalk, o) {
   });
 }
 function fl_agave(t, o = {}) {
-  const p = fl_o(o), spr = fl_agaveSpr(Math.round(o.h ?? 40), o.n ?? 15, (o.seed ?? 1) | 0, o.stalk ?? 0, { ...o, depth: p.depth });
+  const p = fl_o(o), spr = fl_agaveSpr(Math.round(o.h ?? 40), o.n ?? 15, (o.seed ?? 1) | 0, fl_q(o.stalk ?? 0), { ...o, depth: p.depth });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 0.6 * fl_wind(t, p.x, o), { pow: 2, span: spr.h });
 }
 
 // ───────────── ocotillo ─────────────
 function fl_ocotilloSpr(h, n, seed, bloom, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `oc|${h}|${n}|${seed}|${Math.round(bloom * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `oc|${h}|${n}|${seed}|${bloom}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = Math.round(h * 0.9) + 20, H = h + 10;
   return fl_spr(key, W, H, W >> 1, H - 4, b => {
     const r = fl_rng(seed), T = fl_tones([WO[1], ST[2], GR[1], GR[2], LM[2], LM[3]], o, 'leaf'), F = fl_tones([RD[2], RD[3], RD[4], AM[6], AM[7]], { ...o, fogK: 0.4 }, 'warm'), cx = W >> 1, base = H - 5;
@@ -1463,7 +1518,7 @@ function fl_ocotilloSpr(h, n, seed, bloom, o) {
   });
 }
 function fl_ocotillo(t, o = {}) {
-  const p = fl_o(o), spr = fl_ocotilloSpr(Math.round(o.h ?? 80), o.n ?? 11, (o.seed ?? 1) | 0, o.bloom ?? 0.8, { ...o, depth: p.depth });
+  const p = fl_o(o), spr = fl_ocotilloSpr(Math.round(o.h ?? 80), o.n ?? 11, (o.seed ?? 1) | 0, fl_q(o.bloom ?? 0.8), { ...o, depth: p.depth });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 2.4 * fl_wind(t, p.x, o), { pow: 1.6 });
 }
 
@@ -1562,7 +1617,8 @@ function fl_tumbleweed(x, y, t, o = {}) {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // 7. SAVANE : acacias en parasol, baobab, hautes herbes, termitière, buissons
 // ═══════════════════════════════════════════════════════════════════════════════════════
-const fl_ACAF = [GR[0], GR[1], LM[1], LM[2], LM[3], LM[4]];
+const fl_ACAF = [GR[0], GR[1], LM[1], LM[2], LM[3], LM[4]];            // feuillage de baobab
+const fl_ACAD = [GR[0], GR[1], GR[2], LM[1], LM[2]];                   // canopée d'acacia à contre-jour : vert sombre, le vert clair LM seulement en bouquets côté soleil
 
 // ───────────── acacia en parasol ─────────────
 // kind : 'tortilis' (large table plate) | 'lean' (penché, canopée décalée) | 'twin' (deux troncs) | 'round' (couronne arrondie) ; o.sil : silhouette à contre-jour
@@ -1571,8 +1627,9 @@ function fl_acaciaSpr(h, cw, kind, seed, sil, o) {
   const W = Math.round(cw + 30), H = Math.round(h + 14);
   return fl_spr(key, W, H, W >> 1, H - 5, b => {
     const r = fl_rng(seed), base = H - 6, cx = W >> 1;
-    const Tw = sil ? fl_tones([NI[0], NI[1], DU[0], NI[3]], { ...o, fogK: 0.4 }, 'sil') : fl_tones([NI[1], WO[0], WO[1], WO[2], WO[3]], o, 'wood');
-    const Tl = sil ? fl_tones([NI[0], NI[1], DU[0], DU[1], NI[3]], { ...o, fogK: 0.4 }, 'sil') : fl_tones(fl_ACAF, o, 'leaf'), rimU = fl_us(E.rim);
+    const oM = { ...o, fogK: (o.fogK ?? 1) * Math.min(1, 0.45 / Math.max(0.01, fl_fog(dep))) };      // brume plafonnée à 0,45 : le feuillage reste vert (plus loin : sil: true)
+    const Tw = sil ? fl_tones([NI[0], NI[1], DU[0], NI[3]], { ...o, fogK: 0.4 }, 'sil') : fl_tones([NI[1], WO[0], WO[1], WO[2], WO[3]], oM, 'wood');
+    const Tl = sil ? fl_tones([NI[0], NI[1], DU[0], DU[1], NI[3]], { ...o, fogK: 0.4 }, 'sil') : fl_tones(fl_ACAD, oM, 'leaf'), rimU = fl_us(E.rim);
     const ct = h * (kind === 'round' ? 0.42 : 0.26), ctop = base - h + Math.round(ct * 0.5), off = kind === 'lean' ? cw * 0.12 * (r() < 0.5 ? -1 : 1) : 0, ccx = cx + off;
     const trunk = (x0, wb, hf, lean) => {                            // tronc court qui se divise en branches maîtresses qui montent vers la canopée
       const fy = base - h * hf, pts = [[x0, base, wb], [x0 + lean * 0.3, base - h * hf * 0.5, wb * 0.88], [x0 + lean, fy, wb * 0.75]];
@@ -1597,14 +1654,18 @@ function fl_acaciaSpr(h, cw, kind, seed, sil, o) {
         const u = (x - ccx) / (cw / 2), dome = (kind === 'round' ? 0.85 : 0.5) * ct * (1 - u * u * (kind === 'round' ? 1 : 0.9)), droop = Math.pow(Math.abs(u), 3) * ct * 0.35;
         const cy = ctop + ct * (0.5 + 0.3 * lf) - dome * (1 - 0.7 * lf) + droop - r() * ct * 0.16, rx = Math.round(5 + r() * 5 + (1 - Math.abs(u)) * 3), ry = Math.round(ct * (0.2 + 0.14 * r())) + 1;
         const lim = under(x) - cy; if (lim < 1.5) continue;
-        fl_clump(b, Math.round(x), Math.round(Math.min(cy, under(x) - ry)), rx, Math.min(ry, Math.max(2, Math.floor(lim))), Tl, light, { rag: 0.55, seed: seed + L_ * 7, hi: 0.45, bias: 0.14 * lf - 0.1 + (r() - 0.5) * 0.2, dk: 3.4 });
+        fl_clump(b, Math.round(x), Math.round(Math.min(cy, under(x) - ry)), rx, Math.min(ry, Math.max(2, Math.floor(lim))), Tl, light, { rag: 0.55, seed: seed + L_ * 7, hi: 0.45, bias: 0.14 * lf - 0.2 + (r() - 0.5) * 0.2 + (u * light > 0.25 ? 0.14 : 0), dk: 3.4 });
       }
     }
     // trous de ciel dans le feuillage (tramés) et franges pendantes sous la canopée
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (!b.d[y * W + x] || y < ctop + 3) continue; if (fl_n2(x / 2.2, y / 1.6, seed + 4) > 0.8 && fl_bay(x, y) < 0.7 && y > ctop + ct * 0.35) b.d[y * W + x] = 0; }
     for (let x = Math.round(ccx - cw / 2); x < ccx + cw / 2; x++) { const yy = Math.round(under(x)); if (b.get(x, yy) && fl_h2(x, yy, seed) < 0.3) { b.set(x, yy + 1, Tl[sil ? 1 : 0]); if (fl_h2(x, yy, seed + 5) < 0.3) b.set(x, yy + 2, Tl[0]); } }
     // dessous de la canopée à l'ombre : bande sombre tramée
-    for (let y = Math.round(ctop + ct * 0.7); y <= Math.round(ctop + ct + 2); y++) for (let x = 0; x < W; x++) { const c = b.d[y * W + x]; if (c && Tl.includes(c) && fl_bay(x, y) < (y - (ctop + ct * 0.7)) / (ct * 0.34) * 0.8) b.d[y * W + x] = Tl[0]; }
+    if (!sil) for (let y = Math.round(ctop + ct * 0.5); y <= Math.round(ctop + ct + 2); y++) for (let x = 0; x < W; x++) {      // le dessous est à l'ombre : deux tons plus sombre, puis le plus sombre
+      const c = b.d[y * W + x], k = (y - (ctop + ct * 0.5)) / (ct * 0.5), ix = c ? Tl.indexOf(c) : -1; if (ix < 0 || fl_bay(x, y) >= Math.min(1, k * 1.15)) continue;
+      b.d[y * W + x] = Tl[k > 0.8 ? 0 : Math.max(0, ix - 2)];
+    }
+    else for (let y = Math.round(ctop + ct * 0.7); y <= Math.round(ctop + ct + 2); y++) for (let x = 0; x < W; x++) { const c = b.d[y * W + x]; if (c && Tl.includes(c) && fl_bay(x, y) < (y - (ctop + ct * 0.7)) / (ct * 0.34) * 0.8) b.d[y * W + x] = Tl[0]; }
     fl_rim(b, light, rimU, { topP: sil ? 0.9 : 0.55, skip: c => Tw.includes(c) && !sil });
     if (dep < 0.5 && !sil) fl_selout(b, 0.6);
     fl_gshadow(b, cx - light * 6, base + 3, Math.round(cw * 0.28), 2, Tw[0], 0.8);
@@ -1618,7 +1679,7 @@ function fl_acacia(t, o = {}) {
 
 // ───────────── baobab ─────────────
 function fl_baobabSpr(h, seed, sil, leaf, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `bb|${h}|${seed}|${sil ? 1 : 0}|${Math.round(leaf * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `bb|${h}|${seed}|${sil ? 1 : 0}|${leaf}|${E.name}|${E.mist}|${light}|${dep}`;
   const tw = h * 0.46, W = Math.round(h * 1.1) + 24, H = h + 12;
   return fl_spr(key, W, H, W >> 1, H - 5, b => {
     const r = fl_rng(seed), base = H - 6, cx = W >> 1, T = sil ? fl_tones([NI[0], NI[1], DU[0], DU[1], NI[3]], { ...o, fogK: 0.4 }, 'sil') : fl_tones([NI[2], DU[1], WO[1], WO[2], WO[3], OC[2]], o, 'warm'), lv = sil ? T : fl_tones(fl_ACAF, o, 'leaf'), rimU = fl_us(E.rim);
@@ -1640,7 +1701,7 @@ function fl_baobabSpr(h, seed, sil, leaf, o) {
   });
 }
 function fl_baobab(t, o = {}) {
-  const p = fl_o(o), spr = fl_baobabSpr(Math.round(o.h ?? 100), (o.seed ?? 1) | 0, !!o.sil, o.leaf ?? 0.5, { ...o, depth: p.depth });
+  const p = fl_o(o), spr = fl_baobabSpr(Math.round(o.h ?? 100), (o.seed ?? 1) | 0, !!o.sil, fl_q(o.leaf ?? 0.5), { ...o, depth: p.depth });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 0.7 * fl_wind(t, p.x, o), { pow: 2.2 });
 }
 
@@ -1715,7 +1776,7 @@ function fl_termiteMound(t, o = {}) {
 // ───────────── buisson ─────────────
 // kind : 'olive' (buisson épineux de savane) | 'green' (printemps) | 'dry' | 'winter' (persistant sous la neige) ; w largeur, h hauteur
 function fl_bushSpr(w, h, kind, seed, snow, o) {
-  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `bu|${w}|${h}|${kind}|${seed}|${Math.round(snow * 10)}|${E.name}|${E.mist}|${light}|${dep}`;
+  const E = fl_env(o), light = E.light, dep = Math.round((o.depth ?? 0.3) * 10) / 10, key = `bu|${w}|${h}|${kind}|${seed}|${snow}|${E.name}|${E.mist}|${light}|${dep}`;
   const W = w + 14, H = h + 12;
   return fl_spr(key, W, H, W >> 1, H - 4, b => {
     const r = fl_rng(seed), ramp = { olive: [GR[0], GR[1], LM[1], LM[2], LM[3], LM[4]], green: [GR[1], GR[2], LM[2], LM[3], LM[4], LM[5]], dry: [WO[1], OC[1], OC[2], AM[4], AM[5], AM[6]], winter: [GR[0], GR[0], GR[1], GR[2], GR[3], GR[3]] }[kind] || [GR[0], GR[1], LM[1], LM[2], LM[3], LM[4]];
@@ -1733,7 +1794,7 @@ function fl_bushSpr(w, h, kind, seed, snow, o) {
   });
 }
 function fl_bush(t, o = {}) {
-  const p = fl_o(o), w = Math.round(o.w ?? 34), h = Math.round(o.h ?? w * 0.6), spr = fl_bushSpr(w, h, o.kind || 'olive', (o.seed ?? 1) | 0, o.snow ?? 0, { ...o, depth: p.depth });
+  const p = fl_o(o), w = Math.round(o.w ?? 34), h = Math.round(o.h ?? w * 0.6), spr = fl_bushSpr(w, h, o.kind || 'olive', (o.seed ?? 1) | 0, fl_q(o.snow ?? 0), { ...o, depth: p.depth });
   fl_blitSway(spr, fl_sx(p.x, o), fl_sy(p.y, o), 0.9 * fl_wind(t, p.x, o), { pow: 1.6 });
 }
 
@@ -1742,8 +1803,8 @@ function fl_bush(t, o = {}) {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 const fl_FGR = {
   green: [[GR[0], GR[1], GR[2], LM[3], LM[4], LM[5]], 'leaf'],
-  dry: [[NI[0], WO[0], WO[2], OC[2], AM[6], AM[8]], 'warm'],
-  gold: [[NI[0], WO[0], WO[2], AM[4], AM[7], AM[9]], 'warm'],
+  dry: [[WO[0], WO[2], WO[4], OC[3], AM[6], AM[8]], 'warm'],          // herbes sèches : le côté ombre reste brun (WO[2]), pas de contour marine ; seul le côté éclairé est clair
+  gold: [[WO[0], WO[2], OC[2], AM[4], AM[7], AM[9]], 'warm'],
   spring: [[GR[1], GR[2], LM[2], LM[4], LM[5], LM[6]], 'leaf'],
 };
 // un brin : lame courbe qui s'effile, côté ombre sombre, côté soleil clair, pointe vive, pied dans l'ombre ; dessiné directement sur L
@@ -1752,7 +1813,7 @@ function fl_blade(x0, y0, h, lean, w0, T, light, sway, o = {}) {
   let px_ = x0;
   L.setTransform(1, 0, 0, 1, 0, 0);
   for (let k = 0; k <= steps; k++) {
-    const s = k / steps, y = y0 - h * s * (1 - 0.18 * Math.min(1, Math.abs(lean) / h * 1.6)), x = x0 + lean * Math.pow(s, 1.8) + sway * Math.pow(s, 1.5);
+    const s = k / steps, y = y0 - h * s * (1 - 0.18 * Math.min(1, Math.abs(lean) / h * 1.6)), x = x0 + lean * Math.pow(s, 1.8) + sway * Math.pow(s, 1.5) + (o.curl || 0) * Math.pow(s, 3);      // curl : la pointe se recourbe (puissance 3 du haut)
     const w = Math.max(1, Math.round(w0 * (1 - Math.pow(s, 2.1)) * (0.85 + 0.15 * Math.sin(s * 3.1)) + 0.3)), xl = Math.round(Math.min(px_, x) - w / 2), xr = Math.round(Math.max(px_, x) + w / 2);
     const foot = s < 0.22 ? 1 : 0, dark = T[Math.max(0, 1 - foot)], mid = T[Math.max(0, 2 - foot)], lit = T[Math.max(0, Math.min(n - 2, 4 - foot))];
     const yy = Math.round(y), wd = xr - xl + 1;
@@ -1774,21 +1835,23 @@ function fl_grassFg(t, o = {}) {
   const par = o.par ?? 1.3, cam = (o.cam || 0) * par, wind = o.wind ?? 1;
   for (let layer = 0; layer < 2; layer++) {                           // fond plus clair et plus petit, puis premier plan sombre et grand
     const back = layer === 0, T = fl_tones(back ? ramp.map((c, i) => i) .map(i => ramp[Math.min(ramp.length - 1, i + 1)]) : ramp, { ...o, depth: back ? 0.1 : 0.0 }, fam), cnt = Math.round(nb * (back ? 0.7 : 1)), sc = back ? 0.62 : 1;
-    const list = [];
-    for (let i = 0; i < cnt; i++) {
-      const u = (i + fl_h(i, seed + layer * 50) * 0.9) / cnt;                              // 0..1 le long de l'écran
+    const list = [], padN = Math.ceil(cnt * 0.55);                                        // brins au-delà des deux bords (u < 0 et u > 1) : aucun trou au bord quand la caméra glisse de ±100 px
+    for (let i = -padN; i < cnt + padN; i++) {
+      const u = (i + fl_h(i, seed + layer * 50) * 0.9) / cnt, uc = fl_cl(u);                // u de 0 à 1 le long de l'écran (hors de [0, 1] : débordement)
       let x, env;
-      if (side === 'bottom') { x = u * (LW + 40) - 20; env = 0.28 + 0.72 * Math.pow(Math.abs(u - 0.5) * 2, 1.4) * dip + (1 - dip) * 0.6; }
-      else if (side === 'left') { x = Math.pow(u, 1.5) * 150 - 16; env = 1 - u * 0.75; }
-      else if (side === 'right') { x = LW + 16 - Math.pow(u, 1.5) * 150; env = 1 - u * 0.75; }
-      else { const lf = u < 0.5; const v = lf ? u * 2 : (1 - u) * 2; x = lf ? Math.pow(v, 1.4) * 120 - 16 : LW + 16 - Math.pow(v, 1.4) * 120; env = 0.35 + 0.65 * (1 - v * 0.6) * dip + (1 - dip) * 0.5; }
+      if (side === 'bottom') { x = u * (LW + 40) - 20; env = 0.28 + 0.72 * Math.pow(Math.abs(uc - 0.5) * 2, 1.4) * dip + (1 - dip) * 0.6; }
+      else if (side === 'left') { if (u > 1) continue; x = u < 0 ? u * 150 - 16 : Math.pow(u, 1.5) * 150 - 16; env = 1 - uc * 0.75; }
+      else if (side === 'right') { if (u > 1) continue; x = u < 0 ? LW + 16 - u * 150 : LW + 16 - Math.pow(u, 1.5) * 150; env = 1 - uc * 0.75; }
+      else { const lf = u < 0.5; const v = lf ? u * 2 : (1 - u) * 2; x = lf ? (v < 0 ? v * 120 : Math.pow(v, 1.4) * 120) - 16 : LW + 16 - (v < 0 ? v * 120 : Math.pow(v, 1.4) * 120); env = 0.35 + 0.65 * (1 - Math.max(0, v) * 0.6) * dip + (1 - dip) * 0.5; }
+      if (x - cam < -110 || x - cam > LW + 110) continue;                                  // trop loin hors cadre : inutile de dessiner
       list.push({ x, env, r: fl_h(i, seed + 7 + layer * 13), r2: fl_h(i, seed + 11 + layer * 17), r3: fl_h(i, seed + 19) });
     }
     list.sort((a, c) => a.env * a.r - c.env * c.r);
     for (const q of list) {
-      const hh = hMax * sc * q.env * (0.55 + 0.6 * q.r), lean = (q.r2 - 0.5) * hh * 0.85 + (side === 'left' ? hh * 0.18 : side === 'right' ? -hh * 0.18 : 0), w0 = (back ? 4 : 8) + q.r3 * 3;
+      const dryK = o.kind === 'gold' || o.kind === 'dry';                                  // herbes sèches : lames fines (≈ 60 % de moins à la base) qui se recourbent, pas des tipis
+      const hh = hMax * sc * q.env * (0.55 + 0.6 * q.r), lean = (q.r2 - 0.5) * hh * 0.85 + (side === 'left' ? hh * 0.18 : side === 'right' ? -hh * 0.18 : 0), w0 = dryK ? (back ? 2.4 : 3.6) + q.r3 * 1.6 : (back ? 4 : 8) + q.r3 * 3;
       const wx = q.x - cam, sway = fl_wind(t, wx + layer * 31, { wind }) * hh * 0.15 + wind * hh * 0.03;
-      const tip = fl_blade(wx, y0 + (back ? -3 : 0) + q.r3 * 3, hh, lean, w0, T, light, sway, o);
+      const tip = fl_blade(wx, y0 + (back ? -3 : 0) + q.r3 * 3, hh, lean, w0, T, light, sway, { ...o, curl: dryK ? (lean >= 0 ? 1 : -1) * hh * (0.04 + 0.12 * q.r2) : 0 });
       // épi ou tige fleurie au bout de quelques brins (herbes sèches et dorées)
       if (!back && (o.kind === 'gold' || o.kind === 'dry') && q.r3 < 0.22) {
         const L_ = 7 + Math.round(q.r * 4); const sT = fl_tones([AM[8], AM[9], AM[10], WH[2]], { ...o, depth: 0, fogK: 0.5 }, 'warm');
@@ -1810,11 +1873,12 @@ function fl_leaf(b, x, y, ang, len, T, light, k = 0) {
     b.set(Math.round(x + i), Math.round(y + j), T[tn]);
   }
 }
+const fl_BM = 26;                                                   // marge hors cadre : le gros bout du tronc continue de 26 px au-delà du bord ancré (décalage de caméra ≤ 10 px + vent ≤ 6 px)
 function fl_branchSpr(corner, kind, len, seed, snow, blossom, o) {
-  const E = fl_env(o), light = E.light, sil = kind === 'acacia' ? (o.sil ?? true) : false, key = `bf3|${corner}|${kind}|${len}|${seed}|${Math.round(snow * 10)}|${blossom ? 1 : 0}|${sil ? 1 : 0}|${E.name}|${E.mist}|${light}`;
-  const W = Math.round(len * 1.05) + 8, H = Math.round(len * 0.85) + 8;
-  return fl_spr(key, W, H, corner[1] === 'l' ? 0 : W, corner[0] === 't' ? 0 : H, b => {
-    const r = fl_rng(seed), sx = corner[1] === 'l' ? 1 : -1, sy = corner[0] === 't' ? 1 : -1, ox = corner[1] === 'l' ? 0 : W - 1, oy = corner[0] === 't' ? 0 : H - 1;
+  const E = fl_env(o), light = E.light, sil = kind === 'acacia' ? (o.sil ?? true) : false, key = `bf3|${corner}|${kind}|${len}|${seed}|${snow}|${blossom ? 1 : 0}|${sil ? 1 : 0}|${E.name}|${E.mist}|${light}`;
+  const W0 = Math.round(len * 1.05) + 8, W = W0 + fl_BM, H = Math.round(len * 0.85) + 8, left = corner[1] === 'l';
+  return fl_spr(key, W, H, left ? fl_BM : W0, corner[0] === 't' ? 0 : H, b => {      // ancre = point du coin du cadre ; le sprite déborde de fl_BM px hors cadre côté ancré
+    const r = fl_rng(seed), sx = left ? 1 : -1, sy = corner[0] === 't' ? 1 : -1, ox = left ? fl_BM : W0 - 1, oy = corner[0] === 't' ? 0 : H - 1;
     const mx = u => ox + sx * u, my = v => oy + sy * v, o0 = { ...o, depth: 0, fogK: 0 };
     const wood = sil ? fl_tones([NI[0], NI[1], DU[0], DU[1], ST[0]], o0, 'sil') : fl_tones(kind === 'dead' ? [NI[0], ST[0], ST[1], ST[3], ST[4]] : [NI[0], WO[0], WO[1], WO[2], WO[3]], o0, kind === 'dead' ? 'stone' : 'wood');
     const Tn = fl_tones([GR[0], GR[1], GR[2], GR[3], LM[3]], o0, 'conifer'), Lf = fl_tones([GR[0], GR[1], LM[2], LM[3], LM[4], LM[5]], o0, 'leaf'), sn = fl_tones(fl_SNW, o0, 'snow'), rimU = fl_us(E.rim);
@@ -1835,7 +1899,12 @@ function fl_branchSpr(corner, kind, len, seed, snow, blossom, o) {
         }
       },
     };
-    fl_grow(b, -6, 12 + r() * 6, 0.4 + (r() - 0.5) * 0.08, len, Math.max(6, len * 0.07), cfg, 0);
+    const gy = 12 + r() * 6, ga = 0.4 + (r() - 0.5) * 0.08, gw = Math.max(6, len * 0.07);        // (même ordre de tirages qu'avant : la branche garde sa forme)
+    {                                                                // prolongement du tronc vers l'extérieur du cadre, dans l'axe de départ : il ne se détache jamais du bord
+      const ex = fl_BM - 2, q = [[-6 - ex, gy - Math.sin(ga) * ex, gw * 1.08], [-6 - ex * 0.5, gy - Math.sin(ga) * ex * 0.5, gw * 1.04], [-6, gy, gw]].map(p => [mx(p[0]), my(p[1]), p[2]]);
+      fl_tube(b, q, fl_shader(wood, light, { dk: 3, rough: 0.25 }));
+    }
+    fl_grow(b, -6, gy, ga, len, gw, cfg, 0);
     for (const lf of leaves) for (const sd of [-1, 1]) if (r() < 0.85) {
       const aa = lf[2] + sd * (0.6 + r() * 0.6), l = 5 + r() * 3;
       fl_leaf(b, lf[0], lf[1], aa, l, Lf.slice(1), light, (r() - 0.5) * 0.2);
@@ -1851,7 +1920,7 @@ function fl_branchSpr(corner, kind, len, seed, snow, blossom, o) {
   });
 }
 function fl_branchFg(t, o = {}) {
-  o = o || {}; const corner = o.corner || 'tl', len = Math.round(o.len ?? 130), spr = fl_branchSpr(corner, o.kind || 'leafy', len, (o.seed ?? 1) | 0, o.snow ?? 0, !!o.blossom, o);
+  o = o || {}; const corner = o.corner || 'tl', len = Math.round(o.len ?? 130), spr = fl_branchSpr(corner, o.kind || 'leafy', len, (o.seed ?? 1) | 0, fl_q(o.snow ?? 0), !!o.blossom, o);
   const par = o.par ?? 1.35, x = (corner[1] === 'l' ? 0 : LW) - fl_cl((o.cam || 0) * par * 0.4, -10, 10), y = corner[0] === 't' ? 0 : LH;
   const w = fl_wind(t, corner === 'tl' || corner === 'bl' ? 20 : 150, o);
   fl_blitSway(spr, x, y, 2.4 * w * (len / 120), { pow: 1.2, abs: true, span: spr.h });
