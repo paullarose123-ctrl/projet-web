@@ -551,7 +551,7 @@ function ly_paperDraw(x, y, w, h, o = {}) {                                     
   poly([[x0 + sk + 1, y0], [x1 + sk, y0], [x1, y1], [x0 + 1, y1]], WH[2]);
   poly([[x1 + sk - 2, y0], [x1 + sk, y0], [x1, y1], [x1 - 2, y1]], WH[0]);
   const sc = w >= 30 ? 2 : 1, tw = textW('OUI', sc), tx = Math.round(x - tw / 2 + sk * 0.5), ty = Math.round(y - 3.5 * sc);
-  if (h >= 14) ptext('OUI', tx, ty, GR[2], sc, null);
+  if (h >= 14 && tx >= 0 && tx + tw <= LW) ptext('OUI', tx, ty, GR[2], sc, null);
   if (h >= 24) { for (let i = 0; i < 3; i++) R(x0 + 4 + sk * 0.3, y1 - 7 + i * 2 - (sc === 2 ? 2 : 0), Math.max(2, w - 8 - (i === 2 ? 5 : 0)), 1, ST[6]); }
 }
 function ly_ballot(cx, cy, s, t, o = {}) {
@@ -674,7 +674,7 @@ function ly_nose(cx, cy, s, t, o = {}) {
       pxl(e[0] - er * 0.4, e[1] - er * 0.45, WH[3], Math.max(1, Math.round(er * 0.3)), Math.max(1, Math.round(er * 0.3)));
     } else { const lw = Math.max(1, Math.round(1.2 * Z)); lineP(e[0] - sd * er, e[1] - er * 0.4, e[0] + sd * 1, e[1] + er * 0.3, '#05040f', lw + 1); lineP(e[0] - sd * er, e[1] + er * 0.9, e[0] + sd * 1, e[1] + er * 0.3, '#05040f', lw + 1); lineP(e[0] - sd * er, e[1] - er * 0.4, e[0] + sd * 1, e[1] + er * 0.3, WO[5], lw); lineP(e[0] - sd * er, e[1] + er * 0.9, e[0] + sd * 1, e[1] + er * 0.3, WO[5], lw); }
   }
-  if (o.ballot) { const q = P0(o.bx || 0, 36 + (o.by || 0)), sc2 = Z >= 1.6 ? 2 : 1; ptextC('OUI', q[0], q[1] - 3.5 * sc2, GR[2], sc2, null); }
+  if (o.ballot) { const q = P0(o.bx || 0, 36 + (o.by || 0)), sc2 = Z >= 1.6 ? 2 : 1; if (q[0] - 16 >= 0 && q[0] + 16 <= LW) ptextC('OUI', q[0], q[1] - 3.5 * sc2, GR[2], sc2, null); }
   return { nose: P0(0, 0), nostrilL: P0(nsL[0], nsL[1]), nostrilR: P0(nsR[0], nsR[1]), eyeL: eyes[0], eyeR: eyes[1], lip: P0(0, 26), w: 120 * Z, paper: P0(o.bx || 0, 29.5 + (o.by || 0)) };
 }
 
