@@ -3,8 +3,8 @@
    sc_lycaon_sprites.js — le LYCAON (Lycaon pictus), la meute et les accessoires du vote (segment Afrique). Préfixe ly_.
    Tout se dessine sur L (270 × 480) dans draw(u, t) (AVANT le tramage), sauf ly_atchoum et ICONES[2] (dans ui(), pixels nets). Fonctions pures du temps : aucun Math.random ni Date (hasard = graine).
 
-   ly_dog(cx, cy, s, t, o)     un lycaon de profil, tourné vers la DROITE (o.flip : vers la gauche). (cx, cy) = sol sous le centre du tronc ; s = 1 → ≈ 145 px du museau au bout de la queue, 79 px au garrot
-                               (60 à 78 cm), ≈ 108 px oreilles comprises ; s = 0,36 → 50 px (meute au loin), s = 1,5 → 218 px (gros plan).
+   ly_dog(cx, cy, s, t, o)     un lycaon de profil, tourné vers la DROITE (o.flip : vers la gauche). (cx, cy) = sol sous le centre du tronc ; s = 1 → ≈ 135 px du museau au bout de la queue, 79 px au garrot
+                               (60 à 78 cm), ≈ 110 px oreilles comprises ; s = 0,37 → 50 px (meute au loin), s = 1,6 → 216 px (gros plan).
                                o.pose   'stand' | 'lie' (couché, tête relevée ; o.rest 0..1 pose la tête sur les pattes, yeux fermés) | 'sit' | 'look' (tête haute, oreilles pointées) | 'sneeze' | 'greet' (tête basse à hauteur d'épaule, oreilles
                                         rabattues, queue qui bat, gueule entrouverte) | 'walk' | 'trot' | 'run' (galop). Une posture d'attitude (stand, look, sneeze, greet) devient mobile avec o.gait 'walk' | 'trot' | 'run'.
                                o.ph     phase de marche (cycles ; 0 à 1) — les pieds ne glissent pas si cx avance de ly_gait(…).x × s ; sans o.ph, la phase vient de t.
@@ -449,8 +449,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
   if (wk > 0.12 && s >= 0.45) for (let k = 0; k < 3; k++) { const a = Ts(11.5 + k * 2.6, -5.6 + k * 0.3), b = Ts(12.4 + k * 2.6, -2.4 + k * 0.2); lineP(a[0], a[1], b[0], b[1], C.brn.hi, 1); }
   const nose = Ts(21.4, -1.6);
   if (s >= 0.5) px(nose[0] - fl * 0.5, nose[1] - 1, ly_mix(ST[5], C.sh, 0.2));
-  if (window.LY_DEBUG) window.LY_DBG = { Lg, tpts, H, N0, an: anR };
-  return { T: Tb, Th: Ts, nose, mouth: Ts(19, 4.4), eye: eS, head: Ts(2, -1), ear: Ts(-5, -26), tail: Tb(...(Lg.tail.pts[9])), back: Tb(0, -80), chest: Tb(34, -50), w: 145 * s, dir: fl, ex, inh, N0: Tb(N0[0], N0[1]) };
+  return { T: Tb, Th: Ts, nose, mouth: Ts(19, 4.4), eye: eS, head: Ts(2, -1), ear: Ts(-5, -26), tail: Tb(...(Lg.tail.pts[9])), back: Tb(0, -80), chest: Tb(34, -50), w: 135 * s, dir: fl, ex, inh, N0: Tb(N0[0], N0[1]) };
 }
 
 // ───────────────────────── la meute ─────────────────────────

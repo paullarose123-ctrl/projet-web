@@ -65,11 +65,11 @@ function ly_drawVote(u, t) {
   const v = u % LY_VP, BX = 196, BY = 338, BS = 1.1, slotX = BX;
   // le nez arrive de la gauche avec le bulletin, plonge vers la fente, lâche, repart ; le bulletin tombe ; puis le nez éternue
   const approach = eo(prog(v, 0, 1.5)), dip = eio(prog(v, 1.5, 2.3)), lift = eo(prog(v, 2.35, 3.1));
-  const nx = lerp(-30, 150, approach) + 40 * dip - 60 * lift, ny = lerp(150, 150, approach) + 76 * dip - 70 * lift + 3 * Math.sin(v * 4) * (1 - dip) ;
+  const nx = lerp(-30, 150, approach) + 46 * dip - 60 * lift, ny = lerp(150, 150, approach) + 76 * dip - 70 * lift + 3 * Math.sin(v * 4) * (1 - dip) ;
   const holding = v < 2.35, NS = 0.8;
   const paperHeld = [nx, ny + 29.5 * NS];
   let paper = null;
-  if (!holding) { const f = prog(v, 2.35, 3.25), y0 = paperHeld[1] + 0, yEnd = 296; paper = { x: lerp(nx, slotX, 0.0) , y: lerp(paperHeld[1], yEnd, Math.pow(f, 1.4)) }; paper.x = (150 + 40) + (slotX - 190) * 0 + Math.sin(f * 7) * 2 * (1 - f); }
+  if (!holding) { const f = prog(v, 2.35, 3.25), yEnd = 308; paper = { x: slotX + Math.sin(f * 7) * 2 * (1 - f), y: lerp(paperHeld[1], yEnd, Math.pow(f, 1.4)) }; }
   const bump = holding ? 0 : sm(prog(v, 3.2, 3.28)) * (1 - sm(prog(v, 3.28, 3.6)));
   ly_ballot(BX, BY, BS, t, { paper, bump });
   ly_nose(nx, ny, NS, t, { ballot: holding ? 1 : 0, sneeze: ly_sneezeEnv(v - 4.6), seed: 4 });
@@ -82,7 +82,8 @@ function ly_voteUi(u, t) {
   ly_atchoum(110, 232, prog(v - 4.62, 0, 1.1), { sc: 3 });
 }
 
-INITS.push(() => { for (const p of ['stand', 'lie', 'sit', 'look', 'greet', 'walk', 'trot', 'run']) ly_dog(135, 300, 0.6, 0, { pose: p, seed: 1 }); ly_nose(135, 200, 0.8, 0, {}); ly_ballot(135, 300, 1, 0, {}); clearL(); });
+// préchauffage : le premier dessin de chaque plan (sols, ciels, palettes, motifs de pelage) est fait avant le premier plan ; il est effacé (aucun pixel ne change)
+INITS.push(() => { ly_drawPlanche(0.5, 0.5); ly_drawCycles(0.5, 0.5); ly_drawVote(0.5, 0.5); clearL(); });
 
 function buildLycaon(S) {
   const tCyc = wt('y2', 'Avant') - 0.1, tVote = wt('y3', 'Plus') - 0.1;
