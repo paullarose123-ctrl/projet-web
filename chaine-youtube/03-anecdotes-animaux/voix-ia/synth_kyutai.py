@@ -38,6 +38,7 @@ ap.add_argument("--temp", type=float, default=0.6, help="température d'échanti
 ap.add_argument("--cfg", type=float, default=2.0)
 ap.add_argument("--ellipse", type=float, default=0.4, help="pause (s) ajoutée après « ... » (« Un grand pouvoir implique... un très gros appétit »)")
 ap.add_argument("--batch", type=int, default=6)
+ap.add_argument("--device", default="auto", help="auto (carte graphique CUDA si présente, sinon processeur), cpu ou cuda : sur une carte graphique la synthèse est bien plus rapide que le temps réel")
 a = ap.parse_args()
 
 torch.set_num_threads(int(os.environ.get("TORCH_THREADS", "4")))
@@ -47,7 +48,8 @@ from moshi.models.tts import DEFAULT_DSM_TTS_REPO, TTSModel
 groups = json.load(open(a.groups, encoding="utf-8"))
 os.makedirs(os.path.join(a.outdir, "prises"), exist_ok=True)
 ck = CheckpointInfo.from_hf_repo(DEFAULT_DSM_TTS_REPO)
-tts = TTSModel.from_checkpoint_info(ck, n_q=32, temp=a.temp, device="cpu", dtype=torch.bfloat16)
+dev = ("cuda" if torch.cuda.is_available() else "cpu") if a.device == "auto" else a.device
+tts = TTSModel.from_checkpoint_info(ck, n_q=32, temp=a.temp, device=dev, dtype=torch.bfloat16)
 vp = tts.get_voice_path(a.voice)
 
 

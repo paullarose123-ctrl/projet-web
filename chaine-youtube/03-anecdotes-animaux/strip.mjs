@@ -1,7 +1,8 @@
 // PAGE=solo_gre.html OUT=build/gre node strip.mjs plan [n=8] [dt=0.25] [début en s depuis le début du plan]  — une bande d'images successives d'un plan : build/strip_<plan>.png (contrôle du mouvement)
 import puppeteer from 'puppeteer-core'; import fs from 'fs'; import { pathToFileURL } from 'url'; import path from 'path'; import { spawnSync } from 'child_process';
+import { CHROME } from './chrome.mjs';
 const [id, n = 8, dt = 0.25, off = 0] = process.argv.slice(2);
-const exe = ['/usr/bin/google-chrome', '/usr/bin/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(p => fs.existsSync(p));
+const exe = CHROME;
 const br = await puppeteer.launch({ executablePath: exe, headless: true, args: ['--allow-file-access-from-files', '--no-sandbox'], protocolTimeout: 900000 });
 const pg = await br.newPage(); pg.on('pageerror', e => console.error('PAGE ERROR', e.message));
 await pg.goto(pathToFileURL(path.resolve(process.env.PAGE || 'piece.html')).href + '?render=1'); await pg.waitForFunction('window.READY===true', { timeout: 300000 });

@@ -1,7 +1,8 @@
 // node sheet.mjs [fraction] [dossier]  — une image par plan (à la fraction donnée de sa durée, 0,55 par défaut) dans build/sheet/ (ou le dossier donné), pour contrôler le film d'un coup d'œil
 import puppeteer from 'puppeteer-core'; import fs from 'fs'; import { pathToFileURL } from 'url'; import path from 'path';
+import { CHROME } from './chrome.mjs';
 const frac = +(process.argv[2] || 0.55), OUT = process.argv[3] || 'build/sheet';
-const exe = ['/usr/bin/google-chrome', '/usr/bin/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(p => fs.existsSync(p));
+const exe = CHROME;
 const br = await puppeteer.launch({ executablePath: exe, headless: true, args: ['--allow-file-access-from-files', '--no-sandbox'], protocolTimeout: 900000 });
 const pg = await br.newPage(); pg.on('pageerror', e => console.error('PAGE ERROR', e.message));
 await pg.goto(pathToFileURL(path.resolve(process.env.PAGE || 'piece.html')).href + '?render=1'); await pg.waitForFunction('window.READY===true', { timeout: 300000 });

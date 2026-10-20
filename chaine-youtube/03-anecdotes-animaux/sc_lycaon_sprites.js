@@ -157,11 +157,11 @@ function ly_coat(seed) {
 // an : angle du cou (0 = horizontal vers l'avant, < 0 = vers le haut) ; nl : longueur du cou ; ah : tangage de la tête (> 0 : museau vers le bas) ; ear : −1 couchées … 1 pointées ;
 // ta, tc : angle de départ et courbure de la queue (ta = π : horizontale vers l'arrière ; ta ≈ 2,5 : pendante) ; wag : battement ; mouth : gueule ; dip, hdip : avant / arrière abaissés ; eye : ouverture.
 const LY_ATT = {
-  stand: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.50, tc: -0.85, wag: 0.12, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  stand: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.78, tc: -0.95, wag: 0.12, mouth: 0, dip: 0, hdip: 0, eye: 1 },
   look: { an: -0.92, nl: 21, ah: -0.16, ear: 1.0, ta: 2.80, tc: -0.55, wag: 0.0, mouth: 0, dip: -1.5, hdip: 0, eye: 1 },
-  sneeze: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.50, tc: -0.85, wag: 0.0, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  sneeze: { an: -0.50, nl: 20, ah: 0.05, ear: 0.45, ta: 2.78, tc: -0.95, wag: 0.0, mouth: 0, dip: 0, hdip: 0, eye: 1 },
   greet: { an: 0.30, nl: 21, ah: 0.52, ear: -0.9, ta: 3.30, tc: -0.35, wag: 1.0, mouth: 0.28, dip: 5, hdip: -1, eye: 0.8 },
-  walk: { an: -0.22, nl: 20, ah: 0.14, ear: 0.3, ta: 2.55, tc: -0.8, wag: 0.1, mouth: 0, dip: 0, hdip: 0, eye: 1 },
+  walk: { an: -0.22, nl: 20, ah: 0.14, ear: 0.3, ta: 2.8, tc: -0.85, wag: 0.1, mouth: 0, dip: 0, hdip: 0, eye: 1 },
   trot: { an: -0.34, nl: 20, ah: 0.08, ear: 0.2, ta: 2.9, tc: -0.55, wag: 0.1, mouth: 0.1, dip: 0, hdip: 0, eye: 1 },
   run: { an: -0.10, nl: 21, ah: 0.22, ear: -0.55, ta: 3.14, tc: 0.12, wag: 0.0, mouth: 0.5, dip: 0, hdip: 0, eye: 1 },
   lie: { an: -0.72, nl: 20, ah: 0.04, ear: 0.4, ta: 1.2, tc: 0.0, wag: 0.05, mouth: 0, dip: 0, hdip: 0, eye: 1 },
@@ -196,11 +196,11 @@ function ly_sneezeEnv(u) {
 
 // torse debout (repère du modèle : x vers l'avant, y vers le bas, sol en y = 0 ; garrot à 79 px) : croupe → garrot, puis (cou) puis sternum → arrière
 const LY_TOP = [[-42, -63], [-38, -72], [-30, -76.5], [-17, -76], [-3, -75], [10, -76.5], [21, -80]];
-const LY_BOT = [[37.5, -57], [35.5, -46], [27, -40], [16, -38.5], [5, -40.5], [-4, -45], [-13, -49.5], [-24, -52.5], [-35, -54.5]];
+const LY_BOT = [[38, -58], [36.5, -45], [28, -37.5], [16, -35.5], [5, -37.5], [-4, -42.5], [-13, -47.5], [-24, -51], [-35, -54]];
 
 // tête dans son repère (origine au centre du crâne, museau vers +x, y vers le bas)
-const LY_HEAD_UP = [[-11.8, -0.5], [-9.8, -6.4], [-4.2, -9.8], [2.8, -9.4], [8.2, -6.8], [13.5, -5.3], [18.2, -4.2], [20.8, -2.4], [21.4, 0.2], [20, 2.3], [15, 2.8], [9, 3.2], [3, 4.4], [-3, 6.3], [-9, 5.2], [-11.5, 2.6]];
-const LY_HEAD_JAW = [[3, 3.6], [10, 3.2], [16, 2.9], [19.6, 3.0], [18.8, 5.0], [14, 6.4], [8, 7.8], [2, 9.0], [-3.5, 8.0], [-5, 5.4]];
+const LY_HEAD_UP = [[-11.8, -0.5], [-9.8, -6.4], [-4.2, -10], [2.8, -9.8], [7.6, -7.6], [11.5, -6.0], [16.2, -5.0], [18.6, -3.4], [19.2, -0.6], [18.2, 2.2], [14, 3], [8, 3.4], [3, 4.6], [-3, 6.5], [-9, 5.4], [-11.5, 2.8]];
+const LY_HEAD_JAW = [[3, 3.7], [9, 3.3], [14.6, 3.0], [17.6, 3.2], [17, 5.2], [13, 6.6], [8, 8], [2, 9.2], [-3.5, 8.2], [-5, 5.5]];
 const LY_EAR = [[-5.4, 0.5], [-6.8, -5], [-6.6, -11], [-3.8, -16.4], [0.8, -18.2], [5, -15.6], [6.6, -9.6], [6, -4], [4.4, 0.5]];
 
 // ───────────────────────── le lycaon ─────────────────────────
@@ -247,14 +247,14 @@ function ly_dog(cx, cy, s, t, o = {}) {
   sn = sn || 0; const inh = Math.max(0, -sn), ex = Math.max(0, sn);
   if (o.look != null) { A.an -= 0.4 * o.look; A.ah -= 0.12 * o.look; }
   if (o.mouth != null) A.mouth = o.mouth;
-  A.an += -0.5 * inh + 0.95 * ex; A.ah += -0.3 * inh + 0.62 * ex; A.dip += 4.5 * ex - 1 * inh; A.ear = o.ear != null ? o.ear : A.ear + 0.3 * inh - 1.5 * ex;
+  A.an += -0.5 * inh + 0.95 * ex; A.ah += -0.3 * inh + 0.5 * ex; A.nl += 5 * ex; A.dip += 4.5 * ex - 1 * inh; A.ear = o.ear != null ? o.ear : A.ear + 0.3 * inh - 1.5 * ex;
   A.eye = (o.eye != null ? o.eye : A.eye) * (1 - 1.15 * clamp(ex));
   const wag = clamp(o.tail ?? A.wag), wk = clamp(ex * 1.2);
   // ── allure : appuis, rebond, flexion de l'échine ──
-  const F = { nF: [28, 0, 0], fF: [28, 0, 0], nH: [-30, 0, 0], fH: [-30, 0, 0] };
+  const F = { nF: [25, 0, 0], fF: [25, 0, 0], nH: [-26, 0, 0], fH: [-26, 0, 0] };
   let bob = 0, pF = 0, pB = 0, recoil = -3 * ex;
   if (G && !lie && !sit) {
-    F.nF = ly_foot(G, ph, G.ph.nF, 28 + G.rF); F.fF = ly_foot(G, ph, G.ph.fF, 28 + G.rF); F.nH = ly_foot(G, ph, G.ph.nH, -30 + G.rH); F.fH = ly_foot(G, ph, G.ph.fH, -30 + G.rH);
+    F.nF = ly_foot(G, ph, G.ph.nF, 25 + G.rF); F.fF = ly_foot(G, ph, G.ph.fF, 25 + G.rF); F.nH = ly_foot(G, ph, G.ph.nH, -26 + G.rH); F.fH = ly_foot(G, ph, G.ph.fH, -26 + G.rH);
     if (gname === 'walk') { bob = -0.9 * (0.5 - 0.5 * Math.cos(4 * Math.PI * ph)); pF = 0.015 * Math.sin(TAU * ph); pB = -pF * 0.6; }
     else if (gname === 'trot') { bob = -3.2 * (0.5 + 0.5 * Math.cos(4 * Math.PI * (ph - 0.46))); pF = 0.02 * Math.sin(4 * Math.PI * ph); pB = -pF; }
     else { const a = 0.5 + 0.5 * Math.cos(TAU * (ph - 0.9)), b = Math.cos(TAU * (ph - 0.35)); bob = -6 * a; pF = 0.09 * b + 0.05; pB = -0.06 * b - 0.03; }
@@ -263,9 +263,10 @@ function ly_dog(cx, cy, s, t, o = {}) {
   const sinkF = A.dip + (rest ? 6 * rest : 0), sinkB = A.hdip;
   const PV = [-2, -60];
   let bodyT;
-  if (lie) bodyT = (x, y) => [x, y + 33 + (rest ? 2.5 * rest * clamp((x + 5) / 40) : 0)];
-  else if (sit) { const th = -0.84, pv = [-38, -54]; bodyT = (x, y) => { const q = ly_rot([x, y], pv, th); return [q[0] - 1, q[1] + 47.5]; }; }
-  else bodyT = (x, y) => { const w = sm(clamp((x + 24) / 52)), q = ly_rot([x, y], PV, lerp(pB, pF, w)); return [q[0] + recoil * w, q[1] + bob + lerp(sinkB, sinkF, w)]; };
+  const sq = x => 0.85 * x - 0.5;
+  if (lie) bodyT = (x, y) => [sq(x), y + 33 + (rest ? 2.5 * rest * clamp((x + 5) / 40) : 0)];
+  else if (sit) { const th = -0.84, pv = [-38, -54]; bodyT = (x, y) => { const q = ly_rot([sq(x), y], pv, th); return [q[0] - 1, q[1] + 47.5]; }; }
+  else bodyT = (x, y) => { const w = sm(clamp((x + 24) / 52)), q = ly_rot([sq(x), y], PV, lerp(pB, pF, w)); return [q[0] + recoil * w, q[1] + bob + lerp(sinkB, sinkF, w)]; };
   const top = LY_TOP.map(p => bodyT(p[0], p[1])), bot = LY_BOT.map(p => bodyT(p[0], p[1]));
   top.forEach((p, i) => { if (i >= 1 && i <= 5) p[1] += -0.5 * breath; }); bot.forEach((p, i) => { if (i >= 1 && i <= 4) p[1] += 0.9 * breath; });
   // ── cou et tête ──
@@ -289,18 +290,19 @@ function ly_dog(cx, cy, s, t, o = {}) {
   const { dark, lite, rimL } = mk(ll);
   const halo = (path, col = C.line, w = 1.1) => { c.lineWidth = mn(w); c.strokeStyle = col; c.lineJoin = 'round'; c.stroke(path); };
   const tone = (key, k = 'mid') => C[LY_KEYS[key]][k];
-  const far = col => ly_mix(col, C.sh, 0.38);
+  const farM = { [C.tan.mid]: WO[4], [C.blk.mid]: WO[1], [C.wht.mid]: ly_mix(WO[6], WO[3], 0.45) }, far = col => farM[col] || ly_mix(col, WO[1], 0.4);
   const rnd = rng(seed * 131 + 7);
 
   // ── pattes : géométrie ──
   const legGeom = (kind, f, side, farSide) => {                                           // kind 'F' | 'H' ; f = [x, levée, balancement]
     const Fx = f[0] + (farSide ? (kind === 'F' ? 4 : 3) : 0), Fy = f[1] - (farSide ? 0.6 : 0), sw = f[2];
     if (kind === 'F') {
-      const S = bodyT(30 + (farSide ? 3 : 0), -52 + (farSide ? 1 : 0)), W = [Fx - 1.2 - 2 * sw, Fy - 9.5 - 1.5 * sw], E = ly_ik(S, W, 20.5, 30.5, -1), heel = [Fx - 0.8, Fy - 3.4];
-      return { pts: [S, E, W, heel], ws: [10, 6.8, 4.9, 4.5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], W, S };
+      const S = bodyT(31 + (farSide ? 3 : 0), -54 + (farSide ? 1 : 0)), W = [Fx - 1.2 - 2 * sw, Fy - 9.5 - 1.5 * sw], E = ly_ik(S, W, 19, 29.5, 1), heel = [Fx - 0.8, Fy - 3.4];
+      const Eu = [E[0] + (E[0] - W[0]) * 0.32, E[1] + (E[1] - W[1]) * 0.32];
+      return { pts: [Eu, E, W, heel], ws: [11, 9.4, 6.2, 5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], W, S };
     }
-    const Hj = bodyT(-30 + (farSide ? 2 : 0), -57 + (farSide ? 1 : 0)), Hk = [Fx - 4.5, Fy - 17.5 - 2 * sw], K = ly_ik(Hj, Hk, 22, 27, 1), heel = [Fx - 1.8, Fy - 3.2];
-    return { pts: [Hj, K, Hk, heel], ws: [12, 8.2, 5.2, 4.4], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], Hj, K, Hk };
+    const Hj = bodyT(-30 + (farSide ? 2 : 0), -57 + (farSide ? 1 : 0)), Hk = [Fx - 7, Fy - 18.5 - 2 * sw], K = ly_ik(Hj, Hk, 22, 27, -1), heel = [Fx - 2.2, Fy - 3.2];
+    return { pts: [Hj, K, Hk, heel], ws: farSide ? [11, 8.4, 5.4, 4.4] : [12, 9.5, 5.8, 4.5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], Hj, K, Hk };
   };
   let Lg;
   if (lie || sit) {
@@ -326,27 +328,31 @@ function ly_dog(cx, cy, s, t, o = {}) {
   } else Lg = { nF: legGeom('F', F.nF, 1, false), fF: legGeom('F', F.fF, -1, true), nH: legGeom('H', F.nH, 1, false), fH: legGeom('H', F.fH, -1, true) };
   // cuisse (près de la hanche) : ellipse le long de la cuisse
   const Hn = Lg.nH.Hj || bodyT(-30, -57), Kn = Lg.nH.K || bodyT(-18, -40), thc = [(Hn[0] + Kn[0]) / 2 - 2.5, (Hn[1] + Kn[1]) / 2 - 1.5], thl = Math.hypot(Kn[0] - Hn[0], Kn[1] - Hn[1]), thr = -Math.atan2(Kn[0] - Hn[0], Kn[1] - Hn[1]);
-  const thigh = ly_ell(thc[0], thc[1], 12.5, thl * 0.5 + 9, thr);
+  const thigh = ly_ell(thc[0], thc[1], 9.5, thl * 0.5 + 8, thr);
 
   // ── paint des pattes ──
-  const paintLeg = (L, idx, farSide) => {
+  const torsoPaint = () => { c.fillStyle = tone(coat.base, 'mid'); c.fillRect(-120, -140, 260, 170); for (const b of coat.blobs) { c.fillStyle = tone(b.col, 'mid'); c.fill(ly_smooth(b.pts.map(p => bodyT(p[0], p[1])))); } };
+  const paintLeg = (L, idx, farSide, hind) => {
     const co = coat.legs[idx], path = ly_limb(L.pts, L.ws, 5), paw = ly_ell(L.paw[0], L.paw[1], L.paw[2], L.paw[3], L.paw[4]);
     const col = k => { const q = tone(k, 'mid'); return farSide ? far(q) : q; };
     if (!farSide) { halo(path); halo(paw, C.line, 1.0); }
     c.fillStyle = col(co.top); c.fill(path);
     c.save(); c.clip(path);
-    const n = L.pts.length, W = L.pts[n - 2], hl = L.pts[n - 1], d = ly_norm([hl[0] - W[0], hl[1] - W[1] + 0.001]), nx = -d[1], ny = d[0], k0 = co.sockAt;
-    const P0 = [lerp(L.pts[n - 3][0], W[0], k0), lerp(L.pts[n - 3][1], W[1], k0)];
+    const n = L.pts.length, W = L.pts[n - 2], hl = L.pts[n - 1], d = ly_norm([hl[0] - W[0], hl[1] - W[1] + 0.001]), nx = -d[1], ny = d[0];
+    if (false) { const K = L.pts[1], dk = ly_norm([W[0] - K[0], W[1] - K[1] + 0.001]), kx = -dk[1], ky = dk[0];
+      c.fillStyle = col(co.top); c.beginPath(); c.moveTo(K[0] + kx * 16 - dk[0] * 3, K[1] + ky * 16 - dk[1] * 3); c.lineTo(K[0] + kx * 4 + dk[0] * 2, K[1] + ky * 4 + dk[1] * 2); c.lineTo(K[0] - kx * 4 - dk[0] * 1, K[1] - ky * 4 - dk[1] * 1); c.lineTo(K[0] - kx * 16 - dk[0] * 4, K[1] - ky * 16 - dk[1] * 4);
+      c.lineTo(K[0] - kx * 16 + dk[0] * 60, K[1] - ky * 16 + dk[1] * 60); c.lineTo(K[0] + kx * 16 + dk[0] * 60, K[1] + ky * 16 + dk[1] * 60); c.closePath(); c.fill(); }
+    const P0 = hind ? [lerp(W[0], hl[0], co.sockAt - 0.4), lerp(W[1], hl[1], co.sockAt - 0.4)] : [lerp(L.pts[n - 3][0], W[0], clamp(co.sockAt + 0.1, 0.5, 0.9)), lerp(L.pts[n - 3][1], W[1], clamp(co.sockAt + 0.1, 0.5, 0.9))];
     c.fillStyle = col(co.sock); c.beginPath(); c.moveTo(P0[0] + nx * 14 - d[0] * 1, P0[1] + ny * 14 - d[1] * 1); c.lineTo(P0[0] + nx * 3 + d[0] * 1.5, P0[1] + ny * 3 + d[1] * 1.5); c.lineTo(P0[0] - nx * 3, P0[1] - ny * 3);
     c.lineTo(P0[0] - nx * 14 - d[0] * 1.5, P0[1] - ny * 14 - d[1] * 1.5); c.lineTo(P0[0] - nx * 14 + d[0] * 30, P0[1] - ny * 14 + d[1] * 30); c.lineTo(P0[0] + nx * 14 + d[0] * 30, P0[1] + ny * 14 + d[1] * 30); c.closePath(); c.fill();
-    if (co.blob && !farSide) { const m = L.pts[1]; c.fillStyle = col(co.blob); c.fill(ly_smooth(ly_blob(rnd, m[0], m[1], 6, 5, 0.5, 8))); }
+    if (co.blob && !farSide && !hind) { const m = L.pts[1]; c.fillStyle = col(co.blob); c.fill(ly_smooth(ly_blob(rnd, m[0], m[1], 6, 5, 0.5, 8))); }
     c.restore();
-    c.fillStyle = col(co.sock === 'k' ? 'k' : co.sock); c.fill(paw);
-    if (!farSide) { dark(path, 2.2, 0.9, 0.5); lite(path, 1.4, 0.6, 0.3); dark(paw, 1.2, 0.5, 0.45); rimL(path, 0.9, 0.85); rimL(paw, 0.8, 0.6); }
-    else { c.fillStyle = 'rgba(46,26,86,0.22)'; c.fill(path); c.fill(paw); }
+    c.fillStyle = col(co.sock); c.fill(paw);
+    if (!farSide) { dark(path, 2.4, 0.9, 0.5); lite(path, 1.6, 0.6, 0.3); dark(paw, 1.2, 0.5, 0.45); rimL(path, 0.9, 0.85); rimL(paw, 0.8, 0.6); }
+    else { c.fillStyle = 'rgba(30,18,12,0.2)'; c.fill(path); c.fill(paw); }
   };
   // far side first
-  paintLeg(Lg.fH, 3, true); paintLeg(Lg.fF, 2, true);
+  paintLeg(Lg.fH, 3, true, true); paintLeg(Lg.fF, 2, true, false);
 
   // ── queue ──
   { const B = bodyT(-40, -67);
@@ -377,15 +383,14 @@ function ly_dog(cx, cy, s, t, o = {}) {
   dark(torso, 4.2, 1.5, 0.5); lite(torso, 2.6, 1.0, 0.3); rimL(torso, 1.0);
 
   // ── cuisse et patte arrière proche ──
-  paintLeg(Lg.nH, 1, false);
-  c.save(); c.fillStyle = tone(coat.base, 'mid'); c.fill(thigh); c.clip(thigh);
-  for (const b of coat.blobs) { c.fillStyle = tone(b.col, 'mid'); c.fill(ly_smooth(b.pts.map(p => bodyT(p[0], p[1])))); }
-  c.restore();
-  { const arc = new Path2D(); for (let i = 0; i <= 12; i++) { const a = -1.35 + 2.7 * i / 12, x = Math.cos(a) * 12.5, y = Math.sin(a) * (thl * 0.5 + 9), q = ly_rot([thc[0] + x * Math.cos(thr) - y * Math.sin(thr), thc[1] + x * Math.sin(thr) + y * Math.cos(thr)], thc, 0); i ? arc.lineTo(q[0], q[1]) : arc.moveTo(q[0], q[1]); }
-    c.save(); c.globalAlpha = 0.55; halo(arc, C.line, 0.9); c.restore(); }
-  dark(thigh, 3.2, 1.2, 0.42); lite(thigh, 2, 0.8, 0.28); rimL(thigh, 0.9, 0.7);
+  paintLeg(Lg.nH, 1, false, true);
+  c.save(); c.globalAlpha = 0.3; halo(thigh, C.line, 0.9); c.restore();
+  c.save(); c.clip(thigh); torsoPaint(); c.restore();
+  dark(thigh, 3.0, 1.2, 0.34); lite(thigh, 2, 0.8, 0.26); rimL(thigh, 0.9, 0.7);
   // ── patte avant proche ──
-  paintLeg(Lg.nF, 0, false);
+  c.save(); { const outP = new Path2D(); outP.rect(-400, -400, 800, 800); outP.addPath(torso); c.clip(outP, 'evenodd'); }
+  paintLeg(Lg.nF, 0, false, false);
+  c.restore();
   { const S = Lg.nF.pts[0], sp = ly_ell(S[0] - 5, S[1] - 7, 8.5, 12.5, 0.2); lite(sp, 2.4, 0.9, 0.22); }
 
   // ── tête ──
@@ -442,5 +447,94 @@ function ly_dog(cx, cy, s, t, o = {}) {
   if (wk > 0.12 && s >= 0.45) for (let k = 0; k < 3; k++) { const a = Ts(11.5 + k * 2.6, -5.6 + k * 0.3), b = Ts(12.4 + k * 2.6, -2.4 + k * 0.2); lineP(a[0], a[1], b[0], b[1], C.brn.hi, 1); }
   const nose = Ts(22.2, -1.6);
   if (s >= 0.5) px(nose[0] - fl * 0.5, nose[1] - 1, ly_mix(ST[5], C.sh, 0.2));
+  if (window.LY_DEBUG) window.LY_DBG = { Lg, tpts, H, N0, an: anR };
   return { T: Tb, Th: Ts, nose, mouth: Ts(19, 4.4), eye: eS, head: Ts(2, -1), ear: Ts(-5, -26), tail: Tb(...(Lg.tail.pts[9])), back: Tb(0, -80), chest: Tb(34, -50), w: 145 * s, dir: fl, ex, inh, N0: Tb(N0[0], N0[1]) };
+}
+
+// ───────────────────────── la meute ─────────────────────────
+// ly_packLayout(o, t) → [{ i, x, y, s, flip, seed, pose, fog, ph, gait, dist }] triés du lointain au proche (y croissant), sans rien dessiner.
+// o : n (7), seed (1), mode 'scatter' (éparpillés, profondeur variable) | 'ring' (cercle de rassemblement : tous tournés vers le centre) | 'run' (file qui part : x avance de ly_gait(t − t0) × s, sol identique),
+//     x0, x1 (étendue horizontale), y0, y1 (ligne de sol du plus lointain / du plus proche), s0, s1 (échelle au loin / près), fog0, fog1 (brume au loin / près), poses (liste, tournante),
+//     ring { cx, cy, rx, ry, a0 } et gather 0..1 (1 : positions du cercle, 0 : positions éparpillées ; entre les deux : trajet de chaque chien), flipP (part de chiens tournés vers la gauche, 0,5),
+//     run { t0, dir (+1 vers la droite), gait ('run'), x0 (départ du premier), gap (écart entre chiens, px), jitter }, cam, par (parallaxe : x − cam × par, avec par = 0,6 + 0,6 × profondeur).
+function ly_packLayout(o = {}, t = 0) {
+  const n = o.n ?? 7, seed = o.seed ?? 1, mode = o.mode || 'scatter', x0 = o.x0 ?? 20, x1 = o.x1 ?? 250, y0 = o.y0 ?? 330, y1 = o.y1 ?? 400, s0 = o.s0 ?? 0.4, s1 = o.s1 ?? 0.6;
+  const poses = o.poses || ['lie', 'stand', 'sit', 'lie', 'stand', 'look', 'lie'], cam = o.cam || 0, out = [];
+  const ring = { cx: 135, cy: 360, rx: 90, ry: 26, a0: 0.3, ...(o.ring || {}) }, run = { t0: 0, dir: 1, gait: 'run', x0: 60, gap: 34, jitter: 12, ...(o.run || {}) };
+  const gather = o.gather ?? 0, ge = eio(clamp(gather));
+  for (let i = 0; i < n; i++) {
+    const h = k => ly_h(i * 7 + k, seed * 31 + 5);
+    const dep = ly_frac(i * 0.618 + 0.25 * h(2)), seedI = (o.seedBase ?? seed * 10) + i;
+    const sx = x0 + (x1 - x0) * ((i + 0.15 + 0.7 * h(1)) / n), sy = lerp(y0, y1, dep), ss = lerp(s0, s1, dep) * (0.93 + 0.14 * h(3));
+    let x = sx, y = sy, sc = ss, flip = h(4) < (o.flipP ?? 0.5), pose = poses[(i + Math.floor(h(5) * 3)) % poses.length], gait = null, ph = undefined, dist = 0;
+    if (mode === 'ring' || gather > 0) {
+      const a = ring.a0 + TAU * i / n, rxp = ring.cx + Math.cos(a) * ring.rx, ryp = ring.cy + Math.sin(a) * ring.ry, d2 = (Math.sin(a) + 1) / 2, rs = lerp(s0, s1, d2) * (0.95 + 0.1 * h(3));
+      const fx = rxp > ring.cx;                                       // tourné vers le centre
+      if (mode === 'ring' && gather >= 1) { x = rxp; y = ryp; sc = rs; flip = fx; pose = o.ringPose || 'greet'; }
+      else if (gather > 0) { x = lerp(sx, rxp, ge); y = lerp(sy, ryp, ge); sc = lerp(ss, rs, ge); flip = ge > 0.5 ? fx : flip; pose = ge > 0.04 ? (o.moveGait ? 'greet' : (ge > 0.6 ? (o.ringPose || 'greet') : 'stand')) : pose; if (ge > 0.04 && ge < 0.97 && o.moveGait) { gait = o.moveGait; } }
+    }
+    if (mode === 'run') {
+      const gg = ly_gait(t - run.t0 - 0.06 * i, { gait: run.gait }), dd = run.dir; dist = gg.x;
+      sc = lerp(s0, s1, dep) * (0.95 + 0.1 * h(3)); flip = dd < 0; pose = run.gait; ph = gg.ph + h(6) * 0.3; gait = run.gait;
+      x = run.x0 - dd * (i * run.gap + h(7) * run.jitter) + dd * ly_gait(t - run.t0, { gait: run.gait }).x * sc;
+    }
+    const d = (y - y0) / Math.max(1, y1 - y0), par = o.par ?? (0.6 + 0.6 * clamp(d));
+    out.push({ i, x: x - cam * par, y, s: sc, flip, seed: seedI, pose, gait, ph, dep: clamp(d), fog: lerp(o.fog0 ?? 0.3, o.fog1 ?? 0, clamp(d)) });
+  }
+  return out.sort((a, b) => a.y - b.y);
+}
+function ly_pack(t, o = {}) {
+  const L0 = ly_packLayout(o, t), res = [];
+  for (const e of L0) {
+    const od = { pose: e.pose, seed: e.seed, flip: e.flip, fog: e.fog, ph: e.ph, gait: e.gait || undefined, env: o.env, light: o.light, rim: o.rim, shadow: o.shadow, sil: o.sil, ...(o.dog || {}) };
+    if (o.each) Object.assign(od, o.each(e, t) || {});
+    if (od.gait && od.pose === 'run') od.gait = undefined;
+    e.r = ly_dog(e.x, e.y, e.s, t, od); res.push(e);
+  }
+  return res;
+}
+
+// ───────────────────────── éternuement : gouttelettes et texte ─────────────────────────
+// petit nuage de gouttelettes dans la lumière rasante : (x, y) = le nez, t0 = instant de la saccade ; o : dir (+1 vers la droite), s (échelle du chien), ang (angle du souffle, 0,55 : vers l'avant et le bas), seed, light (côté du soleil)
+function ly_sneezeFx(x, y, t0, t, o = {}) {
+  const u = t - t0; if (u < -0.02 || u > 1.5) return;
+  const dir = o.dir ?? 1, sc = o.s ?? 1, ang = o.ang ?? 0.55, ca = Math.cos(ang) * dir, sa = Math.sin(ang), r = rng((o.seed ?? 3) * 977 + 5), lightX = o.light ?? 1;
+  L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
+  // anneau de souffle : naît à la saccade, s'élargit vite
+  if (u < 0.2) { const k = u / 0.2, rr = (3 + 11 * eo(k)) * sc; L.strokeStyle = `rgba(255,248,232,${(0.8 * (1 - k)).toFixed(2)})`; L.lineWidth = 1.4; L.beginPath(); L.ellipse(x + ca * 5 * sc, y + sa * 5 * sc, rr * 0.7, rr, ang * dir, 0, TAU); L.stroke(); }
+  // nuage : quelques bouffées qui grossissent et s'éteignent en montant un peu
+  for (let i = 0; i < 6; i++) {
+    const d = 0.015 * i, a = u - d; if (a < 0 || a > 0.95) continue;
+    const k = a / 0.95, dist = (6 + 20 * (1 - Math.exp(-3.2 * a)) + 6 * i * 0.4) * sc, ox = ca * dist + (r() - 0.5) * 5 * sc, oy = sa * dist * 0.8 - 4 * k * sc + (r() - 0.5) * 4 * sc, rad = (2.5 + 5.5 * eo(k)) * sc * (0.8 + 0.4 * r());
+    const al = 0.62 * (1 - k) * (1 - k) + 0.04;
+    L.fillStyle = `rgba(255,244,216,${al.toFixed(3)})`; L.beginPath(); L.arc(x + ox, y + oy, rad, 0, TAU); L.fill();
+    L.fillStyle = `rgba(255,214,140,${(al * 0.7).toFixed(3)})`; L.beginPath(); L.arc(x + ox + lightX * rad * 0.35, y + oy - rad * 0.2, rad * 0.62, 0, TAU); L.fill();
+  }
+  L.restore();
+  // gouttelettes : trajectoires balistiques, éclats clairs dans le contre-jour
+  for (let i = 0; i < 18; i++) {
+    const sp = (45 + 95 * r()) * sc, aa = ang + (r() - 0.5) * 1.15, d = 0.012 * (i % 6), a = u - d, life = 0.45 + 0.5 * r(), big = r() < 0.22; if (a < 0 || a > life) continue;
+    const vx = Math.cos(aa) * dir * sp, vy = Math.sin(aa) * sp, drag = 3.2, px_ = x + vx * (1 - Math.exp(-drag * a)) / drag, py_ = y + vy * (1 - Math.exp(-drag * a)) / drag + 0.5 * 70 * sc * a * a;
+    const k = a / life, col = k > 0.75 ? ST[7] : (i % 3 === 0 ? AM[9] : WH[3]);
+    if (k < 0.9) { R(px_, py_, big ? 2 : 1, big ? 2 : 1, col); if (big && k < 0.4) px(px_ + lightX * 2, py_ - 1, AM[8]); }
+  }
+}
+// « ATCHOUM » en pixels nets (dans ui) : (x, y) = centre en x, haut du texte ; p : 0 → 1 (les lettres sautent l'une après l'autre, restent, puis se dissolvent) ; o : sc (2), col, outline, text, wave
+function ly_atchoum(x, y, p, o = {}) {
+  if (p <= 0 || p >= 1) return;
+  const txt = o.text ?? 'ATCHOUM', sc = o.sc ?? 2, n = txt.length, col = o.col ?? YE[3], out = o.outline ?? '#05040f', shd = o.shadow ?? RD[3], dis = prog(p, 0.74, 1), wv = o.wave ?? 1.6;
+  const w = textW(txt, sc); let cx0 = Math.round(x - w / 2); if (p < 0.12) cx0 += Math.round(Math.sin(p * 120) * 1.5);
+  L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
+  for (let i = 0; i < n; i++) {
+    const ch = txt[i], g = G[ch] || G[' '], age = (p - i * 0.022) / 0.1; if (age <= 0) { cx0 += (g[0].length + 1) * sc; continue; }
+    const pop = 1 + (1 - eo(clamp(age))) * 0.5, sci = Math.max(1, Math.round(sc * pop)), oy = Math.round(-Math.sin(p * 22 - i * 0.9) * wv * (1 - dis) - (1 - eo(clamp(age))) * 6);
+    const gx = cx0 - Math.round((sci - sc) * g[0].length / 2), gy = Math.round(y + oy - (sci - sc) * 3);
+    const draw = (dx, dy, c) => { L.fillStyle = c; for (let r2 = 0; r2 < g.length; r2++) for (let q = 0; q < g[r2].length; q++) if (g[r2][q] === '#') {
+      if (dis > 0) { const bx = gx + q * sci + dx, by = gy + r2 * sci + dy; if (BAYER[(by & 3) * 4 + (bx & 3)] < dis) continue; }
+      L.fillRect(gx + q * sci + dx, gy + r2 * sci + dy, sci, sci); } };
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1], [-1, 1], [1, -1], [-1, -1], [0, 2], [1, 2]]) draw(dx, dy, out);
+    draw(0, 1, shd); draw(0, 0, col);
+    cx0 += (g[0].length + 1) * sc;
+  }
+  L.restore();
 }

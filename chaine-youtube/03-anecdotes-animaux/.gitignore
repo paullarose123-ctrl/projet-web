@@ -6,3 +6,7 @@ build/*
 !build/timeline.js
 !build/timeline.json
 solo_*.html
+!build/ext/
+build/ext/*
+!build/ext/cml928/
+build/ext/cml928/prises/

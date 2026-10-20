@@ -1,6 +1,7 @@
 // node bords.mjs  — repère les textes pixel dessinés en dehors du cadre (à n'importe quel moment du film)
 import puppeteer from 'puppeteer-core'; import fs from 'fs'; import { pathToFileURL } from 'url'; import path from 'path';
-const exe = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+import { CHROME } from './chrome.mjs';
+const exe = CHROME;
 const br = await puppeteer.launch({ executablePath: exe, headless: true, args: ['--allow-file-access-from-files', '--no-sandbox'], protocolTimeout: 900000 });
 const pg = await br.newPage(); pg.on('pageerror', e => console.error('PAGE ERROR', e.message));
 await pg.goto(pathToFileURL(path.resolve(process.env.PAGE || 'piece.html')).href + '?render=1'); await pg.waitForFunction('window.READY===true', { timeout: 300000 });

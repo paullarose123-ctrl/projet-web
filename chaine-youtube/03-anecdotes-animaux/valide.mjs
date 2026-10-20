@@ -2,10 +2,11 @@
 // Tableau des plans d'un segment avec les contrôles de GUIDE.md : le premier plan commence à SEG.t0, les plans se suivent, durée ≥ 0,8 s,
 // chaque coupe tombe 0,05 à 0,15 s avant un début de mot (ou dans le silence de fin de phrase), événements dans leur plan et de types connus.
 import puppeteer from 'puppeteer-core'; import fs from 'fs'; import { pathToFileURL } from 'url'; import path from 'path';
+import { CHROME } from './chrome.mjs';
 const seg = process.argv[2] || null;
 const page = seg ? `solo_${seg}.html` : 'piece.html';
 if (seg && !fs.existsSync(page)) { console.error('lancer d\'abord : node solo.mjs ' + seg); process.exit(1); }
-const exe = ['/usr/bin/google-chrome', '/usr/bin/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(p => fs.existsSync(p));
+const exe = CHROME;
 const br = await puppeteer.launch({ executablePath: exe, headless: true, args: ['--allow-file-access-from-files', '--no-sandbox'], protocolTimeout: 900000 });
 const pg = await br.newPage(); pg.on('pageerror', e => console.error('PAGE ERROR', e.message));
 await pg.goto(pathToFileURL(path.resolve(page)).href + '?render=1'); await pg.waitForFunction('window.READY===true', { timeout: 300000 });
