@@ -8,7 +8,7 @@
                                   o.flip (tourné vers la gauche), o.eye (0 fermé … 1 ouvert ; défaut : cligne tout seul), o.bulge 0..1 (sinus de l'œil gonflé, bord rougi), o.puff 0..1 (gonflement en plus de la pose),
                                   o.rim 0..1 (liseré de soleil, 1), o.light ±1 (côté du soleil, +1 = droite), o.shadow 0..1 (ombre au sol, 1), o.camo 0..1 (se fond dans le sable),
                                   o.ph, o.go (walk : phase de pas et vitesse, sinon tirées de lz_gait(t)), o.seed (individu : taches), o.env ('desertDusk' par défaut ; 'none' = lumière neutre), o.outline (couleur du contour).
-                                  Renvoie { T(lx, ly) → [x, y] écran, eye, head, mouth, crown, bodyTop, tail, w } : repères pour viser (jet, éclaboussure).
+                                  Renvoie { T(lx, ly) → [x, y] écran, eye, jet (point de départ du jet : coin de l'œil côté museau), head, mouth, crown, bodyTop, tail, w } : repères pour viser (jet, éclaboussure).
    lz_gait(t, o)                  marche PAR À-COUPS : { ph, go (0..1 vitesse), x (distance parcourue en px à s = 1, signée vers l'avant), moving } ; o.stride (px à s = 1 par cycle de pas, 26), o.t0 (début), o.pause (1 : durée des arrêts).
                                   Position du lézard : cx = x0 + (o.flip ? −1 : 1) × lz_gait(t − t0).x × s.
    lz_coyote(cx, cy, s, t, o)     coyote de profil. (cx, cy) = sol sous le centre du corps ; s = 1 → ≈ 150 px de long (museau à la queue), hauteur au garrot ≈ 70 px.
@@ -22,11 +22,28 @@
 // ───────────────────────── outils ─────────────────────────
 const lz_rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const lz_hex = r => '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
-function lz_mix(a, b, k) { const A = lz_rgb(a), B = lz_rgb(b); return lz_hex(A.map((v, i) => v + (B[i] - v) * k)); }
+let LZ_SNAP = true;                                                  // les couleurs du lézard et du coyote sont ramenées d'avance à la palette : aplats nets, tramage seulement aux transitions voulues
+function lz_snap(h) { const r = lz_rgb(h); return PAL_HEX[LUT[((r[0] >> 3) << 10) | ((r[1] >> 3) << 5) | (r[2] >> 3)]]; }
+function lz_mix(a, b, k) { const A = lz_rgb(a), B = lz_rgb(b), m = lz_hex(A.map((v, i) => v + (B[i] - v) * k)); return LZ_SNAP ? lz_snap(m) : m; }
 const lz_norm = v => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
 const lz_scr = mkCanvas(), lz_S = lz_scr.getContext('2d', { willReadFrequently: true });
 let lz_BB = [0, 0, LW, LH];                                      // zone de travail (pixels écran) : limite le coût des croissants
 
+// calque restreint à la zone de travail lz_BB (même résultat que layerBegin / layerEnd du moteur, mais sans parcourir tout l'écran)
+function lz_layerBegin() { Y.setTransform(1, 0, 0, 1, 0, 0); Y.globalAlpha = 1; Y.globalCompositeOperation = 'source-over'; Y.filter = 'none'; const B = lz_BB; Y.clearRect(B[0] - 2, B[1] - 2, B[2] - B[0] + 4, B[3] - B[1] + 4); }
+function lz_layerEnd(o = {}) {
+  const B = lz_BB, x0 = Math.max(0, B[0] - 1), y0 = Math.max(0, B[1] - 1), x1 = Math.min(LW, B[2] + 1), y1 = Math.min(LH, B[3] + 1), w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return;
+  const id = Y.getImageData(x0, y0, w, h), d = id.data;
+  for (let i = 3; i < d.length; i += 4) { const a = d[i]; if (a) d[i] = a >= 128 ? 255 : 0; }
+  if (o.outline) {
+    const oc = lz_rgb(o.outline), add = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = y * w + x; if (d[p * 4 + 3]) continue; if ((x > 0 && d[(p - 1) * 4 + 3]) || (x < w - 1 && d[(p + 1) * 4 + 3]) || (y > 0 && d[(p - w) * 4 + 3]) || (y < h - 1 && d[(p + w) * 4 + 3])) add.push(p); }
+    for (const p of add) { d[p * 4] = oc[0]; d[p * 4 + 1] = oc[1]; d[p * 4 + 2] = oc[2]; d[p * 4 + 3] = 255; }
+  }
+  Y.putImageData(id, x0, y0);
+  L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(lay, x0, y0, w, h, x0, y0, w, h);
+}
 // croissant : la partie de path qui n'est PAS couverte par path décalé de (dx, dy) (donc du côté opposé au décalage), floutée de blur px et bornée à path
 function lz_cres(c, path, col, dx, dy, blur = 0, alpha = 1) {
   const S = lz_S, B = lz_BB, w = B[2] - B[0], h = B[3] - B[1];
@@ -36,7 +53,7 @@ function lz_cres(c, path, col, dx, dy, blur = 0, alpha = 1) {
   S.globalCompositeOperation = 'destination-out'; S.translate(dx, dy); S.fill(path);
   S.globalCompositeOperation = 'source-over'; S.setTransform(1, 0, 0, 1, 0, 0);
   c.save(); c.clip(path); c.setTransform(1, 0, 0, 1, 0, 0);
-  if (blur > 0.05) c.filter = `blur(${blur.toFixed(2)}px)`;
+  if (blur > 0.85) c.filter = `blur(${blur.toFixed(2)}px)`;
   c.globalAlpha = alpha; c.drawImage(lz_scr, B[0], B[1], w, h, B[0], B[1], w, h);
   c.restore();
 }
@@ -76,6 +93,26 @@ function lz_fur(pts, ws, amp, ph = 0, step = 2) {
     Lp.push([pts[i][0] - ty * (ws[i] / 2 + tf(0)), pts[i][1] + tx * (ws[i] / 2 + tf(0))]); Rp.push([pts[i][0] + ty * (ws[i] / 2 + tf(2)), pts[i][1] - tx * (ws[i] / 2 + tf(2))]);
   }
   return Lp.concat(Rp.reverse());
+}
+
+// courbe de Catmull-Rom FERMÉE passant par tous les points (contour exact), ou chaîne ouverte de points interpolés
+function lz_spline(pts) {
+  const p = new Path2D(), n = pts.length; p.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    p.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
+  }
+  p.closePath(); return p;
+}
+function lz_cr(pts, n = 5) {                                                      // points interpolés (Catmull-Rom ouvert) : n points par intervalle
+  const out = [], m = pts.length;
+  for (let i = 0; i < m - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(m - 1, i + 2)];
+    for (let k = 0; k < n; k++) { const f = k / n, f2 = f * f, f3 = f2 * f; out.push([0, 1].map(j => 0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * f + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * f2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * f3))); } }
+  out.push(pts[m - 1].slice()); return out;
+}
+function lz_limbS(pts, ws, n = 5) {                                               // patte / queue à contour lisse : ligne médiane et largeurs interpolées
+  const cp = lz_cr(pts, n), wp = lz_cr(ws.map((w, i) => [i, w]), n).map(q => Math.max(0.3, q[1]));
+  return limb(cp, wp);
 }
 
 // ───────────────────────── poses du lézard ─────────────────────────
@@ -145,7 +182,7 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   // ombre au sol
   if (shK > 0) { const sx = cx - lightX * 5 * s, a = 0.55 * shK * (1 - 0.45 * camo); if (typeof k_shadow === 'function') k_shadow(sx, cy + 1.5 * s, (W + 5) * s, (Dp + 1.5) * s * 0.9, a, { col: '40,16,52' }); else ell(sx, cy + 2 * s, (W + 4) * s, Dp * s, 'rgba(20,8,30,0.4)'); }
 
-  layerBegin();
+  lz_layerBegin();
   const c = Y; c.setTransform(s * fl, 0, 0, s, cx, cy); c.lineJoin = 'round';
   const { mn, bl, dark, lite, rimL } = lz_tools(c, s, ll, C.rim, rimK);
   const rnd = rng(seed * 977 + 11);
@@ -168,17 +205,16 @@ function lz_lizard(cx, cy, s, t, o = {}) {
     if (!walkOn) return [x0, y0, 0];
     const u = (((G.ph + phi) % 1) + 1) % 1, duty = 0.7;
     if (u < duty) return [x0 + amp * (1 - 2 * u / duty), y0, 0];
-    const q = (u - duty) / (1 - duty); return [x0 + amp * (-1 + 2 * q), y0 - 3.4 * Math.sin(q * Math.PI), 1];
+    const q = (u - duty) / (1 - duty); return [x0 + amp * (-1 + 2 * q), y0 - 5.2 * Math.sin(q * Math.PI), 1];
   };
   const spread = P.lg;
-  const nF = stance(0, 26 + 3 * spread, 11.2 + 1.5 * spread, 5.5, 0), nH = stance(1, -23 - 3 * spread, 12.6 + 1.5 * spread, 5.5, 0.5), fF = stance(2, 21, -9.5, 5, 0.5), fH = stance(3, -18, -8.5, 5, 0);
+  const wk = walkOn ? 1 : 0, nF = stance(0, 26 + 3 * spread, 11.2 + 1.5 * spread + 1.4 * wk, 8, 0), nH = stance(1, -23 - 3 * spread, 12.6 + 1.5 * spread + 1.2 * wk, 8, 0.5), fF = stance(2, 21, -9.5, 7, 0.5), fH = stance(3, -18, -8.5, 7, 0);
   const lc = lz_mix(C.top, C.wall, 0.55), lcLo = lz_mix(C.under, '#000000', 0.15);
   leg([14, -8 - bh * 0.3], [fF[0], fF[1]], -1, 5.0, lz_mix(lc, C.wallLo, 0.4), C.wallLo);
   leg([-17, -8 - bh * 0.2], [fH[0], fH[1]], -1, 5.2, lz_mix(lc, C.wallLo, 0.4), C.wallLo);
 
   // pattes proches : tirées sous le corps, seul ce qui dépasse du flanc se voit
-  leg([12, -1.0], [nF[0], nF[1]], 1, 5.8, lz_mix(C.top, C.wall, 0.4), C.wallLo);
-  leg([-16, 0], [nH[0], nH[1]], 1, 6.2, lz_mix(C.top, C.wall, 0.4), C.wallLo);
+  if (!walkOn) { leg([12, -1.0], [nF[0], nF[1]], 1, 5.8, lz_mix(C.top, C.wall, 0.4), C.wallLo); leg([-16, 0], [nH[0], nH[1]], 1, 6.2, lz_mix(C.top, C.wall, 0.4), C.wallLo); }
 
   // ── queue : courte, plate, bandée ──
   { const tl = [[-25, -3.5 + bob * 0.5], [-32, -2.6 + 0.8 * sway], [-38, -1.0 + 1.2 * sway + idle * 0.3], [-42.5, 1.0 + 1.8 * sway + idle * 0.6]];
@@ -198,7 +234,7 @@ function lz_lizard(cx, cy, s, t, o = {}) {
     const nx = Math.cos(phi) / 1, ny = Math.sin(phi) * 0.9, nl = Math.hypot(nx, ny), len = Math.max(1.9 + 2.4 * fr + 0.6 * Math.sin(i * 2.3), 2.3 / s), tx = -ny / nl, ty = nx / nl, bw2 = Math.max(1.7 + 0.4 * fr, 1.4 / s);
     fring.push([[px0 + tx * bw2, py0 + ty * bw2], [px0 - tx * bw2, py0 - ty * bw2], [px0 + nx / nl * len, py0 + ny / nl * len + 0.8]]);
   }
-  for (const [a, b, tip] of fring) { const p = lz_tri(a, b, tip); c.fillStyle = lz_mix(C.horn, C.cream, 0.35); c.fill(p); dark(p, lz_mix(C.horn, C.wallLo, 0.6), 1.2, 0.4); }
+  for (const [a, b, tip] of fring) { const p = lz_tri(a, b, tip); c.fillStyle = lz_mix(C.horn, C.cream, 0.35); c.fill(p); c.fillStyle = lz_mix(C.horn, C.wallLo, 0.55); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(tip[0] * 0.35 + a[0] * 0.65, tip[1] * 0.35 + a[1] * 0.65); c.lineTo(b[0] * 0.35 + tip[0] * 0.65, b[1] * 0.35 + tip[1] * 0.65); c.lineTo(b[0], b[1]); c.fill(); }
   // petits piquants du bord lointain (le dessus, vers le haut)
   for (let i = 0; i < 11; i++) {
     const phi = lerp(Math.PI + 0.35, TAU - 0.5, i / 10), px0 = cT[0] + rxT * Math.cos(phi), py0 = cT[1] + ryT * Math.sin(phi), len = Math.max(2.0 + 2.6 * fr, 2.0 / s), bw2 = Math.max(1.5, 1.2 / s);
@@ -212,17 +248,18 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   { const g = c.createLinearGradient(0, cT[1] - ryT, 0, cT[1] + ryT); g.addColorStop(0, lz_mix(C.top, C.topHi, 0.55)); g.addColorStop(0.5, C.top); g.addColorStop(1, lz_mix(C.top, C.rust, 0.45)); c.fillStyle = g; c.fillRect(cT[0] - rxT, cT[1] - ryT, rxT * 2, ryT * 2); }
   // ligne claire dorsale
   c.strokeStyle = C.cream; c.lineWidth = mn(1.0); c.lineCap = 'round'; c.beginPath(); c.moveTo(cT[0] + rxT * 0.82, cT[1] + 0.2); c.quadraticCurveTo(cT[0] + 4, cT[1] - 0.9, cT[0] - rxT * 0.78, cT[1] + 0.3); c.stroke();
-  // taches sombres : deux rangées de chaque côté de la ligne, bord clair
-  const spots = [[0.60, -0.52, 4.2, 2.6], [0.55, 0.58, 3.8, 2.6], [0.06, -0.62, 5.0, 2.8], [0.0, 0.66, 4.6, 2.8], [-0.52, -0.5, 4.2, 2.5], [-0.56, 0.52, 4.2, 2.6]];
-  spots.forEach(([a, b, rx, ry], i) => {
-    const x = cT[0] + rxT * a + (rnd() - 0.5) * 2, y = cT[1] + ryT * b * 0.95 + (rnd() - 0.5) * 1.2, rot = (rnd() - 0.5) * 0.7, pts = [];
-    for (let k = 0; k < 7; k++) { const an = k / 7 * TAU, rr = 0.82 + 0.3 * rnd(); pts.push([x + Math.cos(an + rot) * rx * rr, y + Math.sin(an + rot) * ry * rr]); }
-    const bp = lz_smooth(pts); c.fillStyle = lz_mix(C.rust, C.top, 0.25); c.fill(bp);
-    c.save(); c.translate(0.35 * ll[0], 0.35 * ll[1]); c.fillStyle = C.rustD; c.fill(bp); c.restore();
-    c.save(); c.clip(bp); c.fillStyle = lz_mix(C.spot, C.rustD, 0.6); c.beginPath(); c.ellipse(x - ll[0] * rx * 0.2, y - ll[1] * ry * 0.2, rx * 0.46, ry * 0.42, rot, 0, TAU); c.fill(); c.restore();
+  // marbrures : grandes taches irrégulières de chaque côté de la ligne dorsale (rousses, bord clair), petites taches claires, grain d'écailles
+  const patches = [[0.66, -0.52, 5.0, 3.0], [0.58, 0.58, 4.6, 3.0], [0.2, -0.62, 6.2, 3.2], [0.14, 0.66, 5.6, 3.2], [-0.28, -0.6, 5.6, 3.0], [-0.34, 0.62, 5.6, 3.1], [-0.7, -0.4, 3.6, 2.2], [-0.72, 0.44, 3.6, 2.2]];
+  patches.forEach(([a, b, rx, ry], i) => {
+    const x = cT[0] + rxT * a + (rnd() - 0.5) * 2, y = cT[1] + ryT * b * 0.95 + (rnd() - 0.5) * 1.2, rot = (rnd() - 0.5) * 0.9, pts = [];
+    for (let k = 0; k < 9; k++) { const an = k / 9 * TAU, rr = 0.7 + 0.5 * rnd(); pts.push([x + Math.cos(an + rot) * rx * rr, y + Math.sin(an + rot) * ry * rr]); }
+    const bp = lz_smooth(pts);
+    c.globalAlpha = 0.5; c.fillStyle = C.spotHi; c.save(); c.translate(0.45 * ll[0] * -1, 0.45 * ll[1] * -1); c.fill(bp); c.restore(); c.globalAlpha = 1;       // liseré clair côté lumière
+    c.fillStyle = lz_mix(C.rust, C.top, 0.2); c.fill(bp);
+    c.save(); c.clip(bp); c.fillStyle = lz_mix(C.rustD, C.spot, 0.4); c.beginPath(); c.ellipse(x + ll[0] * rx * 0.2, y + ll[1] * ry * 0.25, rx * 0.5, ry * 0.5, rot, 0, TAU); c.fill(); c.restore();
   });
-  // grain : petites écailles claires et sombres
-  for (let i = 0; i < 70; i++) { const a = rnd() * TAU, r = Math.sqrt(rnd()) * 0.96, x = cT[0] + rxT * r * Math.cos(a), y = cT[1] + ryT * r * Math.sin(a); c.fillStyle = rnd() < 0.55 ? C.topHi : C.rust; c.fillRect(x, y, mn(0.85), mn(0.85)); }
+  for (let i = 0; i < 26; i++) { const a = rnd() * TAU, r = Math.sqrt(rnd()) * 0.92, x = cT[0] + rxT * r * Math.cos(a), y = cT[1] + ryT * r * Math.sin(a); c.fillStyle = rnd() < 0.5 ? C.spotHi : C.rustD; c.beginPath(); c.ellipse(x, y, mn(0.9 + rnd() * 0.7), mn(0.7 + rnd() * 0.4), 0, 0, TAU); c.fill(); }
+  for (let j = 0; j < 9; j++) for (let i = 0; i < 20; i++) { const x = cT[0] - rxT + (i + (j % 2) * 0.5) * rxT * 2 / 19.5, y = cT[1] - ryT + j * ryT * 2 / 8.5; if (((x - cT[0]) / rxT) ** 2 + ((y - cT[1]) / ryT) ** 2 < 0.9) { c.fillStyle = lz_mix(C.top, C.topHi, 0.5); c.fillRect(x, y, mn(0.8), mn(0.8)); } }
   c.restore();
   dark(topP, C.topLo, 3.8, 1.5);
   lite(topP, C.topHi, 2.6, 1.0, 0.9);
@@ -232,6 +269,7 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   for (let i = 0; i < 7; i++) { const a = lerp(0.25, Math.PI - 0.25, (i + 0.5) / 7), x = -2 + (W - 3) * Math.cos(a), y = (Dp + bh * 0.15) * Math.sin(a) - bh * 0.15 - 1.5; c.fillStyle = C.rustD; c.beginPath(); c.ellipse(x, y, 2.5, 1.5, 0, 0, TAU); c.fill(); }
   c.restore();
 
+  if (walkOn) { leg([14, 2.5], [nF[0], nF[1]], 1, 5.4, lz_mix(C.top, C.wall, 0.4), C.wallLo); leg([-15, 3.5], [nH[0], nH[1]], 1, 5.8, lz_mix(C.top, C.wall, 0.4), C.wallLo); }   // en marche les pattes proches passent devant le flanc
   // ── tête et couronne (repère de la tête : origine au centre du crâne, museau vers la droite) ──
   c.save(); c.translate(H0[0], H0[1]); c.rotate(hp);
   const hnR = P.hn, rot = (b, tip, k) => { const dx = tip[0] - b[0], dy = tip[1] - b[1], cs = Math.cos(-k), sn = Math.sin(-k); return [b[0] + dx * cs - dy * sn, b[1] + dx * sn + dy * cs]; };
@@ -244,10 +282,11 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   };
   // couronne : quatre dagues larges dont les bases se touchent, en éventail (3/4 haut : la plus éloignée est la plus haute à l'écran)
   const hk = Math.max(1, 3.0 / (s * 24));                                        // à petite échelle les cornes sont un peu épaissies (lisibilité)
+  const lk = 1 + 0.5 * clamp((0.9 - s) / 0.5);                                  // petites échelles : cornes allongées (la couronne doit se lire en silhouette)
   const horns = [
-    [[-5.0, -7.8], [-14.5, -30.5], 7.6 * hk, 0.12], [[-5.6, -6.4], [-25, -26], 9.6 * hk, 0.11], [[-5.6, -4.6], [-30, -14.5], 9.6 * hk, 0.09], [[-5.0, -2.6], [-23.5, -3.6], 7.4 * hk, 0.06],
-  ];
-  const hornPaths = horns.map(([b, tip, bw, cv], i) => { const tp = rot(b, tip, hnR * (1 - i * 0.12)); hornBase[i] = [b, tp]; return lz_dagger(b, tp, bw, cv, 0.8); });
+    [[-5.2, -7.6], [-18, -27], 8.6 * hk, 0.10], [[-5.8, -6.4], [-29, -24.5], 10.6 * hk, 0.12], [[-5.8, -4.6], [-34, -16], 10.6 * hk, 0.09], [[-5.2, -2.6], [-25, -6.5], 8.0 * hk, 0.05],
+  ].map(([b, t2, w, cv]) => [b, [b[0] + (t2[0] - b[0]) * lk, b[1] + (t2[1] - b[1]) * lk], w, cv]);
+  const hornPaths = horns.map(([b, tip, bw, cv], i) => { const tp = rot(b, tip, hnR * (1 - i * 0.12)); hornBase[i] = [b, tp]; return lz_dagger(b, tp, bw, cv, 0.62); });
   horn(hornPaths[0], 0); horn(hornPaths[1], 1);
   // tête : museau court et large, front bas
   const headP = lz_smooth([[-9, -6.2], [-4.5, -8.8], [0.5, -9.4], [5.4, -8.2], [9.6, -5.2], [13, -2.2], [13.2, 0.5], [10.6, 3.0], [6, 4.7], [0, 5.6], [-6.5, 5.3], [-10, 3]]);
@@ -262,15 +301,15 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   // gonflement du sinus autour de l'œil + rougeur
   const eyeL = [3.8, -4.0];
   if (bulge > 0.02) {
-    const br = 2.4 + 2.7 * bulge, ex0 = eyeL[0] + 0.1, ey0 = eyeL[1] - 0.2, dome = lz_ell(ex0, ey0, br * 1.1, br * 0.98, 0.1), domeIn = lz_ell(ex0 + 0.2, ey0 - 0.2, br * 0.78, br * 0.68, 0.1);
-    c.fillStyle = lz_mix(C.top, '#d73442', 0.16 + 0.3 * bulge); c.fill(dome);
-    c.lineWidth = mn(0.8); c.strokeStyle = lz_mix('#a81c2e', '#d73442', 0.3); c.globalAlpha = clamp(bulge * 1.4) * 0.8; c.stroke(dome); c.globalAlpha = 1;
-    c.fillStyle = lz_mix(C.top, '#f2625a', 0.18 + 0.25 * bulge); c.fill(domeIn);
-    dark(dome, '#a81c2e', 1.4, 0.7); lite(dome, '#ff9a86', 1.0 + 0.6 * bulge, 0.5, 0.75); rimL(dome, 0.8, 0.7);
+    const br = 2.3 + 2.4 * bulge, ex0 = eyeL[0] + 0.1, ey0 = eyeL[1] - 0.3, dome = lz_ell(ex0, ey0, br * 1.12, br * 0.98, 0.1), domeIn = lz_ell(ex0 + 0.3, ey0 - 0.5, br * 0.74, br * 0.62, 0.1);
+    c.fillStyle = lz_mix(C.top, '#d73442', 0.1 + 0.2 * bulge); c.fill(dome);
+    c.save(); c.clip(dome); c.lineWidth = mn(1.0 + 0.5 * bulge); c.strokeStyle = lz_mix('#a81c2e', '#d73442', 0.4); c.globalAlpha = clamp(bulge * 1.5) * 0.85; c.beginPath(); c.ellipse(ex0, ey0 + 0.6, br * 1.1, br * 0.9, 0.1, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke(); c.restore();      // bord rougi côté paupière inférieure
+    c.fillStyle = lz_mix(C.top, '#ff9a86', 0.14 + 0.16 * bulge); c.fill(domeIn);
+    dark(dome, lz_mix(C.rust, '#a81c2e', 0.45), 1.3, 0.6); lite(dome, C.topHi, 1.0 + 0.5 * bulge, 0.5, 0.8); rimL(dome, 0.8, 0.7);
   }
   c.restore();
 
-  layerEnd({ outline: C.out });
+  lz_layerEnd({ outline: C.out });
 
   // ── détails nets en pixels (écran) : œil, narine, bouche ──
   L.setTransform(1, 0, 0, 1, 0, 0);
@@ -285,22 +324,34 @@ function lz_lizard(cx, cy, s, t, o = {}) {
   const nS = Ts(11.8, -2.2); px(Math.round(nS[0]), Math.round(nS[1]), C.out);
   if (s >= 0.7) { const a = Ts(12.8, 1.1), b = Ts(1.5, 3.0); lineP(a[0], a[1], b[0], b[1], lz_mix(C.out, C.under, 0.3), 1); }
 
-  return { T: Tb, Th: Ts, eye: eS, head: Ts(6, -2), mouth: Ts(13, 1), crown: Ts(-16, -16), bodyTop: Tb(cT[0], cT[1]), tail: Tb(-41, 1), w: 105 * s, bulge };
+  return { T: Tb, Th: Ts, eye: eS, jet: Ts(eyeL[0] + 2.0, eyeL[1] + 1.2), head: Ts(6, -2), mouth: Ts(13, 1), crown: Ts(-16, -16), bodyTop: Tb(cT[0], cT[1]), tail: Tb(-41, 1), w: 105 * s, bulge };
 }
 
 // ───────────────────────── le coyote ─────────────────────────
 const LZ_CPOSE = {
   //            amplitude durée d'appui  Hz   levée  affaissement  cou/tête  oreilles  queue(0 pendante … 1 rentrée)
-  trot: { amp: 14, duty: 0.55, freq: 2.2, lift: 9, cF: 0, cR: 0, hd: 0.12, ear: 0.0, tl: 0.15, mouth: 0, D: 51 },
+  trot: { amp: 14, duty: 0.55, freq: 2.2, lift: 9, cF: 0, cR: 0, hd: 0.0, ear: 0.0, tl: 0.15, mouth: 0, D: 51 },
   stalk: { amp: 8, duty: 0.74, freq: 1.15, lift: 5.5, cF: 6, cR: 2, hd: 0.8, ear: 0.0, tl: 0.35, mouth: 0, D: 21.6 },
   sniff: { amp: 0, duty: 0.6, freq: 0, lift: 0, cF: 9, cR: 3, hd: 1.0, ear: 0.0, tl: 0.3, mouth: 0, D: 1 },
   hit: { amp: 0, duty: 0.6, freq: 0, lift: 0, cF: -2, cR: 7, hd: -0.35, ear: 0.95, tl: 1.0, mouth: 0.22, D: 1 },
-  disgust: { amp: 0, duty: 0.6, freq: 0, lift: 0, cF: 5, cR: 3, hd: 0.55, ear: 0.6, tl: 0.7, mouth: 0.6, D: 1 },
+  disgust: { amp: 0, duty: 0.6, freq: 0, lift: 0, cF: 4, cR: 3, hd: 0.2, ear: 0.7, tl: 0.7, mouth: 0.42, D: 1 },
   trotOff: { amp: 12, duty: 0.58, freq: 1.9, lift: 8, cF: 1, cR: 1, hd: 0.5, ear: 0.5, tl: 0.85, mouth: 0, D: 41.4 },
 };
 // marche du coyote : { ph (cycles), x (distance en px à s = 1) } ; cx = x0 + (flip ? −1 : 1) × x × s évite que les pieds glissent
 function lz_cGait(t, o = {}) { const Q = LZ_CPOSE[o.pose || 'trot'] || LZ_CPOSE.trot, ph = (t - (o.t0 || 0)) * Q.freq * (o.speed ?? 1); return { ph, x: ph * Q.D, freq: Q.freq }; }
 // os à deux segments : renvoie l'articulation intermédiaire (bend ±1 : de quel côté elle plie)
+// poils : petites touffes triangulaires posées sur le contour (pts = points du contour fermé, dans l'ordre), orientées vers l'extérieur et couchées vers l'arrière
+function lz_tufts(c, pts, o = {}) {
+  const m = pts.length, ext = [pts[m - 1]].concat(pts, [pts[0], pts[1]]), n = o.n ?? 5, cp = lz_cr(ext, n).slice(n, n * (m + 1)), len = cp.length, cen = [0, 1].map(j => pts.reduce((a, p) => a + p[j], 0) / m);
+  const step = o.step ?? 2, sweep = o.sweep ?? -1.4, L0 = o.len ?? 2.4, bw = o.bw ?? 1.3;
+  for (let i = 0; i < len; i += step) {
+    const a = cp[(i + len - 1) % len], b = cp[(i + 1) % len], p = cp[i]; let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l; let nx = ty, ny = -tx;
+    if (nx * (p[0] - cen[0]) + ny * (p[1] - cen[1]) < 0) { nx = -nx; ny = -ny; }
+    if (o.filter && !o.filter(p, [nx, ny], i)) continue;
+    const ln = L0 * (0.7 + 0.6 * Math.abs(Math.sin(i * 1.7 + (o.ph || 0)))), col = typeof o.col === 'function' ? o.col(p, i) : o.col;
+    c.fillStyle = col; c.beginPath(); c.moveTo(p[0] - tx * bw, p[1] - ty * bw); c.lineTo(p[0] + nx * ln + sweep, p[1] + ny * ln); c.lineTo(p[0] + tx * bw, p[1] + ty * bw); c.closePath(); c.fill();
+  }
+}
 function lz_ik(a, b, l1, l2, bend) {
   const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.max(0.001, Math.min(Math.hypot(dx, dy), l1 + l2 - 0.05)), k = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - k * k)), ux = dx / Math.hypot(dx, dy || 0.001), uy = dy / Math.hypot(dx, dy || 0.001);
   return [a[0] + ux * k - uy * h * bend, a[1] + uy * k + ux * h * bend];
@@ -312,180 +363,314 @@ function lz_coyote(cx, cy, s, t, o = {}) {
   const lightX = o.light ?? E.light ?? 1, ll = lz_norm([lightX * fl * 0.9, -0.5]), tt = t + seed * 1.3;
   const u = t - (o.t0 || 0);
   // ── amplitudes dynamiques ──
-  let hit = o.hit != null ? clamp(o.hit) : (pose === 'hit' ? (o.t0 != null ? (u < 0 ? 0 : u < 0.07 ? sm(u / 0.07) : 0.45 + 0.55 * Math.exp(-(u - 0.07) / 0.45)) : 1) : 0);
+  const hit = o.hit != null ? clamp(o.hit) : (pose === 'hit' ? (o.t0 != null ? (u < 0 ? 0 : u < 0.07 ? sm(u / 0.07) : 0.45 + 0.55 * Math.exp(-(u - 0.07) / 0.45)) : 1) : 0);
   const shake = clamp(o.shake ?? (pose === 'disgust' ? 1 : 0)), headDown = o.headDown != null ? o.headDown : Q.hd;
   const mouth = clamp(o.mouth ?? Q.mouth), tongue = clamp(o.tongue ?? (pose === 'disgust' ? 1 : 0)), wrinkle = clamp(o.wrinkle ?? (pose === 'disgust' ? 1 : 0));
-  const G = lz_cGait(t, { pose, t0: o.t0 }), ph = o.ph != null ? o.ph : G.ph, moving = Q.amp > 0;
-  if (moving && o.speed === 0) Q.amp = 0;
-  const hd = lerp(headDown, -0.35, hit * 0.9), earB = clamp(Q.ear + hit * 0.6 + (pose === 'disgust' ? 0 : 0)), tl = clamp(Q.tl + hit * 0.4);
+  const G = lz_cGait(t, { pose, t0: o.t0 }), ph = o.ph != null ? o.ph : G.ph, moving = Q.amp > 0 && o.speed !== 0;
+  const hd = lerp(headDown, -0.4, hit * 0.9), earB = clamp(Q.ear + hit * 0.6), tl = clamp(Q.tl + hit * 0.4);
   const cF = lerp(Q.cF, -2.5, hit), cR = lerp(Q.cR, 8, hit);
-  const bob = moving ? -Math.abs(Math.sin(Math.PI * ph * 2)) * 1.3 : Math.sin(tt * 1.7) * 0.18;
-  const recoilX = -5 * hit, ysh = x => lerp(cR, cF, clamp((x + 38) / 72)) + bob + (hit ? -1.2 * hit : 0);
+  const bob = moving ? -Math.abs(Math.sin(Math.PI * ph * 2)) * 1.4 : Math.sin(tt * 1.7) * 0.2;
+  const recoilX = -5 * hit, ysh = x => lerp(cR, cF, clamp((x + 38) / 72)) + bob - 1.2 * hit;
   // ── couleurs ──
-  const hiTint = E.lit, shTint = E.shadow, tint = h => lz_mix(lz_mix(h, shTint, 0.1), hiTint, 0.06);
+  const hiTint = E.lit, shTint = E.shadow, tint = h => lz_mix(lz_mix(h, shTint, 0.08), hiTint, 0.05);
   const C = {
-    back: tint('#6a5b4c'), body: tint('#9d8869'), hi: tint('#d3bf9a'), lo: lz_mix('#5a4a3e', shTint, 0.3), belly: tint('#eadcc0'), leg: tint('#b86a30'), legLo: lz_mix('#8a4a22', shTint, 0.25), ear: tint('#a85e2c'), earIn: tint('#ecd0ac'),
-    dark: '#1d120c', nose: '#17110d', tip: '#17110d', tailMid: tint('#85735d'), rim: E.rim || AM[9], out: o.outline || '#1d120c', farK: 0.28,
+    back: tint('#76695a'), body: tint('#a89272'), hi: tint('#d6c29d'), lo: lz_mix('#5c4a3e', shTint, 0.3), belly: tint('#eee2c8'), leg: tint('#c2773a'), legLo: lz_mix('#8e4d24', shTint, 0.25), ear: tint('#b0662f'), earIn: tint('#efd4b0'),
+    dark: '#1d120c', nose: '#17110d', tip: '#17110d', tailMid: tint('#8f7c64'), rim: E.rim || AM[9], out: o.outline || '#1d120c',
   };
-  const far = h => lz_mix(h, lz_mix(shTint, '#2a1a1a', 0.3), C.farK);
-  // ── points du cou et de la tête ──
-  const N0 = [24 + recoilX, -52 + ysh(24)], LN = 21, an = lerp(-0.17, 1.08, clamp((hd + 0.35) / 1.35)) , ah = lerp(0.14, 1.22, clamp((hd + 0.35) / 1.35));
-  const shk = shake * 0.3 * Math.sin(TAU * 6.4 * tt) * (pose === 'disgust' ? 1 : 1) + (shake > 0 ? 0.06 * Math.sin(TAU * 3.1 * tt) * shake : 0);
-  const headAt = (dt) => { const th = shake * 0.3 * Math.sin(TAU * 6.4 * (tt - dt)); const ang = an + th * 0.7, hx = N0[0] + LN * Math.cos(ang), hy = N0[1] + LN * Math.sin(ang); return { H: [hx, hy], a: ah + th * 1.1 }; };
-  const hdn = headAt(0), H = hdn.H, aH = hdn.a, hc = Math.cos(aH), hs = Math.sin(aH);
-  const sniffK = pose === 'sniff' ? 1 : 0, sniffBob = sniffK * (Math.sin(TAU * 5.5 * tt) * 0.8 * (0.5 + 0.5 * Math.sin(TAU * 0.9 * tt)));
-  const Hs = [H[0], H[1] + sniffBob];
-  const Th = (x, y) => [Hs[0] + x * hc - y * hs, Hs[1] + x * hs + y * hc];       // tête → corps
+  const far = h => lz_mix(h, lz_mix(shTint, '#2a1a1a', 0.3), 0.3);
+  // ── cou et tête ──
+  const N0 = [26 + recoilX, -52 + ysh(26)], LN = 19, tH = clamp((hd + 0.4) / 1.4), an = lerp(-0.62, 1.12, tH), ah = lerp(-0.02, 1.22, tH);
+  const shAmp = shake * 0.3, shAt = d => shAmp * Math.sin(TAU * 6.4 * (tt - d));
+  const hdn = (d) => { const th = shAt(d), ang = an + th * 0.7; return { H: [N0[0] + LN * Math.cos(ang), N0[1] + LN * Math.sin(ang)], a: ah + th * 1.1 }; };
+  const hn0 = hdn(0), sniffBob = pose === 'sniff' ? Math.sin(TAU * 5.5 * tt) * 0.9 * (0.5 + 0.5 * Math.sin(TAU * 0.9 * tt)) : 0;
+  const H = [hn0.H[0], hn0.H[1] + sniffBob], aH = hn0.a, hc = Math.cos(aH), hs = Math.sin(aH);
+  const Th = (x, y) => [H[0] + x * hc - y * hs, H[1] + x * hs + y * hc];
   const Tb = (x, y) => [cx + fl * s * x, cy + s * y];
   const Ts = (x, y) => Tb(...Th(x, y));
   const ex = 100 * s + 10; lz_BB = [Math.max(0, Math.floor(cx - ex)), Math.max(0, Math.floor(cy - 100 * s)), Math.min(LW, Math.ceil(cx + ex)), Math.min(LH, Math.ceil(cy + 12 * s + 6))];
   if (shK > 0) { const a = 0.5 * shK; if (typeof k_shadow === 'function') k_shadow(cx - lightX * 6 * s, cy + 1 * s, 58 * s, 5.5 * s, a, { col: '40,16,52' }); else ell(cx, cy, 58 * s, 5 * s, 'rgba(20,8,30,0.4)'); }
 
-  layerBegin();
+  lz_layerBegin();
   const c = Y; c.setTransform(s * fl, 0, 0, s, cx, cy); c.lineJoin = 'round';
   const { mn, bl, dark, lite, rimL, halo } = lz_tools(c, s, ll, C.rim, rimK);
   const rnd = rng(seed * 131 + 7);
-  // ── pattes ──
+  const Y0 = x => ysh(x);
+  // ── pas ──
   const foot = (x0, phi) => {
     if (!moving) return { x: x0, y: 0, sw: 0 };
     const uu = (((ph + phi) % 1) + 1) % 1, A = Q.amp, d = Q.duty;
     if (uu < d) return { x: x0 + A * (1 - 2 * uu / d), y: 0, sw: 0 };
     const q = (uu - d) / (1 - d), e = eio(q), l = Math.pow(Math.sin(Math.PI * q), 0.85); return { x: x0 + A * (-1 + 2 * e), y: -Q.lift * l, sw: l };
   };
-  const hitK = hit, fwd = hitK * 3;                                                // au sursaut les pattes avant se plantent en avant
-  const fN = foot(22 + fwd, 0), fF = foot(25 + fwd, 0.5), hN = foot(-27, 0.5), hF = foot(-24, 0);
-  const sF = [20 + recoilX * 0.6, -41 + ysh(20)], sH = [-25 + recoilX, -41 + ysh(-25)];
-  const pawCol = C.legLo;
+  const fwd = hit * 3.5, fN = foot(23 + fwd, 0), fF = foot(26 + fwd, 0.5), hN = foot(-26, 0.5), hF = foot(-23, 0);
+  const sF = [21 + recoilX * 0.6, -39 + ysh(21)], sH = [-26 + recoilX, -42 + ysh(-26)];
+  const pawC = h => lz_mix(h, C.dark, 0.22);
   const frontLeg = (fp, col, colLo, farSide) => {
-    const P0 = [fp.x, fp.y - 0.5], W = [fp.x - 1.4 - 2.2 * fp.sw, fp.y - 8.5 - 1.5 * fp.sw], Sh = [sF[0] + (farSide ? 2.5 : 0), sF[1] + (farSide ? 1 : 0)], El = lz_ik(Sh, W, 17.2, 17.4, -1);
-    const p = polyPath(limb([Sh, El, W, P0], [9.5, 7.2, 4.6, 4.6])); if (!farSide) halo(p, C.dark, 1.1);
-    c.fillStyle = colLo; c.fill(p); lite(p, col, 2.6, 0.7); dark(p, farSide ? far(C.legLo) : C.legLo, 2.0, 0.6);
-    const paw = lz_ell(fp.x + 2.4, fp.y - 1.0, 5.4, 2.7, -0.08 * (1 + fp.sw)); c.fillStyle = farSide ? far(C.legLo) : lz_mix(C.legLo, C.dark, 0.25); c.fill(paw); if (!farSide) { lite(paw, col, 0.8, 0.3); halo(paw, C.dark, 1.0); }
-    return p;
+    const P0 = [fp.x, fp.y - 0.5], W = [fp.x - 1.2 - 2.4 * fp.sw, fp.y - 9 - 1.6 * fp.sw], Sh = [sF[0] + (farSide ? 3 : 0), sF[1] + (farSide ? 1 : 0)], El = lz_ik(Sh, W, 16.8, 17.2, -1);
+    const p = polyPath(lz_limbS([Sh, El, W, P0], [8.4, 5.8, 3.8, 3.6])), paw = lz_ell(fp.x + 2.2, fp.y - 1.0, 4.5, 2.3, -0.08 * (1 + fp.sw));
+    if (!farSide) { halo(p, C.dark, 1.1); halo(paw, C.dark, 1.0); }
+    c.fillStyle = col; c.fill(p); dark(p, colLo, 2.4, 0.9); lite(p, lz_mix(col, C.hi, 0.35), 1.5, 0.6, 0.85);
+    c.fillStyle = farSide ? far(C.legLo) : pawC(colLo); c.fill(paw); if (!farSide) { lite(paw, col, 0.8, 0.3); rimL(p, 0.9, 0.8); }
   };
   const hindLeg = (fp, col, colLo, farSide) => {
-    const Hk = [fp.x - 2.6 - 3 * fp.sw, fp.y - 11 - 1.5 * fp.sw], Hp = [sH[0] + (farSide ? 1.5 : 0), sH[1] + (farSide ? 1 : 0)], St = lz_ik(Hp, Hk, 20, 20.5, 1), P0 = [fp.x, fp.y - 0.5];
-    const thigh = polyPath(limb([Hp, [(Hp[0] + St[0]) / 2 - 1.5, (Hp[1] + St[1]) / 2], St], [farSide ? 13 : 16, 12.5, 8])), shank = polyPath(limb([St, Hk, [Hk[0] + 1.2, Hk[1] + 5.5], P0], [7.6, 5.0, 4.4, 4.4]));
-    if (!farSide) { halo(shank, C.dark, 1.1); }
-    c.fillStyle = colLo; c.fill(shank); lite(shank, col, 2.0, 0.6); dark(shank, farSide ? far(C.legLo) : C.legLo, 1.8, 0.6);
-    c.fillStyle = farSide ? far(C.body) : C.body; c.fill(thigh); if (!farSide) { halo(thigh, C.dark, 1.1); c.fillStyle = C.body; c.fill(thigh); lite(thigh, C.hi, 3.2, 1.0); dark(thigh, C.lo, 3.4, 1.2); rimL(thigh, 0.9, 0.9); }
-    const paw = lz_ell(fp.x + 2.0, fp.y - 1.0, 5.0, 2.6, -0.06 * (1 + fp.sw)); c.fillStyle = farSide ? far(C.legLo) : lz_mix(C.legLo, C.dark, 0.25); c.fill(paw); if (!farSide) { lite(paw, col, 0.8, 0.3); halo(paw, C.dark, 1.0); }
+    const Hk = [fp.x - 3 - 3 * fp.sw, fp.y - 11.5 - 1.5 * fp.sw], Hp = [sH[0] + (farSide ? 2 : 0), sH[1] + (farSide ? 1 : 0)], St = lz_ik(Hp, Hk, 19.5, 20, 1), P0 = [fp.x, fp.y - 0.5];
+    const shank = polyPath(lz_limbS([Hp, St, Hk, [Hk[0] + 1.6, Hk[1] + 6], P0], [12, 8.6, 4.6, 3.8, 3.6])), paw = lz_ell(fp.x + 2.0, fp.y - 1.0, 4.4, 2.2, -0.06 * (1 + fp.sw));
+    if (!farSide) { halo(shank, C.dark, 1.1); halo(paw, C.dark, 1.0); }
+    c.fillStyle = col; c.fill(shank); dark(shank, colLo, 2.0, 0.8); lite(shank, lz_mix(col, C.hi, 0.35), 1.5, 0.6, 0.85);
+    c.fillStyle = farSide ? far(C.legLo) : pawC(colLo); c.fill(paw); if (!farSide) { lite(paw, col, 0.8, 0.3); rimL(shank, 0.9, 0.8); }
+    return { Hp, St, Hk };
   };
-  // pattes lointaines (plus sombres)
   hindLeg(hF, far(C.leg), far(C.legLo), true);
   frontLeg(fF, far(C.leg), far(C.legLo), true);
 
-  // ── queue : touffue, pendante, bout noir ──
-  { const base = [-37 + recoilX, -49 + ysh(-37)], ts = tl, wag = Math.sin(TAU * (moving ? Q.freq : 0.7) * tt + 1.2) * (moving ? 2.4 : 1.2) * (1 - 0.7 * tl);
-    const ang0 = lerp(2.6, 1.2, ts), L = 34;                                       // angle de départ (rad, 0 = vers la droite, π/2 = vers le bas) : pendante vers l'arrière et le bas
-    const pts = [], ws = []; let ang = ang0 + wag * 0.03;
-    for (let i = 0; i <= 8; i++) { const f = i / 8; pts.push(i ? [pts[i - 1][0] + Math.cos(ang) * L / 8, pts[i - 1][1] + Math.sin(ang) * L / 8] : base); ang += (1.57 - ang) * 0.1 + wag * 0.004 * (i + 1) * 0.5; ws.push(8 + 8.4 * Math.sin(Math.PI * Math.min(1, f * 0.95 + 0.1)) - 3.4 * f * f); }
-    const poly = lz_fur(pts, ws, 1.7, seed, 2), tp = polyPath(poly);
+  // ── queue touffue pendante, bout noir ──
+  { const base = [-39 + recoilX, -51 + ysh(-39)], wag = Math.sin(TAU * (moving ? Q.freq : 0.7) * tt + 1.2) * (moving ? 2.4 : 1.2) * (1 - 0.7 * tl), a0 = lerp(2.72, 1.9, tl), Lq = 40, pts = [base], nP = 8;
+    for (let i = 1; i <= nP; i++) { const f = i / nP, ang = a0 + (1.52 - a0) * Math.pow(f, 0.8) * 0.9 + wag * 0.014 * f; pts.push([pts[i - 1][0] + Math.cos(ang) * Lq / nP, pts[i - 1][1] + Math.sin(ang) * Lq / nP]); }
+    const wsa = [6.5, 10, 13.5, 15, 15, 14, 12.5, 10, 5.6], tp = polyPath(lz_fur(pts, wsa, 1.4, seed, 2));
     halo(tp, C.dark, 1.2); c.fillStyle = C.tailMid; c.fill(tp);
-    c.save(); c.clip(tp); c.fillStyle = C.back; c.beginPath(); { const q0 = pts[1], q1 = pts[5]; c.moveTo(q0[0] - 6, q0[1] - 3); c.lineTo(q1[0] - 1, q1[1] - 5); c.lineTo(q1[0] + 1, q1[1] + 5); c.lineTo(q0[0] + 7, q0[1] + 2); c.closePath(); } c.globalAlpha = 0.5; c.fill(); c.globalAlpha = 1;
-    c.fillStyle = C.tip; c.beginPath(); { const q = pts[6]; const nx = Math.cos(ang0 + 1.57) , ny = Math.sin(ang0 + 1.57); c.arc(pts[8][0], pts[8][1], 12, 0, TAU); c.rect(pts[6][0] - 20, pts[6][1] - 1, 0, 0); } c.fill(); c.restore();
-    // bout noir : région au-delà du 6e point
-    c.save(); c.clip(tp); c.fillStyle = C.tip; { const q = pts[6], q2 = pts[7], dx = pts[8][0] - q[0], dy = pts[8][1] - q[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; c.beginPath(); c.moveTo(q[0] + nx * 14, q[1] + ny * 14); c.lineTo(q[0] - nx * 14, q[1] - ny * 14); c.lineTo(pts[8][0] - nx * 14 + dx * 2, pts[8][1] - ny * 14 + dy * 2); c.lineTo(pts[8][0] + nx * 14 + dx * 2, pts[8][1] + ny * 14 + dy * 2); c.closePath(); c.fill(); } c.restore();
-    dark(tp, C.lo, 2.6, 1.0); lite(tp, C.hi, 2.2, 0.8, 0.8); rimL(tp, 0.9, 0.85); }
+    c.save(); c.clip(tp);
+    c.fillStyle = C.back; c.globalAlpha = 0.5; c.beginPath(); c.moveTo(base[0] - 6, base[1] - 4); c.lineTo(pts[4][0] - 3, pts[4][1] - 12); c.lineTo(pts[4][0] + 6, pts[4][1] + 2); c.lineTo(base[0] + 4, base[1] + 8); c.closePath(); c.fill(); c.globalAlpha = 1;
+    { const q = pts[6], dx = pts[8][0] - q[0], dy = pts[8][1] - q[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; c.fillStyle = C.tip; c.beginPath(); c.moveTo(q[0] + nx * 18, q[1] + ny * 18); c.lineTo(q[0] - nx * 18, q[1] - ny * 18); c.lineTo(pts[8][0] - nx * 18 + dx * 3, pts[8][1] - ny * 18 + dy * 3); c.lineTo(pts[8][0] + nx * 18 + dx * 3, pts[8][1] + ny * 18 + dy * 3); c.closePath(); c.fill(); }
+    c.restore();
+    dark(tp, C.lo, 2.6, 1.0); lite(tp, C.hi, 2.0, 0.8, 0.7); rimL(tp, 0.9, 0.85); }
+  const hl = hindLeg(hN, C.leg, C.legLo, false);
+  frontLeg(fN, C.leg, C.legLo, false);
 
-  // ── tronc : dos, ventre clair, selle sombre ──
-  const Y0 = x => ysh(x), R = [recoilX, 0];
-  const tpts = [[25, -58 + Y0(25)], [14, -59.3 + Y0(14)], [2, -58.4 + Y0(2)], [-10, -56.8 + Y0(-10)], [-22, -57.2 + Y0(-22)], [-32, -55.5 + Y0(-32)], [-38.5, -50 + Y0(-38)], [-39, -43.5 + Y0(-38)], [-35, -38 + Y0(-35)], [-26, -35 + Y0(-26)], [-14, -34.2 + Y0(-14)], [-2, -34.6 + Y0(-2)], [8, -32.4 + Y0(8)], [16, -28.6 + Y0(16)], [24, -28.6 + Y0(24)], [30, -33 + Y0(30)], [33.5, -42 + Y0(32)], [33, -51 + Y0(32)], [31, -57 + Y0(30)]].map(p => [p[0] + recoilX * Math.max(0, (p[0] + 38) / 72), p[1]]);
-  const torso = lz_smooth(tpts);
-  halo(torso, C.dark, 1.2); c.fillStyle = C.body; c.fill(torso);
+  // ── tronc et cou d'un seul tenant (contour exact par spline) ──
+  const nape = Th(-9, -7), thr = Th(-5, 7.5), rx0 = recoilX;
+  const nkTop = [lerp(22 + rx0 * 0.8, nape[0], 0.5), lerp(-63 + Y0(22), nape[1], 0.5) - 2.4], nkBot = [lerp(33 + rx0 * 0.8, thr[0], 0.5) - 1, lerp(-47 + Y0(33), thr[1], 0.5) + 2.6];
+  const tpts = [[-41, -45 + Y0(-41)], [-38.5, -54.5 + Y0(-38)], [-27, -59 + Y0(-27)], [-13, -58.4 + Y0(-13)], [2, -60 + Y0(2)], [14, -61.8 + Y0(14)], [22, -63 + Y0(22)]].map(p => [p[0] + rx0 * clamp((p[0] + 38) / 72), p[1]])
+    .concat([nkTop, nape, thr, nkBot])
+    .concat([[34.5, -46 + Y0(34)], [32.8, -36 + Y0(32)], [25, -27.5 + Y0(25)], [15, -27.8 + Y0(15)], [5, -32 + Y0(5)], [-7, -37 + Y0(-7)], [-19, -37.2 + Y0(-19)], [-30, -36 + Y0(-30)], [-38, -39 + Y0(-38)]].map(p => [p[0] + rx0 * clamp((p[0] + 38) / 72), p[1]]));
+  const torso = lz_spline(tpts);
+  c.fillStyle = C.body; c.fill(torso);
+  lz_tufts(c, tpts, { len: 1.6, bw: 1.0, sweep: -0.9, step: 3, ph: seed, col: (p, i) => (i % 2 === 0 ? C.hi : lz_mix(C.body, C.belly, 0.4)), filter: (p, n, i) => (i % 7 !== 0) && ((p[0] > 4 && p[1] < -50 && n[1] < -0.3) || (p[0] > 22 && p[1] > -44) || (p[0] < -30 && n[0] < -0.2)) });
   c.save(); c.clip(torso);
-  // ventre et poitrail clairs, selle sombre sur le dos
-  { const g = c.createLinearGradient(0, -60 + Y0(0), 0, -30 + Y0(0)); g.addColorStop(0, C.back); g.addColorStop(0.32, C.body); g.addColorStop(0.62, C.body); g.addColorStop(0.86, lz_mix(C.body, C.belly, 0.6)); g.addColorStop(1, C.belly); c.fillStyle = g; c.fillRect(-45, -70, 90, 50); }
-  // frimas : poils clairs sur le dos
-  for (let i = 0; i < 95; i++) { const x = lerp(-36, 30, rnd()), y = -59 + Y0(x) + rnd() * 14; c.fillStyle = rnd() < 0.6 ? C.hi : C.back; c.fillRect(x, y, mn(0.9), mn(0.9)); }
+  { const g = c.createLinearGradient(0, -64 + Y0(0), 0, -27 + Y0(0)); g.addColorStop(0, C.back); g.addColorStop(0.28, lz_mix(C.back, C.body, 0.6)); g.addColorStop(0.55, C.body); g.addColorStop(0.8, lz_mix(C.body, C.belly, 0.55)); g.addColorStop(1, C.belly); c.fillStyle = g; c.fillRect(-48, -70, 96, 50); }
+  for (let i = 0; i < 120; i++) { const x = lerp(-38, 30, rnd()), y = -61 + Y0(x) + rnd() * 17; c.fillStyle = rnd() < 0.65 ? C.hi : C.back; c.fillRect(x, y, mn(0.9), mn(0.9)); }
+  // cuisse : masse ovale sur le flanc, joint plus sombre
+  { const Hp = hl.Hp, th = lz_ell(Hp[0] + 1, Hp[1] + 3, 11.5, 15, -0.2); c.fillStyle = lz_mix(C.body, C.leg, 0.06); c.fill(th); dark(th, C.lo, 2.6, 1.2, 0.5); lite(th, C.hi, 2.0, 1.0, 0.35); c.globalAlpha = 0.3; c.strokeStyle = C.lo; c.lineWidth = mn(0.9); c.stroke(th); c.globalAlpha = 1; }
+  // épaule : masse claire
+  { const sp = lz_ell(sF[0] + 3, sF[1] - 7, 9, 12, 0.15); lite(sp, C.hi, 2.2, 0.8, 0.5); }
   c.restore();
   dark(torso, C.lo, 4.2, 1.6); lite(torso, C.hi, 2.8, 1.0, 0.85); rimL(torso, 1.0);
-  // cou : tronc épais vers la tête
-  { const Nb = [20 + recoilX * 0.7, -50 + ysh(20)], nk = [Nb, [lerp(Nb[0], H[0], 0.5), lerp(Nb[1], H[1], 0.5) + 1.5], [H[0] - 2 * hc, H[1] - 2 * hs]], nw = [19, 14.5, 11];
-    const poly = lz_fur(nk, nw, 1.8, seed + 2), np = polyPath(poly);
-    halo(np, C.dark, 1.1); c.fillStyle = C.body; c.fill(np);
-    c.save(); c.clip(np); const g = c.createLinearGradient(Nb[0], Nb[1] - 10, Nb[0], Nb[1] + 10); g.addColorStop(0, C.back); g.addColorStop(0.45, C.body); g.addColorStop(1, lz_mix(C.body, C.belly, 0.7)); c.fillStyle = g; c.fillRect(Nb[0] - 15, Nb[1] - 20, 50, 40); c.restore();
-    dark(np, C.lo, 3.0, 1.2); lite(np, C.hi, 2.2, 0.8, 0.85); rimL(np, 0.9, 0.9); }
 
-  // ── pattes proches ──
-  hindLeg(hN, C.leg, C.legLo, false);
-  frontLeg(fN, C.leg, C.legLo, false);
-  // ── oreille lointaine ──
+  // ── tête (repère de la tête : origine au centre du crâne, museau vers +x) ──
+  c.save(); c.translate(H[0], H[1]); c.rotate(aH);
   const eAng = -earB * 1.15, rotEar = (pts, pivot, a) => pts.map(p => { const dx = p[0] - pivot[0], dy = p[1] - pivot[1], cs = Math.cos(a), sn = Math.sin(a); return [pivot[0] + dx * cs - dy * sn, pivot[1] + dx * sn + dy * cs]; });
-  c.save(); c.translate(Hs[0], Hs[1]); c.rotate(aH);
-  { const pv = [-3, -8], ear = rotEar([[-8, -6], [-9.6, -17], [-6.4, -28.5], [-1.2, -19], [1, -7]], pv, eAng * 0.9 + 0.12), ep = lz_smooth(ear);
+  if (shake > 0.12) {                                                  // échos : contours pointillés de la tête aux instants précédents (secouement)
+    const wk0 = wrinkle; c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+    for (const [k, dt] of [[0, 0.04], [1, 0.08], [2, 0.12]]) {
+      const g = hdn(dt), gc = Math.cos(g.a), gs = Math.sin(g.a), M = new DOMMatrix([s * fl * gc, s * gs, -s * fl * gs, s * gc, cx + fl * s * g.H[0], cy + s * g.H[1]]);
+      c.setTransform(M); c.setLineDash([mn(1.6), mn(1.8)]); c.lineWidth = mn(1.1); c.strokeStyle = k === 0 ? ST[7] : k === 1 ? ST[6] : ST[5]; c.globalAlpha = 0.9 - 0.2 * k;
+      c.stroke(lz_spline([[-9.5, -6], [-3.5, -10.2], [3.5, -9.6], [9, -6.4], [15, -5.0], [21, -4.0], [26.4, -3.2], [28.8, -1.2], [28.2, 1.4], [23, 2.0], [10, 3.0], [-3, 5.4], [-9.5, 3.8], [-11.8, -1]]));
+      c.stroke(lz_smooth([[-8, -7], [-9.8, -19], [-5.8, -34], [1.8, -23], [4, -8]]));
+    }
+    c.setLineDash([]); c.globalAlpha = 1; c.restore(); c.setTransform(s * fl, 0, 0, s, cx, cy); c.translate(H[0], H[1]); c.rotate(aH);
+  }
+  { const pv = [-3, -8], ear = rotEar([[-9, -6], [-11.4, -18], [-7.6, -32], [-1.2, -20], [1.4, -7]], pv, eAng * 0.9 + 0.14), ep = lz_smooth(ear);
     halo(ep, C.dark, 1.0); c.fillStyle = far(C.ear); c.fill(ep); dark(ep, far(C.lo), 2, 0.6); }
-  // ── tête : crâne et museau, mâchoire inférieure ──
-  const upper = lz_smooth([[-8, -6], [-3, -9.2], [3.5, -8.6], [8, -5.8], [13.5, -4.6], [19.5, -3.6], [24.4, -2.9], [27, -1.0], [26.6, 1.3], [22, 2.0], [16, 2.5], [10, 3.0], [4, 4.0], [-3, 5.2], [-9, 3.4], [-10.8, -1]]);
-  const jawA = mouth * 0.62, jc = Math.cos(jawA), jsn = Math.sin(jawA), jh = [3, 4.6];
-  const jaw0 = [[3, 3.6], [10, 3.0], [16, 2.7], [22, 2.4], [25.2, 3.0], [24, 4.8], [19, 6.2], [12, 7.3], [6, 8.8], [0, 9.2], [-4, 6.6]];
-  const jaw = lz_smooth(jaw0.map(p => { const dx = p[0] - jh[0], dy = p[1] - jh[1]; return [jh[0] + dx * jc - dy * jsn, jh[1] + dx * jsn + dy * jc]; }));
-  if (mouth > 0.08) {                                                            // intérieur de la gueule
-    const inn = polyPath([[3, 3.4], [10, 3.0], [16, 2.6], [22, 2.3], ...[[24, 3.8], [18, 6], [10, 7.2], [4, 8]].map(p => { const dx = p[0] - jh[0], dy = p[1] - jh[1]; return [jh[0] + dx * jc - dy * jsn, jh[1] + dx * jsn + dy * jc]; })]);
-    c.fillStyle = '#5a0c18'; c.fill(inn);
-  }
-  // langue
+  const wk = wrinkle, upper = lz_spline([[-9.5, -6], [-3.5, -10.2], [3.5, -9.6], [9, -6.4 - 0.4 * wk], [15, -5.0 - 1.2 * wk], [21 - 0.8 * wk, -4.0 - 2.4 * wk], [26.4 - 1.6 * wk, -3.2 - 3.0 * wk], [28.8 - 2.2 * wk, -1.2 - 2.8 * wk], [28.2 - 2.2 * wk, 1.4 - 1.8 * wk], [23, 2.0 - 0.8 * wk], [17, 2.5], [10, 3.0], [4, 4.0], [-3, 5.4], [-9.5, 3.8], [-11.8, -1]]);
+  const jawA = mouth * 0.62, jc = Math.cos(jawA), jsn = Math.sin(jawA), jh = [3, 4.8], rj = p => { const dx = p[0] - jh[0], dy = p[1] - jh[1]; return [jh[0] + dx * jc - dy * jsn, jh[1] + dx * jsn + dy * jc]; };
+  const jaw = lz_spline([[3, 3.8], [10, 3.2], [16, 2.9], [23, 2.6], [26.6, 3.1], [24.6, 4.6], [19, 5.8], [12, 6.6], [6, 8.2], [0, 9.2], [-4, 6.8]].map(rj));
+  if (mouth > 0.08) { c.fillStyle = '#5a0c18'; c.fill(polyPath([[3, 3.6], [10, 3.2], [16, 2.8], [23, 2.5], ...[[25.5, 4], [18, 6.4], [10, 7.6], [4, 8.6]].map(rj)])); }
   if (tongue > 0.05) {
-    const gl = [Math.cos(-aH) * 0 - Math.sin(-aH) * 1, Math.sin(-aH) * 0 + Math.cos(-aH) * 1], T0 = (() => { const p = [20, 4.6]; return [jh[0] + (p[0] - jh[0]) * jc - (p[1] - jh[1]) * jsn, jh[1] + (p[0] - jh[0]) * jsn + (p[1] - jh[1]) * jc]; })();
-    const Lg = 9 + 8 * tongue, pts = [], ws = [], sw = Math.sin(TAU * 3.2 * tt) * 1.6 * (shake > 0 ? 1.6 : 0.6);
-    for (let i = 0; i <= 6; i++) { const f = i / 6; pts.push([T0[0] + 6.5 * f * (1 - 0.3 * f) * tongue + gl[0] * Lg * 0.62 * f * f + sw * f * f, T0[1] + 2 * f + gl[1] * Lg * 0.62 * f * f + Math.sin(f * 3 + tt * 4) * 0.4]); ws.push(6.6 - 2.0 * f * f); }
-    const tg = polyPath(limb(pts, ws)); halo(tg, C.dark, 1.0); c.fillStyle = '#f2625a'; c.fill(tg);
-    c.strokeStyle = '#d73442'; c.lineWidth = mn(0.8); c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.stroke();
-    dark(tg, '#a81c2e', 1.2, 0.5); lite(tg, '#ff9a86', 1.0, 0.4, 0.8);
+    const gl = [-Math.sin(-aH), Math.cos(-aH)], T0 = rj([21, 4.6]), Lg = 7.5 + 6.5 * tongue, pts = [], ws = [], sw = Math.sin(TAU * 3.2 * tt) * 1.6 * (shake > 0 ? 1.5 : 0.5);
+    for (let i = 0; i <= 5; i++) { const f = i / 5; pts.push([T0[0] + 5.5 * Math.sin(f * 1.4) * tongue + gl[0] * Lg * 0.9 * f * f + sw * f * f, T0[1] + 0.8 * f + gl[1] * Lg * 0.9 * f * f + Math.sin(f * 3 + tt * 4) * 0.35]); ws.push([4.6, 6.4, 7.2, 7.0, 6.2, 3.8][i]); }
+    const tg = polyPath(lz_limbS(pts, ws, 3)); halo(tg, C.dark, 1.0); c.fillStyle = '#f2625a'; c.fill(tg);
+    c.strokeStyle = '#d73442'; c.lineWidth = mn(0.9); c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length - 1; i++) c.lineTo(pts[i][0], pts[i][1]); c.stroke();
+    dark(tg, '#a81c2e', 1.4, 0.5); lite(tg, '#ff9a86', 1.1, 0.4, 0.85);
   }
-  halo(jaw, C.dark, 1.1); c.fillStyle = lz_mix(C.belly, C.body, 0.15); c.fill(jaw); dark(jaw, lz_mix(C.belly, C.lo, 0.5), 1.8, 0.7); lite(jaw, C.belly, 1.0, 0.4, 0.8);
+  halo(jaw, C.dark, 1.1); c.fillStyle = lz_mix(C.belly, C.body, 0.12); c.fill(jaw); dark(jaw, lz_mix(C.belly, C.lo, 0.5), 1.8, 0.7); lite(jaw, C.belly, 1.0, 0.4, 0.8);
   halo(upper, C.dark, 1.1); c.fillStyle = C.body; c.fill(upper);
   c.save(); c.clip(upper);
-  { const g = c.createLinearGradient(0, -9, 0, 5); g.addColorStop(0, C.back); g.addColorStop(0.42, lz_mix(C.body, C.leg, 0.25)); g.addColorStop(0.8, C.body); g.addColorStop(1, lz_mix(C.body, C.belly, 0.7)); c.fillStyle = g; c.fillRect(-12, -10, 42, 17); }
+  { const g = c.createLinearGradient(0, -10, 0, 5); g.addColorStop(0, C.back); g.addColorStop(0.4, lz_mix(C.body, C.leg, 0.3)); g.addColorStop(0.78, C.body); g.addColorStop(1, lz_mix(C.body, C.belly, 0.75)); c.fillStyle = g; c.fillRect(-13, -11, 45, 18); }
   c.restore();
   dark(upper, C.lo, 2.2, 0.9); lite(upper, C.hi, 1.5, 0.6, 0.85); rimL(upper, 0.9, 0.95);
-  // joues touffues
   for (let i = 0; i < 3; i++) { const q = lz_tri([-3 - i * 2.4, 3.5 + i * 1.2], [-9 - i * 1.5, 1.5 + i * 1.8], [-13 - i * 1.4, 7 + i * 1.4]); c.fillStyle = i ? C.body : lz_mix(C.body, C.belly, 0.5); c.fill(q); }
-  // oreille proche
-  { const pv = [-2, -8], ear = rotEar([[-7, -7], [-8.5, -19], [-4.8, -31], [1.2, -21], [3.5, -8]], pv, eAng), ep = lz_smooth(ear), inn = lz_smooth(rotEar([[-5.6, -9], [-6.2, -18], [-4.0, -26.2], [-0.4, -18.8], [0.8, -9.5]], pv, eAng));
+  { const pv = [-2, -8], ear = rotEar([[-8, -7], [-9.8, -19], [-5.8, -34], [1.8, -23], [4, -8]], pv, eAng), ep = lz_smooth(ear), inn = lz_smooth(rotEar([[-6.4, -9], [-7, -19], [-4.8, -29], [-0.4, -20.4], [1, -9.5]], pv, eAng));
     halo(ep, C.dark, 1.0); c.fillStyle = C.ear; c.fill(ep); c.save(); c.clip(ep); c.fillStyle = C.earIn; c.fill(inn); c.restore(); c.save(); c.clip(inn); c.fillStyle = lz_mix(C.earIn, C.leg, 0.3); c.fillRect(-12, -14, 16, 6); c.restore();
     dark(ep, C.lo, 2.0, 0.7); lite(ep, lz_mix(C.ear, C.hi, 0.5), 1.0, 0.4, 0.8); rimL(ep, 0.9, 0.9); }
-  // truffe
-  { const nose = lz_ell(26.4, -0.6, 2.7, 2.3, 0.2); c.fillStyle = C.nose; c.fill(nose); lite(nose, '#5a4a52', 0.8, 0.3, 0.7); }
+  { const nose = lz_ell(27.6 - 2.2 * wk, -0.8 - 2.6 * wk, 2.9, 2.5, 0.2); c.fillStyle = C.nose; c.fill(nose); lite(nose, '#5a4a52', 0.8, 0.3, 0.7); }
   c.restore();
-  // poitrail : touffes sous le cou
-  { const pb = [[22 + recoilX, -36 + ysh(22)], [28 + recoilX, -34 + ysh(28)], [31 + recoilX, -39 + ysh(30)]]; for (let i = 0; i < 4; i++) { const x0 = 18 + i * 3.6 + recoilX, y0 = -29 + ysh(18 + i * 3.6), q = lz_tri([x0 - 1.8, y0 - 1.5], [x0 + 1.8, y0 - 1.5], [x0 + 0.4, y0 + 3.6 + (i % 2) * 1.4]); c.fillStyle = lz_mix(C.body, C.belly, 0.75); c.fill(q); } }
 
-  layerEnd({ outline: C.out });
+  lz_layerEnd({ outline: C.out });
 
-  // ── détails nets (pixels écran) : œil, narine, bave, traînées ──
+  // ── détails nets (pixels écran) : œil, plis, bave, traînées ──
   L.setTransform(1, 0, 0, 1, 0, 0);
-  const eS = Ts(12.8, -3.4), ex0 = Math.round(eS[0]), ey0 = Math.round(eS[1]), er = Math.max(1, Math.round(1.7 * s)), squint = clamp(hit * 1.6 + (pose === 'disgust' ? 0.9 : 0));
+  const eS = Ts(8.6, -3.4), ex0 = Math.round(eS[0]), ey0 = Math.round(eS[1]), er = Math.max(1, Math.round(2.1 * s)), squint = clamp(hit * 1.6 + (pose === 'disgust' ? 0.9 : 0));
   const eyeOpen = o.eye != null ? clamp(o.eye) : 1 - squint, blinkT = (tt * 0.31) % 1, blink = blinkT > 0.96 ? Math.sin((blinkT - 0.96) / 0.04 * Math.PI) : 0;
   const dirx = fl * Math.cos(aH), diry = Math.sin(aH);
   if (eyeOpen * (1 - blink) > 0.45) {
     disc(ex0, ey0, er, lz_mix(AM[6], '#48291a', 0.3)); disc(ex0, ey0, Math.max(1, er - 1), '#17110d');
-    if (er >= 2) px(ex0 + fl * 0, ey0 - 1, WH[2]);
-    const lx = Math.round(ex0 + dirx * (er + 1)), ly = Math.round(ey0 + diry * (er + 1)); lineP(ex0 + dirx * er, ey0 + diry * er, lx + dirx * 2, ly + diry * 2, '#17110d', 1);       // trait sombre vers le museau
-    if (s >= 0.6) { px(ex0 - fl * er, ey0 - er, C.dark); }
+    if (er >= 2) px(ex0, ey0 - 1, WH[2]);
+    lineP(ex0 + dirx * er, ey0 + diry * er, ex0 + dirx * (er + 4), ey0 + diry * (er + 4) + 0, '#17110d', 1);
   } else {
     const a = Math.round(er * 1.2); lineP(ex0 - a * fl, ey0 + 1 - Math.round(hit), ex0 + a * fl, ey0 + (squint > 0.5 ? 0 : 1), C.dark, 1);
     if (squint > 0.5) { lineP(ex0 - a * fl, ey0 - 2, ex0, ey0, C.dark, 1); }
   }
-  // plis du nez (dégoût)
-  if (wrinkle > 0.05 && s >= 0.5) for (let k = 0; k < 3; k++) { const a = Ts(17 + k * 2.6, -3.2 + k * 0.2), b = Ts(18.2 + k * 2.6, -0.4 + k * 0.1); lineP(a[0], a[1], b[0], b[1], C.lo, 1); }
-  // bave : fil qui s'allonge sous la langue puis goutte qui tombe
+  if (wrinkle > 0.05 && s >= 0.5) for (let k = 0; k < 3; k++) { const a = Ts(14 + k * 2.6, -5 + k * 0.2), b = Ts(15.2 + k * 2.6, -2.4 + k * 0.1); lineP(a[0], a[1], b[0], b[1], C.lo, 1); }
   if (tongue > 0.3 && o.drool !== false) {
-    const jj = [3, 4.6], T0 = (() => { const p = [27, 5]; return [jj[0] + (p[0] - jj[0]) * jc - (p[1] - jj[1]) * jsn, jj[1] + (p[0] - jj[0]) * jsn + (p[1] - jj[1]) * jc]; })(), a0 = Ts(T0[0] - 6, T0[1] + 6);
-    const per = 1.4, k = ((tt / per) % 1 + 1) % 1, len = Math.round((2 + 10 * Math.min(1, k * 1.15)) * Math.max(1, s)), x = Math.round(a0[0]), y = Math.round(a0[1]) + 3;
+    const a0 = Ts(24, 9), per = 1.4, k = ((tt / per) % 1 + 1) % 1, len = Math.round((2 + 10 * Math.min(1, k * 1.15)) * Math.max(1, s)), x = Math.round(a0[0]), y = Math.round(a0[1]) + 3;
     for (let i = 0; i < len; i++) px(x + Math.round(Math.sin(i * 0.7 + tt * 5) * 0.4), y + i, i % 3 === 2 ? ST[6] : WH[2]);
     disc(x, y + len + 1, Math.max(1, Math.round(1.1 * s)), WH[2]); px(x - 1, y + len, WH[3]);
     if (k > 0.82) { const f = (k - 0.82) / 0.18; px(x, y + len + 2 + Math.round(f * 12 * s), WH[2]); }
   }
-  // traînées de secouement : arcs clairs derrière la tête
-  if (shake > 0.15) {
-    const th0 = a => shake * 0.3 * Math.sin(TAU * 6.4 * (tt - a)), now = th0(0), prev = th0(0.045), prev2 = th0(0.09);
-    for (const rr of [16, 23, 30, 36]) for (const [ra, rb, col] of [[prev, now, WH[2]], [prev2, prev, ST[6]]]) {
-      const n = 7; for (let i = 0; i < n; i++) { const f = i / n, aa = lerp(ra, rb, f) * 0.7 + an, p = Tb(N0[0] + (LN + rr - 18) * Math.cos(aa) + 0, N0[1] + (LN + rr - 18) * Math.sin(aa)); if ((i + rr) % 2 === 0) px(p[0], p[1], col); }
-    }
-  }
-  return { T: Tb, Th: Ts, nose: Ts(27, -0.6), eye: eS, muzzle: Ts(20, -3.4), head: Ts(8, -1), ear: Ts(-3, -26), tail: Tb(-45, -20), mouth: Ts(24, 2.6), w: 150 * s, hit };
+  return { T: Tb, Th: Ts, nose: Ts(28, -0.8), eye: eS, muzzle: Ts(21, -3.6), head: Ts(8, -1), ear: Ts(-3, -26), tail: Tb(-45, -20), mouth: Ts(25, 2.6), w: 150 * s, hit };
 }
 
-// icône de case du carnet (17 × 17, contour sombre, couleurs exactes) : définie plus bas
-ICONES[1] = function (cx, cy) { /* remplacée en fin de fichier */ };
+// ───────────────────────── jet de sang ─────────────────────────
+const LZ_G = 520;                                                    // gravité en px/s² (temps réel du lézard, avant ralenti)
+// vitesse (vx, vy) en px/s pour aller de (x0, y0) à (x1, y1) en T secondes (temps réel) avec la gravité g
+function lz_jetVel(x0, y0, x1, y1, T, g = LZ_G) { return [(x1 - x0) / T, (y1 - y0 - 0.5 * g * T * T) / T]; }
+// âge (s réelles) auquel un point lancé de (x0,y0) à (vx,vy) atteint la verticale de pt (ou le sol y = ground) ; null si jamais
+function lz_jetFlight(x0, y0, vx, vy, o = {}) {
+  const g = o.g ?? LZ_G; let a = null;
+  if (o.hit) { const hx = o.hit[0] ?? o.hit.x, hy = o.hit[1] ?? o.hit.y; if (Math.abs(vx) > 1e-6) { const q = (hx - x0) / vx; if (q > 0) a = q; } else { const d = vy * vy + 2 * g * (hy - y0); if (d >= 0) a = (-vy + Math.sqrt(d)) / g; } }
+  if (o.ground != null) { const d = vy * vy + 2 * g * (o.ground - y0); if (d >= 0) { const q = (-vy + Math.sqrt(d)) / g; if (q > 0 && (a == null || q < a)) a = q; } }
+  return a;
+}
+// instant (absolu) où le dernier élément du jet a fini (impact, sol ou fin de portée)
+function lz_jetEnd(x0, y0, vx, vy, t0, o = {}) { const a = lz_jetFlight(x0, y0, vx, vy, o) ?? (o.maxAge ?? 0.9), tau = o.tau ?? 1; return t0 + ((o.dur ?? 0.35) + a) / tau; }
+// instant (absolu) où la tête du jet touche la cible (o.hit) ou le sol
+function lz_jetHitT(x0, y0, vx, vy, t0, o = {}) { const a = lz_jetFlight(x0, y0, vx, vy, o); return a == null ? null : t0 + a / (o.tau ?? 1); }
+/* lz_jet(x0, y0, vx, vy, t0, t, o) : (x0, y0) = point de départ (coin de l'œil), (vx, vy) en px/s réels, t0 = début (s), t = instant courant.
+   o : tau (temps ralenti : 1 = réel, 0,15 = ralenti ×6,7 ; défaut 1), dur (durée réelle de l'émission, 0,35 s), g (gravité), hit [x, y] (la tête du jet disparaît à l'impact), ground (ordonnée du sol : les gouttes qui y tombent laissent une tache),
+     size (épaisseur, 1), breakAge (âge de rupture du filet en gouttes, 0,1 s réelles), n (gouttes, 42), seed, stains (taches au sol, true). Renvoie { tip: [x, y], hitT, live }. Dessiner dans draw(). */
+function lz_jet(x0, y0, vx, vy, t0, t, o = {}) {
+  const tau = o.tau ?? 1, s = (t - t0) * tau, dur = o.dur ?? 0.35, g = o.g ?? LZ_G, sz = o.size ?? 1, ab = o.breakAge ?? 0.1, seed = o.seed ?? 9, N = o.n ?? 42;
+  const aEnd = lz_jetFlight(x0, y0, vx, vy, o), maxAge = o.maxAge ?? 0.9, res = { tip: [x0, y0], hitT: aEnd != null ? t0 + aEnd / tau : null, live: false };
+  if (s < 0) return res;
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const pos = (a, dvx = 0, dvy = 0, da = 0) => [x0 + (vx + dvx) * a + dvx * da * 0, y0 + (vy + dvy) * a + 0.5 * g * a * a];
+  const aMax = Math.min(s, aEnd ?? maxAge, maxAge), aMin = Math.max(0, s - dur);
+  const red0 = RD[0], red1 = RD[1], red2 = RD[2], red3 = RD[3], red4 = RD[4], red5 = RD[5];
+  // petite gerbe au départ de l'œil
+  if (s < 0.09) { const r = rng(seed + 3); for (let i = 0; i < 6; i++) { const a = -0.4 + r() * 0.8 - Math.atan2(vy, vx) * 0 , sp = 30 + r() * 80, aa = Math.atan2(vy, vx) + (r() - 0.5) * 1.5, p = [x0 + Math.cos(aa) * sp * s, y0 + Math.sin(aa) * sp * s + 0.5 * g * s * s]; px(p[0], p[1], r() < 0.4 ? red5 : red3); } }
+  // filet continu : de aMin à min(aMax, ab)
+  const aS = Math.min(aMax, ab);
+  if (aS > aMin + 0.002) {
+    const nSeg = Math.max(3, Math.ceil((aS - aMin) / 0.008)), pts = []; for (let i = 0; i <= nSeg; i++) { const a = lerp(aMin, aS, i / nSeg); pts.push([a, ...pos(a)]); }
+    const th = a => Math.max(1, Math.round((1.9 - 0.9 * clamp(a / ab)) * sz));
+    for (let i = 0; i < nSeg; i++) { const a = pts[i][0], q = pts[i], r = pts[i + 1], w = th(a); if (w >= 2) lineP(q[1], q[2], r[1], r[2], red1, w + 1); }
+    for (let i = 0; i < nSeg; i++) { const a = pts[i][0], q = pts[i], r = pts[i + 1], w = th(a); lineP(q[1], q[2], r[1], r[2], w >= 2 ? red3 : red2, w); }
+    for (let i = 0; i < nSeg; i++) { const a = pts[i][0], q = pts[i], r = pts[i + 1], w = th(a); if (w >= 2 && i % 2 === 0) lineP(q[1] + 0.5, q[2] - 1, r[1] + 0.5, r[2] - 1, red5, 1); else if (i % 5 === 0) px(q[1], q[2], red4); }
+  }
+  // gouttes : après la rupture, elles s'écartent et brillent
+  const r = rng(seed * 17 + 1);
+  for (let j = 0; j < N; j++) {
+    const e = (j + 0.5) / N * dur, a = s - e, dvx = (r() - 0.5) * 0.16 * Math.abs(vx), dvy = (r() - 0.5) * 0.2 * Math.abs(vx), rad = r() < 0.18 ? 1.6 + r() * 0.8 : r() < 0.5 ? 1 + r() * 0.5 : 0.5 + r() * 0.4, abj = ab * (0.85 + r() * 0.5), ph = r() * 7;
+    if (a < abj || a > Math.min(aEnd ?? maxAge, maxAge)) { if (a >= (aEnd ?? maxAge) && o.stains !== false && o.ground != null && aEnd != null && a >= aEnd && !o.hit) { const lx = x0 + vx * aEnd + dvx * (aEnd - abj); const age = s - e - aEnd; if (age > 0) { const sr = rad > 1.4 ? 1 : 0; const c0 = age < 0.4 / tau ? red3 : red1; R(lx, o.ground + (j % 3) - 1, 1 + sr + (j % 4 === 0 ? 1 : 0), 1, c0); if (j % 5 === 0) px(lx + 1, o.ground, red0); } } continue; }
+    const d = a - abj, p = pos(a, dvx * 0, dvy * 0); p[0] += dvx * d; p[1] += dvy * d;
+    const tw = Math.sin(t * 22 + ph) > 0.55;
+    if (rad >= 1.5) { disc(p[0], p[1], 1, red1); disc(p[0], p[1], 1, red3); px(p[0], p[1], red3); R(p[0], p[1], 1, 1, red2); px(p[0] + 0.0, p[1] - 1, tw ? WH[3] : red5); px(p[0] - 1, p[1] + 1, red1); }
+    else if (rad >= 0.95) { R(p[0], p[1], 2, 2, red3); px(p[0], p[1], tw ? WH[2] : red5); px(p[0] + 1, p[1] + 1, red1); }
+    else px(p[0], p[1], tw ? red5 : red3);
+  }
+  const tip = pos(aMax); res.tip = tip; res.live = s < dur + (aEnd ?? maxAge); return res;
+}
+
+/* lz_splat(x, y, t, o) : éclaboussure sur une surface (museau) au point (x, y). o : t0 (instant de l'impact ; t − t0 est le temps écoulé), tau (ralenti, comme le jet), size (1), n (gouttes, 9), dir (angle de la normale de la surface, rad : −π/2 = vers le haut ; défaut vers la gauche-haut),
+   slide [dx, dy] (sens de glissement des filets, défaut vers le bas), drips (3), seed. Gouttes projetées, tache brillante qui s'étale, filets qui glissent et ralentissent. Dessiner dans draw(), après l'animal. */
+function lz_splat(x, y, t, o = {}) {
+  const tau = o.tau ?? 1, s = (t - (o.t0 || 0)) * tau, sz = o.size ?? 1, g = o.g ?? LZ_G, seed = o.seed ?? 4, n = o.n ?? 9;
+  if (s < 0) return;
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const r = rng(seed), nd = o.dir ?? -2.4, sl = lz_norm(o.slide || [0.2, 1]);
+  // gouttes projetées
+  for (let i = 0; i < n; i++) {
+    const a = nd + (r() - 0.5) * 2.2, sp = (40 + r() * 100) * sz, rad = r() < 0.3 ? 1 : 0, life = 0.5 + r() * 0.5, p = [x + Math.cos(a) * sp * s, y + Math.sin(a) * sp * s + 0.5 * g * s * s * 0.5];
+    if (s > life) continue; const k = 1 - s / life;
+    if (rad) { R(p[0], p[1], 2, 2, RD[3]); px(p[0], p[1], k > 0.4 ? RD[5] : RD[3]); px(p[0] + 1, p[1] + 1, RD[1]); } else px(p[0], p[1], k > 0.5 ? RD[4] : RD[3]);
+  }
+  // tache : s'étale en 0,1 s (temps réel), reste brillante
+  const gr = clamp(s / 0.1), R0 = (3.4 + 0.6 * Math.sin(seed)) * sz * eo(gr);
+  if (R0 > 0.6) {
+    const rr = rng(seed + 11); const blob = []; for (let k = 0; k < 9; k++) { const ang = k / 9 * TAU, rad = R0 * (0.72 + 0.5 * rr()); blob.push([x + Math.cos(ang) * rad, y + Math.sin(ang) * rad * 0.85]); }
+    poly(blob, RD[1]); poly(blob.map(p => [x + (p[0] - x) * 0.86, y + (p[1] - y) * 0.86]), RD[2]); poly(blob.map(p => [x + (p[0] - x) * 0.55 - 0.3, y + (p[1] - y) * 0.55 - 0.5]), RD[3]);
+    px(x - 1, y - 1, RD[5]); if (R0 > 2.4) px(x, y - 1, WH[2]);
+    for (let k = 0; k < 4; k++) { const ang = rr() * TAU, d = R0 * (1.15 + rr() * 0.7); px(x + Math.cos(ang) * d, y + Math.sin(ang) * d * 0.85, RD[2]); }
+  }
+  // filets qui glissent (vers le bas du museau)
+  const nDr = o.drips ?? 3;
+  for (let k = 0; k < nDr; k++) {
+    const st = 0.16 + k * 0.13, du = s - st; if (du <= 0) continue;
+    const L0 = (7 + 5 * ((k * 7) % 3)) * sz, len = L0 * (1 - Math.exp(-du * 2.0)), ox = (k - (nDr - 1) / 2) * 2.6 * sz, sx = x + ox, sy = y + 1 + (k % 2);
+    for (let i = 0; i < len; i++) { const f = i / Math.max(1, len); px(sx + sl[0] * i + (i > len * 0.6 ? 0 : 0), sy + sl[1] * i, f > 0.7 ? RD[3] : RD[2]); if (i % 3 === 0 && i < len - 1) px(sx + sl[0] * i - 1, sy + sl[1] * i, RD[1]); }
+    const hx = sx + sl[0] * len, hy = sy + sl[1] * len; R(hx - 0.5, hy, 2, 2, RD[3]); px(hx - 0.5, hy, RD[5]); px(hx + 0.5, hy + 1, RD[1]);
+  }
+}
+
+/* lz_ruler(x, y, w, t, o) : règle (mètre ruban jaune) posée sur le sable ; (x, y) = zéro, sur la ligne du sol ; w = pixels pour 1 mètre ; la règle va jusqu'à 1,08 m.
+   o : reveal 0..1 (déroulement ; 1 = entière), text (true : chiffres 0, 50 CM, 1 M dessinés avec ptext ; false pour les dessiner à part avec lz_rulerText dans ui()), h (épaisseur de la face supérieure, 6), tab (languette au bout). Renvoie { x0, x1, xm(m) }. */
+function lz_ruler(x, y, w, t, o = {}) {
+  const rv = clamp(o.reveal ?? 1), len = Math.round(w * 1.08 * rv), h = o.h ?? 6, x0 = Math.round(x), y0 = Math.round(y), end = x0 + len;
+  const xm = m => x + w * m;
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  if (len <= 0) return { x0, x1: x0, xm };
+  // ombre portée sur le sable
+  L.fillStyle = 'rgba(40,16,52,0.32)'; L.fillRect(x0 + 1, y0 + 1, len + 2, 4); L.fillStyle = 'rgba(40,16,52,0.2)'; L.fillRect(x0 + 3, y0 + 5, len, 2);
+  // face supérieure (vue rasante), tranche avant, contour
+  R(x0 - 1, y0 - h - 1, len + 2, h + 3, NI[0]);
+  R(x0, y0 - h, len, h, AM[7]); R(x0, y0 - h, len, 1, AM[10]); R(x0, y0 - h + 1, len, 1, AM[8]);
+  R(x0, y0 - 1, len, 1, AM[5]); R(x0, y0, len, 1, AM[4]);                    // tranche
+  ditherRect(x0, y0 - h + 2, len, h - 3, AM[6], 0.18);
+  // graduations tous les 5 cm : courtes ; 10 cm : moyennes ; 50 cm et 1 m : longues
+  for (let k = 0; k <= 21; k++) {
+    const m = k * 0.05, px0 = Math.round(x0 + w * m); if (px0 > end - 1) break;
+    const big = k % 10 === 0, mid = k % 2 === 0; const hh = big ? h - 1 : mid ? 4 : 2;
+    R(px0, y0 - 1 - hh, 1, hh, big ? NI[0] : WO[1]);
+  }
+  // bout : languette métallique repliée, ou rouleau qui se déroule
+  if (rv >= 1) { R(end, y0 - h - 2, 2, h + 4, NI[0]); R(end, y0 - h - 1, 1, h + 2, ST[6]); R(end + 1, y0 - h - 1, 1, h + 2, ST[3]); px(end, y0 - h - 1, WH[3]); }
+  else {
+    const rr = 5, cx0 = end + 1, cy0 = y0 - 3; disc(cx0, cy0, rr, NI[0]); disc(cx0, cy0, rr - 1, AM[7]); disc(cx0, cy0, rr - 2, AM[6]);
+    const ang = len / 3.2; for (let k = 0; k < 3; k++) { const a = ang + k * 2.1; lineP(cx0, cy0, cx0 + Math.cos(a) * (rr - 1), cy0 + Math.sin(a) * (rr - 1), k ? AM[8] : AM[4], 1); } disc(cx0, cy0, 1, NI[0]);
+    px(cx0 - 2, cy0 - 3, AM[10]);
+  }
+  if (o.text !== false) lz_rulerText(x, y, w, t, o);
+  return { x0, x1: end, xm };
+}
+// chiffres de la règle (pixel 5 × 7) : à appeler dans ui() si on veut les garder nets
+function lz_rulerText(x, y, w, t, o = {}) {
+  const rv = clamp(o.reveal ?? 1), len = w * 1.08 * rv, h = o.h ?? 6;
+  for (const [m, label] of [[0, '0'], [0.5, '50 CM'], [1, '1 M']]) {
+    const d = w * m, k = (len - d) / 10; if (k <= 0) continue; const up = Math.round(3 * (1 - clamp(k))), px0 = Math.round(x + d), ty = Math.round(y) - h - 17 + up;
+    R(px0, ty + 8, 1, 5 - up, WH[2]);
+    ptextC(label, px0, ty, WH[3], 1, NI[0]);
+  }
+}
+
+// ───────────────────────── icône de case du carnet (17 × 17, contour sombre, couleurs exactes) ─────────────────────────
+// lézard royal vu de dessus : disque plat à frange pointue, queue courte, tête à museau, couronne de cornes en éventail vers l'arrière ; formes rasterisées sur une grille 17 × 17, contour calculé autour
+const LZ_ICOL = { h: '#ffe08a', a: '#dba67c', b: '#c06a34', c: '#964a26', d: '#f4cfa6', e: '#12100c', w: '#fff8e8', g: '#a96d3c' };
+let LZ_ICON_G = null;
+function lz_iconGrid() {
+  const N = 17, G = Array.from({ length: N }, () => Array(N).fill('.'));
+  const inPoly = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) if (((pts[i][1] > y) !== (pts[j][1] > y)) && (x < (pts[j][0] - pts[i][0]) * (y - pts[i][1]) / (pts[j][1] - pts[i][1]) + pts[i][0])) c = !c; return c; };
+  const poly = (pts, ch) => { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (inPoly(pts, x + 0.5, y + 0.5)) G[y][x] = ch; };
+  const ell = (cx, cy, rx, ry, ch) => { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dx * dx + dy * dy <= 1) G[y][x] = ch; } };
+  const pset = (x, y, ch) => { if (x >= 0 && y >= 0 && x < N && y < N) G[y][x] = ch; };
+  // lézard de profil (museau à droite), vu de trois quarts haut : disque plat, queue courte, tête, couronne en éventail
+  const stroke = (x0, y0, x1, y1, w0, ch) => {                                              // trait qui s'effile (cornes)
+    const dx = x1 - x0, dy = y1 - y0, l2 = dx * dx + dy * dy;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const px0 = x + 0.5 - x0, py0 = y + 0.5 - y0, t = clamp((px0 * dx + py0 * dy) / l2), qx = px0 - t * dx, qy = py0 - t * dy; if (Math.hypot(qx, qy) <= Math.max(0.55, w0 / 2 * (1 - t))) G[y][x] = ch; }
+  };
+  poly([[2.4, 11.6], [0.4, 13.4], [2.6, 14.2]], 'g');                                      // queue
+  ell(12.0, 14.4, 1.7, 0.9, 'g'); ell(3.4, 14.6, 1.7, 0.9, 'g');                            // pieds
+  ell(7.2, 11.7, 6.4, 3.4, 'c'); ell(7.2, 11.4, 6.0, 3.0, 'b'); ell(7.2, 10.9, 5.6, 2.5, 'a'); ell(8.2, 10.3, 3.2, 1.0, 'd');
+  for (const [x, y] of [[4, 11], [6, 12], [9, 12], [11, 11], [7, 10]]) pset(x, y, 'c');     // taches
+  for (const [x, y] of [[2, 14], [5, 15], [7, 15], [9, 15], [11, 15], [13, 14], [1, 10], [2, 9], [13, 9]]) pset(x, y, 'h');    // frange
+  // tête
+  ell(13.2, 10.2, 2.6, 2.2, 'a'); poly([[13.6, 9.0], [16.4, 10.4], [16.0, 11.6], [13.4, 12.2]], 'a'); ell(14.0, 11.5, 1.8, 0.8, 'd');
+  pset(13, 9, 'e'); pset(14, 9, 'w'); pset(16, 10, 'c');
+  // couronne : quatre cornes vers l'arrière en éventail (la plus haute est la plus lointaine)
+  stroke(11.4, 8.2, 8.8, 1.0, 3.6, 'a'); stroke(11.0, 8.6, 2.6, 3.4, 3.6, 'a'); stroke(10.8, 9.2, 0.9, 7.0, 3.2, 'a'); for (const [x, y] of [[8, 1], [9, 1], [2, 3], [3, 3], [1, 7], [0, 7]]) if (G[y][x] !== '.') G[y][x] = 'h';
+  for (const [x, y] of [[10, 8], [11, 8], [10, 9], [11, 9], [9, 9], [10, 10]]) pset(x, y, 'a');
+  return G;
+}
+ICONES[1] = function (cx, cy) {
+  const N = 17, g = LZ_ICON_G || (LZ_ICON_G = lz_iconGrid()), x0 = Math.round(cx) - 8, y0 = Math.round(cy) - 8, fill = (x, y) => x >= 0 && y >= 0 && x < N && y < N && g[y][x] !== '.';
+  for (let y = -1; y <= N; y++) for (let x = -1; x <= N; x++) if (!fill(x, y) && (fill(x - 1, y) || fill(x + 1, y) || fill(x, y - 1) || fill(x, y + 1))) R(x0 + x, y0 + y, 1, 1, '#05040f');
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const ch = g[y][x]; if (ch !== '.') R(x0 + x, y0 + y, 1, 1, LZ_ICOL[ch]); }
+};

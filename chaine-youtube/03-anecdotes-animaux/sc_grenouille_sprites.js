@@ -2,7 +2,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
    sc_grenouille_sprites.js — la GRENOUILLE DES BOIS (Lithobates sylvaticus) et ses vues internes (préfixe gr_ ; aucun nom global sans gr_)
    Tout se dessine sur L (270 × 480) AVANT le tramage, dans draw(u, t, S) (jamais dans ui()), sauf ICONES[0] (couleurs exactes, dans ui()).
-   Fonctions pures du temps : aucun Math.random, aucun Date ; hasard = graine (o.seed), tout est déterministe.
+   Fonctions pures du temps : aucun Math.random, aucun Date ; hasard = graine (o.seed), tout est déterministe (vérifié : mêmes pixels pour la même image, quel que soit l'ordre de rendu).
 
    gr_frog(cx, cy, s, t, o)   (cx, cy) = point de contact avec le sol sous le milieu du ventre ; s = échelle (1 : ≈ 40 px de long, assise ; 5 : gros plan ≈ 200 px) ; t = temps du film.
         o.pose    'sit' (assise) | 'alert' (tête haute, bras tendus) | 'crouch' (accroupie, avant le saut) | 'leap' (saut complet, ph 0..1) | 'land' (réception, ph 0..1)
@@ -23,7 +23,16 @@
         renvoie { eye: [x, y], mouth: [x, y], head: [x, y], hip: [x, y], throat: [x, y], mask: (px, py) → bool (silhouette écran), lift, bbox }
    gr_leapLift(ph, h) hauteur du corps au-dessus du sol (px d'unité) ; gr_hopX(ph, dist) déplacement horizontal du saut (unités) ; gr_breath(t, rate) pulsation de la gorge 0..1
    gr_blink(t, seed) clignement automatique 0..1
-   Vues internes : gr_heart(cx, cy, s, t, o) · gr_ecg(x, y, w, h, t, o) · gr_cells(x, y, w, h, t, o) · gr_glucose(x, y, s, t, o) · gr_icecrystal(x, y, s, o) · gr_lungs(cx, cy, s, t, o)
+   Vues internes (couleurs de palette, à dessiner dans draw(), sur fond sombre NI) :
+     gr_heart(cx, cy, s, t, o)      cœur de grenouille (deux oreillettes, ventricule, tronc et crosses aortiques) ; s = 1 : ≈ 60 × 55 px. o.beat 0..1 contraction (le ventricule se vide, les oreillettes se remplissent) ;
+                                    o.state 'live' (rouge) | 'slow' (rouge sombre) | 'stopped' (pâle, gris-bleu, givre qui scintille) | 'restart' (rouge + anneau doré à chaque battement) ; o.tone 0..1 (tonus : 1 vif … 0 arrêté) ; o.light ±1 ; renvoie { ventricle, top, mask }
+     gr_ecg(x, y, w, h, t, o)       écran d'électrocardiogramme (quadrillage, tracé qui défile) ; o.beats = tableau des instants ABSOLUS des battements (pic R) ; o.speed px/s (64) ; o.now position du curseur (0.86 de w) ;
+                                    ligne plate sans battement, tracé et voyant rouges 1,3 s après le dernier battement (o.alarm pour forcer) ; renvoie { alarm }
+     gr_cells(x, y, w, h, t, o)     amas de cellules à membrane et noyau dans un cadre ; o.shrink 0..1 (la cellule se ratatine, membrane crénelée, cytoplasme dense) ; o.ice 0..1 (aiguilles de glace entre les cellules ; défaut 0,9 × shrink) ;
+                                    o.glucose 0..1 (enrobage doré, lueur, grains ; protège : le ratatinement diminue) ; o.bounce 0..1 (jusqu'à 5 cristaux qui viennent buter sur l'enrobage, éclair au contact ; sans sucre ils percent) ; o.molecules 0..1 ; o.n (9), o.seed, o.bg
+     gr_glucose(x, y, s, t, o)      molécule de glucose : hexagone doré, O du cycle et quatre OH rouges, CH2OH ; o.rot, o.spin (rad/s), o.glow
+     gr_icecrystal(x, y, s, o)      cristal de glace en aiguilles (six branches, ramifications, cyan à fil blanc) ; o.rot, o.t (scintillement), o.arms, o.light
+     gr_lungs(cx, cy, s, t, o)      trachée et deux poumons ; o.inflate 0..1 (défaut : respiration automatique), o.state 'live' | 'stopped' (pâles, dégonflés)
    ICONES[0] : icône de case du carnet (17 × 17).
    ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
@@ -93,7 +102,7 @@ function gr_ik(hx, hy, ax, ay, L1, L2, b) {
 // indices : 0 brun très sombre · 1 ombre · 2 ombre douce · 3 corps · 4 corps clair · 5 clair · 6 éclairé · 7 éclat humide · 8 roux · 9 masque · 10 ventre ombre · 11 ventre · 12 ventre clair · 13 ventre éclat
 const gr_N = [WO[1], WO[2], WO[3], WO[4], WO[5], WO[6], SK[3], SK[4], OC[3], WO[0], WH[0], WH[1], WH[2], WH[3]];
 const gr_PALE = [WO[3], WO[4], WO[5], SK[2], SK[3], SK[4], WH[1], WH[3], SK[2], WO[2], WH[1], WH[2], WH[3], WH[3]];
-const gr_ICY = [ST[3], ST[4], ST[5], ST[6], NE[1], NE[2], NE[3], NE[4], ST[5], ST[3], NE[1], NE[2], NE[3], NE[4]];
+const gr_ICY = [ST[3], ST[4], ST[5], ST[6], NE[0], NE[1], NE[2], NE[3], ST[5], ST[2], NE[1], NE[2], NE[3], NE[4]];
 const gr_NI = gr_N.map(gr_rgb);
 const gr_LUT = new Uint8Array(32768);
 (function () {
@@ -108,7 +117,7 @@ const gr_LUT = new Uint8Array(32768);
 // 2. POSES : images-clés (torse, pattes) puis interpolation ; les pattes sont recalculées par IK (longueurs constantes, contact au sol exact)
 // ════════════════════════════════════════════════════════════════════════════════════════
 // repère : x vers l'avant (la tête), y vers le bas, unités = pixels à s = 1 ; sol : y = 0 ; assise : torse de x = −16 à +21
-const gr_TH = 12.5, gr_SH = 14.5, gr_TAR = 7.5, gr_TOE = 10.5;          // cuisse, jambe, tarse, orteils
+const gr_TH = 12.5, gr_SH = 14.5, gr_TAR = 7.5, gr_TOE = 12;          // cuisse, jambe, tarse, orteils
 const gr_UA = 5.6, gr_FA = 6.6, gr_HAND = 3.8;                          // bras, avant-bras, doigts
 const gr_HIPL = [-11, -9.2], gr_SHOL = [4.2, -6.4];                    // attaches (repère du torse assis)
 const gr_PIV = [-4, -7], gr_NECK = [5.5, -9.5];                          // pivot de la rotation du torse, de la tête
@@ -116,11 +125,11 @@ const gr_PIV = [-4, -7], gr_NECK = [5.5, -9.5];                          // pivo
 const gr_TORSO = [
   ['b', -13.6, -3.6], ['b', -16.8, -8.0], ['b', -14.6, -13.4], ['b', -8.6, -15.9], ['b', -1.8, -15.6], ['b', 4.2, -14.7],
   ['h', 9.6, -14.4], ['h', 13.8, -12.9], ['h', 17.0, -10.9], ['h', 18.9, -8.4], ['h', 18.3, -6.0], ['h', 14.8, -4.0], ['h', 10.3, -3.0], ['h', 6.2, -2.4],
-  ['b', 2.4, -2.1], ['b', -3, -1.6], ['b', -9.5, -1.9],
+  ['b', 2.4, -3.2], ['b', -3, -3.0], ['b', -9.5, -3.0],
 ];
 const gr_KEYS = {
   // hind : { ax, ay } cheville absolue  ou { hl, ha } (fraction d'extension, angle hanche → cheville) ; ta tarse, fa orteils (angles absolus, 0 = vers l'avant, + = vers le bas)
-  sit: { tx: 0.4, ty: 0.7, rot: 0.3, len: 0.95, hgt: 1.08, arch: 0.6, hp: -0.08, hind: { ax: -12.0, ay: -3.1, ta: 0.28, fa: 0.1, fs: 0.86, ss: 0.8 }, fore: { wx: 8.0, wy: -0.4, ha: 0.1 } },
+  sit: { tx: 0.4, ty: 0.7, rot: 0.3, len: 0.95, hgt: 1.08, arch: 0.6, hp: -0.08, hind: { ax: -12.0, ay: -3.1, ta: 0.28, fa: 0.1, fs: 0.93, ss: 0.82 }, fore: { wx: 8.0, wy: -0.4, ha: 0.1 } },
   alert: { tx: -0.6, ty: -1.4, rot: 0.5, len: 0.97, hgt: 1.06, arch: 0.35, hp: 0.0, hind: { ax: -12.6, ay: -3.1, ta: 0.26, fa: 0.1, fs: 0.9, ss: 0.84 }, fore: { wx: 10.2, wy: -0.2, ha: 0.1 } },
   crouch: { tx: 1.2, ty: 1.3, rot: -0.08, len: 1.07, hgt: 0.9, arch: 0.7, hp: -0.14, hind: { ax: -13.6, ay: -2.4, ta: 0.2, fa: 0.06, fs: 0.84, ss: 0.78 }, fore: { wx: 10.6, wy: -0.4, ha: 0.1 } },
   frozen: { tx: 0.6, ty: 0.7, rot: -0.03, len: 1.03, hgt: 0.94, arch: 0.8, hp: -0.1, hind: { ax: -13.0, ay: -2.8, ta: 0.22, fa: 0.07, fs: 0.85, ss: 0.79 }, fore: { wx: 9.6, wy: -0.5, ha: 0.1 } },
@@ -241,7 +250,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   // ── contour du corps (points avec gorge qui gonfle, dos qui se bombe)
   const pts = gr_TORSO.map(([ty_, x, y], i) => {
     let dx = 0, dy = 0;
-    if (i === 11) { dx = 0.4 * b; dy = 0.9 * b; } else if (i === 12) { dx = 0.7 * b; dy = 2.8 * b; } else if (i === 13) { dx = 0.3 * b; dy = 2.2 * b; }
+    if (i === 11) { dx = 0.6 * b; dy = 1.2 * b; } else if (i === 12) { dx = 1.0 * b; dy = 3.6 * b; } else if (i === 13) { dx = 0.4 * b; dy = 3.0 * b; }
     if (i >= 2 && i <= 4) dy -= (K.arch - 0.5) * 5;
     return ty_ === 'b' ? T(x + dx, y + dy) : H(x + dx, y + dy);
   });
@@ -287,9 +296,9 @@ function gr_frog(cx, cy, s, t, o = {}) {
     const ik = gr_ik(sho[0], sho[1], wr[0], wr[1], gr_UA, gr_FA, 1), el = ik.k, w2 = ik.a;
     const tones = far ? [gr_N[2], gr_N[3], gr_N[4], gr_N[1], gr_N[0]] : [gr_N[5], gr_N[6], gr_N[7], gr_N[3], gr_N[2]];
     const part = (pp, ww, wl = [1.6, 0.7], ws = [1.4, 0.6], contour = !far) => { const p = gr_seg(pp, ww); if (contour) { c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(p); } gr_fill(c, p, tones[0]); gr_cres(c, p, ll, wl[0], tones[1]); gr_cres(c, p, ll, wl[1], tones[2]); gr_cres(c, p, ll, ws[0], tones[3], true); gr_cres(c, p, ll, ws[1], tones[4], true); return p; };
-    for (let k = 0; k < 4; k++) { const a = K.fore.ha + (k - 1.5) * 0.2, len = gr_HAND * [0.8, 1, 1, 0.85][k]; part([w2, [w2[0] + Math.cos(a) * len * 0.5, w2[1] + Math.sin(a) * len * 0.5], [w2[0] + Math.cos(a) * len, w2[1] + Math.sin(a) * len]], [1.7, 1.4, 1.0], [0.6, 0.3], [0.5, 0.3], false); if (!far) { c.fillStyle = gr_N[6]; c.beginPath(); c.arc(w2[0] + Math.cos(a) * len, w2[1] + Math.sin(a) * len, 0.7, 0, TAU); c.fill(); } }
-    part([el, w2], [3.4, 2.8]);
-    part([sho, [(sho[0] + el[0]) / 2, (sho[1] + el[1]) / 2], el], [4.6, 4.2, 3.3]);
+    for (let k = 0; k < 4; k++) { const a = K.fore.ha + (k - 1.5) * 0.2, len = gr_HAND * [0.8, 1, 1, 0.85][k]; part([w2, [w2[0] + Math.cos(a) * len * 0.5, w2[1] + Math.sin(a) * len * 0.5], [w2[0] + Math.cos(a) * len, w2[1] + Math.sin(a) * len]], [1.5, 1.25, 0.95], [0.6, 0.3], [0.5, 0.3], false); if (!far) { c.fillStyle = gr_N[6]; c.beginPath(); c.arc(w2[0] + Math.cos(a) * len, w2[1] + Math.sin(a) * len, 0.7, 0, TAU); c.fill(); } }
+    part([el, w2], [2.9, 2.4]);
+    part([sho, [(sho[0] + el[0]) / 2, (sho[1] + el[1]) / 2], el], [4.0, 3.6, 2.9]);
     return { el, w2 };
   };
   // loin : patte arrière et bras éloignés (décalés vers l'avant et le haut pour qu'on les voie dépasser)
@@ -324,7 +333,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   c.restore();
   // bosse de l'œil (saillante au-dessus de la tête)
   const eyeC = H(8.8, -14.6);
-  { const e = gr_ell(eyeC[0], eyeC[1], 3.5, 3.4); c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(e); gr_fill(c, e, gr_N[3]); gr_cres(c, e, ll, 1.8, gr_N[4]); gr_cres(c, e, ll, 0.8, gr_N[5]); gr_cres(c, e, ll, 1.6, gr_N[2], true); }
+  { const e = gr_ell(eyeC[0], eyeC[1], 3.7, 3.6); c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(e); gr_fill(c, e, gr_N[3]); gr_cres(c, e, ll, 1.8, gr_N[4]); gr_cres(c, e, ll, 0.8, gr_N[5]); gr_cres(c, e, ll, 1.6, gr_N[2], true); }
   // près : patte arrière et bras
   const hindN = drawHind(hipN, [K.hind.ax, K.hind.ay], false);
   const foreN = drawFore(shoN, [K.fore.wx, K.fore.wy], false);
@@ -333,7 +342,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   const eyeS = [Sx(eyeC[0]), Sy(eyeC[1])];
   const info = gr_finish(o, { cx, cy: cy - lift * s, s, flip, Ls, rim, outline, pale, ice, seed, t, ll, K });
   // ── œil net
-  gr_eye(eyeS[0], eyeS[1], 2.8 * s, { open: eyeOpen, blink, dull, flip, Ls, ice: ice, info, s, seed, t, pale, sil: o.sil });
+  gr_eye(eyeS[0], eyeS[1], 3.2 * s, { open: eyeOpen, blink, dull, flip, Ls, ice: ice, info, s, seed, t, pale, sil: o.sil });
   const J = q => [Sx(q[0]), Sy(q[1])];
   return { joints: { hip: J(hipN), knee: J(hindN.kn), ankle: J(hindN.an), ball: J(hindN.ball), toe: J(hindN.tip), sho: J(shoN), elbow: J(foreN.el), wrist: J(foreN.w2) }, eye: eyeS, mouth: [Sx(mouth[0]), Sy(mouth[1])], head: [Sx(head[0]), Sy(head[1])], hip: [Sx(hipN[0]), Sy(hipN[1])], throat: [Sx(thr[0]), Sy(thr[1])], mask: info.mask, lift, bbox: info.bbox };
 }
@@ -387,16 +396,20 @@ function gr_finish(o, st) {
     if (fr > 0 && gr_bay(x0 + i, y0 + j) < fr) s0++;
     let c = (s0 === 0 ? gr_NI : s0 === 1 ? gr_PI : gr_II)[k];
     if (lv > 0.04) {
-      const edge = dIn[p] <= 2.2 ? 1 : 0.32, pf = gr_ss(0.04, 0.5, lv) * (1 - 0.82 * gr_ss(0.55, 1, lv)) * edge * 0.9, hz = gr_h2(x0 + i, y0 + j, seed + 3);
-      if (hz < pf) c = hz < pf * 0.55 ? W3 : (hz < pf * 0.8 ? N4 : W2);
-      else if (lv > 0.55 && ((x0 + i) * 3 + (y0 + j) * 2 + seed * 7) % 29 < 2 && dIn[p] > 1.5) c = N4;                      // reflets en biais sur la glace
-      else if (lv > 0.6 && dIn[p] > 2.5 && gr_h2(x0 + i, y0 + j, seed + 8) < 0.022) c = W3;
+      // givre : plaques groupées (bruit lisse) qui prennent d'abord les bords tournés vers la lumière et le dessus, puis s'étendent et se rejoignent
+      const X_ = x0 + i, Y_ = y0 + j, nz = gr_n2(X_ / 2.3, Y_ / 2.3, seed + 3) * 0.62 + gr_n2(X_ / 0.9, Y_ / 0.9, seed + 4) * 0.38;
+      const lit = (i + rx < 0 || j + ry < 0 || i + rx >= w || j + ry >= h) ? 1 : (occ[(j + ry) * w + i + rx] ? 0 : 1);                  // bord éclairé : le voisin vers la lumière est vide
+      const bias = (dIn[p] <= 1.6 ? 0.22 : dIn[p] <= 3.2 ? 0.1 : 0) + lit * 0.3 + (1 - clamp((Y_ - (cy - 22 * s)) / (26 * s))) * 0.12;
+      const cov = gr_ss(0.03, 0.62, lv) * 0.66 * (1 - 0.92 * gr_ss(0.66, 0.98, lv)), thr = 0.74 - 0.46 * cov - bias * 0.34 * Math.min(1, cov * 2.2);
+      if (nz > thr) { const hz = gr_h2(X_, Y_, seed + 3); c = nz > thr + 0.12 ? (hz < 0.6 ? W3 : N4) : (hz < 0.5 ? W2 : N3); }
+      else if (lv > 0.55 && (X_ * 3 + Y_ * 2 + seed * 7) % 31 < 2 && dIn[p] > 1.5) c = N4;                                    // reflets en biais sur la glace
+      else if (lv > 0.6 && dIn[p] > 2.5 && gr_h2(X_, Y_, seed + 8) < 0.02) c = W3;
     }
     setc(p, c);
   }
   // coque de glace autour du corps (de plus en plus épaisse) : tons cyan, bord clair côté lumière, bord sombre à l'opposé
   if (lvlAt) {
-    const tmax = Math.min(7, 1.5 + 0.8 * s);
+    const tmax = Math.min(5, 1.1 + 0.5 * s);
     for (let j = 1; j < h - 1; j++) for (let i = 1; i < w - 1; i++) {
       const p = j * w + i; if (occ[p] || dOut[p] > tmax + 1) continue;
       const lv = lvlAt(i, j), th = tmax * gr_ss(0.2, 0.95, lv) * (0.78 + 0.5 * gr_h2((x0 + i) >> 1, (y0 + j) >> 1, seed + 17));
@@ -479,15 +492,24 @@ function gr_eye(ex, ey, er, st) {
     const hs = Math.max(0, Math.round(R_ * 0.2)); disc(ex + lx * Math.round(R_ * 0.38), ey - Math.round(R_ * 0.42), hs, WH[3]); if (R_ >= 3) px(ex - lx * Math.round(R_ * 0.4), ey + Math.round(R_ * 0.36), R_ >= 6 ? WH[2] : AM[9]);
     if (R_ >= 9) { px(ex + lx * Math.round(R_ * 0.55), ey - Math.round(R_ * 0.2), WH[3]); }
   } else if (R_ >= 3) { px(ex + lx * Math.round(R_ * 0.36), ey - Math.round(R_ * 0.4), NE[2]); if (R_ >= 6) { px(ex + lx * Math.round(R_ * 0.36) + lx, ey - Math.round(R_ * 0.4), NE[3]); px(ex, ey - Math.round(R_ * 0.5), NE[1]); } }
-  // paupières : la fente visible se réduit du haut (œil mi-clos) et du bas (clignement : la paupière inférieure monte)
+  // œil fermé : la paupière couvre tout, une fente courbe sombre au milieu
+  if (eff < 0.2) {
+    const dpt = 0;
+    for (let dy = -R_; dy <= R_; dy++) { const hw = Math.floor(Math.sqrt(Math.max(0, R_ * R_ + R_ * 0.6 - dy * dy))); L.fillStyle = dy < -R_ * 0.4 ? skin : skinD; L.fillRect(ex - hw, ey + dy, hw * 2 + 1, 1); }
+    for (let dx = -R_ + 1; dx <= R_ - 1; dx++) { const yy = ey + Math.round(dpt * (1 - (dx / R_) ** 2)) - 1; px(ex + dx, yy, ring); if (R_ >= 5) px(ex + dx, yy - 1, skinD); }
+    px(ex + lx * Math.round(R_ * 0.35), ey - Math.round(R_ * 0.45), st.ice > 0.4 ? NE[4] : (st.pale > 0.5 ? SK[4] : WO[6]));
+  } else
+  // paupières : l'ouverture est une ellipse horizontale qui se rétrécit (œil mi-clos : la paupière du haut descend ; clignement : celle du bas monte)
   if (eff < 0.999) {
-    const yT = ey - R_ + Math.round(2 * R_ * 0.52 * (1 - st.open) + 0), yB = ey + R_ - Math.round(2 * R_ * st.blink * 0.95 + 2 * R_ * 0.4 * (1 - st.open));
+    const ay = Math.max(0.25, R_ * eff), cyo = (1 - st.open) * R_ * 0.35 - st.blink * R_ * 0.3, mask = (dx, dy) => (dx / (R_ + 0.2)) ** 2 + ((dy - cyo) / (ay + 0.35)) ** 2 <= 1;
     for (let dy = -R_; dy <= R_; dy++) {
-      const y = ey + dy, hw = Math.floor(Math.sqrt(Math.max(0, R_ * R_ + R_ * 0.6 - dy * dy)));
-      if (y < yT || y > yB || yB <= yT) { L.fillStyle = (y < yT ? skin : (y > yB ? skin : skinD)); L.fillRect(ex - hw, y, hw * 2 + 1, 1); }
+      const hw = Math.floor(Math.sqrt(Math.max(0, R_ * R_ + R_ * 0.6 - dy * dy)));
+      for (let dx = -hw; dx <= hw; dx++) {
+        if (mask(dx, dy)) continue;
+        const edge = mask(dx, dy + (dy < cyo ? 1 : -1)) || mask(dx + 1, dy) || mask(dx - 1, dy);
+        px(ex + dx, ey + dy, edge ? ring : (dy < cyo ? skin : skinD));
+      }
     }
-    if (yB > yT) { R(ex - Math.floor(Math.sqrt(Math.max(0, R_ * R_ - (yT - ey) ** 2))), yT, 1, 1, ring); L.fillStyle = ring; const hwT = Math.floor(Math.sqrt(Math.max(0, R_ * R_ + R_ * 0.6 - (yT - ey) ** 2))); if (yT > ey - R_) L.fillRect(ex - hwT, yT, hwT * 2 + 1, 1); const hwB = Math.floor(Math.sqrt(Math.max(0, R_ * R_ + R_ * 0.6 - (yB - ey) ** 2))); if (yB < ey + R_) L.fillRect(ex - hwB, yB, hwB * 2 + 1, 1); }
-    else { const yy = Math.min(ey + R_ - 1, Math.max(ey - R_ + 1, yT)); L.fillStyle = ring; const hw = Math.floor(Math.sqrt(Math.max(0, R_ * R_ - (yy - ey) ** 2))); L.fillRect(ex - hw + 1, Math.round((yT + yB) / 2) + (R_ >= 4 ? 1 : 0), Math.max(1, hw * 2 - 1), 1); }
   }
   // voile de givre sur l'œil
   if (st.ice > 0.2 && st.info.lvlAt) { const lv = st.info.lvlAt(ex, ey), q = gr_ss(0.2, 0.9, lv); if (q > 0) for (let dy = -R_; dy <= R_; dy++) for (let dx = -R_; dx <= R_; dx++) if (dx * dx + dy * dy <= R_ * R_ && gr_h2(ex + dx, ey + dy, st.seed + 5) < q * 0.55) px(ex + dx, ey + dy, gr_h2(ex + dx, ey + dy, st.seed + 6) < 0.4 ? WH[3] : NE[3]); }
@@ -550,7 +572,9 @@ function gr_heart(cx, cy, s, t, o = {}) {
   const vx = 1 - 0.2 * bb, vy = 1 - 0.16 * bb, ax = 1 + 0.14 * bb, tw = 1 + 0.16 * bb;
   const V = (x, y) => [ox + (x - ox) * vx, oy + (y - oy) * vy + 2.2 * bb];            // la pointe remonte un peu quand le ventricule se vide
   const A = (x, y, sd) => [x * ax * sd, -8 + (y + 8) * (1 + 0.1 * bb)];
-  if (state === 'restart' && b > 0.05) rgrad(cx, cy + 6 * s, 4, 46 * s, [[0, `rgba(255,224,138,${0.5 * b})`], [0.5, `rgba(255,160,60,${0.22 * b})`], [1, 'rgba(255,120,30,0)']], 1, 'lighter');
+  if (state === 'restart' && b > 0.04 && b < 0.97) {                                          // onde de redémarrage : un anneau doré qui s'élargit à chaque battement
+    const rr = (16 + (1 - b) * 26) * s, N = 72; for (let k = 0; k < N; k++) { const an = k / N * TAU; if (gr_bay(k * 3, k) > b * 1.1) continue; px(cx + Math.cos(an) * rr, cy + 8 * s + Math.sin(an) * rr * 0.9, b > 0.5 ? WH[3] : AM[9]); if (b > 0.35 && k % 2) px(cx + Math.cos(an) * (rr + 1.5), cy + 8 * s + Math.sin(an) * (rr + 1.5) * 0.9, AM[7]); }
+  }
   if (o.shadow !== false) { L.save(); L.setTransform(1, 0, 0, 1, 0, 0); L.fillStyle = 'rgba(5,4,15,0.35)'; L.beginPath(); L.ellipse(cx + 2 * s, cy + 29 * s, 17 * s, 3.2 * s, 0, 0, TAU); L.fill(); L.restore(); }
   layerBegin(); const c = Y; c.setTransform(s, 0, 0, s, cx, cy);
   const cres = (path, w, col, inv) => gr_cres(c, path, ll, w, col, inv);
@@ -594,3 +618,223 @@ function gr_heart(cx, cy, s, t, o = {}) {
   }
   return { ventricle: [cx, cy + 10 * s], top: [cx, cy - 26 * s], mask: (qx, qy) => { const i = Math.round(qx) - info.x0, j = Math.round(qy) - info.y0; return i >= 0 && j >= 0 && i < info.w && j < info.h && info.occ[j * info.w + i] > 0; } };
 }
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 8. ÉLECTROCARDIOGRAMME : écran à quadrillage, tracé qui défile (les battements viennent de o.beats), ligne plate sans battement
+// ════════════════════════════════════════════════════════════════════════════════════════
+// forme d'un battement : onde P, complexe QRS (R haute et fine), onde T ; d = secondes depuis le pic R
+function gr_ecgShape(d) {
+  const g = (m, w, a) => a * Math.exp(-((d - m) * (d - m)) / (2 * w * w));
+  return g(-0.17, 0.035, 0.13) + g(-0.032, 0.011, -0.16) + g(0, 0.012, 1) + g(0.03, 0.013, -0.3) + g(0.22, 0.055, 0.28);
+}
+function gr_ecgAt(tau, beats) { let v = 0; for (let i = 0; i < beats.length; i++) { const d = tau - beats[i]; if (d > -0.4 && d < 0.6) v += gr_ecgShape(d); } return v; }
+// o.beats : tableau des instants ABSOLUS des battements (secondes du film) ; o.speed px/s (64) ; o.now position du curseur (fraction de w, 0.86) ; o.col couleur du tracé ;
+// o.alarm (défaut : auto, rouge si plus de battement depuis 1,3 s après un premier) ; o.led : voyant qui s'allume à chaque battement ; o.amp amplitude (fraction de h, 0.36)
+function gr_ecg(x, y, w, h, t, o = {}) {
+  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+  const beats = o.beats || [], speed = o.speed ?? 64, nowX = x + Math.round(w * (o.now ?? 0.86)), base = y + Math.round(h * 0.6), amp = h * (o.amp ?? 0.36);
+  // dernier battement passé : sert à l'alarme et au voyant
+  let last = -1e9; for (const b of beats) if (b <= t && b > last) last = b;
+  const had = last > -1e8, since = t - last, alarm = o.alarm ?? (had ? since > 1.3 : (beats.length > 0 && t > beats[0] + 0.01 ? true : false));
+  // écran
+  R(x - 2, y - 2, w + 4, h + 4, ST[2]); R(x - 1, y - 1, w + 2, h + 2, '#05040f'); R(x, y, w, h, GR[0]);
+  for (let gx = x + 10; gx < x + w; gx += 10) R(gx, y, 1, h, GR[1]);
+  for (let gy = y + 8; gy < y + h; gy += 8) R(x, gy, w, 1, GR[1]);
+  for (let gx = x + 5; gx < x + w; gx += 10) for (let gy = y + 4; gy < y + h; gy += 8) px(gx, gy, GR[1]);
+  R(x, base, w, 1, GR[1]);
+  R(x, y, w, 1, ST[4]); R(x, y, 1, h, ST[4]);                                                   // reflet de la vitre
+  const colMain = o.col ?? (alarm ? RD[4] : GR[5]), colGlow = alarm ? RD[1] : GR[2], colHead = alarm ? RD[5] : WH[3];
+  // tracé : une colonne par pixel, 4 échantillons par colonne ; le front du tracé est au curseur
+  const yAt = [], SUB = 4;
+  for (let i = 0; i <= nowX - x - 1; i++) {
+    const cxp = x + 1 + i; let mn = 1e9, mx = -1e9;
+    for (let k = 0; k < SUB; k++) { const tau = t - (nowX - (cxp + k / SUB)) / speed, v = gr_ecgAt(tau, beats), yy = base - v * amp; mn = Math.min(mn, yy); mx = Math.max(mx, yy); }
+    yAt.push([cxp, mn, mx]);
+  }
+  for (const [cxp, mn, mx] of yAt) { const age = (nowX - cxp) / (w * 0.86); if (age < 0.9) R(cxp, Math.round(mn) - 1, 1, Math.round(mx - mn) + 3, colGlow); }
+  let prev = null;
+  for (const [cxp, mn, mx] of yAt) {
+    const a = Math.round(mn), b = Math.round(mx), pa = prev;
+    if (pa !== null) { const lo = Math.min(a, pa), hi = Math.max(b, pa); R(cxp, lo, 1, hi - lo + 1, colMain); } else R(cxp, a, 1, b - a + 1, colMain);
+    prev = (mn + mx) / 2 > base ? b : a; if (b - a > 1) prev = Math.round((mn + mx) / 2 > base - 1 ? a : b);
+  }
+  // pointe du tracé : un éclat blanc au curseur (la valeur du moment)
+  { const v = gr_ecgAt(t, beats), hy = Math.round(base - v * amp); R(nowX - 1, hy - 1, 3, 3, colHead); R(nowX, hy, 1, 1, colMain); }
+  // curseur et efface : une barre sombre juste devant le front
+  R(nowX + 1, y + 1, Math.min(4, x + w - nowX - 2), h - 2, GR[0]);
+  // voyant : une pastille qui s'allume à chaque battement (0,18 s)
+  { const on = had && since < 0.18; disc(x + w - 6, y + 6, 2, on ? (alarm ? RD[5] : WH[3]) : GR[1]); if (on) disc(x + w - 6, y + 6, 1, GR[6]); else if (alarm && Math.floor(t * 2.5) % 2 === 0) disc(x + w - 6, y + 6, 2, RD[3]); }
+  return { alarm, base, nowX };
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 9. MOLÉCULES ET CRISTAUX : glucose (hexagone doré à pointes OH), cristal de glace en aiguilles (cyan)
+// ════════════════════════════════════════════════════════════════════════════════════════
+// o.rot (rad), o.spin (rad/s), o.glow (1), o.t pour le scintillement
+function gr_glucose(x, y, s, t, o = {}) {
+  const rot = (o.rot ?? 0) + (o.spin ?? 0.25) * t, bob = Math.sin(t * 2 + (o.seed ?? 0)) * 0.5 * s;
+  y += bob;
+  const R0 = 8 * s, th = Math.max(1, Math.round(1.3 * s)), glow = o.glow ?? 1;
+  if (glow > 0) rgrad(x, y, 2, 15 * s, [[0, `rgba(255,200,74,${0.32 * glow})`], [0.5, `rgba(255,150,40,${0.12 * glow})`], [1, 'rgba(255,120,30,0)']], 1, 'lighter');
+  const V = []; for (let i = 0; i < 6; i++) { const a = rot + i * TAU / 6 + TAU / 12; V.push([x + Math.cos(a) * R0, y + Math.sin(a) * R0 * 0.82, a]); }
+  // substituants : OH sur quatre sommets, CH2OH sur un cinquième, O du cycle (rouge) sur le sixième
+  for (let i = 0; i < 6; i++) {
+    if (i === 0) continue;
+    const [vx, vy, a] = V[i], len = (i === 1 ? 7.5 : 6) * s, ex = vx + Math.cos(a) * len, ey = vy + Math.sin(a) * len * 0.9;
+    lineP(vx, vy, ex, ey, '#05040f', th + 2); lineP(vx, vy, ex, ey, AM[7], th);
+    if (i === 1) { const fx = ex + Math.cos(a + 0.7) * 4.5 * s, fy = ey + Math.sin(a + 0.7) * 4 * s; lineP(ex, ey, fx, fy, '#05040f', th + 2); lineP(ex, ey, fx, fy, AM[7], th); disc(fx, fy, Math.max(1, Math.round(1.7 * s)), '#05040f'); disc(fx, fy, Math.max(1, Math.round(1.3 * s)), RD[4]); }
+    const rr = Math.max(1, Math.round(1.9 * s)); disc(ex, ey, rr + 1, '#05040f'); disc(ex, ey, rr, RD[4]); px(ex - Math.round(rr * 0.3), ey - Math.round(rr * 0.4), WH[3]);
+    const hx = ex + Math.cos(a + 0.9) * 3.2 * s, hy = ey + Math.sin(a + 0.9) * 3 * s; disc(hx, hy, Math.max(1, Math.round(0.9 * s)), WH[2]);
+  }
+  for (let i = 0; i < 6; i++) { const [ax, ay] = V[i], [bx, by] = V[(i + 1) % 6]; lineP(ax, ay, bx, by, '#05040f', th + 2); }
+  for (let i = 0; i < 6; i++) { const [ax, ay] = V[i], [bx, by] = V[(i + 1) % 6]; lineP(ax, ay, bx, by, i === 0 || i === 5 ? AM[8] : AM[7], th); }
+  for (let i = 1; i < 5; i++) { const [ax, ay] = V[i], [bx, by] = V[i + 1]; lineP(ax + 0.4 * s, ay - 0.5 * s, bx + 0.4 * s, by - 0.5 * s, AM[10], 1); }
+  // l'oxygène du cycle : sommet 0, rouge
+  { const [ox_, oy_] = V[0], rr = Math.max(2, Math.round(2.2 * s)); disc(ox_, oy_, rr + 1, '#05040f'); disc(ox_, oy_, rr, RD[4]); px(ox_ - 1, oy_ - 1, WH[3]); }
+  // reflet doré au centre
+  disc(x, y, Math.max(1, Math.round(2 * s)), AM[3]); disc(x, y, Math.max(1, Math.round(1.2 * s)), AM[6]);
+}
+function gr_icecrystal(x, y, s, o = {}) {
+  const rot = o.rot ?? 0.3, arms = o.arms ?? 6, t = o.t ?? 0, len = 8.5 * s, wd = Math.max(1.5, 1.7 * s), light = o.light ?? 1;
+  const pulse = Math.pow(Math.max(0, Math.sin(t * 3.1 + (o.seed ?? 0) * 1.7)), 8);
+  const needle = (ax, ay, a, L_, W_) => {                                                    // aiguille : losange à deux tons (côté lumière clair, côté ombre cyan)
+    const ux = Math.cos(a), uy = Math.sin(a), nx = -uy, ny = ux, tipx = ax + ux * L_, tipy = ay + uy * L_, mx = ax + ux * L_ * 0.35, my = ay + uy * L_ * 0.35;
+    const side = (nx * light * 0.62 + ny * -0.78) > 0 ? 1 : -1;
+    poly([[ax, ay], [mx + nx * W_ / 2 * 1.15, my + ny * W_ / 2 * 1.15], [tipx, tipy], [mx - nx * W_ / 2 * 1.15, my - ny * W_ / 2 * 1.15]].map(p => [p[0] + (ux * 0), p[1]]), '#05040f');
+    const outer = [[ax, ay], [mx + nx * (W_ / 2 * 1.15 - 0.6), my + ny * (W_ / 2 * 1.15 - 0.6)], [tipx - ux * 0.6, tipy - uy * 0.6], [mx - nx * (W_ / 2 * 1.15 - 0.6), my - ny * (W_ / 2 * 1.15 - 0.6)]];
+    poly(outer, CY[2]);
+    poly([[ax, ay], [mx + nx * side * (W_ / 2 * 1.15 - 0.6), my + ny * side * (W_ / 2 * 1.15 - 0.6)], [tipx - ux * 0.6, tipy - uy * 0.6], [ax + ux * 0.8, ay + uy * 0.8]], CY[4]);
+    lineP(ax + ux * 1, ay + uy * 1, tipx - ux * 1, tipy - uy * 1, WH[3], 1);
+  };
+  const L2 = [];
+  for (let k = 0; k < arms; k++) {
+    const a = rot + k * TAU / arms;
+    L2.push(() => {
+      needle(x, y, a, len, wd);
+      if (s >= 0.7) for (const [f, sc] of [[0.45, 0.42], [0.72, 0.28]]) { const bx = x + Math.cos(a) * len * f, by = y + Math.sin(a) * len * f; for (const sd of [-1, 1]) needle(bx, by, a + sd * 1.02, len * sc, wd * 0.7); }
+    });
+  }
+  L2.forEach(f => f());
+  disc(x, y, Math.max(1, Math.round(1.1 * s)), WH[3]);
+  if (pulse > 0.4) { const r = Math.round(len * 0.9); px(x, y - r, WH[3]); px(x, y + r, WH[3]); px(x - r, y, WH[3]); px(x + r, y, WH[3]); if (pulse > 0.8) { px(x + r * 0.7, y - r * 0.7, CY[4]); px(x - r * 0.7, y + r * 0.7, CY[4]); } }
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 10. CELLULES : amas à membrane et noyau ; ratatinement quand l'eau sort (o.shrink), glace dans les interstices (o.ice), enrobage de sucre (o.glucose), cristaux qui rebondissent (o.bounce)
+// ════════════════════════════════════════════════════════════════════════════════════════
+// o : n (9), seed, shrink 0..1, glucose 0..1, ice 0..1 (défaut 0,9 × shrink), bounce 0..1 (nombre de cristaux qui viennent buter sur l'enrobage), bg (true : fond et cadre), light (+1), molecules 0..1 (grains de glucose qui flottent)
+function gr_cellLayout(x, y, w, h, n, seed) {
+  const cols = Math.max(2, Math.round(Math.sqrt(n * w / h))), rows = Math.ceil(n / cols), cw = w / cols, ch = h / rows, out = [];
+  for (let k = 0; k < n; k++) {
+    const i = k % cols, j = Math.floor(k / cols), off = (j % 2) * 0.5 * cw * 0.5;
+    const cx = x + (i + 0.5) * cw + off - cw * 0.12 + (gr_h(k, seed) - 0.5) * cw * 0.28, cy = y + (j + 0.5) * ch + (gr_h(k, seed + 1) - 0.5) * ch * 0.24;
+    out.push({ cx: clamp(cx, x + cw * 0.4, x + w - cw * 0.4), cy: clamp(cy, y + ch * 0.4, y + h - ch * 0.4), r: Math.min(cw, ch) * (0.4 + gr_h(k, seed + 2) * 0.1), ph: gr_h(k, seed + 3) * TAU, ph2: gr_h(k, seed + 4) * TAU });
+  }
+  return out;
+}
+function gr_cells(x, y, w, h, t, o = {}) {
+  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+  const n = o.n ?? 9, seed = o.seed ?? 5, shrink = clamp(gr_fin(o.shrink, 0)), glu = clamp(gr_fin(o.glucose, 0)), ice = clamp(gr_fin(o.ice, shrink * 0.9)), light = o.light ?? 1, bounce = clamp(o.bounce ?? 0);
+  const cells = gr_cellLayout(x, y, w, h, n, seed), eff = shrink * (1 - 0.88 * glu);
+  if (o.bg !== false) { R(x - 2, y - 2, w + 4, h + 4, ST[3]); R(x - 1, y - 1, w + 2, h + 2, '#05040f'); R(x, y, w, h, NI[2]); ditherRect(x, y, w, h, NI[3], 0.18); R(x, y, w, 1, ST[4]); R(x, y, 1, h, ST[4]); }
+  L.save(); L.beginPath(); L.rect(x, y, w, h); L.clip();
+  // le liquide autour des cellules : de la glace s'y forme (aiguilles cyan qui grossissent)
+  const shape = (c, rr, kk) => { const pts = [], N = 40; for (let q = 0; q < N; q++) { const a = q / N * TAU, wob = 1 + 0.07 * Math.sin(3 * a + c.ph) + 0.05 * Math.sin(5 * a + c.ph2), crk = eff * 0.16 * Math.sin(9 * a + c.ph + t * 0.6) + eff * 0.08 * Math.sin(13 * a + c.ph2); pts.push([c.cx + Math.cos(a) * rr * (wob + crk), c.cy + Math.sin(a) * rr * (wob + crk) * 0.95]); } return pts; };
+  const inCell = (px_, py_, pad) => cells.some(c => { const d = Math.hypot(px_ - c.cx, py_ - c.cy); return d < c.r * 1.2 + pad; });
+  if (ice > 0.05) {
+    const nI = Math.round(ice * 46), R_ = rng(seed * 11 + 3);
+    for (let k = 0; k < nI; k++) { const px_ = x + R_() * w, py_ = y + R_() * h, L0 = (2.5 + R_() * 5.5) * (0.4 + ice * 1.0), a0 = R_() * TAU; if (inCell(px_, py_, 1 + L0 * 0.4)) continue; for (let q = 0; q < 3; q++) { const a = a0 + q * Math.PI / 3, ex = Math.cos(a) * L0, ey = Math.sin(a) * L0; lineP(px_ - ex, py_ - ey, px_ + ex, py_ + ey, CY[2], 1); lineP(px_ - ex * 0.6, py_ - ey * 0.6 - 1, px_ + ex * 0.8, py_ + ey * 0.8 - 1, CY[4], 1); } px(px_, py_, WH[3]); }
+  }
+  // cellules
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i], shr = 1 - 0.36 * eff, r = c.r * shr, lx = light, cx_ = c.cx, cy_ = c.cy;
+    // enrobage de sucre : anneau doré qui grossit, lueur, grains
+    if (glu > 0.02) {
+      const rc = r + 1.5 + 3.4 * glu;
+      rgrad(cx_, cy_, r * 0.9, rc * 1.5, [[0, `rgba(255,214,90,${0.08 * glu})`], [0.7, `rgba(255,190,60,${0.1 * glu})`], [1, 'rgba(255,160,40,0)']], 1, 'lighter');
+      poly(shape(c, rc + 1, 0), '#05040f'); poly(shape(c, rc, 0), AM[7]); poly(shape(c, rc - 0.9, 0), AM[8]); poly(shape({ ...c, cx: c.cx - lx * 0.8, cy: c.cy + 0.6 }, rc - 1.8, 0), AM[6]);
+      const nG = Math.round(8 + 22 * glu); for (let k = 0; k < nG; k++) { const a = k / nG * TAU + t * 0.4 + c.ph, rr_ = rc + 0.6 + 1.2 * Math.sin(t * 2 + k); px(cx_ + Math.cos(a) * rr_, cy_ + Math.sin(a) * rr_ * 0.95, k % 3 === 0 ? WH[3] : AM[9]); }
+    }
+    // membrane, cytoplasme (plus sombre et plus dense quand la cellule perd son eau), reflet, noyau
+    poly(shape(c, r + 1.2, 0), '#05040f'); poly(shape(c, r + 0.4, 0), eff > 0.3 ? GR[1] : GR[2]);
+    const cyt = eff > 0.55 ? [GR[2], GR[3], GR[4]] : eff > 0.2 ? [GR[3], GR[4], GR[5]] : [GR[4], GR[5], LM[5]];
+    poly(shape(c, r - 0.7, 0), cyt[0]);
+    poly(shape({ ...c, cx: c.cx + lx * r * 0.1, cy: c.cy - r * 0.12 }, r * 0.82, 0), cyt[1]);
+    poly(shape({ ...c, cx: c.cx + lx * r * 0.26, cy: c.cy - r * 0.3 }, r * 0.42, 0), cyt[2]);
+    for (let k = 0; k < 7; k++) { const a = c.ph + k * 2.4, d = r * (0.45 + 0.35 * gr_h(k, i + seed)), gx = cx_ + Math.cos(a) * d, gy = cy_ + Math.sin(a) * d * 0.9; px(gx, gy, k % 2 ? GR[6] : AM[7]); }   // organites
+    const nr = r * 0.36, nx_ = cx_ - lx * r * 0.06 + Math.sin(c.ph) * r * 0.05, ny_ = cy_ + r * 0.04;
+    ell(nx_, ny_, nr + 1, nr * 0.92 + 1, '#05040f'); ell(nx_, ny_, nr, nr * 0.92, DU[3]); ell(nx_ + lx * nr * 0.18, ny_ - nr * 0.16, nr * 0.7, nr * 0.62, DU[4]); ell(nx_ + lx * nr * 0.35, ny_ - nr * 0.35, Math.max(1, nr * 0.28), Math.max(1, nr * 0.22), DU[6]); disc(nx_ - lx * nr * 0.25, ny_ + nr * 0.2, Math.max(1, Math.round(nr * 0.26)), DU[1]);
+    // membrane : liseré clair côté lumière
+    const mem = shape(c, r + 0.4, 0); for (let q = 0; q < mem.length; q++) { const a = q / mem.length * TAU, f = Math.cos(a) * lx * 0.62 - Math.sin(a) * 0.78; if (f > 0.55) px(mem[q][0], mem[q][1], GR[6]); }
+  }
+  // grains de glucose qui flottent entre les cellules
+  if ((o.molecules ?? 0) > 0) { const m = Math.round(o.molecules * 7); for (let k = 0; k < m; k++) { const px_ = x + 6 + ((gr_h(k, seed + 30) * w * 0.95 + t * (3 + k)) % (w - 12)), py_ = y + 8 + (gr_h(k, seed + 31) * (h - 16)) + Math.sin(t * 1.4 + k) * 3; if (!inCell(px_, py_, 2)) gr_glucose(px_, py_, 0.55, t, { glow: 0.8, seed: k, spin: 0.6 }); } }
+  // cristaux de glace qui viennent buter sur l'enrobage doré (ou qui percent la membrane s'il n'y a pas de sucre)
+  const nB = Math.round(bounce * 5);
+  for (let k = 0; k < nB; k++) {
+    const c = cells[(k * 3 + 1) % cells.length], P_ = 1.9 + 0.26 * k, ph = (((t / P_) + k * 0.37) % 1 + 1) % 1, th = gr_h(k, seed + 20) * TAU, r = c.r * (1 - 0.36 * eff);
+    const rc = r + 2.8 + 3.4 * glu, rPierce = r * (0.55 - 0.1 * Math.sin(k)), rContact = glu > 0.3 ? rc : lerp(rPierce, rc, clamp(glu * 3)), rFar = r * 3.4;
+    const dist = ph < 0.45 ? lerp(rFar, rContact, eo(ph / 0.45)) : lerp(rContact, rFar, ei((ph - 0.45) / 0.55));
+    const drift = Math.sin(ph * TAU) * 0.18, ax = th + drift, qx = c.cx + Math.cos(ax) * dist, qy = c.cy + Math.sin(ax) * dist * 0.95;
+    gr_icecrystal(qx, qy, 0.5, { rot: t * (1.6 + k * 0.3) + k, t, seed: k });
+    if (glu > 0.3 && ph > 0.42 && ph < 0.58) { const u = (ph - 0.42) / 0.16, rr = 2 + 6 * u, ccx = c.cx + Math.cos(th) * rContact, ccy = c.cy + Math.sin(th) * rContact * 0.95; for (let q = 0; q < 8; q++) { const a = q / 8 * TAU; px(ccx + Math.cos(a) * rr, ccy + Math.sin(a) * rr, u < 0.6 ? WH[3] : AM[9]); } }
+  }
+  L.restore();
+  if (o.bg !== false) { R(x, y, w, 1, ST[5]); R(x, y, 1, h, ST[5]); }
+  return { cells };
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 11. POUMONS : deux sacs qui se gonflent (o.inflate 0..1, défaut : respiration automatique) ; o.state 'live' | 'stopped' (pâles, dégonflés)
+// ════════════════════════════════════════════════════════════════════════════════════════
+function gr_lungs(cx, cy, s, t, o = {}) {
+  const st = o.state || 'live', live = st !== 'stopped', k = clamp(o.inflate ?? (live ? gr_breath(t, 0.7) : 0));
+  const T_ = live ? { b: RD[5], l: SK[4], h: WH[2], s: RD[4], d: RD[3], v: RD[2], vb: BL[3], tr: NE[2], trs: ST[6], trl: WH[3] } : { b: ST[6], l: NE[2], h: NE[3], s: ST[5], d: ST[4], v: ST[4], vb: ST[3], tr: NE[1], trs: ST[5], trl: NE[3] };
+  const sc = live ? 1 + 0.26 * k : 0.8;
+  layerBegin(); const c = Y; c.setTransform(s, 0, 0, s, cx, cy);
+  const ll = [0.62, -0.78], n = Math.hypot(ll[0], ll[1]); ll[0] /= n; ll[1] /= n;
+  const tr = gr_seg([[0, -27], [0, -20], [0, -13]], [5, 5, 5.4]); gr_fill(c, tr, T_.tr); gr_cres(c, tr, ll, 1.4, T_.trl); gr_cres(c, tr, ll, 1.6, T_.trs, true);
+  c.strokeStyle = T_.trs; c.lineWidth = 0.6; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-2.4, -25 + i * 3.4); c.lineTo(2.4, -25 + i * 3.4); c.stroke(); }
+  for (const sd of [-1, 1]) {
+    const bp = gr_seg([[0, -13], [sd * 4, -10], [sd * 7, -6]], [4.2, 3.6, 3.2]); gr_fill(c, bp, T_.tr); gr_cres(c, bp, ll, 1.2, T_.trl); gr_cres(c, bp, ll, 1.4, T_.trs, true);
+    const L_ = gr_spline([[sd * 4, -9], [sd * 9, -13], [sd * 16, -9], [sd * 20, 1], [sd * 19, 12], [sd * 14, 20], [sd * 8, 20], [sd * 4, 11], [sd * 2.5, 0]].map(([x, y]) => [x * sc, -9 + (y + 9) * (0.96 + 0.1 * (sc - 1) * 3)]));
+    gr_fill(c, L_, T_.b); gr_cres(c, L_, ll, 4.2, T_.l); gr_cres(c, L_, ll, 1.8, T_.h); gr_cres(c, L_, ll, 4.4, T_.s, true); gr_cres(c, L_, ll, 1.6, T_.d, true);
+    c.save(); c.clip(L_); c.strokeStyle = T_.v; c.lineWidth = 0.55;
+    for (let i = 0; i < 6; i++) { const y0 = -6 + i * 4.2; c.beginPath(); c.moveTo(sd * 3 * sc, -7); c.quadraticCurveTo(sd * (9 + i) * sc, y0 - 3, sd * (15 + (i % 2) * 2) * sc, y0 + 2); c.stroke(); }
+    c.strokeStyle = T_.vb; c.lineWidth = 0.45; c.globalAlpha = 0.8; for (let i = 0; i < 4; i++) { const y0 = -2 + i * 5; c.beginPath(); c.moveTo(sd * 15 * sc, y0 + 4); c.quadraticCurveTo(sd * (10) * sc, y0, sd * 4 * sc, -1 + i); c.stroke(); } c.globalAlpha = 1;
+    for (let q = 0; q < 14; q++) { const x = sd * (5 + gr_h(q, 91 + (sd > 0 ? 1 : 0)) * 12) * sc, y = -4 + gr_h(q, 93) * 22; c.fillStyle = T_.d; c.fillRect(x, y, 0.8, 0.8); }
+    c.restore();
+  }
+  const info = gr_snapLayer(gr_toneSet(Object.values(T_)), cx - 36 * s, cy - 32 * s, 72 * s, 60 * s, 5);
+  layerEnd({ outline: o.outline ?? '#05040f' });
+  return { x: cx, y: cy, k };
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 12. ICÔNE DE CASE DU CARNET (17 × 17 px, couleurs exactes, contour sombre) : la tête de la grenouille des bois, de trois quarts, avec son masque sombre
+// ════════════════════════════════════════════════════════════════════════════════════════
+const gr_ICON = [                                       // . vide · o contour · b brun · l brun clair · d brun ombre · m masque · M masque profond · c crème · C crème clair · g iris · G iris sombre · p pupille · w éclat
+  '.................',
+  '...oooo...oooo...',
+  '..owggGo.owggGo..',
+  '..ogppGo.ogppGo..',
+  '..oggGGo.oggGGo..',
+  '.lbooooblboooobl.',
+  'ommmlllllllllmmmo',
+  'oMMmbbbbbbbbbmMMo',
+  'omMmbbbdbdbbbmMmo',
+  'ommcCcCcCcCcCcmmo',
+  'ooooooooooooooooo',
+  '..oddcccccccddo..',
+  '...oocccccccoo...',
+  '.....ooooooo.....',
+  '.................',
+  '.................',
+  '.................',
+];
+function gr_icon(cx, cy) {
+  const pal = { o: '#05040f', b: WO[5], l: WO[6], d: WO[4], m: WO[1], M: WO[0], c: WH[1], C: WH[2], g: AM[7], G: AM[6], p: '#05040f', w: WH[3] };
+  const x0 = Math.round(cx) - 8, y0 = Math.round(cy) - 8;
+  for (let j = 0; j < 17; j++) for (let i = 0; i < 17; i++) { const ch = gr_ICON[j][i]; if (ch !== '.') px(x0 + i, y0 + j, pal[ch]); }
+}
+ICONES[0] = gr_icon;
