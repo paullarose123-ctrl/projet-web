@@ -126,7 +126,7 @@ function buildKitDemo(S) {
       k_birds(t, { y: 132, x: 40, speed: 16, cam, n: 9, col: DU[1], size: 1 });
       k_horizon(P, t, { y: 258, cam, base: 360 });
       kd_ground(298, [AM[5], AM[3], OC[1]], { cam, hi: AM[8], drift: AM[4], lo: OC[1], seed: 6, tufts: true, t, light: 1 });
-      k_haze(298, 360, '#ffc880', 0.22, { t, cam, profile: 'top', seed: 9 });
+      k_haze(298, 352, '#ffc880', 0.3, { t, cam, profile: 'top', seed: 9, wisp: 1 });
       k_rays(sp[0] - cam * 0.04, sp[1], t, { angle: Math.PI * 0.55, spread: 1.6, len: 380, strength: 0.3, n: 10, col: AM[9], cam });
       k_insects(t, { cx: 120, cy: 330, r: 46, n: 22, cam });
       k_dust(t, { n: 36, cam, y0: 200, y1: 440, beam: { x: sp[0], y: sp[1], angle: Math.PI * 0.55, spread: 2, len: 360 } });

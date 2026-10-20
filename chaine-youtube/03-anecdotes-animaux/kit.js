@@ -41,7 +41,7 @@
                      (sans bandes ni plaques à angles droits), éboulis éclairé en dégradé sur toute la largeur du tas, face éclairée à bord tramé qui serpente. 1 ms.
    k_dunes(preset, t, {y 290, amp 1, layers 2, seed 1, cam, camY, base, light})   dunes de sable (ligne d'ombre de la crête en biais) ou congères de neige en Alaska, 2 plans (0.4, 0.7). 0,5 ms.
    k_horizon(preset, t, {y 262, layers 3, trees 0.7, seed 1, cam, camY, base, light})   horizon de savane : trois plans de plaine (0.12, 0.2, 0.3) du lointain rose-brumeux au proche brun-rouge, crête dentelée de touffes inégales, liseré doré, acacias et baobabs miniatures PLANTÉS dans l'herbe ;
-                     la brume est dans le dégradé de chaque plan (pas de voile à points) ; le corps du plan proche (≈ 40 px sous sa crête) converge vers un brun chaud (OC[2]) que prolonge le sol de flore.js (fl_savannaSoil). 0,8 ms.
+                     la brume est dans le dégradé de chaque plan (pas de voile à points) ; le corps du plan proche (≈ 40 px sous sa crête) converge vers un brun orangé (OC[3]) que prolonge le sol de flore.js (fl_savannaSoil) ; le raccord reste une ligne nette (bande d'herbe lointaine contre sol plus clair). 0,8 ms.
    k_ridge(preset, t, {kind 'alpine'|'hills'|'mesa'|'dune'|'savanna', y, amp, freq, span 720, depth, seed, par 0.2, cam, haze, hazeBase, snow, snowy, trees, treeH, tier 0..2, light ±1, rim, dither, sub, wide, baobab, base, alpha, dx})
                      la couche générique que les cinq fonctions ci-dessus empilent (une couche = 0,2 ms recopiée ; 15 à 25 ms la première fois avec des réglages nouveaux).
 
@@ -51,7 +51,7 @@
                      canopy 0..1 ajoure par des feuilles (avec stipple) ; (x, y) suit la caméra à 0.04 (o.par pour changer) ; défaut = éclaircissement doux 2 ms ; stipple:true = pixels tramés, plus contrastés, 30 ms.
    k_vignetteWarm(a 0.5, {cold false, col 'r,g,b', r0 90, r1 290, cx, cy})   vignette brun-orangé (ou bleu nuit avec cold:true). 0,5 ms.
    k_backdrop(preset, t, {horizon, cam, camY, clouds, sun true, haze true, hills true, aurora true, moon [x,y,r,phase], birds false, seed 1, snow, base, speed, light}) → {H, sun: [x, y, r] | null, skyH}
-                     le décor standard d'un monde en un appel ; horizon = ordonnée du début du sol (défaut : 322 alaskaDusk, 332 alaskaNight, 318 alaskaSpring, 352 desertDusk, 318 savannaDawn) ; renvoie la position du soleil pour k_rays. 2 à 4 ms.
+                     le décor standard d'un monde en un appel ; horizon = ordonnée du début du sol (défaut : 322 alaskaDusk, 332 alaskaNight, 318 alaskaSpring, 352 desertDusk, 318 savannaDawn) ; renvoie la position du soleil pour k_rays. savannaDawn : crêtes lointaine à H−42, proche à H−22 (≈ 22 px de plan proche visibles avant le sol), le soleil se couche sur la crête lointaine. 2 à 4 ms.
    k_shadow(x, y, rx, ry, a 0.4, {col '5,4,15', cam, par 1})   ombre portée ovale à bord doux sous un animal, un rocher, un arbre ; (x, y) = centre. 0,1 ms.
    k_wind(t, x, ph) → −1..1                                    oscillation de vent partagée avec rafales (+ vers la droite) ; x = position monde (le vent se propage), ph = phase propre à l'objet. Pour incliner herbes, branches, queues.
    k_pan(u, a, b, ease 'io', dur 1) → nombre                   déplacement de caméra de a à b en dur secondes (u = secondes depuis le début du plan) ; ease 'lin' | 'io' | 'o' | 'i' | 'sm' | fonction.
@@ -748,7 +748,7 @@ function k_buildSavanna(p) {
     for (let x2 = 0; x2 < per; x2++) top[x2] -= nb[x2];
   }
   // corps de la couche : dégradé continu de la crête (tons sombres des touffes à contre-jour) vers la couleur de brume du pied ; la brume se mélange DANS L'ESPACE DES TONS (un seul tramage de Bayer : deux tramages superposés font des barres)
-  const vMist = [1, 1, 0.56][tier], vTop = [0.3, 0.3, 0.12][tier], vBot = [0.5, 0.45, 0.56][tier], tau = [14, 12, 10][tier];
+  const vMist = [1, 1, 0.68][tier], vTop = [0.3, 0.3, 0.12][tier], vBot = [0.5, 0.45, 0.66][tier], tau = [14, 12, 10][tier];
   for (let x = 0; x < per; x++) {
     const tx = Math.round(top[x]);
     for (let y = Math.max(0, tx); y < hh; y++) {
@@ -978,12 +978,12 @@ function k_backdrop(preset, t, o = {}) {
     k_mesas(preset, t, { y: H - 108, cam, camY, base, seed: sd, light: o.light });
     if (o.hills !== false) k_dunes(preset, t, { y: H - 52, cam, camY, base, seed: sd, light: o.light });
   } else {                                                           // savannaDawn
-    out.skyH = H - 62; const sp3 = k_sunPos(preset, { h: out.skyH }); out.sun = [sp3[0], sp3[1], sp3[2]];
+    out.skyH = H - 44; const sp3 = k_sunPos(preset, { h: out.skyH }); out.sun = [sp3[0], sp3[1], sp3[2]];
     k_sky(preset, t, { h: out.skyH, cam, camY });
     if (o.sun !== false) k_sun(out.sun[0], out.sun[1], out.sun[2], { t, cam, camY });
     k_clouds(t, { preset, y0: 50, y1: H - 160, cam, camY, n: nC, seed: 11 + sd, speed: sp });
     if (o.birds) k_birds(t, { y: H - 186 - camY * 0.1, x: 40, speed: 16, cam, n: 9, col: DU[1] });
-    k_horizon(preset, t, { y: H - 60, cam, camY, base, seed: sd, light: o.light });
+    k_horizon(preset, t, { y: H - 42, cam, camY, base, seed: sd, light: o.light });
   }
   return out;
 }
