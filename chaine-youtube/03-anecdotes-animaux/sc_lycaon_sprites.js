@@ -103,21 +103,22 @@ const ly_palM = new Map();
 function ly_pal(env, fog = 0, sil = 0) {
   const fq = Math.round(clamp(fog) * 20) / 20, sq = Math.round(clamp(sil) * 20) / 20, key = env + '|' + fq + '|' + sq;
   let C = ly_palM.get(key); if (C) return C;
-  const E = fl_env({ env }), sh = E.shadow, lit = E.lit, mist = E.mist, sc = sq > 0 ? ly_mix(ly_mixRaw(sh, '#05040f', 0.55), WO[0], 0.2) : null;
-  const T = (c, k = 0) => {                                                         // k : 0 neutre, > 0 vers la lumière, < 0 vers l'ombre
+  const E = fl_env({ env }), sh = E.shadow, lit = E.lit, mist = E.mist, sc = sq > 0 ? ly_mix(DU[0], WO[0], 0.35) : null;
+  const T = (c, k = 0, st = sc) => {                                                // k : 0 neutre, > 0 vers la lumière, < 0 vers l'ombre ; st : couleur de silhouette de cette famille (contre-jour)
     let r = c; if (k > 0) r = ly_mix(r, lit, k); else if (k < 0) r = ly_mix(r, sh, -k);
     if (fq > 0) r = ly_mix(r, mist, fq * 0.8);
-    if (sq > 0) r = ly_mix(r, sc, sq);
+    if (sq > 0) r = ly_mix(r, st, sq);
     return r;
   };
+  const sT = ly_mix(WO[3], DU[1], 0.55), sW = DU[2];
   C = {
     env, E, fq, sq,
-    tan: { hi: T(WO[6], 0.42), mid: T(WO[6], 0), lo: T(WO[4], -0.12), deep: T(WO[3], -0.32) },
+    tan: { hi: T(WO[6], 0.42, sT), mid: T(WO[6], 0, sT), lo: T(WO[4], -0.12, sT), deep: T(WO[3], -0.32, sT) },
     blk: { hi: T(WO[3], 0.1), mid: T(WO[1], 0), lo: T(WO[0], -0.1), deep: T('#05040f', 0) },
-    wht: { hi: T(WH[2], 0.3), mid: T(WH[1], 0), lo: T(ST[6], -0.3), deep: T(ST[5], -0.45) },
-    brn: { hi: T(WO[5], 0.3), mid: T(WO[4], 0), lo: T(WO[3], -0.2), deep: T(WO[1], -0.2) },      // face et oreilles : brun
+    wht: { hi: T(WH[2], 0.3, sW), mid: T(WH[1], 0, sW), lo: T(ST[6], -0.3, sW), deep: T(ST[5], -0.45, sW) },
+    brn: { hi: T(WO[5], 0.3, sT), mid: T(WO[4], 0, sT), lo: T(WO[3], -0.2, sT), deep: T(WO[1], -0.2, sT) },      // face et oreilles : brun
     earIn: T(SK[2], 0), mouth: T(RD[1], 0), tongue: T(RD[4], 0), tongueLo: T(RD[2], 0), teeth: T(WH[2], 0),
-    line: T('#05040f', 0), rim: T(E.rim, 0), shadowCol: ly_mixRaw(sh, '#05040f', 0.35), litCol: lit,
+    line: T('#05040f', 0), rim: fq > 0 ? ly_mix(E.rim, mist, fq * 0.5) : ly_snap(E.rim), shadowCol: ly_mixRaw(sh, '#05040f', 0.35), litCol: lit,
     sh: T(sh, 0),
   };
   ly_palM.set(key, C); return C;
@@ -133,14 +134,14 @@ function ly_blob(r, cx, cy, rx, ry, rot, n = 9) {                               
 }
 function ly_coat(seed) {
   if (ly_coatM.has(seed)) return ly_coatM.get(seed);
-  const r = rng(seed * 7919 + 13), roll = r(), base = roll < 0.46 ? 't' : roll < 0.74 ? 'k' : 'w';
+  const r = rng(seed * 7919 + 13), roll = r(), base = roll < 0.34 ? 't' : roll < 0.72 ? 'k' : 'w';
   const other = c => { const q = r(); if (c === 't') return q < 0.62 ? 'k' : 'w'; if (c === 'k') return q < 0.55 ? 't' : 'w'; return q < 0.5 ? 'k' : 't'; };
   const blobs = [];
   const xs = [-33, -20, -7, 6, 19, 31], ys = [-69, -55, -43];
   for (let j = 0; j < ys.length; j++) for (let i = 0; i < xs.length; i++) {
-    if (r() < 0.34) continue;
+    if (r() < (base === 'k' ? 0.64 : 0.44)) continue;
     const col = r() < 0.74 ? other(base) : (base === 'k' ? 'w' : 'k');
-    const cx = xs[i] + (r() - 0.5) * 9, cy = ys[j] + (r() - 0.5) * 7, rx = 6 + r() * 8, ry = 5 + r() * 6.5, rot = (r() - 0.5) * 1.3;
+    const cx = xs[i] + (r() - 0.5) * 9, cy = ys[j] + (r() - 0.5) * 7, rx = 5.5 + r() * 7.5, ry = 5 + r() * 6, rot = (r() - 0.5) * 1.3;
     blobs.push({ col, pts: ly_blob(r, cx, cy, rx, ry, rot, 9) });
   }
   const nroll = r(), nbase = nroll < 0.5 ? 'k' : nroll < 0.82 ? 't' : 'w';
@@ -273,7 +274,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
   const N0 = bodyT(30, -73), sway = Math.sin(tt * 0.8) * 0.025, an = A.an + sway + (G ? 0.03 * Math.sin(TAU * ph * (gname === 'walk' ? 2 : 1)) : 0);
   const nl = A.nl + (rest ? 12 * rest : 0), anR = lerp(an, 0.95, rest);
   const H = [N0[0] + nl * Math.cos(anR), N0[1] + nl * Math.sin(anR)], aH = lerp(A.ah + 0.02 * Math.sin(tt * 1.1 + 1), 0.28, rest), hc = Math.cos(aH), hs = Math.sin(aH);
-  const Th = (x, y) => [H[0] + x * hc - y * hs, H[1] + x * hs + y * hc];
+  const HS = 1.1, Th = (x, y) => [H[0] + (x * hc - y * hs) * HS, H[1] + (x * hs + y * hc) * HS];
   const Tb = (x, y) => [cx + fl * s * x, cy + s * y], Ts = (x, y) => Tb(...Th(x, y));
   const ex0 = 105 * s + 8; ly_BB = [Math.max(0, Math.floor(cx - ex0)), Math.max(0, Math.floor(cy - 125 * s)), Math.min(LW, Math.ceil(cx + ex0)), Math.min(LH, Math.ceil(cy + 10 * s + 6))];
   // ── ombre au sol ──
@@ -302,7 +303,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
       return { pts: [Eu, E, W, heel], ws: [11, 9.4, 6.2, 5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], W, S };
     }
     const Hj = bodyT(-30 + (farSide ? 2 : 0), -57 + (farSide ? 1 : 0)), Hk = [Fx - 7, Fy - 18.5 - 2 * sw], K = ly_ik(Hj, Hk, 22, 27, -1), heel = [Fx - 2.2, Fy - 3.2];
-    return { pts: [Hj, K, Hk, heel], ws: farSide ? [11, 8.4, 5.4, 4.4] : [12, 9.5, 5.8, 4.5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], Hj, K, Hk };
+    return { pts: [Hj, K, Hk, heel], ws: farSide ? [11, 9.2, 6.4, 4.8] : [12, 9.5, 5.8, 4.5], paw: [Fx + 2.2, Fy - 1.7, 4.6, 2.4, 0.4 * sw], Hj, K, Hk };
   };
   let Lg;
   if (lie || sit) {
@@ -395,7 +396,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
 
   // ── tête ──
   const llH = ly_rot(ll, [0, 0], -aH), H0 = mk(llH);
-  c.save(); c.translate(H[0], H[1]); c.rotate(aH);
+  c.save(); c.translate(H[0], H[1]); c.rotate(aH); c.scale(HS, HS);
   const earE = A.ear, earAng = earE > 0 ? lerp(0, 0.3, earE) : earE * 1.25, flick = k => { const P = 3.4, x = (tt + k * 0.9) / P, id = Math.floor(x), pp = (x - id) * P; return pp < 0.3 && ly_h(id, seed + k * 7) < 0.55 ? Math.sin(pp / 0.3 * Math.PI) * 0.34 * (ly_h(id, seed + k) < 0.5 ? 1 : -1) : 0; };
   const earPath = (base, ang, sy) => ly_spline(LY_EAR.map(p => { const q = ly_rot([p[0], p[1] * sy], [0, 0], ang); return [base[0] + q[0], base[1] + q[1]]; }));
   const flat = clamp(-earE), sy = 1 - 0.18 * flat;
@@ -425,7 +426,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
   c.fillStyle = tone(coat.head.throat, 'mid'); c.fill(polyPath([[-13, 1.2], [-4, 2.6], [2, 4.4], [8, 6], [8, 12], [-13, 12]]));        // joue claire / gorge
   c.restore();
   H0.dark(upper, 2.6, 1.0, 0.45); H0.lite(upper, 1.6, 0.6, 0.3); H0.rimL(upper, 0.9, 0.95);
-  c.fillStyle = C.blk.deep; c.fill(ly_ell(21.2 - 1.2 * wk, -1.5 - 1.6 * wk, 2.8, 2.6, 0.2));                                           // truffe
+  c.fillStyle = C.blk.deep; c.fill(ly_ell(20.3 - 1.2 * wk, -1.5 - 1.6 * wk, 2.6, 2.4, 0.2));                                           // truffe
   H0.lite(jaw, 1.0, 0.4, 0.28);
   // oreille proche
   { const pN = earPath([-5.5, -8.4], earAng + flick(1), sy);
@@ -444,8 +445,9 @@ function ly_dog(cx, cy, s, t, o = {}) {
     if (er >= 2) { disc(exx, eyy, er, ly_mix(AM[6], '#48291a', 0.35)); disc(exx, eyy, Math.max(1, er - 1), '#12100c'); px(exx - fl, eyy - 1, WH[3]); }
     else px(exx, eyy, '#12100c');
   } else { const a = Math.max(1, Math.round(er * 1.1)); lineP(exx - a * fl, eyy + (ex > 0.3 ? 1 : 0), exx + a * fl, eyy, '#05040f', 1); if (ex > 0.3) lineP(exx - a * fl, eyy - 1, exx, eyy + 1, '#05040f', 1); }
+  if (s >= 1.0) for (const L_ of [Lg.nF, Lg.nH]) { const pw = L_.paw, nT = s >= 1.5 ? 3 : 2; for (let k = 0; k < nT; k++) { const a = Tb(pw[0] + 1.0 + k * (nT === 3 ? 1.5 : 2.2), pw[1] - 0.6), b = Tb(pw[0] + 1.3 + k * (nT === 3 ? 1.5 : 2.2), pw[1] + 1.7); lineP(a[0], a[1], b[0], b[1], ly_mix('#05040f', C.sh, 0.3), 1); } }
   if (wk > 0.12 && s >= 0.45) for (let k = 0; k < 3; k++) { const a = Ts(11.5 + k * 2.6, -5.6 + k * 0.3), b = Ts(12.4 + k * 2.6, -2.4 + k * 0.2); lineP(a[0], a[1], b[0], b[1], C.brn.hi, 1); }
-  const nose = Ts(22.2, -1.6);
+  const nose = Ts(21.4, -1.6);
   if (s >= 0.5) px(nose[0] - fl * 0.5, nose[1] - 1, ly_mix(ST[5], C.sh, 0.2));
   if (window.LY_DEBUG) window.LY_DBG = { Lg, tpts, H, N0, an: anR };
   return { T: Tb, Th: Ts, nose, mouth: Ts(19, 4.4), eye: eS, head: Ts(2, -1), ear: Ts(-5, -26), tail: Tb(...(Lg.tail.pts[9])), back: Tb(0, -80), chest: Tb(34, -50), w: 145 * s, dir: fl, ex, inh, N0: Tb(N0[0], N0[1]) };
@@ -538,3 +540,161 @@ function ly_atchoum(x, y, p, o = {}) {
   }
   L.restore();
 }
+
+// ───────────────────────── l'urne et le bulletin ─────────────────────────
+// (cx, cy) = sol au milieu de la face avant ; s = 1 → urne de 66 px de large, 46 de haut. o : fall 0..1 (le bulletin tombe dans la fente : 0 = au-dessus, 1 = avalé), bump 0..1 (l'urne encaisse), paper {x, y} (bulletin libre : centre en pixels écran,
+// remplace la chute), tilt (rad, bulletin libre), env, light (côté du soleil), shadow.
+// Renvoie { slot: [x, y] (le milieu de la fente, en écran), top: [x, y] (le dessus de l'urne), w, h }.
+function ly_paperDraw(x, y, w, h, o = {}) {                                       // un bulletin : feuille blanche, bord, « OUI » vert ; (x, y) = centre ; skew décale le haut en x
+  const sk = o.skew || 0, x0 = Math.round(x - w / 2), x1 = Math.round(x + w / 2), y0 = Math.round(y - h / 2), y1 = Math.round(y + h / 2);
+  poly([[x0 + sk, y0 - 1], [x1 + sk + 1, y0 - 1], [x1 + 1, y1 + 1], [x0, y1 + 1]], '#05040f');
+  poly([[x0 + sk + 1, y0], [x1 + sk, y0], [x1, y1], [x0 + 1, y1]], WH[2]);
+  poly([[x1 + sk - 2, y0], [x1 + sk, y0], [x1, y1], [x1 - 2, y1]], WH[0]);
+  const sc = w >= 30 ? 2 : 1, tw = textW('OUI', sc), tx = Math.round(x - tw / 2 + sk * 0.5), ty = Math.round(y - 3.5 * sc);
+  if (h >= 14) ptext('OUI', tx, ty, GR[2], sc, null);
+  if (h >= 24) { for (let i = 0; i < 3; i++) R(x0 + 4 + sk * 0.3, y1 - 7 + i * 2 - (sc === 2 ? 2 : 0), Math.max(2, w - 8 - (i === 2 ? 5 : 0)), 1, ST[6]); }
+}
+function ly_ballot(cx, cy, s, t, o = {}) {
+  const E = fl_env({ env: o.env || 'savannaDawn' }), lightX = o.light ?? E.light, bump = clamp(o.bump ?? 0), sy = 1 - 0.05 * bump, sx = 1 + 0.025 * bump;
+  const X_ = x => cx + x * s * sx, Y_ = y => cy + y * s * sy, W2 = 33, Hf = 46, Ht = 58, Wt = 28;
+  const shK = clamp(o.shadow ?? 1); if (shK > 0 && typeof k_shadow === 'function') k_shadow(cx - lightX * 6 * s, cy + 0.5 * s, 46 * s, Math.max(2, 5 * s), 0.5 * shK, { col: '46,26,86' });
+  const P = pts => pts.map(p => [X_(p[0]), Y_(p[1])]);
+  // face avant : planches de bois, sangles de métal, étiquette
+  poly(P([[-W2, 0], [W2, 0], [W2, -Hf], [-W2, -Hf]]), '#05040f');
+  poly(P([[-W2 + 0.6, -0.6], [W2 - 0.6, -0.6], [W2 - 0.6, -Hf + 0.6], [-W2 + 0.6, -Hf + 0.6]]), WO[5]);
+  for (let i = 1; i < 6; i++) { const x = -W2 + i * (2 * W2 / 6); R(X_(x), Y_(-Hf + 1), Math.max(1, rd(0.9 * s)), rd((Hf - 2) * s * sy), WO[4]); }
+  R(X_(-W2 + 1), Y_(-Hf + 1), rd(5 * s), rd((Hf - 2) * s * sy), WO[3]);                                  // côté gauche à l'ombre
+  R(X_(W2 - 3), Y_(-Hf + 1), rd(2 * s), rd((Hf - 2) * s * sy), AM[5]);                                    // liseré du soleil à droite
+  for (const yy of [-Hf + 1, -7]) { R(X_(-W2 + 0.6), Y_(yy), rd((2 * W2 - 1.2) * s * sx), rd(5 * s * sy), ST[3]); R(X_(-W2 + 0.6), Y_(yy), rd((2 * W2 - 1.2) * s * sx), Math.max(1, rd(1 * s)), ST[6]); for (const rx of [-W2 + 4, W2 - 5]) px(X_(rx), Y_(yy + 2.5), ST[7]); }
+  if (s >= 0.6) { const lx = X_(-17), ly = Y_(-35), lw = rd(34 * s * sx), lh = rd(22 * s * sy); R(lx - 1, ly - 1, lw + 2, lh + 2, '#05040f'); R(lx, ly, lw, lh, WH[1]); R(lx, ly + lh - Math.max(1, rd(2 * s)), lw, Math.max(1, rd(2 * s)), WH[0]); ptextC('VOTE', lx + lw / 2, ly + lh / 2 - (s >= 1.6 ? 7 : 3.5), NI[1], s >= 1.6 ? 2 : 1, null); }
+  // dessus : plateau clair, fente
+  poly(P([[-W2, -Hf], [W2, -Hf], [Wt, -Ht], [-Wt, -Ht]]), '#05040f');
+  poly(P([[-W2 + 0.8, -Hf - 0.5], [W2 - 0.8, -Hf - 0.5], [Wt - 0.6, -Ht + 0.6], [-Wt + 0.6, -Ht + 0.6]]), WO[6]);
+  poly(P([[W2 - 7, -Hf - 0.5], [W2 - 0.8, -Hf - 0.5], [Wt - 0.6, -Ht + 0.6], [Wt - 5, -Ht + 0.6]]), AM[7]);
+  const slotY = -Hf - 6, sl = [X_(0), Y_(slotY)];
+  R(X_(-17), Y_(slotY - 1.6), rd(34 * s * sx), Math.max(2, rd(3.2 * s * sy)), NI[0]);
+  R(X_(-17), Y_(slotY + 1.8), rd(34 * s * sx), Math.max(1, rd(0.9 * s)), WO[2]);
+  R(X_(-17), Y_(-Ht + 0.6), rd(34 * s * sx), 1, AM[9]);
+  // bulletin
+  const pw = Math.round(24 * s), ph = Math.round(31 * s);
+  if (o.paper) { L.save(); if (Math.abs(o.paper.x - cx) < 22 * s) { L.beginPath(); L.rect(0, 0, LW, Math.round(Y_(slotY) + 1)); L.clip(); } ly_paperDraw(o.paper.x, o.paper.y, pw, ph, { skew: Math.round((o.tilt || 0) * 10 * s) }); L.restore(); }
+  else if (o.fall != null && o.fall < 1) {
+    const f = clamp(o.fall), top0 = Y_(slotY) - ph - 30 * s, top1 = Y_(slotY) + 3 * s, ytop = lerp(top0, top1, Math.pow(f, 1.5)), sw = Math.sin(f * 8) * 3 * (1 - f) * s;
+    L.save(); L.beginPath(); L.rect(0, 0, LW, Math.round(Y_(slotY) + 1)); L.clip();
+    ly_paperDraw(cx + sw, ytop + ph / 2, pw, ph, { skew: Math.round(sw * 0.9) }); L.restore();
+  }
+  return { slot: sl, top: [X_(0), Y_(-Ht)], w: 2 * W2 * s, h: Ht * s, paperW: pw, paperH: ph, slotY: Y_(slotY) };
+}
+
+// ───────────────────────── le museau de face, en gros plan ─────────────────────────
+// (cx, cy) = centre de la truffe ; s = 1 → truffe de 40 px de large, visage de 120 px (jusqu'aux yeux et aux oreilles). o : sneeze (−0,5..1, voir ly_sneezeEnv ; par défaut le nez respire), ballot 0..1 (un bulletin collé sous la truffe), bx, by (décalage du bulletin),
+// open (gueule), eye, env, rim, ears 0..1 (visibles ; défaut 1), seed (motif de joue), t0.
+// Renvoie { nose, nostrilL, nostrilR, eyeL, eyeR, lip, w }.
+function ly_nose(cx, cy, s, t, o = {}) {
+  const seed = o.seed ?? 3, coat = ly_coat(seed), C = ly_pal(o.env || 'savannaDawn', o.fog || 0, o.sil || 0), E = C.E, lightX = o.light ?? E.light, rimK = clamp(o.rim ?? 1);
+  const sn = o.sneeze || 0, ex = Math.max(0, sn), inh = Math.max(0, -sn), tt = t + seed * 1.3;
+  const flare = 1 + 0.1 * Math.sin(tt * 5.2) + 0.55 * inh - 0.4 * ex, up = -3.5 * inh + 2 * ex, zoom = 1 + 0.07 * ex, sqz = 1 - 0.14 * ex;
+  const R_ = 150 * s * zoom; ly_BB = [Math.max(0, Math.floor(cx - R_ - 4)), Math.max(0, Math.floor(cy - 135 * s * zoom - 4)), Math.min(LW, Math.ceil(cx + R_ + 4)), Math.min(LH, Math.ceil(cy + 70 * s * zoom + 4))];
+  ly_layerBegin();
+  const c = Y; c.setTransform(s * zoom, 0, 0, s * zoom, cx, cy + ex * 3 * s); c.lineJoin = 'round';
+  const ll = ly_norm([lightX * 0.9, -0.5]), mn = u => Math.max(u, 1.05 / (s * zoom)), bl = u => Math.max(0.5, u * s);
+  const dark = (path, off = 4, blur = 1.4, a = 0.5, col = C.shadowCol) => ly_cres(c, path, col, ll[0] * mn(off), ll[1] * mn(off), bl(blur), a);
+  const lite = (path, off = 2.4, blur = 0.9, a = 0.3, col = C.litCol) => ly_cres(c, path, col, -ll[0] * mn(off), -ll[1] * mn(off), bl(blur), a);
+  const rimL = (path, w = 1.1, a = 1) => { if (rimK > 0) ly_cres(c, path, C.rim, -ll[0] * mn(w), -ll[1] * mn(w), 0, rimK * a); };
+  const halo = (path, col = C.line, w = 1.2) => { c.lineWidth = mn(w); c.strokeStyle = col; c.stroke(path); };
+  const mir = pts => pts.concat(pts.slice(1).reverse().map(p => [-p[0], p[1]]));
+  const tone = (k, m = 'mid') => C[LY_KEYS[k]][m];
+  const earOpen = clamp(o.ears ?? 1);
+  // oreilles (vue de face : l'intérieur clair, bordé de poils sombres) : elles se couchent vers l'extérieur à l'éternuement
+  if (earOpen > 0) for (const sd of [-1, 1]) {
+    const pv = [sd * 50, -84 + up], a = sd * (0.18 + 0.7 * ex), q = pts => pts.map(p => { const r = ly_rot([pv[0] + p[0], pv[1] + p[1]], pv, a); return r; });
+    const outer = ly_spline(q([[-20, 8], [-27, -10], [-24, -32], [-9, -48], [10, -48], [24, -32], [27, -10], [20, 8]])), inner = ly_spline(q([[-13, 4], [-18, -10], [-15, -28], [-5, -38], [7, -38], [15, -28], [18, -10], [13, 4]]));
+    halo(outer, C.line, 1.4); c.fillStyle = tone('b', 'lo'); c.fill(outer);
+    c.fillStyle = tone('k', 'mid'); c.save(); c.clip(outer); c.fillStyle = tone('k', 'mid'); c.fill(ly_ell(pv[0] + sd * 8, pv[1] - 20, 22, 30, 0)); c.restore();
+    c.fillStyle = C.earIn; c.fill(inner);
+    c.save(); c.clip(inner); c.strokeStyle = tone('t', 'lo'); c.lineWidth = mn(1.3); for (let k = 0; k < 4; k++) { c.beginPath(); const q0 = ly_rot([pv[0] + (k - 1.5) * 6, pv[1] - 4], pv, a), q1 = ly_rot([pv[0] + (k - 1.5) * 4, pv[1] - 30], pv, a); c.moveTo(q0[0], q0[1]); c.lineTo(q1[0], q1[1]); c.stroke(); } c.restore();
+    dark(outer, 4, 1.2, 0.4); rimL(outer, 1.1, 0.9);
+  }
+  // visage : brun, joues claires
+  const face = ly_spline(mir([[0, -98 + up], [26, -94 + up], [50, -80 + up], [60, -54], [58, -26], [50, 0], [38, 22], [22, 38], [8, 44]]));
+  halo(face, C.line, 1.4); c.fillStyle = tone(coat.head.cheek, 'mid'); c.fill(face);
+  c.save(); c.clip(face);
+  c.fillStyle = tone(coat.head.throat === 'k' ? 't' : coat.head.throat, 'mid'); c.fill(ly_ell(-44, 30, 22, 26, 0.3)); c.fill(ly_ell(44, 30, 22, 26, -0.3));        // joues claires
+  c.fillStyle = tone('k', 'mid'); c.fill(polyPath([[-6, -100 + up], [6, -100 + up], [10, -70], [16, -50], [-16, -50], [-10, -70]]));                                    // raie noire du front
+  for (const sd of [-1, 1]) { c.fillStyle = tone('k', 'lo'); c.fill(ly_ell(sd * 33, -60 + up * 0.5, 19, 13, sd * -0.25)); }                                               // masques sombres autour des yeux
+  c.restore();
+  dark(face, 6, 2, 0.4); lite(face, 3.4, 1.3, 0.28); rimL(face, 1.3, 0.9);
+  // museau noir
+  const half = [[0, -52 + up * 0.6], [13, -50 + up * 0.6], [26, -38], [34, -20], [38, -1], [37, 16], [30, 29], [16, 36], [0, 37]];
+  const muzzle = ly_spline(half.concat(half.slice(1, -1).reverse().map(p => [-p[0], p[1]])));
+  halo(muzzle, C.line, 1.2); c.fillStyle = tone('k', 'mid'); c.fill(muzzle);
+  dark(muzzle, 5, 1.6, 0.5); lite(muzzle, 3, 1.1, 0.34); rimL(muzzle, 1.1, 0.8);
+  // plis du nez qui se froncent à l'éternuement
+  if (ex > 0.15) for (let k = 0; k < 3; k++) { const yy = -24 - k * 6 + up, ww = 15 - k * 2.4; c.strokeStyle = tone('b', 'hi'); c.lineWidth = mn(1.5); c.beginPath(); c.moveTo(-ww, yy + 2); c.quadraticCurveTo(0, yy - 3 * ex, ww, yy + 2); c.stroke(); }
+  // babines et menton
+  const lipP = new Path2D(); lipP.moveTo(0, 17 + up * 0.3); lipP.lineTo(0, 26); lipP.bezierCurveTo(-4, 31, -17, 31, -26, 24); lipP.moveTo(0, 26); lipP.bezierCurveTo(4, 31, 17, 31, 26, 24);
+  c.strokeStyle = C.blk.deep; c.lineWidth = mn(1.6); c.stroke(lipP);
+  const mo = clamp(o.open ?? 0.25 * ex);
+  if (mo > 0.05) { c.fillStyle = C.mouth; c.fill(polyPath([[-20, 27], [20, 27], [16, 27 + 14 * mo], [-16, 27 + 14 * mo]])); c.fillStyle = C.teeth; c.fill(polyPath([[-9, 27], [-5, 27], [-7, 27 + 5]])); c.fill(polyPath([[5, 27], [9, 27], [7, 27 + 5]])); }
+  // bulletin collé sous la truffe (dans la couche : la truffe le recouvre)
+  if (o.ballot) { const bx = o.bx || 0, by = o.by || 0, pp = polyPath([[bx - 17, 8 + by], [bx + 17, 8 + by], [bx + 17, 51 + by], [bx - 17, 51 + by]]); halo(pp, C.line, 1.2); c.fillStyle = WH[2]; c.fill(pp); c.fillStyle = WH[0]; c.fillRect(bx + 13, 8 + by, 4, 43); }
+  // truffe : trapèze arrondi, noir violacé et humide
+  const pad = ly_smooth([[-21 * sqz, -11 + up], [0, -13 + up], [21 * sqz, -11 + up], [22 * sqz, -1 + up], [15 * sqz, 12 + up], [0, 17 + up], [-15 * sqz, 12 + up], [-22 * sqz, -1 + up]]);
+  halo(pad, C.line, 1.3); c.fillStyle = ly_mix(DU[0], C.sh, 0.2); c.fill(pad);
+  c.save(); c.clip(pad); c.fillStyle = NI[0]; c.fill(ly_ell(0, 12 + up, 26, 8, 0)); c.restore();
+  dark(pad, 3, 1, 0.4); lite(pad, 2, 0.8, 0.28); rimL(pad, 0.9, 0.6);
+  const nsL = [-11 * sqz, 1.5 + up], nsR = [11 * sqz, 1.5 + up], nsPath = (p, sd) => ly_ell(p[0], p[1], 6 * flare * (1 - 0.15 * ex), 3.4 * flare * (1 - 0.3 * ex), sd * 0.55);
+  for (const [p, sd] of [[nsL, -1], [nsR, 1]]) { const ns = nsPath(p, sd); c.fillStyle = NI[0]; c.fill(ns); }
+  c.strokeStyle = tone('k', 'lo'); c.lineWidth = mn(1.2); c.beginPath(); c.moveTo(0, 6 + up); c.lineTo(0, 17 + up); c.stroke();                                    // sillon de la truffe
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  ly_layerEnd({ outline: o.outline === undefined ? ly_mix('#05040f', C.sh, 0.2) : o.outline });
+
+  // ── détails nets : reflets de la truffe, yeux, pores et moustaches ──
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const Z = s * zoom, P0 = (x, y) => [cx + x * Z, cy + ex * 3 * s + y * Z], pxl = (x, y, col, w = 1, h = 1) => R(Math.round(x), Math.round(y), w, h, col);
+  { const a = P0(-13 * sqz, -8 + up), b = P0(-3, -9.4 + up), d = P0(-17 * sqz, -3 + up);                                                                              // reflet humide en arc, haut gauche
+    lineP(a[0], a[1], b[0], b[1] - 0.5, WH[3], Math.max(1, Math.round(1.4 * Z))); lineP(d[0], d[1] + 1, a[0], a[1], WH[3], Math.max(1, Math.round(1.2 * Z))); const e = P0(10 * sqz, -9 + up), f = P0(14 * sqz, -7 + up); lineP(e[0], e[1], f[0], f[1], ST[7], 1);
+    const g = P0(-9, 14 + up), h = P0(9, 14 + up); lineP(g[0], g[1], h[0], h[1], CY[2], 1); pxl(...P0(11, 11 + up), CY[4]); }
+  for (const [sd, X0] of [[-1, -1], [1, 1]]) {                                                                                                                         // narines : liseré humide sous l'ouverture
+    const p = P0(X0 * 11 * sqz, 1.5 + up + 4 * flare * (1 - 0.3 * ex)); pxl(p[0] - 2, p[1], DU[3], 4, 1); }
+  // pores des moustaches sur la babine
+  if (s >= 0.7) for (let r = 0; r < 3; r++) for (let k = 0; k < 3; k++) for (const sd of [-1, 1]) { const p = P0(sd * (14 + k * 6.5 + r * 1.5), 14 + r * 5 + k * 0.6 + up * 0.3); pxl(p[0], p[1], WO[3]); }
+  // moustaches : fines courbes claires
+  const whisk = (x0, y0, dx, dy, bend) => { let prev = P0(x0, y0); for (let i = 1; i <= 8; i++) { const f = i / 8, q = P0(x0 + dx * f, y0 + dy * f + bend * f * f); lineP(prev[0], prev[1], q[0], q[1], i < 6 ? WH[2] : ST[6], 1); prev = q; } };
+  for (const sd of [-1, 1]) { whisk(sd * 30, 18 + up * 0.3, sd * 52, -6, 22); whisk(sd * 28, 22 + up * 0.3, sd * 56, 8, 20); whisk(sd * 26, 26 + up * 0.3, sd * 46, 22, 14); }
+  // yeux
+  const eyeOpen = o.eye != null ? clamp(o.eye) : clamp(1 - 1.4 * ex), er = Math.max(2, Math.round(7 * Z));
+  const eyes = [P0(-33, -60 + up * 0.5), P0(33, -60 + up * 0.5)];
+  for (const [i, e] of eyes.entries()) {
+    const sd = i ? 1 : -1;
+    if (eyeOpen > 0.35) {
+      L.fillStyle = '#05040f'; L.beginPath(); L.ellipse(e[0], e[1], er + 1.5, er * 0.78 + 1.5, sd * -0.18, 0, TAU); L.fill();
+      L.fillStyle = ly_mix(AM[7], '#48291a', 0.15); L.beginPath(); L.ellipse(e[0], e[1], er, er * 0.76, sd * -0.18, 0, TAU); L.fill();
+      L.fillStyle = '#12100c'; L.beginPath(); L.arc(e[0] - sd * 0.5, e[1] + 0.5, Math.max(1.4, er * 0.52), 0, TAU); L.fill();
+      pxl(e[0] - er * 0.4, e[1] - er * 0.45, WH[3], Math.max(1, Math.round(er * 0.3)), Math.max(1, Math.round(er * 0.3)));
+    } else { const lw = Math.max(1, Math.round(1.2 * Z)); lineP(e[0] - sd * er, e[1] - er * 0.4, e[0] + sd * 1, e[1] + er * 0.3, '#05040f', lw + 1); lineP(e[0] - sd * er, e[1] + er * 0.9, e[0] + sd * 1, e[1] + er * 0.3, '#05040f', lw + 1); lineP(e[0] - sd * er, e[1] - er * 0.4, e[0] + sd * 1, e[1] + er * 0.3, WO[5], lw); lineP(e[0] - sd * er, e[1] + er * 0.9, e[0] + sd * 1, e[1] + er * 0.3, WO[5], lw); }
+  }
+  if (o.ballot) { const q = P0(o.bx || 0, 36 + (o.by || 0)), sc2 = Z >= 1.6 ? 2 : 1; ptextC('OUI', q[0], q[1] - 3.5 * sc2, GR[2], sc2, null); }
+  return { nose: P0(0, 0), nostrilL: P0(nsL[0], nsL[1]), nostrilR: P0(nsR[0], nsR[1]), eyeL: eyes[0], eyeR: eyes[1], lip: P0(0, 26), w: 120 * Z, paper: P0(o.bx || 0, 29.5 + (o.by || 0)) };
+}
+
+// ───────────────────────── icône du carnet : tête de lycaon de face (17 × 17, centrée en (cx, cy), couleurs exactes) ─────────────────────────
+ICONES[2] = function (cx, cy) {
+  cx = Math.round(cx); cy = Math.round(cy);
+  const o = '#05040f', K = WO[2], k = WO[0], e = SK[3], f = WO[6], F = WO[5], w = WH[2], W = WH[0], y = AM[8];
+  // grandes oreilles rondes (contour sombre, dos brun-noir, intérieur clair)
+  for (const sd of [-1, 1]) {
+    ell(cx + sd * 5, cy - 4, 3, 4, o); ell(cx + sd * 5, cy - 4, 2, 3, K); R(cx + sd * 5 - (sd < 0 ? 0 : 1), cy - 6, 1, 4, e); px(cx + sd * 5 - (sd < 0 ? 0 : 1) + (sd < 0 ? -1 : 1), cy - 5, F);
+  }
+  // visage : fauve, ombré à droite ; raie noire du front ; taches ; museau noir
+  ell(cx, cy + 2, 6, 6, o); ell(cx, cy + 2, 5, 5, f);
+  R(cx + 3, cy - 1, 2, 6, F); px(cx + 4, cy + 5, F);
+  R(cx - 1, cy - 4, 2, 4, k); px(cx, cy, k);                                  // raie du front
+  R(cx - 5, cy - 1, 2, 2, k); px(cx - 4, cy + 1, k);                           // tache noire à gauche
+  R(cx + 3, cy - 3, 2, 2, w);                                                  // tache blanche à droite
+  ell(cx, cy + 5, 3, 2, k); R(cx - 2, cy + 6, 5, 1, k); R(cx - 1, cy + 4, 3, 1, k);   // museau noir
+  px(cx - 1, cy + 4, ST[5]);                                                   // reflet de la truffe
+  R(cx - 5, cy + 4, 2, 2, w); px(cx - 5, cy + 3, W);                           // joue blanche
+  // yeux ambrés dans le masque sombre
+  for (const sd of [-1, 1]) { px(cx + sd * 3, cy + 1, '#12100c'); px(cx + sd * 3, cy, y); }
+};
