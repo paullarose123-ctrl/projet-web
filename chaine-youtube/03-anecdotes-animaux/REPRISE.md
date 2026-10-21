@@ -28,21 +28,7 @@ Resynthétiser (≈ 25 min sur 4 coeurs) : `python voix-ia/preparer.py build/gro
 
 ## 3. Ce qui est fait
 
-| Élément | État |
-|---|---|
-| Texte (script de l'auteur, mot pour mot), voix, timeline | fait |
-| Faits vérifiés (`faits.md`, avec les réserves à signaler) | fait |
-| `kit.js` (ciels, aurore, reliefs, glace, neige, eau, particules) | fait, relu, corrigé |
-| `flore.js` (arbres, cactus, herbes, fleurs, sols, rochers) | fait, relu, corrigé |
-| `score.mjs` (musique, 17 ambiances, bruitages de tous les types du GUIDE §4) | fait, mesuré (−14 LUFS en essai) |
-| Sprites grenouille (`sc_grenouille_sprites.js`) | écrits ; relecture en cours |
-| Sprites lézard / coyote / jet / règle (`sc_lezard_sprites.js`) | écrits ; le lézard ressemble trop à un hérisson (à corriger) ; relecture en cours |
-| Sprites lycaon (`sc_lycaon_sprites.js`) | en cours d'écriture |
-| Plans des segments (`sc_grenouille.js`, `sc_lezard.js`, `sc_lycaon.js`) | contiennent seulement des planches de contrôle provisoires |
-| Accroche et finale (`sc_intro.js`, `sc_fin.js`) | à faire (attendent les sprites) |
-| Plan de sortie Raisins (`outro.js`) | fait (identique à la vidéo 2) |
-
-Pour savoir où en est un segment : un fichier `sc_<nom>_sprites.js` de plus de ≈ 50 Ko est écrit ; `build/rev_<nom>_*` contient les images des relecteurs ; `sc_<nom>.js` de plus de ≈ 30 Ko = vrais plans ; `son_<nom>.md` existe quand les plans sont finis.
+Tout est fait : voix, sprites des trois animaux, 29 plans (accroche, grenouille, lézard, lycaons, finale, sortie), musique, ambiances et bruitages, rendu `3-anecdotes-folles-animaux.mp4` (66 s, 16 Mo, −13,9 LUFS, crête vraie −2,3 dBFS). Ce qui peut encore être retouché à la demande de l'auteur : voir les remarques éventuelles sur la voix, le niveau de la musique, les bruitages, les plans.
 
 ## 4. Relancer la production (outil Workflow de Claude Code)
 

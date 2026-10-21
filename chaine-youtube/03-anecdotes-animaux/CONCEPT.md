@@ -10,9 +10,9 @@
 
 **Fil conducteur** : le **carnet de terrain**. En haut à gauche, trois cases (grenouille, lézard, lycaon) : celle de l'anecdote en cours est allumée avec le lieu (« 1/3 ALASKA »), les précédentes sont cochées. Le scientifique de la chaîne (le même qu'en vidéo 2 : dégradé et boucles blond vénitien) ouvre le film (il présente les trois cases) et le ferme (il hésite entre les trois cartes). Coupes franches partout, comme dans les vidéos précédentes.
 
-**Format** : 1080 × 1920, 30 i/s, environ 1 min 10 (voix ≈ 65 s, carton final 2 s, plan de sortie « RAISINS » 4,2 s). Voix : la même que la vidéo 2, Kyutai TTS (voix de référence « fabieng »), voix de synthèse à signaler dans la description.
+**Format** : 1080 × 1920, 30 i/s, 66 s (voix 59,9 s, carton final 2 s, plan de sortie « RAISINS » 4,2 s ; 16 Mo). Voix : Kyutai TTS avec la voix de référence **CML-TTS français, locuteur 928** (CC-BY 4.0 : mentionner « CML-TTS »), choisie pour sa ressemblance (timbre, hauteur 123 Hz, débit 3,3 mots/s) avec la voix de la vidéo TikTok de référence ; voix de synthèse à signaler dans la description (étiquette « contenu généré par IA »).
 
-## Plan par segment (les temps sont ceux de la voix, `build/timeline.js`)
+## Plan par segment (les temps sont ceux de la voix, `build/timeline.js` ; les plans réels, au nombre de 29, sont listés par `node valide.mjs` et décrits dans `son_<segment>.md` : ils suivent ce tableau avec quelques découpages en plus, par exemple g1_scan, y1_atchoum, y4_urne)
 
 Chaque segment est dessiné dans son fichier (voir `GUIDE.md`) ; le premier plan d'un segment commence 0,12 s avant sa première parole, le dernier dure jusqu'au segment suivant (la pause de fin d'anecdote est une respiration, pas un trou).
 

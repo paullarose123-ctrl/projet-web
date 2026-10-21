@@ -479,10 +479,10 @@ function musAfrique() {                                  // AFRIQUE : kalimba et
   [["d'éternuements", 'A5'], ['plus', 'B5', 1], ['groupe', 'D6'], ['chances', 'E6'], ['partir', 'G6']].forEach(([w, n, k = 0], i) => kalimba(wt('y3', w, k), n, { gain: 0.05 + 0.004 * i, pan: -0.3 + 0.15 * i, decay: 1.2 }));
   for (const e of EVENTS) if (e.type === 'sneeze' && e.t >= ty3 && e.t < ty4) dHi(e.t + 0.12, 0.5, { f: 330 * Math.pow(1.06, clamp(e.v, 0.8, 1.3) * 4) });
   // y4 : le gag (« voter avec son nez ») puis la meute file vers le soleil
-  [['Oui', 'G5'], ['lycaons', 'E6'], ['voter', 'D6'], ['nez', 'G6']].forEach(([w, n], i) => kalimba(wt('y4', w), n, { gain: 0.055, pan: -0.3 + 0.2 * i, decay: 1.3 }));
+  [['Oui', 'G5'], ['lycaons', 'E6'], ['voter', 'D6'], ['nez', 'G6']].forEach(([w, n], i) => kalimba(wt('y4', w) + (w === 'nez' || w === 'voter' ? 0.30 : 0), n, { gain: 0.055, pan: -0.3 + 0.2 * i, decay: 1.3 }));
   flute(tRun - 0.05, 0.35, 'E5', { gain: 0.04 }); flute(tRun + 0.4, 0.35, 'D5', { gain: 0.04 }); flute(tRun + 0.8, 0.35, 'B4', { gain: 0.04 }); flute(tRun + 1.2, 0.3, 'D5', { gain: 0.04 });
-  const tNez = wt('y4', 'nez'); [['G2', 0], ['D3', 0.02], ['G3', 0.04], ['B3', 0.06], ['D4', 0.08]].forEach(([n, d]) => nylon(Math.max(tNez, tRun) + d + 0.1, n, { gain: 0.06, t60: 2.4 }));
-  glass(Math.max(tNez, tRun) + 0.12, 'G6', { gain: 0.04, tau: 2.4 });
+  const tNez = wt('y4', 'nez'); [['G2', 0], ['D3', 0.02], ['G3', 0.04], ['B3', 0.06], ['D4', 0.08]].forEach(([n, d]) => nylon(Math.max(tNez + 0.3, tRun) + d + 0.1, n, { gain: 0.06, t60: 2.4 }));      // l'accord arrive APRÈS « nez » (il le couvrait)
+  glass(Math.max(tNez + 0.3, tRun) + 0.12, 'G6', { gain: 0.04, tau: 2.4 });
 }
 function musFin() {                                      // QUESTION FINALE : légère, curieuse, suspendue (sur la dominante ; la marque résout en ré)
   rnd = mkRnd(505); B = BUS.music; const [s0, s1] = SEG.fin, tf = ph('fin').t0, tSur = wt('fin', 'surpris');
@@ -616,16 +616,34 @@ function croak(t0, dur, r0, r1, f1, f2, g) {             // coassement : impulsi
 // ───────── exécution ─────────
 const finalToPre = d => Math.atanh(clamp(dbv(d), 0, 0.98)) / 1.4;     // crête finale visée (après tanh(1,4 x)) → crête avant mastering
 const CAP = mkBus(Math.floor(16 * SR), 0);
+// Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : mesuré sur le film, le jet de sang
+// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »). Les sons de réussite et de marque restent entiers.
+const DUCK_EXEMPT = new Set(['ding', 'no', 'endCard', 'logo', 'letters']);
+const WORDS_ALL = TLJ.phrases.flatMap(p => p.words);
+function duckFactor(t, type) {
+  if (DUCK_EXEMPT.has(type)) return 1;
+  let ov = 0; const a = t, b = t + 0.9;
+  for (const w of WORDS_ALL) { const x0 = w.t0 - 0.04, x1 = w.t1 + 0.10; ov += Math.max(0, Math.min(b, x1) - Math.max(a, x0)); }
+  return Math.pow(10, -11 * Math.min(1, ov / 0.9) / 20);
+}
+// les bruitages « de bruit » (éternuement, jet, éclaboussure, couinement, reniflement, secousse, urne) dont le début tombe DANS un mot sont retardés jusqu'à la fin du mot (au plus 0,35 s) :
+// mesuré, l'éternuement tombait sur « nez » (la chute de la blague) et la reconnaissance de parole lisait « nom ».
+const SHIFT_TYPES = new Set(['sneeze', 'squirt', 'splat', 'yelp', 'sniff', 'shake', 'vote']);
+function shiftOffWord(t, type) {
+  if (!SHIFT_TYPES.has(type)) return t;
+  for (const w of WORDS_ALL) if (t > w.t0 + 0.02 && t < w.t1 - 0.03 && w.t1 + 0.03 - t <= 0.35) return w.t1 + 0.03;
+  return t;
+}
 function runSfx() {
   const sfxBus = BUS.sfx; let idx = 0; const unknown = {};
   for (const e of EVENTS) {
     idx++; const fn = SFX[e.type]; if (!fn) { unknown[e.type] = (unknown[e.type] || 0) + 1; continue; }
     rnd = mkRnd(7000 + idx * 7919 + e.type.length * 31);
-    const off = Math.max(0, Math.floor((e.t - 0.4) * SR)); CAP.off = off; CAP.lo = 1e12; CAP.hi = -1; B = CAP;
-    let rel = 1; try { const r = fn(e.t, e.v); if (typeof r === 'number') rel = r; if (e.type === 'label' && e.t >= SEG.sortie[0]) rel = 0.65; } catch (err) { warn(`bruitage ${e.type} @${e.t} : ${err.message}`); }
+    const et = shiftOffWord(e.t, e.type), off = Math.max(0, Math.floor((et - 0.4) * SR)); CAP.off = off; CAP.lo = 1e12; CAP.hi = -1; B = CAP;
+    let rel = 1; try { const r = fn(et, e.v); if (typeof r === 'number') rel = r; if (e.type === 'label' && e.t >= SEG.sortie[0]) rel = 0.65; } catch (err) { warn(`bruitage ${e.type} @${e.t} : ${err.message}`); }
     B = BUS.music; if (CAP.hi < 0) continue;
     let pk = 0; for (let i = CAP.lo; i <= CAP.hi; i++) pk = Math.max(pk, Math.abs(CAP.L[i]), Math.abs(CAP.R[i]));
-    if (pk > 1e-9) { const k = finalToPre(LV[e.type] ?? -12) * rel / pk; for (let i = CAP.lo; i <= CAP.hi; i++) { const j = off + i; if (j >= N) break; sfxBus.L[j] += CAP.L[i] * k; sfxBus.R[j] += CAP.R[i] * k; sfxBus.SL[j] += CAP.SL[i] * k; sfxBus.SR[j] += CAP.SR[i] * k; } }
+    if (pk > 1e-9) { const k = finalToPre(LV[e.type] ?? -12) * rel / pk * duckFactor(et, e.type); for (let i = CAP.lo; i <= CAP.hi; i++) { const j = off + i; if (j >= N) break; sfxBus.L[j] += CAP.L[i] * k; sfxBus.R[j] += CAP.R[i] * k; sfxBus.SL[j] += CAP.SL[i] * k; sfxBus.SR[j] += CAP.SR[i] * k; } }
     for (let i = CAP.lo; i <= CAP.hi; i++) { CAP.L[i] = 0; CAP.R[i] = 0; CAP.SL[i] = 0; CAP.SR[i] = 0; }
   }
   for (const [t, n] of Object.entries(unknown)) warn(`type d'événement inconnu ignoré : ${t} (${n} fois)`);
@@ -645,6 +663,21 @@ if (ONLY !== 'demo' && want('music')) { musIntro(); musAlaska(); musMexique(); m
 if (ONLY !== 'demo' && want('amb')) ambiances();
 if (ONLY !== 'demo' && want('sfx')) runSfx();
 
+// ───────── la chute de la blague : musique et ambiances baissées de 8 dB sur « nez » ─────────
+// (mesuré : musique et ambiances ensemble faisaient lire « nom » par la reconnaissance de parole, alors que chacune seule laisse lire « nez »)
+{
+  const nez = P.y4.words.filter(w => norm(w.w) === 'nez')[0];
+  if (nez) {
+    const a0 = nez.t0 - 0.25, a1 = nez.t1 + 0.35, ramp = 0.06, lo = Math.pow(10, -8 / 20);
+    for (const k of ['music', 'amb']) {
+      const b = BUS[k];
+      for (let i = Math.max(0, Math.floor((a0 - ramp) * SR)); i < Math.min(N, Math.floor((a1 + ramp) * SR)); i++) {
+        const x = i / SR, f = Math.min(1, Math.max(0, (x - (a0 - ramp)) / ramp), Math.max(0, (a1 + ramp - x) / ramp)), g = 1 - (1 - lo) * f;
+        b.L[i] *= g; b.R[i] *= g; b.SL[i] *= g; b.SR[i] *= g;
+      }
+    }
+  }
+}
 // ───────── réverbération (type Freeverb) ─────────
 class Comb { constructor(n) { this.b = new Float32Array(n); this.i = 0; this.f = 0; } p(x, fb, d) { const y = this.b[this.i]; this.f = y * (1 - d) + this.f * d; this.b[this.i] = x + this.f * fb; this.i = (this.i + 1) % this.b.length; return y; } }
 class AP { constructor(n) { this.b = new Float32Array(n); this.i = 0; } p(x) { const bo = this.b[this.i], y = -x + bo; this.b[this.i] = x + bo * 0.5; this.i = (this.i + 1) % this.b.length; return y; } }

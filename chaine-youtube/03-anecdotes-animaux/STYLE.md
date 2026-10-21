@@ -41,7 +41,7 @@ Les rampes **`LM`** (vert-jaune, herbe et mousse), **`NE`** (neige bleutée) et 
 
 ## Son
 
-Voix off : Kyutai TTS (voix « fabieng »), la même que la vidéo 2. Musique douce aux timbres acoustiques synthétisés (kalimba, cordes pincées, flûte, nappe), une couleur par monde : cristalline et froide (Alaska, qui tire vers le grave quand le cœur s'arrête puis s'ouvre au dégel), chaude avec une petite guitare et un shaker (Mexique), kalimba et tambours doux sur une pulsation de marche (Afrique), curieuse pour la question finale. Ambiances en continu : vent et neige, oiseaux de printemps, ruisseau, grillons au crépuscule, savane au lever du jour. Un bruit pour chaque action visible (voir le vocabulaire d'événements dans `GUIDE.md`), aucun bruit sur les coupes.
+Voix off : Kyutai TTS avec la voix de référence CML-TTS français (locuteur 928), choisie pour ressembler à la voix d'une vidéo TikTok de référence (la vidéo 2 garde la voix « fabieng »). Musique douce aux timbres acoustiques synthétisés (kalimba, cordes pincées, flûte, nappe), une couleur par monde : cristalline et froide (Alaska, qui tire vers le grave quand le cœur s'arrête puis s'ouvre au dégel), chaude avec une petite guitare et un shaker (Mexique), kalimba et tambours doux sur une pulsation de marche (Afrique), curieuse pour la question finale. Ambiances en continu : vent et neige, oiseaux de printemps, ruisseau, grillons au crépuscule, savane au lever du jour. Un bruit pour chaque action visible (voir le vocabulaire d'événements dans `GUIDE.md`), aucun bruit sur les coupes.
 
 ## Plan de sortie (marque de la chaîne)
 

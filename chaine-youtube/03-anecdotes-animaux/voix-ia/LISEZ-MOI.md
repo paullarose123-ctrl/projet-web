@@ -54,3 +54,7 @@ Non essayés, faute de licence commerciale ou de place : Fish Audio S2 / Drama 3
 - Poids **Kyutai TTS 1.6B** : CC-BY 4.0.
 - Voix de référence : `unmute-prod-website/*` et `voice-donations/*` du dépôt `kyutai/tts-voices` sont en **CC0**, `cml-tts/*` en CC-BY 4.0 (mentionner CML-TTS), `expresso/*` et `ears/*` sont **réservées à un usage non commercial** : ne pas les utiliser pour une chaîne monétisée.
 - Mentionner dans la description que la voix est une voix de synthèse, et activer l'étiquette « contenu généré par IA » de la plateforme.
+
+## Choisir la voix de référence (vidéo 3)
+
+`synth_kyutai.py --voice <chemin dans kyutai/tts-voices>` lit avec une autre voix de référence (`--device auto` utilise une carte graphique CUDA si elle existe). Pour trouver la voix libre de droits la plus proche d'une voix donnée : `voix_proche.py ref.wav` classe les voix de référence utilisables par similarité de timbre (empreinte de locuteur ECAPA, la voix donnée est mesurée, jamais copiée), puis on fait lire une phrase du film par les premières et on compare hauteur, étendue de hauteur, débit et similarité. Pour la vidéo 3, la voix d'une vidéo TikTok (homme, 123 Hz, 3,4 mots/s) a donné `cml-tts/fr/928_486_000075-0001_enhanced.wav` (similarité 0,45, hauteur 116 Hz, débit 3,1 mots/s) ; l'auteur l'a préférée à la première du classement (locuteur 4482). Licence CML-TTS : CC-BY 4.0, à mentionner.
