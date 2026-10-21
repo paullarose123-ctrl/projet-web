@@ -1,8 +1,9 @@
 // Workflow (outil Workflow de Claude Code) de la vidéo 3 : sprites des animaux → relecture → corrections → plans → relecture → corrections, puis accroche et finale.
-// Reprise après une interruption : passer en args l'étape de départ de chaque segment, d'après l'état des fichiers (voir REPRISE.md) :
-//   { "depart": { "gre": "plans", "lez": "revsprites", "lyc": "sprites" }, "introfin": true, "relecteurs": 2, "effort_relecture": "low" }
-//   étapes : sprites | revsprites | plans | revplans   (un segment absent de « depart » repart de « sprites » ; « depart »: {"gre":"fini"} saute le segment)
-//   relecteurs : 1 ou 2 relecteurs par étape (1 = économique) ; effort_relecture : effort des relecteurs ('low' | 'medium' | 'high')
+// REPRISE après une interruption (limite d'usage, redémarrage) : NE JAMAIS compter sur le cache d'une reprise pour sauter une étape (il peut manquer, et refaire une étape
+// « sprites » ou « plans » réécrit les fichiers) ; passer en args l'étape de départ de chaque segment d'après l'état des fichiers (voir REPRISE.md) :
+//   { "depart": { "gre": "revplans", "lez": "revplans", "lyc": "plans" }, "introfin": true }
+//   étapes : sprites | revsprites | plans | revplans | fini   (un segment absent de « depart » repart de « sprites » ; « fini » saute le segment)
+//   « plans » reprend le travail déjà écrit dans sc_<nom>.js s'il est avancé ; « revplans » = relecture puis corrections des plans existants.
 export const meta = {
   name: 'video3-animaux',
   description: 'Vidéo 3 : les trois anecdotes (sprites des animaux, puis plans), relues par des relecteurs indépendants',
@@ -137,6 +138,7 @@ const fixSpritesPrompt = (sg, built, issues) => [
 
 const shotsPrompt = (sg, sprites) => [COMMUN, 'TON NOM : ' + sg.nom + ' (préfixe ' + sg.prefixe + ' pour toute fonction ou constante nouvelle). Dossier de sortie : build/' + sg.nom + '/.',
   "SPRITES LIVRÉS (relus et corrigés) : " + JSON.stringify(sprites),
+  "REPRISE : si sc_" + sg.nom + ".js contient déjà de VRAIS plans (plus de 15 Ko), c'est un travail interrompu par une limite d'usage : lis-le en entier, lance node solo.mjs " + sg.seg + " puis node check.mjs et répare ce qui plante (une erreur du type « X is not defined » = un plan resté à moitié écrit), termine les plans qui manquent et améliore ceux qui sont faibles ; NE REPARS PAS DE ZÉRO et n'efface aucun plan abouti ; écris son_" + sg.nom + ".md s'il n'existe pas. S'il ne contient que les plans de contrôle provisoires, écris les vrais plans.",
   sg.shots_brief,
   "FIN DE TRAVAIL : (1) node solo.mjs " + sg.seg + " ; node valide.mjs " + sg.seg + " doit ne donner aucun avertissement (début du segment, plans qui se suivent jusqu'à S.t1, coupes juste avant un mot, événements de types connus et dans leur plan) ; (2) PAGE=solo_" + sg.seg + ".html OUT=build/" + sg.nom + " node check.mjs 6 : erreurs : 0 ; node bords.mjs (avec PAGE=...) : aucun texte hors cadre ; (3) tu as regardé chaque plan à 15 %, 55 % et 90 % de sa durée et en bande de mouvement pour les plans qui bougent, et à 1/4 de taille : le sujet se lit, rien de flottant, sous-titres (y ≈ 375) sans recouvrir l'essentiel ; (4) tu écris son_" + sg.nom + ".md : pour CHAQUE plan : ce qu'on voit, l'ambiance continue souhaitée (vent, oiseaux, ruisseau, grillons...), la liste des événements avec leur instant et ce qu'ils représentent, et l'intention musicale (calme, tension, soulagement, comique) ; (5) rapport structuré.",
 ].join('\n\n')
@@ -157,7 +159,7 @@ const SHOT_LENSES = [
 const fixShotsPrompt = (sg, built, issues) => [
   COMMUN, 'TON NOM : ' + sg.nom + ' (préfixe ' + sg.prefixe + '). Tu es l\'artiste qui corrige : deux relecteurs indépendants ont examiné le segment (travail déjà fait : à reprendre en place avec Edit, sans tout réécrire) et ont trouvé : ' + JSON.stringify(issues),
   "Compte rendu de la première version : " + JSON.stringify(built),
-  "Applique chaque correction bloquante ou importante (et les mineures peu coûteuses), revérifie (valide.mjs sans avertissement, check.mjs erreurs : 0, bords.mjs, images regardées aux fractions utiles, strips), mets à jour son_" + sg.nom + ".md si des plans ou événements changent. Ce qui n'est pas corrigé va dans 'restant' avec la raison.",
+  "Applique chaque correction bloquante ou importante (et les mineures peu coûteuses), revérifie (valide.mjs sans avertissement, check.mjs erreurs : 0, bords.mjs, images regardées aux fractions utiles, strips), mets à jour son_" + sg.nom + ".md si des plans ou événements changent (et écris-le s'il n'existe pas : pour chaque plan, l'image, l'ambiance continue, les événements avec leur instant, l'intention musicale). Ce qui n'est pas corrigé va dans 'restant' avec la raison.",
 ].join('\n\n')
 
 
@@ -191,16 +193,17 @@ async function accrocheFinale() {
   await SPRITES_PRETS
   log('sprites prêts : accroche et finale')
   return await parallel(FIN_SEGMENTS.map(fs => async () => {
-    const built = await agent(finPrompt(fs), { label: 'plans:' + fs.nom, phase: 'Plans', schema: SC_SPRITES })
-    const lenses = SHOT_LENSES.map(l => ({ ...l, text: l.text.replace('NOM', fs.nom) + ' ' + fs.review_focus }))
-    const rev = await parallel(lenses.slice(0, RELECTEURS).map(l => () => agent(reviewShotsPrompt(fs, built, l), optRev({ label: 'revplans:' + fs.nom + ':' + l.id, phase: 'Relecture plans', schema: SC_REVIEW }))))
+    const built = await agent(finPrompt(fs), { label: 'plans:' + fs.nom, phase: 'Plans', schema: SC_SPRITES, effort: 'high' })
+    const lenses = [COMBI].map(l => ({ ...l, text: l.text.replace(/NOM/g, fs.nom) + ' ' + fs.review_focus }))
+    const rev = await parallel(lenses.map(l => () => agent(reviewShotsPrompt(fs, built, l), { label: 'revplans:' + fs.nom + ':' + l.id, phase: 'Relecture plans', schema: SC_REVIEW, effort: 'medium' })))
     const iss = fusion(rev)
     let fix = null
-    if (iss.some(i => i.gravite !== 'mineur')) fix = await agent(fixShotsPrompt(fs, built, iss), { label: 'fixplans:' + fs.nom, phase: 'Corrections plans', schema: SC_FIX })
+    if (iss.some(i => i.gravite !== 'mineur')) fix = await agent(fixShotsPrompt(fs, built, iss), { label: 'fixplans:' + fs.nom, phase: 'Corrections plans', schema: SC_FIX, effort: 'high' })
     return { seg: fs.seg, built, rev, fix }
   }))
 }
 
+const COMBI = { id: 'complet', text: SHOT_LENSES[0].text + ' EN PLUS (récit, synchronisation, exactitude) : ' + SHOT_LENSES[1].text }
 const graves = r => (r && r.issues || []).filter(i => i.gravite !== 'mineur')
 const fusion = rs => rs.filter(Boolean).flatMap(r => r.issues || [])
 
@@ -214,29 +217,26 @@ async function segment(sg) {
 const ARGS = (typeof args === 'object' && args) || {}
 const DEP = ARGS.depart || {}
 const ORDRE = ['sprites', 'revsprites', 'plans', 'revplans']
-const RELECTEURS = ARGS.relecteurs || 2
-const EFFORT = ARGS.effort_relecture
-const optRev = o => EFFORT ? { ...o, effort: EFFORT } : o
 async function segmentInner(sg) {
   const dep = DEP[sg.seg] || 'sprites'
   if (dep === 'fini') return { seg: sg.seg, saute: true }
   const depuis = i => ORDRE.indexOf(dep) <= i
   const NOTE = { note: 'travail déjà fait : lire les fichiers du segment (sc_' + sg.nom + '*.js, son_' + sg.nom + '.md) et build/' + sg.nom + '/' }
   const sprites = depuis(0) ? await agent(spritesPrompt(sg), { label: 'sprites:' + sg.nom, phase: 'Sprites', schema: SC_SPRITES }) : NOTE
-  const revS = depuis(1) ? await parallel(SPRITE_LENSES.slice(0, RELECTEURS).map(l => () => agent(reviewSpritesPrompt(sg, sprites, l), optRev({ label: 'revsprites:' + sg.nom + ':' + l.id, phase: 'Relecture sprites', schema: SC_REVIEW })))) : []
+  const revS = depuis(1) ? await parallel(SPRITE_LENSES.map(l => () => agent(reviewSpritesPrompt(sg, sprites, l), { label: 'revsprites:' + sg.nom + ':' + l.id, phase: 'Relecture sprites', schema: SC_REVIEW }))) : []
   const issS = fusion(revS)
   let spritesFinal = sprites
   if (issS.some(i => i.gravite !== 'mineur')) {
-    const fx = await agent(fixSpritesPrompt(sg, sprites, issS), { label: 'fixsprites:' + sg.nom, phase: 'Corrections sprites', schema: SC_FIX })
+    const fx = await agent(fixSpritesPrompt(sg, sprites, issS), { label: 'fixsprites:' + sg.nom, phase: 'Corrections sprites', schema: SC_FIX, effort: 'high' })
     spritesFinal = { premiere_version: sprites, corrections: fx }
   }
   SPRITES_DONE[sg.seg](spritesFinal)
-  const shots = depuis(2) ? await agent(shotsPrompt(sg, spritesFinal), { label: 'plans:' + sg.nom, phase: 'Plans', schema: SC_SPRITES }) : NOTE
-  const lensesShots = SHOT_LENSES.slice(0, RELECTEURS).map(l => ({ ...l, text: l.text.replace('NOM', sg.nom) + ' ' + sg.review_focus }))
-  const revP = depuis(3) ? await parallel(lensesShots.map(l => () => agent(reviewShotsPrompt(sg, shots, l), optRev({ label: 'revplans:' + sg.nom + ':' + l.id, phase: 'Relecture plans', schema: SC_REVIEW })))) : []
+  const shots = depuis(2) ? await agent(shotsPrompt(sg, spritesFinal), { label: 'plans:' + sg.nom, phase: 'Plans', schema: SC_SPRITES, effort: 'high' }) : NOTE
+  const lensesShots = [COMBI].map(l => ({ ...l, text: l.text.replace(/NOM/g, sg.nom) + ' ' + sg.review_focus }))
+  const revP = depuis(3) ? await parallel(lensesShots.map(l => () => agent(reviewShotsPrompt(sg, shots, l), { label: 'revplans:' + sg.nom + ':' + l.id, phase: 'Relecture plans', schema: SC_REVIEW, effort: 'medium' }))) : []
   const issP = fusion(revP)
   let fixP = null
-  if (issP.some(i => i.gravite !== 'mineur')) fixP = await agent(fixShotsPrompt(sg, shots, issP), { label: 'fixplans:' + sg.nom, phase: 'Corrections plans', schema: SC_FIX })
+  if (issP.some(i => i.gravite !== 'mineur')) fixP = await agent(fixShotsPrompt(sg, shots, issP), { label: 'fixplans:' + sg.nom, phase: 'Corrections plans', schema: SC_FIX, effort: 'high' })
   return { seg: sg.seg, sprites, spritesFinal, revS, shots, revP, fixP }
 }
 
