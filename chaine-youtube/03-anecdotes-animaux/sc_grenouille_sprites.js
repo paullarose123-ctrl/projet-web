@@ -352,7 +352,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   { const r = rng(seed * 97 + 5); for (let i = 0; i < 5; i++) { const x = -13 + r() * 14, y = -14.4 + r() * 3.6, q = T(x, y); gr_fill(c, gr_ell(q[0], q[1], 1.8 + r() * 1.6, 0.9 + r() * 0.8, r() * 3), gr_N[8]); }
     for (let i = 0; i < 7; i++) { const x = -13 + r() * 13, y = -15.4 + r() * 5.4, q = T(x, y); gr_fill(c, gr_ell(q[0], q[1], 0.9 + r() * 1.4, 0.6 + r() * 0.8, r() * 3), gr_N[2]); } }
   // plis dorso-latéraux : une ligne claire bordée d'ombre, de derrière l'œil jusqu'au bassin
-  { const fold = [Ph(4.2, -14.1), Pb(-1, -15.1), Pb(-7, -15.3), Pb(-12.2, -13.6), Pb(-15.2, -9.5)]; gr_stroke(c, fold.map(p => [p[0], p[1] + 1.3]), 1.0, gr_N[3]); gr_stroke(c, fold, 1.4, gr_N[6]); }
+  { const fold = [Ph(4.2, -14.1), Pb(-1, -15.1), Pb(-7, -15.3), Pb(-12.2, -13.6), Pb(-15.2, -9.5)]; gr_stroke(c, fold.map(p => [p[0], p[1] + 1.7]), 1.3, gr_N[2]); gr_stroke(c, fold, 1.9, gr_N[7]); gr_stroke(c, fold.slice(0, 4).map(p => [p[0] + 0.4, p[1] - 0.5]), 0.7, gr_N[13]); }
   // ventre et mâchoire inférieure (crème)
   { const belly = [Ph(21.0, -7.0), Ph(15, -6.4), Ph(10, -5.7), Ph(5.2, -5.2), Pb(0, -5.5), Pb(-6, -4.9), Pb(-12, -4.5), Pb(-17.5, -5.7), Pb(-18, 6), Pb(0, 7), Ph(23, 7)], bp = polyPath(belly);
     gr_fill(c, bp, gr_N[11]);
@@ -376,7 +376,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   c.restore();
   // bosse de l'œil (saillante au-dessus de la tête)
   const eyeC = H(8.8, -14.6);
-  { const bR = Math.max(3.7, 3.2 + 1.4 / s), e = gr_ell(eyeC[0], eyeC[1], bR, bR - 0.1); c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(e); gr_fill(c, e, gr_N[3]); gr_cres(c, e, ll, 1.8, gr_N[4]); gr_cres(c, e, ll, 0.8, gr_N[5]); gr_cres(c, e, ll, 1.6, gr_N[2], true); }
+  { const bR = Math.max(3.3, 2.85 + 1.25 / s), e = gr_ell(eyeC[0], eyeC[1], bR, bR - 0.1); c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(e); gr_fill(c, e, gr_N[3]); gr_cres(c, e, ll, 1.8, gr_N[4]); gr_cres(c, e, ll, 0.8, gr_N[5]); gr_cres(c, e, ll, 1.6, gr_N[2], true); }
   // près : patte arrière et bras
   const hindN = drawHind(hipN, [K.hind.ax, K.hind.ay], false);
   const foreN = drawFore(shoN, [K.fore.wx, K.fore.wy], false);
@@ -385,7 +385,7 @@ function gr_frog(cx, cy, s, t, o = {}) {
   const eyeS = [Sx(eyeC[0]), Sy(eyeC[1])];
   const info = gr_finish(o, { cx, cy: cy - lift * s, s, flip, Ls, rim, outline, pale, ice, seed, t, ll, K, eyeS });
   // ── œil net
-  gr_eye(eyeS[0], eyeS[1], 3.2 * s, { open: eyeOpen, blink, dull, flip, Ls, ice: ice, info, s, seed, t, pale, sil: o.sil });
+  gr_eye(eyeS[0], eyeS[1], 2.85 * s, { open: eyeOpen, blink, dull, flip, Ls, ice: ice, info, s, seed, t, pale, sil: o.sil });
   const J = q => [Sx(q[0]), Sy(q[1])];
   return { joints: { hip: J(hipN), knee: J(hindN.kn), ankle: J(hindN.an), ball: J(hindN.ball), toe: J(hindN.tip), sho: J(shoN), elbow: J(foreN.el), wrist: J(foreN.w2) }, eye: eyeS, mouth: [Sx(mouth[0]), Sy(mouth[1])], head: [Sx(head[0]), Sy(head[1])], hip: [Sx(hipN[0]), Sy(hipN[1])], throat: [Sx(thr[0]), Sy(thr[1])], mask: info.mask, lift, bbox: info.bbox };
 }
@@ -568,7 +568,7 @@ function gr_eye(ex, ey, er, st) {
   // tons de la peau de la tête (même rampes que le bossage de l'œil : le globe et la paupière se raccordent au crâne)
   const SKs = st.ice > 0.55 ? gr_ICY : st.pale > 0.5 ? gr_PALE : gr_N, tSh = SKs[2], tBa = SKs[3], tMi = SKs[4], tLi = SKs[5];
   const ringL = WO[0], ringD = ST[3];
-  const irisL = [AM[5], AM[6], AM[7]], irisD = [ST[4], ST[5], ST[6]];
+  const irisL = [AM[4], AM[5], AM[6]], irisD = [ST[4], ST[5], ST[6]];
   L.setTransform(1, 0, 0, 1, 0, 0);
   const prx = Math.max(1, (R_ - 1) * 0.62), pry = Math.max(0.8, (R_ - 1) * 0.4);
   const r9 = R_ >= 9, sr = rng(st.seed * 7 + 3);
@@ -585,7 +585,7 @@ function gr_eye(ex, ey, er, st) {
     else if (R_ >= 4 && rr <= R_ - 1.8) col = I[1];
     else col = I[0];
     if (!alive && R_ >= 4 && (dx * st.Ls[0] + dy * ly) / R_ < -0.45 && rr > R_ * 0.5 && col !== ST[2] && col !== ringD) col = ST[3];       // croissant d'ombre : la cornée est bombée
-    if (r9 && alive && rr > R_ * 0.58 && rr < R_ * 0.8 && col !== '#05040f' && col !== ST[2]) { let a = Math.atan2(dy, dx); if (a < 0) a += TAU; for (const q of striae) { let d = Math.abs(a - q); if (d > Math.PI) d = TAU - d; if (d * rr < 0.55) { col = alive ? AM[4] : ST[3]; break; } } }
+    if (r9 && alive && rr > R_ * 0.58 && rr < R_ * 0.8 && col !== '#05040f' && col !== ST[2]) { let a = Math.atan2(dy, dx); if (a < 0) a += TAU; for (const q of striae) { let d = Math.abs(a - q); if (d > Math.PI) d = TAU - d; if (d * rr < 0.55) { col = alive ? AM[3] : ST[3]; break; } } }
     fx(dx, dy, col);
   }
   if (dl < 0.5) {                                                         // éclat de la lumière : un grand, un petit

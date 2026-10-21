@@ -46,12 +46,13 @@ function gr_g1(u, t, sh, close) {
   fl_spruceForest(t, { env: P, y: 300, bands: 2, h: 56, seed: 3, cam, snow: 0.55 });
   fl_snowGround(298, 480, { env: P, seed: 7, cam, t, melt: 0.3, under: 'litter' });
   if (!close) {
-    fl_birch(t, { x: 236, y: 330, h: 120, env: P, depth: 0.4, leaf: 0, snow: 0.1, seed: 5, cam });
+    fl_birch(t, { x: 246, y: 342, h: 204, env: P, depth: 0.0, leaf: 0, snow: 0.1, seed: 5, cam });             // vrai tronc de bouleau (blanc, marques sombres, branches), plus la fine tige qui ressemblait à un poteau
     fl_spruce(t, { x: 26, y: 326, h: 92, env: P, depth: 0.3, seed: 2, cam, snow: 0.7 });
     fl_leafLitter(10, 340, 262, 420, { env: P, snow: 0.4, seed: 3, cam, scale: 1.4 });
     fl_log(6, 354, 258, 34, { env: P, moss: 0.85, snow: 0.2, seed: 6, end: 'left', cam, depth: 0.1 });
     k_shadow(130 - cam * 1.1, 352, 80, 4, 0.3, { col: '30,36,80' });
     gr_last = gr_frog(130 - cam * 1.1, 331, 3.6, t, { pose: 'sit', light: -1, rim: NE[4], seed: 3, shadow: 0.2 });
+    k_breath(gr_last.mouth[0], gr_last.mouth[1], t, { dir: 1, period: 2.2, size: 0.85, phase: 0.2, strength: 0.95 });               // buée du souffle de la grenouille (soir froid)
     fl_moss(34 - cam * 1.1, 404, 44, { env: P, seed: 4, depth: 0.1, cam });
     fl_ferns(t, { x: 252, y: 440, h: 30, n: 6, env: P, depth: 0.1, seed: 4, cam, unfurl: 0.1 });
     fl_grassFg(t, { env: P, kind: 'dry', side: 'bottom', h: 50, n: 26, seed: 8, cam });
@@ -61,11 +62,12 @@ function gr_g1(u, t, sh, close) {
     fl_log(-34, 366, 350, 52, { env: P, moss: 0.9, snow: 0.15, seed: 9, end: 'none', cam, depth: 0.05 });
     k_shadow(135 - cam * 1.1, 354, 100, 5, 0.3, { col: '30,36,80' });
     gr_last = gr_frog(135 - cam * 1.1, 335, 5.2, t, { pose: 'sit', light: -1, rim: NE[4], seed: 3, shadow: 0.2 });
+    k_breath(gr_last.mouth[0], gr_last.mouth[1], t, { dir: 1, period: 2.2, size: 1.0, phase: 0.2, strength: 0.95 });
     fl_grassFg(t, { env: P, kind: 'dry', side: 'bottom', h: 60, n: 22, seed: 4, cam });
     fl_branchFg(t, { env: P, corner: 'tl', kind: 'spruce', len: 110, seed: 3, snow: 0.5, cam });
   }
   k_birds(t, { y: 112, x: 30, speed: 12, cam, n: 6, col: NI[2] });
-  k_snow(t, { cam, wind: 4, density: 0.35, par: [0.3, 0.6, 1] });
+  k_snow(t, { cam, wind: 4, density: 0.6, par: [0.3, 0.6, 1.2] });
   k_glints(t, { y0: 300, y1: 470, n: 12, cam });
   k_vignetteWarm(0.4, { cold: true });
 }
@@ -135,7 +137,7 @@ function gr_burrowFg(u, t, P, cam, o = {}) {
   const spring = P === 'alaskaSpring';
   fl_deadBranches(t, { x: 40, y: 452, h: 54, n: 5, env: P, depth: 0.0, seed: 3, cam, snow: spring ? 0.1 : 0.9 });
   fl_branchFg(t, { env: P, corner: 'tl', kind: 'spruce', len: 120, seed: 8, snow: spring ? 0.2 : 0.9, cam });
-  if (!spring) fl_branchFg(t, { env: P, corner: 'br', kind: 'spruce', len: 100, seed: 2, snow: 0.9, cam });
+  fl_branchFg(t, { env: P, corner: 'br', kind: 'spruce', len: 100, seed: 2, snow: spring ? 0.15 : 0.9, cam });       // au printemps : c'est la pointe de cette branche qui goutte dans la mare
 }
 
 // ───────────── plan 3 : g2_gel ─────────────
@@ -265,14 +267,18 @@ function gr_g3sucreUi(u, t, sh) {
 
 // ───────────── plan 7 : g3_survit ─────────────
 function gr_g3survit(u, t, sh) {
-  const P = 'alaskaDusk', cam = k_pan(u, -2, 4, 'o', 1.2), sv = gr_rel('survit', sh);
+  const P = 'alaskaDusk', cam = k_pan(u, -5, 7, 'io', 1.0), sv = gr_rel('survit', sh);
   gr_burrow(u, t, P, cam);
   k_shadow(gr_BX - cam * 1.1, gr_BY + 2, 74, 4, 0.34, { col: '30,36,80' });
   gr_frog(gr_BX - cam * 1.1, gr_BY, 4.4, t, { pose: 'frozen', light: -1, rim: NE[4], seed: 3, shadow: 0.2, ice: 0.82 });
-  k_glow(gr_BX - cam * 1.1, gr_BY - 24, 80, '255,190,90', 0.05 + 0.16 * bump(u, sv - 0.05, sv + 0.15, sv + 0.5, sv + 0.7));
+  // lueur ambre qui pulse (≈ 1,7 Hz, comme un cœur qui se prépare) dès le début du plan ; l'éclat de « survit » s'y ajoute ; deux halos : un large, un serré sur le ventre
+  const e = sm(prog(u, 0.02, 0.28)), pu = 0.5 + 0.5 * Math.sin((u - 0.1) * TAU * 1.7), fl = bump(u, sv - 0.05, sv + 0.1, sv + 0.4, sv + 0.7);
+  k_glow(gr_BX - cam * 1.1, gr_BY - 22, 150, '255,170,70', e * (0.12 + 0.08 * pu + 0.1 * fl));
+  k_glow(gr_BX - cam * 1.1 + 6, gr_BY - 20, 70, '255,214,130', e * (0.13 + 0.1 * pu + 0.12 * fl));
   gr_burrowFg(u, t, P, cam);
   k_snow(t, { cam, wind: 4, density: 1.0, speed: 1.0, par: [0.3, 0.6, 1.2] });
   k_glints(t, { y0: 300, y1: 470, n: 16, cam, rate: 1.4 });
+  k_glints(t, { x0: 40, x1: 215, y0: 262, y1: 352, n: 14, cam, par: 1.1, rate: 2.6, seed: 21, col: YE[3], col2: AM[7] });   // le givre de la grenouille scintille, tiré vers l'ambre par la lueur
   k_vignetteWarm(0.45, { cold: true });
 }
 function gr_g3survitUi(u, t, sh) {
@@ -283,10 +289,42 @@ function gr_g3survitUi(u, t, sh) {
 
 // ───────────── plan 8 : g4_degel ─────────────
 // matin de printemps, même terrier : la neige recule, les gouttes tombent d'une branche, la glace quitte la grenouille (la tête d'abord) pendant « dégèle »
-function gr_drop(x, y0, y1, td, t) {                                              // goutte qui tombe en accélérant et touche à td
-  const T = 0.42, a = (t - (td - T)) / T; if (a < 0 || a > 1) return;
-  const y = y0 + (y1 - y0) * a * a, l = 2 + Math.round(a * 3);
-  R(x, y - l - 1, 1, l, CY[2]); R(x - 1, y, 3, 2, CY[3]); R(x, y - 1, 1, 4, CY[4]); px(x, y, WH[3]); px(x, y + 2, CY[2]);
+// goutte de fonte : un renflement s'accroche à la pointe de la branche (0,35 s), se détache, tombe en accélérant (g ≈ 420 px/s²) et touche l'eau à td ;
+// à l'impact : deux anneaux clairs sur filet sombre (lisibles sur le reflet), quelques gouttelettes. (x, y0) = pointe ; y1 = surface de l'eau.
+const gr_G = 420;
+const gr_PX = 160, gr_PY = 445, gr_TX = 181, gr_TY = 416;                       // mare (centre) et pointe de branche qui goutte
+function gr_dropFall(y0, y1) { return Math.sqrt(2 * Math.max(1, y1 - y0) / gr_G); }
+function gr_dripFx(x, y0, y1, td, t, pond) {                                       // pond : [cx, rx, ry] de la mare (les anneaux sont coupés à son bord)
+  const T = gr_dropFall(y0, y1), a = t - (td - T), age = t - td;
+  if (a < -0.4 || age > 0.8) return;
+  const dk = CY[1], hi = WH[3], col = CY[4];
+  if (a < 0) {                                                                    // renflement qui gonfle à la pointe
+    const q = (a + 0.4) / 0.4;
+    if (q < 0.3) { px(x, y0 + 1, dk); px(x, y0 + 1, col); }
+    else if (q < 0.65) { px(x - 1, y0 + 1, dk); px(x, y0 + 1, hi); px(x + 1, y0 + 1, dk); px(x, y0 + 2, dk); }
+    else { px(x - 1, y0 + 1, dk); px(x, y0 + 1, hi); px(x + 1, y0 + 1, dk); px(x - 1, y0 + 2, dk); px(x, y0 + 2, col); px(x + 1, y0 + 2, dk); px(x, y0 + 3, dk); if (q > 0.88) px(x, y0 + 4, dk); }
+  } else if (age < 0) {                                                           // chute : tête 3 × 4 à liseré sombre + traînée qui s'allonge avec la vitesse
+    const yy = Math.round(y0 + 2 + 0.5 * gr_G * a * a), tail = Math.min(14, 2 + Math.round(gr_G * a * 0.03));
+    for (let s_ = 3; s_ <= tail + 2; s_++) px(x, yy - s_, s_ < 6 ? col : (s_ % 2 ? CY[3] : dk));
+    px(x, yy - 1, dk); px(x - 1, yy, dk); px(x, yy, hi); px(x + 1, yy, dk); px(x - 1, yy + 1, dk); px(x, yy + 1, col); px(x + 1, yy + 1, dk); px(x, yy + 2, dk);
+  } else {                                                                        // impact : anneaux (liseré sombre dessous, trait clair dessus) + gouttelettes
+    L.save(); L.beginPath(); L.ellipse(pond[0], y1 - 1, pond[1] - 1, pond[2] - 1, 0, 0, TAU); L.clip();
+    for (let k = 0; k < 2; k++) {
+      const b = age - k * 0.13; if (b <= 0) continue;
+      const r = 2 + 24 * eo(clamp(b / 0.55, 0, 1)), f = 1 - b / 0.62; if (f <= 0) continue;
+      const n = Math.ceil(r * 7), ry = r * 0.34;
+      for (let q = 0; q < n; q++) {
+        const an = q / n * TAU, X = x + Math.cos(an) * r, Y = y1 + Math.sin(an) * ry;
+        if (k_bay(q, k + 3) > f * 1.5) continue;
+        px(X, Y + 1, dk); px(X, Y, f > 0.55 ? hi : col);
+      }
+    }
+    L.restore();
+    if (age < 0.3) for (let i = 0; i < 5; i++) {
+      const vx = (i - 2) * 9 + (k_h(i, 9) - 0.5) * 5, vy = -46 - 22 * k_h(i, 10), X = x + vx * age, Y = y1 + vy * age + 0.5 * 230 * age * age;
+      if (Y > y1 + 1) continue; px(X, Y, age < 0.15 ? hi : col); if (age < 0.12) px(X, Y - 1, col);
+    }
+  }
 }
 function gr_degelIce(u, sh) { return 0.74 - 0.14 * sm(prog(u, 0.3, gr_rel('degele', sh))) - 0.5 * sm(prog(u, gr_rel('degele', sh), gr_rel('degele1', sh) + 0.05)); }
 function gr_runoff(m, t, tStart) {                                                // gouttes de fonte qui glissent sur la glace de la grenouille (surface lue dans le masque)
@@ -303,14 +341,14 @@ function gr_g4degel(u, t, sh) {
   gr_burrow(u, t, P, cam, { melt: Math.round(melt * 40) / 40, litterSnow: 0.35 * (1 - melt) });
   k_rays(262 - cam * 0.04, -20, t, { angle: 2.0, spread: 0.9, len: 430, strength: 0.3, n: 8, col: WH[2], col2: YE[3], cam });
   const D = (gr_A.drips || []);
-  k_puddle(48 - cam * 1.1, 408, 36, 10, t, { preset: P, drips: D, dropX: 0, axis: 300 });
-  for (const d of D) k_splash(48 - cam * 1.1, 408, d, t, { size: 0.9 });
+  k_puddle(gr_PX - cam * 1.1, gr_PY, 46, 11, t, { preset: P, drips: [], axis: 170 });        // mare dégagée (plus de branches mortes devant) : elle reflète le ciel bleu, les anneaux y tranchent
   k_shadow(gr_BX - cam * 1.1, gr_BY + 2, 74, 4, 0.34, { col: '40,30,20' });
   const ph = 0.55 * sm(prog(u, dg + 0.1, dg1 + 0.1));
   gr_last = gr_frog(gr_BX - cam * 1.1, gr_BY, 4.4, t, { pose: 'thaw', ph, light: 1, rim: '#fff8e8', seed: 3, shadow: 0.2, ice, iceFrom: 'head' });
   if (ice > 0.1) gr_runoff(gr_last, t, sh.t0 + 0.2);
   gr_burrowFg(u, t, P, cam);
-  for (const d of D) gr_drop(48 - cam * 1.1, 124, 404, d, t);
+  const tx = gr_TX - Math.max(-10, Math.min(10, cam * 0.54)), ty = gr_TY;                  // pointe de la branche (premier plan, avant bas droit) qui goutte
+  for (const d of D) gr_dripFx(tx, ty, gr_PY + 1, d, t, [gr_PX - cam * 1.1, 46, 11]);
   k_birds(t, { y: 100, x: 200, speed: 14, cam, n: 4, col: NI[3], dir: -1 });
   k_pollen(t, { n: 22, y0: 120, y1: 330, cam, beam: { x: 262, y: -20, angle: 2.0, spread: 1.1, len: 520 } });
   k_glints(t, { y0: 300, y1: 440, n: 14, cam, col2: CY[4] });
@@ -351,30 +389,34 @@ function gr_g4saut(u, t, sh) {
   gr_backdrop(P, t, cam, { cseed: 17, snow: 0.7 });
   fl_spruceForest(t, { env: P, y: 302, bands: 2, h: 56, seed: 12, cam, snow: 0.05, fog: 0.5, depthNear: 0.5 });
   fl_grassSpring(300, 480, { env: P, t, cam, grow: 1, seed: 8, h: 14 });
-  fl_birch(t, { x: 214, y: 330, h: 126, env: P, depth: 0.4, leaf: 0.85, seed: 8, cam });
+  fl_birch(t, { x: 252, y: 330, h: 126, env: P, depth: 0.4, leaf: 0.85, seed: 8, cam });       // tronc loin du museau d'arrivée (pas de tangente)
   fl_birch(t, { x: 30, y: 326, h: 112, env: P, depth: 0.45, leaf: 0.8, seed: 3, cam, stems: 2 });
   fl_flowers(8, 322, 262, 362, { env: P, t, cam, seed: 4, density: 0.8, zmin: 0.7, zmax: 1.0, depth: 0.25 });
   k_rays(262 - cam * 0.04, -20, t, { angle: 2.0, spread: 0.9, len: 430, strength: 0.26, n: 8, col: WH[2], col2: YE[3], cam });
   k_shadow(fx, fy + 1, 52, 4, 0.3, { col: '20,40,10' });
+  const tl = sh.t0 + J.tL + 0.8 * gr_JT;                                           // poussière à la réception : derrière la grenouille (sinon elle tramerait de vert sa gorge claire)
+  k_dustKick(98 + gr_JD, fy + 1, tl, t, { col: 'grass', dir: 0, size: 1.3, n: 9, cam });
   const o = { light: 1, rim: '#fff8e8', seed: 3, shadow: 0.2, hop: 9 };
   if (u < J.tL) gr_frog(fx, fy, 2.6, t, { ...o, pose: 'thaw', ph: 0.62 + 0.38 * sm(prog(u, 0, 0.28)) });
   else gr_frog(fx, fy, 2.6, t, { ...o, pose: 'leap', ph: J.lph, ...(rib > 0 ? { breath: Math.max(0.15, rib) } : {}) });
-  const tl = sh.t0 + J.tL + 0.8 * gr_JT;                                           // poussière à la réception
-  k_dustKick(98 + gr_JD, fy + 1, tl, t, { col: 'grass', dir: 0, size: 1.3, n: 9, cam });
   fl_ferns(t, { x: 236 - cam * 0.0, y: 410, h: 36, n: 7, env: P, depth: 0.1, seed: 5, cam, unfurl: 0.4 });
   fl_flowers(6, 392, 266, 470, { env: P, t, cam, seed: 8, density: 1.0, zmin: 0.9, zmax: 1.5, depth: 0.1 });
   fl_grassFg(t, { env: P, kind: 'spring', side: 'both', h: 120, n: 34, seed: 2, cam, dip: 0.8 });
   fl_grassFg(t, { env: P, kind: 'green', side: 'bottom', h: 50, n: 30, seed: 7, cam, dip: 0.25 });
   fl_branchFg(t, { env: P, corner: 'tl', kind: 'leafy', len: 120, seed: 6, blossom: true, cam });
   k_butterfly(150 - cam + 14 * Math.sin(u * 2.2), 262 + 10 * Math.sin(u * 3.1), t, { col: YE[2], col2: AM[6], flutter: 3 });
-  k_butterfly(214 - cam * 0.9, 300 + 8 * Math.sin(u * 2.6 + 1), t, { col: WH[3], col2: CY[3], phase: 2 });
+  k_butterfly(238 - cam * 0.9, 268 + 8 * Math.sin(u * 2.6 + 1), t, { col: WH[3], col2: CY[3], phase: 2 });
   k_birds(t, { y: 96, x: 120, speed: 10, cam, n: 5, col: NI[3], dir: 1 });
   k_pollen(t, { n: 24, y0: 100, y1: 340, cam, beam: { x: 262, y: -20, angle: 2.0, spread: 1.1, len: 520 } });
 }
 function gr_g4sautUi(u, t, sh) {
   const ee = gr_rel('etait1', sh);
   hudTracker(0, 0, 1); hudLieu(0);
-  if (u >= ee) mark(26, 26, 'yes', prog(u, ee, ee + 0.3), 5);
+  if (u >= ee) {                                                                   // coche de fin d'anecdote : pastille plus grande (r 7), rebond, halo vert qui s'étend sur 0,35 s
+    const h = prog(u, ee, ee + 0.35);
+    if (h > 0 && h < 1) { const r = 8 + 11 * eo(h), n = Math.ceil(r * 7); for (let q = 0; q < n; q++) { if (((q * 7) % 5) / 5 > 1 - h) continue; const an = q / n * TAU; px(27 + Math.cos(an) * r, 27 + Math.sin(an) * r, h < 0.5 ? GR[5] : GR[3]); if (h < 0.4) px(27 + Math.cos(an) * (r - 1), 27 + Math.sin(an) * (r - 1), GR[4]); } }
+    mark(27, 27, 'yes', prog(u, ee, ee + 0.3), 7);
+  }
 }
 
 // ───────────── la page : préchauffage des caches des bibliothèques ─────────────
@@ -401,7 +443,7 @@ function buildGrenouille(S) {
   A.stop = A.battre + 0.1; A.hbeats = gr_beatsHeart(A.arrete + 0.25);                                      // battements du cœur qui s'arrête (le dernier pendant « battre »)
   A.rbeats = [A.et4 + 0.05, A.et4 + 0.45];                                          // le cœur repart pendant « et » : deux battements espacés de 0,4 s (le plan ne dure que 0,8 s)
   const t3 = A.mais - 0.1, t3s = A.elle3 - 0.1, t4 = A.au - 0.1, t4c = A.et4 - 0.1, t4s = A.comme - 0.1, t2c = A.son2 - 0.1, t2s = A.et - 0.1;
-  A.drips = [t4 + 0.3, t4 + 0.72, t4 + 1.12, t4 + 1.5];
+  A.drips = [t4 + 0.46, t4 + 0.86, t4 + 1.26, t4 + 1.66];                         // impacts ; chaque goutte se forme à la pointe 0,4 s avant de tomber (0,37 s de chute)
   shot('g2_coeur', t2c, { draw: gr_g2coeur, ui: gr_g2coeurUi, ev: [[t2c, 'zoom', 0.5], ...A.hbeats.filter(b => b >= t2c).flatMap((b, i, a) => [[b, 'heartbeat', 1 - 0.2 * i], [b, 'beep', 1]]), [A.stop, 'flatline', t2s - A.stop], [A.battre - 0.05, 'label', 1]] });
   shot('g2_souffle', t2s, { draw: gr_g2souffle, ui: gr_g2souffleUi, ev: [[t2s, 'wind', 1.5], [A.cesse, 'suspense', A.respirer1 - A.cesse], [A.respirer - 0.05, 'label', 1]] });
   shot('g3_sucre', t3, { draw: gr_g3sucre, ui: gr_g3sucreUi, ev: [[t3, 'zoom', 0.6], [A.sucre, 'label', 1], [A.sucre, 'glow', A.cellules - A.sucre], [A.protege + 0.2, 'sparkle', 1], [A.protege + 0.6, 'sparkle', 1]] });

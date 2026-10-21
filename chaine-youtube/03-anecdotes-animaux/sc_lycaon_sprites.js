@@ -179,6 +179,8 @@ const LY_ATT = {
   lie: { an: -0.72, nl: 20, ah: 0.04, ear: 0.4, ta: 1.2, tc: 0.0, wag: 0.05, mouth: 0, dip: 0, hdip: 0, eye: 1 },
   sit: { an: -0.62, nl: 17, ah: 0.0, ear: 0.55, ta: 1.3, tc: 0.0, wag: 0.0, mouth: 0, dip: 0, hdip: 0, eye: 1 },
 };
+// fondu entre deux attitudes (w 0..1) : champs numériques interpolés (tête qui se relève, oreilles, queue, gueule), pour passer de « salutation » à « debout » sans saut
+function ly_attBlend(a, b, w, extra = {}) { const A = LY_ATT[a], B = { ...LY_ATT[b], ...extra }, o = {}; for (const k in A) o[k] = lerp(A[k], B[k], w); return o; }
 // allures (attaque de chaque patte à ph = 1 - décalage) : f = cycles par seconde, A = demi-amplitude des pas (px à s = 1), d = part d'appui, lift = hauteur de levée, ph = décalage d'attaque de chaque patte (nF/nH : côté visible, fF/fH : côté éloigné)
 const LY_GAITS = {
   walk: { f: 0.9, A: 15, d: 0.68, lift: 7, rF: 1, rH: 0, ph: { nH: 0, nF: 0.25, fH: 0.5, fF: 0.75 } },
@@ -251,6 +253,7 @@ function ly_dog(cx, cy, s, t, o = {}) {
   const C = ly_pal(envName, o.fog || 0, o.sil || 0), coat = ly_coat(seed), E = C.E;
   const lightX = o.light ?? E.light, rimK = clamp(o.rim ?? 1) * (1 - 0.3 * clamp(o.fog || 0)), shK = clamp(o.shadow ?? 1);
   const A = { ...(LY_ATT[pose] || LY_ATT.stand) };
+  if (o.att) Object.assign(A, o.att);                                                   // o.att : champs d'attitude forcés (fondu entre deux attitudes : voir ly_attBlend)
   const gname = o.gait || (LY_GAITS[pose] ? pose : null), G = gname ? LY_GAITS[gname] : null, tt = t + seed * 1.3;
   const ph = o.ph != null ? o.ph : (G ? (t - (o.t0 || 0)) * G.f + ly_h(seed, 11) : 0);               // sans o.ph : phase propre à chaque individu (deux chiens côte à côte ne marchent pas au même pas)
   const lie = pose === 'lie', sit = pose === 'sit', rest = lie ? clamp(o.rest ?? 0) : 0;
@@ -604,7 +607,7 @@ function ly_atchoum(x, y, p, o = {}) {
     const pop = 1 + (1 - eo(clamp(age))) * 0.5, sci = Math.max(1, Math.round(sc * pop)), oy = Math.round(-Math.sin(p * 22 - i * 0.9) * wv * (1 - dis) - (1 - eo(clamp(age))) * 6);
     const gx = cx0 - Math.round((sci - sc) * g[0].length / 2), gy = Math.round(y + oy - (sci - sc) * 3);
     const draw = (dx, dy, c) => { L.fillStyle = c; for (let r2 = 0; r2 < g.length; r2++) for (let q = 0; q < g[r2].length; q++) if (g[r2][q] === '#') {
-      if (dis > 0) { const bx = gx + q * sci + dx, by = gy + r2 * sci + dy; if (BAYER[(by & 3) * 4 + (bx & 3)] < dis) continue; }
+      if (dis > 0) { const bx = gx + q * sci, by = gy + r2 * sci; if (BAYER[(by & 3) * 4 + (bx & 3)] < dis) continue; }
       L.fillRect(gx + q * sci + dx, gy + r2 * sci + dy, sci, sci); } };
     for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1], [-1, 1], [1, -1], [-1, -1], [0, 2], [1, 2]]) draw(dx, dy, out);
     draw(0, 1, shd); draw(0, 0, col);
@@ -751,6 +754,16 @@ function ly_nose(cx, cy, s, t, o = {}) {
       L.restore();
     } else { const w = Math.max(2, er), x0 = ex_ - w, x1 = ex_ + w, m = Math.floor((x0 + x1) / 2); lineP(x0, ey_, m, ey_ + 1, WO[3], 1); lineP(m, ey_ + 1, x1, ey_, WO[3], 1); pxl(x0 - 0, ey_, WO[3]); }   // paupière : arc convexe, un pixel plus bas au milieu
   }
+  // sourcils (o.brow, ou o.browL / o.browR : −1 baissé et froncé … 0 neutre … 1 haussé : un seul sourcil haussé = air malicieux) et rictus (o.smirk 0..1 : le coin droit de la babine remonte)
+  if (o.brow != null || o.browL != null || o.browR != null) {
+    const bs = [o.browL ?? o.brow ?? 0, o.browR ?? o.brow ?? 0];
+    for (const [i, e] of eyes.entries()) {
+      const sd = i ? 1 : -1, k = bs[i], bw = Math.max(3, Math.round(6.5 * Z)), by = e[1] - er - 3 - Math.max(0, k) * 8 * Z + Math.max(0, -k) * 1.5 * Z;
+      const xi = e[0] - sd * bw, xo = e[0] + sd * bw, yi = by + (k < 0 ? 2.2 * Z * -k : -1.2 * Z * k), yo = by + (k < 0 ? -1.2 * Z * -k : 1.0 * Z * k);
+      lineP(xi, yi, xo, yo, WH[0], Math.max(2, Math.round(2 * Z))); lineP(xi, yi + 2, xo, yo + 2, WO[2], 1);
+    }
+  }
+  if ((o.smirk || 0) > 0.05) { const k = o.smirk, a = P0(9, 24.5), b = P0(19, 25 - 3 * k), c2 = P0(27, 24 - 9 * k), w = Math.max(1, Math.round(1.7 * Z)); lineP(a[0], a[1], b[0], b[1], NI[0], w); lineP(b[0], b[1], c2[0], c2[1], NI[0], w); px(c2[0], c2[1] - 1, WO[3]); }
   if (o.ballot) { const q = P0(o.bx || 0, 36 + (o.by || 0)), sc2 = Z >= 1.6 ? 2 : 1; if (q[0] - 16 >= 0 && q[0] + 16 <= LW) ptextC('OUI', q[0], q[1] - 3.5 * sc2, GR[2], sc2, null); }
   return { nose: P0(0, 0), nostrilL: P0(nsL[0], nsL[1]), nostrilR: P0(nsR[0], nsR[1]), eyeL: eyes[0], eyeR: eyes[1], lip: P0(0, 24), w: 120 * Z, paper: P0(o.bx || 0, 29.5 + (o.by || 0)) };
 }

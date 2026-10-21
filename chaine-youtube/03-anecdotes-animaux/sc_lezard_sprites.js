@@ -127,19 +127,19 @@ function lz_limbS(pts, ws, n = 5) {                                             
 // ───────────────────────── poses du lézard ─────────────────────────
 const LZ_POSE = {
   //          épaisseur  largeur  profondeur  tête(y, x)    tangage   piquants  cornes  pattes   respiration
-  // hn : couchage de la couronne (0 = en éventail de repos, + = couchée vers le dos, − = dressée) ; flat : disque posé au sol (bd 0,72, bh 1,8) ; puff : disque épaissi mais ovale (bh 9,5), couronne dressée au-dessus du dôme
+  // hn : couchage de la couronne (0 = en éventail de repos, + = couchée vers le dos, − = dressée) ; flat : disque posé au sol (bd 0,72, bh 1,8) ; puff : disque élargi et à peine épaissi (bh 6,6, bw 1,32 : une galette plus qu'une boule), couronne dressée au-dessus du dôme
   rest: { bh: 5.2, bw: 1.0, bd: 1.0, hy: 0, hx: 0, hp: 0.05, sp: 0.25, hn: 0.0, lg: 0.0, br: 1.0 },
   alert: { bh: 6.0, bw: 0.98, bd: 1.0, hy: -4.5, hx: 1.5, hp: -0.16, sp: 0.35, hn: -0.1, lg: 0.0, br: 1.4 },
   walk: { bh: 5.2, bw: 1.0, bd: 1.0, hy: -1.5, hx: 1, hp: -0.04, sp: 0.3, hn: 0.05, lg: 0.0, br: 0.8 },
   flat: { bh: 1.8, bw: 1.14, bd: 0.72, hy: 4.0, hx: 1.5, hp: 0.1, sp: 0.5, hn: 0.7, lg: 1.0, br: 0.7 },
-  puff: { bh: 9.5, bw: 1.18, bd: 1.18, hy: -1, hx: -2, hp: -0.02, sp: 1.0, hn: 0.1, lg: 0.0, br: 0.4 },
+  puff: { bh: 6.6, bw: 1.32, bd: 1.02, hy: 0, hx: -1, hp: -0.02, sp: 0.62, hn: 0.1, lg: 0.0, br: 0.4 },
   squirt: { bh: 5.6, bw: 1.0, bd: 1.0, hy: 3.5, hx: 4.5, hp: 0.28, sp: 0.8, hn: 0.15, lg: 0.0, br: 0.5 },
 };
 function lz_pose(o) {
   const A = LZ_POSE[o.pose || 'rest'] || LZ_POSE.rest, B = o.pose2 ? (LZ_POSE[o.pose2] || A) : A, k = o.pose2 ? clamp(o.mix ?? 0) : 0, P = {};
   for (const key in A) P[key] = lerp(A[key], B[key], k);
   const pf = clamp(o.puff ?? 0);
-  if (pf > 0) { P.bh = lerp(P.bh, 10, pf); P.bw = lerp(P.bw, 1.18, pf); P.bd = lerp(P.bd, 1.18, pf); P.sp = lerp(P.sp, 1, pf); P.hn = lerp(P.hn, 0.1, pf); P.hx = lerp(P.hx, -2, pf); P.hy = lerp(P.hy, -1, pf); }
+  if (pf > 0) { P.bh = lerp(P.bh, 6.8, pf); P.bw = lerp(P.bw, 1.32, pf); P.bd = lerp(P.bd, 1.02, pf); P.sp = lerp(P.sp, 0.62, pf); P.hn = lerp(P.hn, 0.1, pf); P.hx = lerp(P.hx, -1, pf); P.hy = lerp(P.hy, 0, pf); }
   P.name = o.pose || 'rest'; P.walk = (o.pose === 'walk' ? 1 - k : 0) + (o.pose2 === 'walk' ? k : 0);
   return P;
 }
@@ -582,7 +582,7 @@ function lz_jetEnd(x0, y0, vx, vy, t0, o = {}) { const a = lz_jetFlight(x0, y0, 
 function lz_jetHitT(x0, y0, vx, vy, t0, o = {}) { const a = lz_jetFlight(x0, y0, vx, vy, o); return a == null ? null : t0 + a / (o.tau ?? 1); }
 /* lz_jet(x0, y0, vx, vy, t0, t, o) : (x0, y0) = point de départ (coin de l'œil), (vx, vy) en px/s réels, t0 = début (s), t = instant courant.
    o : tau (temps ralenti : 1 = réel, 0,15 = ralenti ×6,7 ; défaut 1), dur (durée réelle de l'émission, 0,35 s), g (gravité), hit [x, y] (la tête du jet disparaît à l'impact), ground (ordonnée du sol : les gouttes qui y tombent laissent une tache),
-     size (épaisseur, 1), breakAge (âge de rupture du filet en gouttes, 0,1 s réelles), n (gouttes, 42), seed, stains (taches au sol, true). Renvoie { tip: [x, y], hitT, live }. Dessiner dans draw(). */
+     size (épaisseur, 1), gs (échelle des gouttes, 1 ; > 1 : gouttes rondes plus grosses), breakAge (âge de rupture du filet en gouttes, 0,1 s réelles), n (gouttes, 42), seed, stains (taches au sol, true). Renvoie { tip: [x, y], hitT, live }. Dessiner dans draw(). */
 function lz_jet(x0, y0, vx, vy, t0, t, o = {}) {
   const tau = o.tau ?? 1, s = (t - t0) * tau, dur = o.dur ?? 0.35, g = lz_gOf(o), sz = o.size ?? 1, ab = o.breakAge ?? 0.15, seed = o.seed ?? 9, N = o.n ?? 42;
   const aEnd = lz_jetFlight(x0, y0, vx, vy, o), maxAge = o.maxAge ?? 0.9, res = { tip: [x0, y0], hitT: aEnd != null ? t0 + aEnd / tau : null, live: false };
@@ -609,7 +609,8 @@ function lz_jet(x0, y0, vx, vy, t0, t, o = {}) {
     if (a < abj || a > Math.min(aEnd ?? maxAge, maxAge)) { if (a >= (aEnd ?? maxAge) && o.stains !== false && o.ground != null && aEnd != null && a >= aEnd && !o.hit) { const lx = x0 + vx * aEnd + dvx * (aEnd - abj); const age = s - e - aEnd; if (age > 0) { const sr = rad > 1.4 ? 1 : 0; const c0 = age < 0.4 / tau ? red3 : red1; R(lx, o.ground + (j % 3) - 1, 1 + sr + (j % 4 === 0 ? 1 : 0), 1, c0); if (j % 5 === 0) px(lx + 1, o.ground, red0); } } continue; }
     const d = a - abj, p = pos(a, dvx * 0, dvy * 0); p[0] += dvx * d; p[1] += dvy * d;
     const tw = Math.sin(t * 22 + ph) > 0.55;
-    if (rad >= 1.5) { R(p[0] - 2, p[1] - 2, 5, 5, red0); R(p[0] - 1, p[1] - 1, 3, 3, red3); px(p[0] - 1, p[1] - 1, tw ? WH[3] : red5); px(p[0] + 1, p[1] + 1, red1); }
+    if (o.gs > 1) { const rg = Math.max(1.3, rad * o.gs * 0.95); disc(p[0], p[1], rg + 1, red0); disc(p[0], p[1], rg, red3); if (rg > 2) disc(p[0] - rg * 0.25, p[1] - rg * 0.25, rg * 0.55, red4); px(p[0] - rg * 0.4, p[1] - rg * 0.4, tw ? WH[3] : red5); }
+    else if (rad >= 1.5) { R(p[0] - 2, p[1] - 2, 5, 5, red0); R(p[0] - 1, p[1] - 1, 3, 3, red3); px(p[0] - 1, p[1] - 1, tw ? WH[3] : red5); px(p[0] + 1, p[1] + 1, red1); }
     else if (rad >= 0.95) { R(p[0] - 1, p[1] - 1, 4, 4, red0); R(p[0], p[1], 2, 2, red3); px(p[0], p[1], tw ? WH[2] : red5); px(p[0] + 1, p[1] + 1, red1); }
     else { R(p[0] - 1, p[1] - 1, 4, 3, red0); R(p[0], p[1], 2, 1, red3); px(p[0], p[1], tw ? WH[2] : red5); }
   }
@@ -655,7 +656,8 @@ function lz_ruler(x, y, w, t, o = {}) {
   L.setTransform(1, 0, 0, 1, 0, 0);
   if (len <= 0) return { x0, x1: x0, xm };
   // ombre portée sur le sable
-  L.fillStyle = 'rgba(40,16,52,0.32)'; L.fillRect(x0 + 1, y0 + 1, len + 2, 4); L.fillStyle = 'rgba(40,16,52,0.2)'; L.fillRect(x0 + 3, y0 + 5, len, 2);
+  const hk = h / 6;
+  L.fillStyle = 'rgba(40,16,52,0.32)'; L.fillRect(x0 + 1, y0 + 1, len + 2, Math.round(4 * hk)); L.fillStyle = 'rgba(40,16,52,0.2)'; L.fillRect(x0 + 3, y0 + 1 + Math.round(4 * hk), len, Math.round(2 * hk));
   // face supérieure (vue rasante), tranche avant, contour
   R(x0 - 1, y0 - h - 1, len + 2, h + 3, NI[0]);
   R(x0, y0 - h, len, h, AM[7]); R(x0, y0 - h, len, 1, AM[10]); R(x0, y0 - h + 1, len, 1, AM[8]);
@@ -664,13 +666,13 @@ function lz_ruler(x, y, w, t, o = {}) {
   // graduations tous les 5 cm : courtes ; 10 cm : moyennes ; 50 cm et 1 m : longues
   for (let k = 0; k <= 21; k++) {
     const m = k * 0.05, px0 = Math.round(x0 + w * m); if (px0 > end - 1) break;
-    const big = k % 10 === 0, mid = k % 2 === 0; const hh = big ? h - 1 : mid ? 4 : 2;
+    const big = k % 10 === 0, mid = k % 2 === 0; const hh = big ? h - 1 : mid ? Math.round(h * 0.62) : Math.round(h * 0.34);
     R(px0, y0 - 1 - hh, 1, hh, big ? NI[0] : WO[1]);
   }
   // bout : languette métallique repliée, ou rouleau qui se déroule
   if (rv >= 1) { R(end, y0 - h - 2, 2, h + 4, NI[0]); R(end, y0 - h - 1, 1, h + 2, ST[6]); R(end + 1, y0 - h - 1, 1, h + 2, ST[3]); px(end, y0 - h - 1, WH[3]); }
   else {
-    const rr = 5, cx0 = end + 1, cy0 = y0 - 3; disc(cx0, cy0, rr, NI[0]); disc(cx0, cy0, rr - 1, AM[7]); disc(cx0, cy0, rr - 2, AM[6]);
+    const rr = Math.round(5 * hk), cx0 = end + 1, cy0 = y0 - Math.round(3 * hk); disc(cx0, cy0, rr, NI[0]); disc(cx0, cy0, rr - 1, AM[7]); disc(cx0, cy0, rr - 2, AM[6]);
     const ang = len / 3.2; for (let k = 0; k < 3; k++) { const a = ang + k * 2.1; lineP(cx0, cy0, cx0 + Math.cos(a) * (rr - 1), cy0 + Math.sin(a) * (rr - 1), k ? AM[8] : AM[4], 1); } disc(cx0, cy0, 1, NI[0]);
     px(cx0 - 2, cy0 - 3, AM[10]);
   }
@@ -680,10 +682,13 @@ function lz_ruler(x, y, w, t, o = {}) {
 // chiffres de la règle (pixel 5 × 7) : à appeler dans ui() si on veut les garder nets
 function lz_rulerText(x, y, w, t, o = {}) {
   const rv = clamp(o.reveal ?? 1), len = w * 1.08 * rv, h = o.h ?? 6;
-  for (const [m, label] of [[0, '0'], [0.5, '50 CM'], [1, '1 M']]) {
-    const d = w * m, k = (len - d) / 10; if (k <= 0) continue; const up = Math.round(3 * (1 - clamp(k))), px0 = Math.round(x + d), ty = Math.round(y) - h - 17 + up;
-    R(px0, ty + 8, 1, 5 - up, WH[2]);
-    ptextC(label, px0, ty, WH[3], 1, NI[0]);
+  const ts = o.ts ?? 1;                                                            // échelle du texte (2 : chiffres de 14 px de haut)
+  for (const [m, label] of (o.labels || [[0, '0'], [0.5, '50 CM'], [1, '1 M']])) {
+    const d = w * m, k = (len - d) / 10; if (k <= 0) continue; const up = Math.round(3 * (1 - clamp(k))), px0 = Math.round(x + d), ty = Math.round(y) - h - 10 - 7 * ts + up;
+    const tw = textW(label, ts); if (px0 - tw / 2 < 2 || px0 + tw / 2 > LW - 2) continue;       // jamais de texte coupé par le bord du cadre : le chiffre apparaît quand il est entier dans l'image
+    const hl = o.hi && Math.abs(o.hi[0] - m) < 1e-6 && o.hi[2] ? o.hi[1] : WH[3];                // o.hi = [mètre, couleur, actif] : le chiffre s'allume quand le jet arrive
+    R(px0, ty + 7 * ts + 1, ts, 5 - up, hl === WH[3] ? WH[2] : hl);
+    ptextC(label, px0, ty, hl, ts, NI[0]);
   }
 }
 

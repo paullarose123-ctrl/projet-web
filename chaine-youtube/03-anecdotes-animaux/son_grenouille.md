@@ -6,7 +6,7 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 
 ## g1_alaska — 6.71 → 8.86 s (2.15 s) : Alaska, heure bleue d'automne (« En Alaska, la grenouille des bois possède »)
 
-**Ce qu'on voit.** Paysage large : montagnes enneigées, aurore pâle derrière les crêtes, forêt d'épicéas dans la brume, première neige sur la litière de feuilles. Au premier plan, la grenouille des bois (≈ 45 % de la largeur) sur un tronc moussu, qui respire et cligne ; branche d'épicéa enneigée en haut à droite, herbes sèches en bas, quelques flocons, un vol d'oiseaux très lointain. Les trois cases du carnet et « 1/3 ALASKA » apparaissent (case de la grenouille allumée). Caméra qui glisse lentement vers la droite.
+**Ce qu'on voit.** Paysage large : montagnes enneigées, aurore pâle derrière les crêtes, forêt d'épicéas dans la brume, première neige sur la litière de feuilles. Au premier plan, la grenouille des bois (≈ 45 % de la largeur) sur un tronc moussu, qui respire (la gorge bat, une petite buée de souffle sort du museau toutes les 2,2 s) et cligne ; un vrai bouleau nu (tronc blanc à marques sombres, branches fines) à droite ; branche d'épicéa enneigée en haut à droite, herbes sèches en bas, quelques flocons, un vol d'oiseaux très lointain. Les trois cases du carnet et « 1/3 ALASKA » apparaissent (case de la grenouille allumée). Caméra qui glisse lentement vers la droite.
 
 **Ambiance continue.** Soir d'hiver qui s'annonce, très calme : vent léger et froid dans les épicéas (souffle continu bas, avec de petites rafales), un oiseau lointain (pas de chant de printemps : une seule note de mésange, espacée), air immobile et grand. Pas de grillons. Aucun bruit sur la coupe.
 
@@ -99,7 +99,7 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 
 ## g3_survit — 19.02 → 20.02 s (1.00 s) : Elle survit (« elle survit ! »)
 
-**Ce qu'on voit.** Retour dehors, nuit bleue : la grenouille gelée sous la neige, une lueur chaude très douce pulse autour d'elle ; sur « survit » une grande pastille verte ✓ apparaît en rebond et l'étiquette « 18 SUR 18 SURVIVENT » se tape. Neige qui tombe, scintillements, légère caméra.
+**Ce qu'on voit.** Retour dehors, nuit bleue : la grenouille gelée sous la neige, une lueur ambre pulse autour d'elle dès le début du plan (≈ 1,7 Hz, deux halos, plus forte sur « survit »), son givre scintille (points ambre), la caméra avance de ≈ 12 px sur la seconde ; sur « survit » une grande pastille verte ✓ apparaît en rebond et l'étiquette « 18 SUR 18 SURVIVENT » se tape. Neige qui tombe, scintillements, légère caméra.
 
 **Ambiance continue.** Le calme de l'hiver mais plus chaleureux : le vent retombe, une note d'espoir dans l'air ; on peut laisser un son très doux de glace qui chante.
 
@@ -113,7 +113,7 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 
 ## g4_degel — 20.02 → 21.93 s (1.91 s) : Le printemps, le dégel (« Au printemps, elle dégèle »)
 
-**Ce qu'on voit.** Même creux, matin clair de printemps (lumière à droite, rayons de soleil, ciel bleu, forêt verte). La neige recule, laissant la terre brune et des flaques ; des gouttes de fonte tombent d'une branche dans une flaque (anneaux à chaque goutte) ; des gouttes glissent sur la glace de la grenouille ; la glace se craquelle et fond, la peau brune reparaît (le dos d'abord, la tête en dernier), l'œil reste encore terne. Étiquette « GELÉE ≈ 6 MOIS » sur « printemps ». Oiseaux qui passent, pollen, scintillements de l'eau.
+**Ce qu'on voit.** Même creux, matin clair de printemps (lumière à droite, rayons de soleil, ciel bleu, forêt verte). La neige recule, laissant la terre brune et des flaques ; des gouttes de fonte tombent de la pointe d'une branche d'épicéa (premier plan, en bas à droite) dans une mare dégagée en bas à gauche (anneaux clairs à chaque contact) ; des gouttes glissent sur la glace de la grenouille ; la glace se craquelle et fond, la peau brune reparaît (le dos d'abord, la tête en dernier), l'œil reste encore terne. Étiquette « GELÉE ≈ 6 MOIS » sur « printemps ». Oiseaux qui passent, pollen, scintillements de l'eau.
 
 **Ambiance continue.** Le dégel : ruissellement d'eau de fonte, gouttes régulières qui claquent sur la flaque (une par goutte visible), craquements de glace, premiers chants d'oiseaux (ouverture douce), vent tiède. Très net contraste avec l'hiver.
 
@@ -124,10 +124,10 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 - 20.02 s · `bird` · 1 · un oiseau de printemps (type 1) au début
 - 20.20 s · `label` · 1 · l'étiquette « GELÉE ≈ 6 MOIS » se tape
 - 20.20 s · `thaw` · 1.607 · filet d'eau de la fonte (de « printemps » à la fin de « dégèle »)
-- 20.32 s · `drip` · 0.6 · une goutte d'eau frappe la flaque (×4 ; chacune correspond à une goutte tombée d'une branche et à un anneau dans la flaque)
-- 20.74 s · `drip` · 0.6 · une goutte d'eau frappe la flaque (×4 ; chacune correspond à une goutte tombée d'une branche et à un anneau dans la flaque)
-- 21.14 s · `drip` · 0.6 · une goutte d'eau frappe la flaque (×4 ; chacune correspond à une goutte tombée d'une branche et à un anneau dans la flaque)
-- 21.52 s · `drip` · 0.6 · une goutte d'eau frappe la flaque (×4 ; chacune correspond à une goutte tombée d'une branche et à un anneau dans la flaque)
+- 20.48 s · `drip` · 0.6 · une goutte frappe la mare (×4, toutes les 0,4 s) : un renflement s'accroche à la pointe de la branche d'épicéa du premier plan bas droit, la goutte tombe 0,37 s (sombre à liseré, traînée claire) puis deux anneaux clairs s'ouvrent sur le reflet bleu de la mare et quelques gouttelettes jaillissent ; l'instant de l'événement est celui du contact
+- 20.88 s · `drip` · 0.6 · une goutte frappe la mare (×4, toutes les 0,4 s) : un renflement s'accroche à la pointe de la branche d'épicéa du premier plan bas droit, la goutte tombe 0,37 s (sombre à liseré, traînée claire) puis deux anneaux clairs s'ouvrent sur le reflet bleu de la mare et quelques gouttelettes jaillissent ; l'instant de l'événement est celui du contact
+- 21.28 s · `drip` · 0.6 · une goutte frappe la mare (×4, toutes les 0,4 s) : un renflement s'accroche à la pointe de la branche d'épicéa du premier plan bas droit, la goutte tombe 0,37 s (sombre à liseré, traînée claire) puis deux anneaux clairs s'ouvrent sur le reflet bleu de la mare et quelques gouttelettes jaillissent ; l'instant de l'événement est celui du contact
+- 21.68 s · `drip` · 0.6 · une goutte frappe la mare (×4, toutes les 0,4 s) : un renflement s'accroche à la pointe de la branche d'épicéa du premier plan bas droit, la goutte tombe 0,37 s (sombre à liseré, traînée claire) puis deux anneaux clairs s'ouvrent sur le reflet bleu de la mare et quelques gouttelettes jaillissent ; l'instant de l'événement est celui du contact
 - 21.38 s · `crack` · 0.6 · la glace de la grenouille se fissure (×2, force 0,6 puis 0,8)
 - 21.68 s · `crack` · 0.8 · la glace de la grenouille se fissure (×2, force 0,6 puis 0,8)
 - 21.81 s · `sparkle` · 1 · scintillement de la dernière glace qui fond
@@ -151,7 +151,7 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 
 ## g4_saut — 22.73 → 24.60 s (1.87 s) : La grenouille saute dans la prairie (« comme si de rien n'était ! »)
 
-**Ce qu'on voit.** Prairie fleurie de printemps : herbe neuve, crocus et saxifrages, bouleaux en feuilles, papillons (jaune et blanc), rayons de soleil, pollen. La grenouille (brune, l'œil d'or qui s'est rallumé) finit de se réveiller (l'œil, la gorge qui repart), s'accroupit, saute sur « rien » (anticipation, impulsion, vol, réception avec écrasement) en avançant de ≈ 86 px, la caméra la suit en partie ; poussière d'herbe à la réception ; elle se pose, respire, cligne, puis gonfle deux fois la gorge (coassement). À la fin de « n'était » la case 1/3 se coche (pastille verte dans la case de la grenouille). Le dernier plan court jusqu'au début de l'anecdote suivante (0,5 s de calme : respiration, papillons, herbe).
+**Ce qu'on voit.** Prairie fleurie de printemps : herbe neuve, crocus et saxifrages, bouleaux en feuilles, papillons (jaune et blanc), rayons de soleil, pollen. La grenouille (brune, l'œil d'or qui s'est rallumé) finit de se réveiller (l'œil, la gorge qui repart), s'accroupit, saute sur « rien » (anticipation, impulsion, vol, réception avec écrasement) en avançant de ≈ 86 px, la caméra la suit en partie ; poussière d'herbe à la réception ; elle se pose, respire, cligne, puis gonfle deux fois la gorge (coassement). À la fin de « n'était » la case 1/3 se coche : pastille verte plus grande (rayon 7) qui rebondit, avec un halo vert qui s'étend sur 0,35 s autour de la case. Le dernier plan court jusqu'au début de l'anecdote suivante (0,5 s de calme : respiration, papillons, herbe).
 
 **Ambiance continue.** Printemps plein : chants d'oiseaux variés (merle, mésange, fauvette), bourdonnement d'insectes, ruisseau de fonte au loin, vent tiède dans l'herbe et dans les feuilles des bouleaux. À l'opposé du début : l'air est plein de vie.
 
@@ -171,7 +171,7 @@ Principe sonore du segment : on commence dehors dans l'air froid de l'automne (v
 
 - Types utilisés (tous du vocabulaire du GUIDE) : pop, label, wind, bird, suspense, scan, snowfall, frost, crack, zoom, heartbeat, beep, flatline, glow, sparkle, ding, reveal, thaw, drip, whoosh, hop, ribbit. Aucun type ajouté.
 - `heartbeat` : un par battement visible ; leur nombre et leurs instants collent à l'image (g2_coeur : 2 ; g4_coeur : 2). Le tracé de l'électrocardiogramme a son pic R exactement à ces instants. Les battements d'avant la coupe de g2_coeur (le tracé en montre une dizaine, de plus en plus serrés vers le passé) n'ont pas d'événement : la planche est un film accéléré (horloge 0 → 20 H).
-- `drip` : 4 gouttes dans g4_degel, chacune visible (goutte qui tombe d'une branche puis anneau dans la flaque à l'instant de l'événement).
+- `drip` : 4 gouttes dans g4_degel (20.48, 20.88, 21.28, 21.68 s), chacune visible : renflement à la pointe de la branche, chute de 0,37 s, anneaux sur la mare à l'instant de l'événement (déplacé de +0,16 s par rapport à la première version pour que la première goutte se forme à l'écran).
 - `flatline` démarre 0,1 s après « battre » et dure jusqu'à la coupe de g2_coeur (0,5 s) ; le silence qui suit dans g2_souffle est voulu.
 - `suspense` de g1_scan (de la coupe à « digne ») prépare `scan` (durée 1,5 s) ; `reveal` de g3_survit tombe en même temps que `ding`.
 - Les poumons de g2_souffle se gonflent une fois puis s'arrêtent sur « cesse » : rien n'est déclaré en événement (pas de type adapté), le `suspense` de ce plan l'accompagne.
