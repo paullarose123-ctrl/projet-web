@@ -5,7 +5,7 @@
    Fonctions pures du temps : aucun Math.random, aucun Date ; hasard = graine (o.seed), tout est déterministe (vérifié : mêmes pixels pour la même image, quel que soit l'ordre de rendu).
 
    gr_frog(cx, cy, s, t, o)   (cx, cy) = point de contact avec le sol sous le milieu du ventre ; s = échelle (1 : ≈ 40 px de long, assise ; 5 : gros plan ≈ 200 px) ; t = temps du film.
-        Anatomie : 4 doigts aux mains (écartés, bouts clairs), bras à coude net (épaule haute, bras vers l'arrière, avant-bras vers l'avant et le bas, coude ≈ 80°, poignet renflé), 5 orteils palmés aux pattes arrière (le 4e dépasse),
+        Anatomie : 4 doigts aux mains (écartés, bouts clairs), bras à coude net (épaule haute, bras court et trapu vers l'arrière, pointe osseuse du coude, avant-bras épais effilé vers un poignet fin, coude ≈ 80° en pose assise ; bras tendu en pose 'alert'), sans contour de bille aux articulations, 5 orteils palmés aux pattes arrière (le 4e dépasse),
         cuisse à muscle ombré et barres sombres irrégulières, museau assez pointu, bouche qui descend à l'arrière (pli sous le tympan), œil saillant dont la bosse dépasse du dos.
         o.pose    'sit' (assise) | 'alert' (tête haute, bras tendus) | 'crouch' (accroupie, croupe levée, tête relevée) | 'leap' (saut complet, ph 0..1) | 'land' (réception : bras droits devant le museau, tête basse, pattes arrière en traîne, rebond de gorge)
                   | 'frozen' (gelée : ramassée, peau désaturée gris-brun, œil OUVERT mais terne) | 'thaw' (dégel, ph 0..1 : de gelée à assise)
@@ -137,7 +137,7 @@ const gr_KEYS = {
   // hind : { ax, ay } cheville absolue  ou { hl, ha } (fraction d'extension, angle hanche → cheville) ; ta tarse, fa orteils (angles absolus, 0 = vers l'avant, + = vers le bas)
   sit: { tx: 0.4, ty: 0.7, rot: 0.3, len: 0.95, hgt: 1.08, arch: 0.6, hp: -0.08, hind: { ax: -12.0, ay: -3.1, ta: 0.28, fa: 0.1, fs: 0.93, ss: 0.82 }, fore: { wx: 5.9, wy: -0.9, ha: -0.04 } },
   alert: { tx: -0.6, ty: -1.1, rot: 0.46, len: 0.97, hgt: 1.06, arch: 0.35, hp: 0.02, hind: { ax: -12.6, ay: -3.1, ta: 0.26, fa: 0.1, fs: 0.9, ss: 0.84 }, fore: { wx: 6.0, wy: -0.6, ha: -0.02 } },
-  crouch: { tx: 1.2, ty: 1.0, rot: -0.2, len: 1.06, hgt: 0.97, arch: 0.55, hp: 0.24, hind: { ax: -13.6, ay: -2.4, ta: 0.2, fa: 0.06, fs: 0.84, ss: 0.78 }, fore: { wx: 7.6, wy: -0.9, ha: -0.02 } },
+  crouch: { tx: 1.0, ty: 1.2, rot: -0.33, len: 1.06, hgt: 0.97, arch: 0.7, hp: 0.42, hind: { ax: -13.6, ay: -2.4, ta: 0.2, fa: 0.06, fs: 0.84, ss: 0.78 }, fore: { wx: 7.6, wy: -0.9, ha: -0.02 } },
   frozen: { tx: 0.6, ty: 0.7, rot: 0.06, len: 1.02, hgt: 1.0, arch: 0.75, hp: -0.02, hind: { ax: -13.0, ay: -2.8, ta: 0.22, fa: 0.07, fs: 0.85, ss: 0.79 }, fore: { wx: 5.8, wy: -0.9, ha: -0.04 } },
   ext: { tx: 2, ty: 0, rot: 0.62, len: 1.08, hgt: 1.04, arch: 0.15, hp: 0.06, pin: 'foot', hind: { hl: 0.97, ha: 2.38, ta: 2.5, fa: 2.62, fan: 0.26, fl: 0.7 }, fore: { fl: 0.55, fha: 2.1, ha: 1.9 } },
   fly1: { tx: 3, ty: -22, rot: 0.36, len: 1.08, hgt: 1.08, arch: 0.15, hp: 0.04, hind: { hl: 0.94, ha: 2.72, ta: 2.9, fa: 3.08, fan: 0.32, fl: 1 }, fore: { fl: 0.6, fha: 1.9, ha: 1.7 } },
@@ -331,10 +331,12 @@ function gr_frog(cx, cy, s, t, o = {}) {
       part([w2, m1, tip], [1.5, 1.25, 0.85], [0.6, 0.3], [0.5, 0.3], false);
       if (!far) { c.fillStyle = gr_N[7]; c.beginPath(); c.arc(tip[0], tip[1], 0.62, 0, TAU); c.fill(); }
     }
-    part([el, [(el[0] + w2[0]) / 2, (el[1] + w2[1]) / 2], w2], [2.9, 2.5, 2.1]);
-    const wp = gr_ell(w2[0], w2[1], 1.5, 1.2); if (!far) { c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(wp); } gr_fill(c, wp, tones[0]); gr_cres(c, wp, ll, 0.7, tones[1]); gr_cres(c, wp, ll, 0.8, tones[3], true);           // renflement du poignet
-    part([sho, [(sho[0] + el[0]) / 2, (sho[1] + el[1]) / 2], el], [3.9, 3.4, 2.9], [1.3, 0.6], [1.3, 0.5]);
-    const ep = gr_ell(el[0], el[1], 1.7, 1.7); if (!far) { c.strokeStyle = gr_N[1]; c.lineWidth = cw; c.stroke(ep); } gr_fill(c, ep, tones[0]); gr_cres(c, ep, ll, 0.8, tones[1]); gr_cres(c, ep, ll, 0.6, tones[2]); gr_cres(c, ep, ll, 0.9, tones[3], true);   // le coude, net
+    // avant-bras épais près du coude, étroit au poignet ; bras court et trapu ; coude et poignet sans contour propre (ils se fondent dans le membre : pas de bille de mannequin)
+    part([el, [(el[0] + w2[0]) / 2, (el[1] + w2[1]) / 2], w2], [3.5, 2.9, 1.9]);
+    const wp = gr_ell(w2[0], w2[1], 1.25, 1.0); gr_fill(c, wp, tones[0]); gr_cres(c, wp, ll, 0.6, tones[1]); gr_cres(c, wp, ll, 0.7, tones[3], true);           // renflement du poignet
+    part([sho, [(sho[0] + el[0]) / 2, (sho[1] + el[1]) / 2], el], [4.4, 3.8, 3.4], [1.3, 0.6], [1.3, 0.5]);
+    const eb = Math.atan2(el[1] - (sho[1] + w2[1]) / 2, el[0] - (sho[0] + w2[0]) / 2), ep = gr_ell(el[0] + Math.cos(eb) * 0.5, el[1] + Math.sin(eb) * 0.5, 1.9, 1.4, eb);        // le coude : une pointe osseuse tournée vers l'extérieur du pli, au ton du membre (pas de gros éclat : ce n'est pas une bille)
+    gr_fill(c, ep, tones[0]); gr_cres(c, ep, ll, 0.8, tones[1]); gr_cres(c, ep, ll, 0.9, tones[3], true);
     return { el, w2 };
   };
   // loin : patte arrière et bras éloignés (décalés vers l'avant et le haut pour qu'on les voie dépasser)
@@ -532,7 +534,7 @@ function gr_finish(o, st) {
       if (top < 0 || lvA[Math.min(h - 1, top + 2) * w + i] < 0.3) continue;
       const m = 3 + Math.floor(R_() * 3), a0 = -Math.PI / 2 + (R_() - 0.5) * 0.7, bx0 = x0 + i, by = y0 + top + 1;
       for (let q = 0; q < m; q++) {
-        const f = (q - (m - 1) / 2), ang = a0 + f * 0.3 + (R_() - 0.5) * 0.12, len = (4.2 + R_() * 6.0) * unit * (1 - 0.22 * Math.abs(f)), bx = bx0 + f * 1.3, tx = bx + Math.cos(ang) * len, ty = by + Math.sin(ang) * len;
+        const f = (q - (m - 1) / 2), ang = a0 + f * 0.3 + (R_() - 0.5) * 0.12, len = (5.4 + R_() * 7.0) * unit * (1 - 0.22 * Math.abs(f)), bx = bx0 + f * 1.3, tx = bx + Math.cos(ang) * len, ty = by + Math.sin(ang) * len;
         const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux, bw = big ? 1.5 : 0.8;
         const nd = (bw_, ex_, c_) => poly([[bx - nx * bw_, by - ny * bw_], [bx + nx * bw_, by + ny * bw_], [bx + ux * (len + ex_), by + uy * (len + ex_)]], c_);   // aiguille : triangle effilé
         if (big) { nd(bw + 1, 1.2, '#05040f'); nd(bw, 0, CY[2]); nd(bw * 0.45, -0.4, CY[4]); px(bx + ux * len, by + uy * len, WH[3]); }
@@ -570,7 +572,7 @@ function gr_eye(ex, ey, er, st) {
   L.setTransform(1, 0, 0, 1, 0, 0);
   const prx = Math.max(1, (R_ - 1) * 0.62), pry = Math.max(0.8, (R_ - 1) * 0.4);
   const r9 = R_ >= 9, sr = rng(st.seed * 7 + 3);
-  const striae = r9 ? Array.from({ length: 16 }, (_, k) => k / 16 * TAU + sr() * 0.3) : null;
+  const striae = r9 ? Array.from({ length: 11 }, (_, k) => k / 11 * TAU + (sr() - 0.5) * 0.55) : null;       // quelques stries irrégulières (pas un cadran de montre)
   const fx = (ox, oy, w) => { L.fillStyle = w; L.fillRect(ex + ox, ey + oy, 1, 1); };
   // globe : anneau, iris en trois tons, pupille horizontale ; pixel par pixel (la couleur vivante ou terne se choisit selon la distance au centre)
   for (let dy = -R_; dy <= R_; dy++) for (let dx = -R_; dx <= R_; dx++) {
@@ -583,7 +585,7 @@ function gr_eye(ex, ey, er, st) {
     else if (R_ >= 4 && rr <= R_ - 1.8) col = I[1];
     else col = I[0];
     if (!alive && R_ >= 4 && (dx * st.Ls[0] + dy * ly) / R_ < -0.45 && rr > R_ * 0.5 && col !== ST[2] && col !== ringD) col = ST[3];       // croissant d'ombre : la cornée est bombée
-    if (r9 && alive && rr > R_ * 0.55 && rr < R_ * 0.86 && col !== '#05040f' && col !== ST[2]) { let a = Math.atan2(dy, dx); if (a < 0) a += TAU; for (const q of striae) { let d = Math.abs(a - q); if (d > Math.PI) d = TAU - d; if (d * rr < 0.55) { col = alive ? AM[4] : ST[3]; break; } } }
+    if (r9 && alive && rr > R_ * 0.58 && rr < R_ * 0.8 && col !== '#05040f' && col !== ST[2]) { let a = Math.atan2(dy, dx); if (a < 0) a += TAU; for (const q of striae) { let d = Math.abs(a - q); if (d > Math.PI) d = TAU - d; if (d * rr < 0.55) { col = alive ? AM[4] : ST[3]; break; } } }
     fx(dx, dy, col);
   }
   if (dl < 0.5) {                                                         // éclat de la lumière : un grand, un petit
