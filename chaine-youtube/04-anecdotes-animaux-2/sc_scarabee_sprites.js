@@ -178,27 +178,28 @@ function sb_shadow(x, y, rx, ry, a = 0.36, col = '5,4,15') {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 2. LE SCARABÉE : géométrie (repère du corps : x vers l'avant, y vers le bas, sol y = 0, unités = px à s = 1)
 // ════════════════════════════════════════════════════════════════════════════════════════
-const sb_ELY = [[13.5, -33], [9, -36.8], [1, -39.3], [-8, -39.8], [-17, -38.3], [-25, -35], [-31, -30.5], [-34, -25], [-34.4, -19.5], [-31.5, -16], [-22, -14.8], [-10, -14.3], [2, -14.6], [10, -15.8], [14.5, -20], [15.5, -27]];
-const sb_PRO = [[10, -34], [15, -37], [21, -36.6], [26, -32.5], [28.8, -26.5], [28.4, -20.5], [25.2, -16.6], [18, -15.4], [12, -16.6], [9.8, -23]];
-const sb_HEAD = [[23, -29.5], [28.5, -31.5], [34.5, -30], [38.8, -25.5], [40.6, -20.8], [39, -17], [34, -15.4], [28, -15.8], [23.5, -19]];
-const sb_VENT = [[-33.5, -20], [-31.5, -14.6], [-22, -13.2], [-10, -12.6], [2, -12.9], [10, -14.4], [13, -17.5], [0, -16.6], [-18, -17.2], [-30, -18.6]];      // dessous du corps (sternites)
-const sb_HIP = { F: [17.5, -15.2], M: [3.5, -14.4], H: [-12, -14.6] };
-const sb_PIV = [0, -26], sb_NECK = [25, -22], sb_ANT0 = [37.2, -27.6];
-const sb_LF = 12.6, sb_LT = 14.6, sb_LTAR = 8.6;                                                                   // fémur, tibia, tarse
+const sb_ELY = [[13.5, -33.2], [9, -36.4], [1, -38.6], [-8, -39], [-17, -37.6], [-25, -34.4], [-31, -30], [-34.5, -24.8], [-35, -20.8], [-32, -18.2], [-22, -17.2], [-10, -16.8], [2, -17], [10, -18.2], [14.5, -22], [15.5, -27.6]];
+const sb_PRO = [[10.5, -34.2], [15.5, -36.4], [21, -35.4], [25, -31.4], [27.2, -26.6], [26.8, -22.4], [23.6, -19.4], [18, -18.4], [12.5, -19.2], [10.2, -25.5]];
+const sb_HEAD = [[24, -29.4], [28.8, -31.2], [33.6, -30.6], [37.6, -27.6], [40.2, -23.8], [39.6, -21], [36, -19.2], [31, -18.8], [26.5, -19.6], [24.2, -22]];
+const sb_VENT = [[-33.5, -22], [-31.5, -16.6], [-22, -15.2], [-10, -14.6], [2, -14.9], [10, -16.4], [13, -19.4], [0, -18.6], [-18, -19.2], [-30, -20.6]];      // dessous du corps (sternites)
+const sb_HIP = { F: [18, -17.2], M: [3.5, -16.4], H: [-12.5, -16.8] };
+const sb_PIV = [0, -27], sb_NECK = [25.5, -24], sb_ANT0 = [36, -28.4];
+const sb_LF = 13.4, sb_LT = 16.2, sb_LTAR = 8.8;                                                                   // fémur, tibia, tarse
+const sb_FORE = { F: [0.96, 1], M: [0.58, 1], H: [0.86, 1] };                                                      // raccourcis de perspective (vue de profil : le fémur du milieu pointe vers nous)
 // pointe de l'abdomen : lignes médianes (6 points, de l'intérieur des élytres jusqu'à la buse) pour 0 / 0,35 / 0,7 / 1
 const sb_TIPK = [
   [[-25, -19.5], [-29.5, -19.6], [-33.5, -19.2], [-36.4, -18.6], [-38.4, -18], [-39.6, -17.5]],
   [[-25, -19.8], [-32, -20.2], [-39, -20.4], [-46, -19.6], [-52, -17.6], [-57, -15]],
   [[-25, -21], [-32, -24], [-38, -30], [-41, -38], [-40.5, -46], [-36, -52]],
-  [[-25, -21.5], [-33, -25.5], [-38.5, -32.5], [-37.5, -41], [-30.5, -46.5], [-21, -48]],
+  [[-25, -22], [-33.5, -26], [-39, -33], [-38, -41.5], [-30, -46.5], [-19, -47.5]],
 ];
-const sb_TIPW = [8.4, 8.0, 7.2, 6.2, 5.0, 3.8];
+const sb_TIPW = [8.2, 7.4, 6.2, 5.0, 4.0, 3.0];
 const sb_WALK = { T: 0.52, duty: 0.6, stride: 13, lift: 5.2 };
 sb_WALK.speed = sb_WALK.stride / (sb_WALK.duty * sb_WALK.T);                    // unités/s : le corps avance de `stride` pendant l'appui d'un pied
 const sb_walkPh = d => d * sb_WALK.duty / sb_WALK.stride;                       // phase (en cycles) après avoir avancé de d unités
 
 // pieds au repos (repère de cx : le sol est y = 0) ; [x, y] pour F, M, H ; côté proche (n) et lointain (f)
-const sb_TOES = { n: { F: [37, 0], M: [8.5, 0], H: [-28, 0] }, f: { F: [41, 0], M: [11.5, 0], H: [-24, 0] } };
+const sb_TOES = { n: { F: [40.5, 0], M: [10, 0], H: [-31, 0] }, f: { F: [44.5, 0], M: [13.5, 0], H: [-27, 0] } };
 function sb_gait(ph, id, side, st) {                                           // pied d'une patte pendant la marche (tripodes : proche F + proche H + lointaine M ensemble)
   const grp = ((id === 'M') === (side === 'f')) ? 0 : 0.5, p = (((ph + grp) % 1) + 1) % 1, W = sb_WALK, base = st[side][id];
   if (p < W.duty) return [base[0] + W.stride * (0.5 - p / W.duty), 0];
@@ -239,7 +240,7 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   const minW = 1.5 / s;                                                           // largeur minimale d'un trait (px écran → unités)
   // transformations du corps (tangage autour du pivot, hauteur, balancement) et de la tête
   const Tb = (x, y) => { const q = sb_rotAbout(x, y, sb_PIV[0], sb_PIV[1], P.pitch); return [q[0] + jit[0], q[1] - P.raise - P.bob + jit[1]]; };
-  const Th = (x, y) => { const q = sb_rotAbout(x, y, sb_NECK[0], sb_NECK[1], P.headRot); return Tb(q[0], q[1]); };
+  const Th = (x, y) => { const q = sb_rotAbout(sb_NECK[0] + (x - sb_NECK[0]) * 0.9, sb_NECK[1] + (y - sb_NECK[1]) * 0.9, sb_NECK[0], sb_NECK[1], P.headRot); return Tb(q[0], q[1]); };
   const mapPts = (pts, f) => pts.map(p => f(p[0], p[1]));
   const sx = x => cx + flip * s * x, sy = y => cy + s * y;
   const sil = o.sil || null;
@@ -253,7 +254,7 @@ function sb_beetle(cx, cy, s, t, o = {}) {
     sb_cres(c, path, ll, wl[0], tones[1]); sb_cres(c, path, ll, wl[1], tones[2]);
     sb_cres(c, path, ll, ws[0], tones[3], true); sb_cres(c, path, ll, ws[1], tones[4], true);
   };
-  const OR_N = [C.o3, C.o4, C.o5, C.o2, C.o1], OR_F = [C.o2, C.o3, C.o4, C.o1, C.o0];
+  const OR_N = [C.o4, C.o5, C.o6, C.o3, C.o2], OR_F = [C.o3, C.o4, C.o5, C.o2, C.o1];
   // ── pattes
   const hipsN = { F: Tb(...sb_HIP.F), M: Tb(...sb_HIP.M), H: Tb(...sb_HIP.H) };
   const legsInfo = {};
@@ -261,20 +262,20 @@ function sb_beetle(cx, cy, s, t, o = {}) {
     const dir = id === 'H' ? -1 : 1;                                                    // le tarse pointe en avant (avant, milieu) ou en arrière (arrière)
     const lifted = clamp(-toe[1] / 5.5), al = 0.34 + 0.75 * lifted;
     const ank = [toe[0] - dir * sb_LTAR * Math.cos(al), toe[1] - sb_LTAR * Math.sin(al)];
-    const ik = sb_ik(hip[0], hip[1], ank[0], ank[1], sb_LF, sb_LT, true), kn = ik.k, an = ik.a;
+    const ik = sb_ik(hip[0], hip[1], ank[0], ank[1], sb_LF * sb_FORE[id][0], sb_LT * sb_FORE[id][1], true), kn = ik.k, an = ik.a;
     const tones = far ? OR_F : OR_N;
     const wd = (a, b, m) => [Math.max(minW * 1.1, a), Math.max(minW * 1.2, m), Math.max(minW, b)];
     const stk = (pp, ww, wl, ws) => { const p = sb_seg(pp, ww); if (!far) { c.strokeStyle = C.o1; c.lineWidth = cw * 0.8; c.lineJoin = 'round'; c.stroke(p); } part(p, tones, wl, ws); return p; };
     // tarse (cinq articles : un trait fin) et deux griffes
     const tm = [(ank[0] + toe[0]) / 2, (ank[1] + toe[1]) / 2 + 0.2];
-    stk([an, tm, toe], wd(1.9, 1.1, 1.5), [0.5, 0.3], [0.5, 0.3]);
+    stk([an, tm, toe], wd(1.5, 0.9, 1.2), [0.5, 0.3], [0.5, 0.3]);
     const claw = (a) => { c.strokeStyle = far ? C.o1 : C.o2; c.lineWidth = Math.max(0.7, minW * 0.8); c.lineCap = 'round'; c.beginPath(); c.moveTo(toe[0], toe[1]); c.lineTo(toe[0] + dir * 1.8 * Math.cos(a), toe[1] + 1.8 * Math.sin(a)); c.stroke(); };
     claw(0.9); claw(-0.1);
     // tibia fin, légèrement renflé au milieu, avec de petites épines
-    stk([kn, [(kn[0] + an[0]) / 2 + 0.1, (kn[1] + an[1]) / 2], an], wd(2.8, 2.0, 2.5), [0.9, 0.4], [1.0, 0.4]);
+    stk([kn, [(kn[0] + an[0]) / 2 + 0.1, (kn[1] + an[1]) / 2], an], wd(2.0, 1.5, 1.8), [0.7, 0.3], [0.8, 0.3]);
     // fémur épais (fuseau)
     const fm = [(hip[0] + kn[0]) / 2, (hip[1] + kn[1]) / 2 - 0.4];
-    stk([hip, fm, kn], wd(3.4, 3.0, 5.0), [1.4, 0.6], [1.5, 0.6]);
+    stk([hip, fm, kn], wd(2.4, 2.5, 3.5), [1.1, 0.5], [1.2, 0.5]);
     if (!far && s >= 1.4) { c.strokeStyle = C.o2; c.lineWidth = 0.6; for (let q = 1; q <= 3; q++) { const f = 0.25 + q * 0.2, px_ = kn[0] + (an[0] - kn[0]) * f, py_ = kn[1] + (an[1] - kn[1]) * f; c.beginPath(); c.moveTo(px_ - dir * 0.6, py_); c.lineTo(px_ - dir * 1.6, py_ - 0.2); c.stroke(); } }
     legsInfo[id + (far ? 'f' : 'n')] = { kn, an, toe };
   };
@@ -287,11 +288,11 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   const antenna = (far) => {
     const base = Th(sb_ANT0[0] + (far ? 1.2 : 0), sb_ANT0[1] + (far ? -0.2 : 0));
     const pts = [base], ws = [Math.max(1.2, minW)]; let ax = base[0], ay = base[1];
-    const a0 = -0.62 + P.antA + (far ? -0.22 : 0.0) + P.headRot * 0.5, nseg = 11, L1 = 2.65;
+    const a0 = -0.5 + P.antA + (far ? -0.26 : 0.0) + P.headRot * 0.5, nseg = 11, L1 = 3.5;
     for (let i = 0; i < nseg; i++) {
       const f = i / nseg, wv = P.antW * (Math.sin(t * 3.1 + i * 0.55 + (far ? 1.7 : 0)) * 0.1 + Math.sin(t * 1.3 + (far ? 0.6 : 0)) * 0.08) * (0.3 + f);
-      const a = a0 + 0.62 * f * f + wv + 0.22 * f; ax += Math.cos(a) * L1; ay += Math.sin(a) * L1;
-      pts.push([ax, ay]); ws.push(Math.max(i % 2 ? 1.25 : 1.6, minW * (i % 2 ? 0.95 : 1.15)) * (1 - 0.3 * f));
+      const a = a0 + 0.9 * f * f + wv + 0.1 * f; ax += Math.cos(a) * L1; ay += Math.sin(a) * L1;
+      pts.push([ax, ay]); ws.push(Math.max(i % 2 ? 0.95 : 1.25, minW * (i % 2 ? 0.8 : 1.0)) * (1 - 0.35 * f));
     }
     const p = sb_seg(pts, ws, new Path2D(), 3);
     part(p, far ? OR_F : OR_N, [0.5, 0.3], [0.5, 0.3]);
@@ -358,7 +359,7 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   // ── pronotum
   const pro = sb_spline(mapPts(sb_PRO, Tb));
   c.strokeStyle = C.o0; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(pro);
-  part(pro, [C.o3, C.o4, C.o5, C.o2, C.o1], [3.2, 1.4], [3.6, 1.5]);
+  part(pro, [C.o4, C.o5, C.o6, C.o3, C.o2], [3.0, 1.3], [3.4, 1.5]);
   c.save(); c.clip(pro);
   { const gr = [Tb(18, -38), Tb(18.6, -28), Tb(18.2, -16)]; sb_stroke(c, gr, Math.max(0.7, minW * 0.8), C.o2); sb_stroke(c, gr.map(p => [p[0] + 0.9 * ll[0], p[1] + 0.9 * ll[1]]), 0.6, C.o5);     // sillon médian
     const gr2 = [Tb(11.6, -34), Tb(11.2, -24), Tb(12.4, -16.5)]; sb_stroke(c, gr2, Math.max(0.8, minW * 0.9), C.o1); }                                            // sillon de base
@@ -367,18 +368,18 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   const head = sb_spline(mapPts(sb_HEAD, Th));
   c.strokeStyle = C.o0; c.lineWidth = cw; c.stroke(head);
   // mandibules : faucilles brun sombre sous le museau
-  const mand = (dx, dy, far) => { const a = Th(38.2 + dx, -19.5 + dy), b = Th(42.8 + dx, -17.6 + dy), e = Th(42.8 + dx, -14.2 + dy); const p = sb_seg([a, b, e], [Math.max(2.4, minW * 1.5), Math.max(1.8, minW * 1.2), Math.max(0.9, minW * 0.7)]); part(p, far ? [C.o1, C.o2, C.o3, C.o0, C.o0] : [C.o2, C.o3, C.o4, C.o1, C.o0], [0.6, 0.3], [0.6, 0.3]); };
+  const mand = (dx, dy, far) => { const a = Th(38.6 + dx, -22.2 + dy), b = Th(42.6 + dx, -20.4 + dy), e = Th(42.4 + dx, -16.8 + dy); const p = sb_seg([a, b, e], [Math.max(2.0, minW * 1.4), Math.max(1.5, minW * 1.1), Math.max(0.8, minW * 0.7)]); part(p, far ? [C.o1, C.o2, C.o3, C.o0, C.o0] : [C.o2, C.o3, C.o4, C.o1, C.o0], [0.6, 0.3], [0.6, 0.3]); };
   mand(0.5, 0.6, true);
-  part(head, [C.o3, C.o4, C.o5, C.o2, C.o1], [3.0, 1.3], [3.2, 1.4]);
+  part(head, [C.o4, C.o5, C.o6, C.o3, C.o2], [2.8, 1.2], [3.0, 1.3]);
   mand(0, 0, false);
   // palpes
-  { const a = Th(35.6, -15.6), b = Th(38, -12.6); sb_stroke(c, [a, [(a[0] + b[0]) / 2 + 0.5, (a[1] + b[1]) / 2], b], Math.max(1.1, minW), C.o3); }
+  { const a = Th(36.4, -19.4), b = Th(38.6, -15.8); sb_stroke(c, [a, [(a[0] + b[0]) / 2 + 0.5, (a[1] + b[1]) / 2], b], Math.max(1.1, minW), C.o3); }
   // œil composé : bossage sombre à reflet chaud en haut à droite (lumière), cerné d'un anneau brun
-  const eyeC = Th(33.2, -25.2), eyeR = 3.7;
+  const eyeC = Th(32.4, -26), eyeR = 3.2;
   { const e = sb_ell(eyeC[0], eyeC[1], eyeR, eyeR * 0.92, P.headRot); c.strokeStyle = C.o1; c.lineWidth = cw * 0.9; c.stroke(e); sb_fill(c, e, C.e0);
     sb_cres(c, e, ll, 1.6, C.e3); sb_cres(c, e, ll, 0.8, C.e4); c.globalAlpha = 0.8; sb_cres(c, e, ll, 1.3, C.w1, true); c.globalAlpha = 1; }
   // front : une petite crête claire au-dessus de l'œil
-  { const a = Th(29.5, -30.6), b = Th(35.5, -29.8); sb_stroke(c, [a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.6], b], Math.max(0.9, minW * 0.9), C.o5); }
+  { const a = Th(29, -30.4), b = Th(35.5, -29.4); sb_stroke(c, [a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.5], b], Math.max(0.9, minW * 0.9), C.o5); }
   // antenne proche
   const antEnd = antenna(false);
   // ── pattes proches (par-dessus le corps)

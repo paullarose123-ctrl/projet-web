@@ -275,6 +275,10 @@ const BIRD = {
   coo: (t, s, o) => { [[0, 0.3, 500], [0.42, 0.2, 560], [0.7, 0.2, 550], [0.98, 0.5, 490]].forEach(([d, du, f]) => chirp(t + d, du, [[0, f * s * 1.04], [1, f * s]], { ...o, att: 0.35, h2: 0.25, h3: 0.06 })); },
   hoopoe: (t, s, o) => { for (let k = 0; k < 3; k++) chirp(t + k * 0.29, 0.14, [[0, 480 * s], [0.25, 540 * s], [1, 470 * s]], { ...o, att: 0.2, h2: 0.4, h3: 0.1 }); },
   rasp: (t, s, o) => { let x = t; for (let k = 0; k < 6; k++) { chirp(x, 0.09, [[0, 1700 * s], [1, 1250 * s]], { ...o, fm: [95, 380 * s], att: 0.2, h2: 0.6, h3: 0.3 }); x += 0.2 - k * 0.018; } },
+  parrot: (t, s, o) => { chirp(t, 0.2, [[0, 2000 * s], [0.3, 2600 * s], [1, 1500 * s]], { ...o, fm: [85, 420 * s], att: 0.15, h2: 0.5, h3: 0.3 }); chirp(t + 0.27, 0.16, [[0, 2300 * s], [1, 1600 * s]], { ...o, fm: [90, 380 * s], att: 0.15, h2: 0.5, h3: 0.25, gain: (o.gain || 0.05) * 0.8 }); },
+  oriole: (t, s, o) => { chirp(t, 0.36, [[0, 2300 * s], [0.3, 3000 * s], [1, 1900 * s]], { ...o, att: 0.2, h2: 0.1 }); chirp(t + 0.45, 0.28, [[0, 2100 * s], [1, 1650 * s]], { ...o, att: 0.2, h2: 0.08 }); },
+  toucan: (t, s, o) => { for (let k = 0; k < 4; k++) chirp(t + k * 0.23, 0.13, [[0, 950 * s], [1, 680 * s]], { ...o, fm: [60, 240 * s], att: 0.2, h2: 0.7, h3: 0.35 }); },
+  tinamou: (t, s, o) => { for (let k = 0; k < 3; k++) chirp(t + k * 1.0, 0.7, [[0, (1000 + 90 * k) * s], [1, (1080 + 90 * k) * s]], { ...o, att: 0.45, h2: 0.05 }); },
   owl: (t, s, o) => { chirp(t, 0.38, [[0, 360 * s], [0.4, 345 * s], [1, 330 * s]], { ...o, att: 0.35, h2: 0.15 }); chirp(t + 0.62, 0.55, [[0, 350 * s], [1, 300 * s]], { ...o, att: 0.3, h2: 0.15 }); },
 };
 
@@ -290,6 +294,42 @@ function voc(t0, dur, o = {}) {
   }
   emit(buf, t0, pan, send, gain / mx);
 }
+
+// ───────── instruments de l'épisode 2 ─────────
+function pizz(t0, n, o = {}) {                           // corde pincée d'orchestre (violoncelle / alto) : Karplus-Strong court, claquement du doigt, un peu de caisse
+  const { gain = 0.06, pan = 0, send = 0.3, t60 = 0.5, a = 0.58, bright = 1 } = o, f = hz(n), len = Math.floor(Math.min(1.8, t60 * 1.7 + 0.15) * SR), buf = ksString(f, len, { a, t60, pos: 0.14, exc: 0.85 });
+  dull(buf, clamp(f * 9 * bright, 1200, 5200), clamp(f * 2.2, 260, 1300), 0.07); bodyRes(buf, 0.5);
+  const sn = lpNoise(Math.floor(0.004 * SR), 0.1); for (let i = 0; i < sn.length; i++) buf[i] += sn[i] * 0.3 * (1 - i / sn.length);
+  emit(buf, t0, pan, send, gain * 1.5);
+}
+function boing(t0, f0, o = {}) {                         // ressort : sinus à vibrato de hauteur rapide qui s'amortit (« boi-oi-oing »), harmoniques creuses, ressort métallique (partiels légèrement désaccordés)
+  const { gain = 0.06, dur = 0.75, pan = 0, send = 0.4, depth = 0.55, rate = 12.5, tau = 0.28 } = o;
+  logOn(t0, 'boing', gain); const s0 = Math.floor(t0 * SR), len = Math.floor(dur * SR); let p1 = 0, p2 = 0;
+  for (let i = 0; i < len; i++) {
+    const x = i / SR, f = f0 * (1 + depth * Math.exp(-x / (tau * 0.8)) * Math.sin(TAU * rate * x * (1 + 0.5 * x)));
+    p1 += TAU * f / SR; p2 += TAU * f * 2.01 / SR;
+    const e = Math.min(1, x / 0.004) * Math.exp(-x / tau) * Math.min(1, (dur - x) / 0.05);
+    put(s0 + i, gain * e * (Math.sin(p1) + 0.45 * Math.sin(p2) + 0.2 * Math.sin(1.5 * p1 + 0.5)), pan, send);
+  }
+}
+function hum(t0, dur, n, o = {}) {                       // ronflement électrique : fondamentale grave et harmoniques 2 à 6 (audibles sur un petit haut-parleur), battement lent, trémolo
+  const { gain = 0.03, att = 1.0, rel = 1.2, send = 0.3, h = [0.45, 1, 0.8, 0.5, 0.3, 0.14], pan = 0 } = o, f = hz(n);
+  logOn(t0, 'hum', gain); const s0 = Math.floor(t0 * SR), len = Math.floor((dur + rel) * SR); let p1 = 0, p2 = 0;
+  for (let i = 0; i < len; i++) {
+    const x = i / SR; p1 += TAU * f / SR; p2 += TAU * f * 1.0035 / SR;
+    let v = 0; for (let k = 0; k < h.length; k++) v += h[k] * 0.5 * (Math.sin((k + 1) * p1) + Math.sin((k + 1) * p2 + 0.7 * k));
+    const e = x < att ? sm(x / att) : x > dur ? Math.max(0, 1 - (x - dur) / rel) : 1;
+    put(s0 + i, gain * v * e * e * (1 + 0.1 * Math.sin(TAU * 0.23 * x)), pan, send);
+  }
+}
+function zing(t0, f, o = {}) {                           // petite note aiguë qui crépite : ping très bref (sinus + harmonique) et micro-étincelles de 1 à 3 ms
+  const { gain = 0.04, pan = 0, send = 0.45, sparks = 4, dec = 0.05 } = o;
+  tone(t0, dec * 5, { f0: f, gain, att: 0.0008, rel: 0.012, dec, harm: [1, 0.25], pan, send });
+  for (let k = 0; k < sparks; k++) { const tk = t0 + 0.004 + k * (0.006 + 0.012 * rnd()); tone(tk, 0.012, { f0: Math.min(f * (1.2 + 1.8 * rnd()), 11000), gain: gain * (0.3 + 0.5 * rnd()), att: 0.0004, rel: 0.005, dec: 0.003, pan: clamp(pan + rr(-0.3, 0.3), -1, 1), send }); }
+}
+const semi = (n, st) => hz(n) * Math.pow(2, st / 12);    // note décalée de `st` demi-tons
+const pent = (root, st) => i => semi(root, 12 * Math.floor(i / 5) + st[((i % 5) + 5) % 5]);       // gamme pentatonique : degré i (négatif accepté) → fréquence
+const P_MIN = [0, 3, 5, 7, 10], P_MAJ = [0, 2, 4, 7, 9];
 
 // ───────── ambiances : tampons temporaires normalisés en RMS ─────────
 function layer(a, b, o, gen) {                           // gen() dessine dans le bus temporaire B (temps absolus) ; on règle le niveau RMS (dBFS avant mastering), fondus d'entrée / sortie, envoi de réverbération
@@ -349,23 +389,23 @@ function genCicada(o) {                                  // cigale lointaine : b
   const { seed = 5, f = 6200, bursts = [] } = o;
   return b => { for (const [t, d, g, pan] of bursts) { const rg = mkRnd(seed + Math.floor(t * 10)), F = new Filt().set(f, 7), s0 = Math.floor(t * SR), L = Math.floor(d * SR), r = 85 + 30 * rg(); for (let i = 0; i < L; i++) { const x = i / SR, u = i / L; F.run(rg() * 2 - 1); const pul = Math.pow(0.5 + 0.5 * Math.sin(TAU * r * x), 1.5), e = Math.pow(Math.sin(Math.PI * u), 1.4); put(s0 + i, g * F.bpn * pul * e * 0.35, pan, 0.4); } } };
 }
-function genStream(o) {                                  // ruisseau de fonte : bruit filtré à modulation rapide + bulles qui montent en fréquence + gouttes
-  const { seed = 31, bubbles = 60, drips = 0.35 } = o;
+function genStream(o) {                                  // cours d'eau : bruit filtré à modulation rapide + bulles qui montent en fréquence + gouttes (rivière : fa / fb plus graves, moins de bulles)
+  const { seed = 31, bubbles = 60, drips = 0.35, fa = 2400, fb = 900, hiss = 0.1, bubF = 450, dripF = [1100, 2600] } = o;
   return b => {
     for (let c = 0; c < 2; c++) {
       const rg = mkRnd(seed + c * 5), w1 = wander(seed + c * 17, 17, 8 / SR), w2 = wander(seed + c * 17 + 3, 6, 8 / SR), w3 = wander(seed + c * 29, 0.4, 8 / SR), F1 = new Filt(), F2 = new Filt(), F3 = new Filt(), out = c ? b.R : b.L; let m1 = 1, m2 = 1;
       for (let i = 0; i < b.n; i++) {
-        if ((i & 7) === 0) { m1 = clamp(0.65 + 0.5 * w1(), 0.1, 1.6); m2 = clamp(0.7 + 0.5 * w2(), 0.1, 1.5); F1.set(2400 * (0.85 + 0.2 * w3()), 0.8); F2.set(900 * (0.9 + 0.15 * w3()), 0.9); F3.set(5200, 0.9); }
-        const n = rg() * 2 - 1; F1.run(n); F2.run(n); F3.run(n); out[i] += F1.bpn * m1 * 0.7 + F2.bpn * m2 * 0.9 + F3.hp * 0.1 * m1;
+        if ((i & 7) === 0) { m1 = clamp(0.65 + 0.5 * w1(), 0.1, 1.6); m2 = clamp(0.7 + 0.5 * w2(), 0.1, 1.5); F1.set(fa * (0.85 + 0.2 * w3()), 0.8); F2.set(fb * (0.9 + 0.15 * w3()), 0.9); F3.set(5200, 0.9); }
+        const n = rg() * 2 - 1; F1.run(n); F2.run(n); F3.run(n); out[i] += F1.bpn * m1 * 0.7 + F2.bpn * m2 * 0.9 + F3.hp * hiss * m1;
       }
     }
     const rg = mkRnd(seed + 99), t1 = (b.off + b.n) / SR; let t = b.off / SR;
     while (t < t1) {                                     // bulles : sinus qui monte vite, amorti
-      const f = 450 * Math.pow(5, rg()), d = 0.014 + 0.03 * rg(), a = 0.25 + 0.75 * rg() * rg(), pan = rg() * 1.8 - 0.9, s0 = Math.floor(t * SR), L = Math.floor(d * 4 * SR); let ph = 0;
+      const f = bubF * Math.pow(5, rg()), d = 0.014 + 0.03 * rg(), a = 0.25 + 0.75 * rg() * rg(), pan = rg() * 1.8 - 0.9, s0 = Math.floor(t * SR), L = Math.floor(d * 4 * SR); let ph = 0;
       for (let i = 0; i < L; i++) { const x = i / SR, fr = f * (1 + 1.1 * (1 - Math.exp(-x / (d * 0.5)))); ph += TAU * fr / SR; put(s0 + i, a * 0.45 * Math.sin(ph) * Math.exp(-x / d) * Math.min(1, i / 12), pan, 0.25); }
       t += -Math.log(1 - rg()) / bubbles;
     }
-    t = b.off / SR + rg() * 2; while (t < t1) { const f = 1100 + 1500 * rg(), pan = rg() * 1.4 - 0.7; tone(t, 0.16, { f0: f, f1: f * 1.9, curve: 0.5, gain: 0.3 + 0.2 * rg(), att: 0.002, rel: 0.02, dec: 0.045, pan, send: 0.7 }); t += -Math.log(1 - rg()) / drips; }
+    t = b.off / SR + rg() * 2; while (t < t1) { const f = dripF[0] + (dripF[1] - dripF[0]) * rg(), pan = rg() * 1.4 - 0.7; tone(t, 0.16, { f0: f, f1: f * 1.9, curve: 0.5, gain: 0.3 + 0.2 * rg(), att: 0.002, rel: 0.02, dec: 0.045, pan, send: 0.7 }); t += -Math.log(1 - rg()) / drips; }
   };
 }
 function genBirds(o) {                                   // oiseaux : appels tirés au hasard (Poisson) parmi des espèces pondérées ; densité variable dans le temps
@@ -377,6 +417,83 @@ function genBirds(o) {                                   // oiseaux : appels tir
       const isFar = rg() < far, s = lerp(scale[0], scale[1], rg()), g = gain * (isFar ? 0.45 : 1) * (0.6 + 0.4 * rg()), pan = rg() * 1.8 - 0.9;
       BIRD[sp](t, s, { gain: g, pan, send: isFar ? sendFar : sendNear }); if (rg() < 0.35) BIRD[sp](t + 0.9 + rg() * 0.6, s * (0.95 + 0.1 * rg()), { gain: g * 0.8, pan, send: isFar ? sendFar : sendNear });
       t += -Math.log(1 - rg()) / Math.max(0.03, rate(t));
+    }
+    rnd = save;
+  };
+}
+function genFlies(o) {                                   // mouches : bourdonnement de vol (battement ≈ 150-240 Hz, harmoniques adoucis vers 1,5 kHz) qui passe, tourne, s'éloigne
+  const { seed = 71, rate = 0.3 } = o;
+  return b => {
+    const rg = mkRnd(seed), t1 = (b.off + b.n) / SR; let t = b.off / SR + rg() * 2;
+    while (t < t1) {
+      const d = 0.9 + 2.4 * rg(), f0 = 150 + 95 * rg(), p0 = rg() * 2 - 1, p1 = rg() * 2 - 1, amp = 0.3 + 0.7 * rg(), nz = mkRnd(Math.floor(seed * 7919 + t * 100)), wob = wander(Math.floor(seed + t * 10), 3, 1 / SR), F = new Filt().set(900, 0.8);
+      const s0 = Math.floor(t * SR), L = Math.floor(d * SR), tn = rg() * 0.5; let ph = 0;
+      for (let i = 0; i < L; i++) {
+        const x = i / SR, u = i / L, f = f0 * (1 + 0.07 * wob() + 0.015 * Math.sin(TAU * 11 * x)), near = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * clamp(u * (0.55 + tn))), 1.5);
+        ph += TAU * f / SR; let v = 0; for (let h = 1; h <= 9; h++) v += Math.sin(h * ph + h * h * 0.05) / Math.pow(h, 0.7);
+        F.run(v); put(s0 + i, 0.5 * amp * near * (F.lp * 0.6 + F.bp * 0.7) * Math.min(1, i / 480) * Math.min(1, (L - i) / 960), p0 + (p1 - p0) * u, 0.2);
+      }
+      t += -Math.log(1 - rg()) / rate;
+    }
+  };
+}
+function genTreeFrogs(o) {                               // rainettes : « tink-tink-tink » (sinus 1,7-3,4 kHz, 40 ms) en séries rapides, chacune sa hauteur, son rythme, sa place ; quelques coassements graves lointains
+  const { n = 6, seed = 81, f = [2100, 3400], rate = [5, 9], series = [4, 10], gap = [1.2, 4.5], croakers = 2, mulAmp = null } = o;
+  return b => {
+    const rg = mkRnd(seed), t1 = (b.off + b.n) / SR, save = rnd;
+    for (let k = 0; k < n; k++) {
+      const fk = lerp(f[0], f[1], rg()), rk = lerp(rate[0], rate[1], rg()), pan = n > 1 ? (k / (n - 1) * 2 - 1) * 0.85 : 0, amp = 0.45 + 0.55 * rg(); let t = b.off / SR + rg() * 3;
+      while (t < t1) {
+        const m = Math.round(lerp(series[0], series[1], rg())), ga = amp * (0.7 + 0.3 * rg()) * (mulAmp ? mulAmp(t) : 1);
+        for (let j = 0; j < m; j++) { const tj = t + j / rk * (0.96 + 0.08 * rg()), fj = fk * (1 + 0.012 * (rg() - 0.5)); tone(tj, 0.045, { f0: fj * 0.95, f1: fj * 1.06, gain: ga * (j < 2 ? 0.55 : 1) * (0.85 + 0.15 * rg()), att: 0.004, rel: 0.014, dec: 0.017, harm: [1, 0.3], pan, send: 0.3 }); }
+        t += m / rk + lerp(gap[0], gap[1], rg());
+      }
+    }
+    rnd = mkRnd(seed + 5);
+    for (let k = 0; k < croakers; k++) {
+      let t = b.off / SR + rg() * 4; const pan = rg() * 1.6 - 0.8, sc = 0.85 + 0.3 * rg();
+      while (t < t1) { const ga = (mulAmp ? mulAmp(t) : 1); croak(t, 0.1, 55 * sc, 68 * sc, 360 * sc, 1200 * sc, 0.28 * ga); croak(t + 0.16, 0.14, 62 * sc, 85 * sc, 430 * sc, 1500 * sc, 0.3 * ga); t += lerp(2.5, 7, rg()); }
+    }
+    rnd = save;
+  };
+}
+function genDrops(o) {                                   // gouttes qui tombent des grandes feuilles : « plip » qui monte vite, parfois une grosse goutte plus grave
+  const { seed = 91, rate = 0.8, f = [900, 2200], mulAmp = null } = o;
+  return b => { const rg = mkRnd(seed), t1 = (b.off + b.n) / SR; let t = b.off / SR + rg(); while (t < t1) { const big = rg() < 0.2, fr = lerp(f[0], f[1], rg()) * (big ? 0.55 : 1), pan = rg() * 1.6 - 0.8; tone(t, 0.2, { f0: fr * 0.9, f1: fr * 1.9, curve: 0.45, gain: (big ? 0.5 : 0.25) * (0.4 + 0.6 * rg()) * (mulAmp ? mulAmp(t) : 1), att: 0.002, rel: 0.02, dec: big ? 0.07 : 0.04, harm: [1, 0.15], pan, send: 0.7 }); t += -Math.log(1 - rg()) / rate; } };
+}
+function genUWHum(o) {                                   // sous l'eau : bourdonnement sourd et étouffé (bruit passe-bas ≈ 230 Hz, résonance ≈ 95 Hz) + ronflements à 58, 87 et 131 Hz qui battent lentement
+  const { seed = 101 } = o;
+  return b => {
+    for (let c = 0; c < 2; c++) {
+      const rg = mkRnd(seed + c * 3), w = wander(seed + c, 0.12, 16 / SR), w2 = wander(seed + 7 + c, 0.35, 16 / SR), F = new Filt(), G = new Filt(), out = c ? b.R : b.L; let p1 = 0, p2 = 0, p3 = 0, a = 1;
+      for (let i = 0; i < b.n; i++) {
+        if ((i & 15) === 0) { F.set(230 * (1 + 0.3 * w()), 0.7); G.set(95 * (1 + 0.1 * w2()), 1.6); a = 0.75 + 0.25 * w2(); }
+        const n = rg() * 2 - 1; F.run(n); G.run(n); p1 += TAU * (58 + 0.4 * c) / SR; p2 += TAU * (87 + 0.5 * c) / SR; p3 += TAU * (131 - 0.6 * c) / SR;
+        out[i] += (F.lp * 1.4 + G.bpn * 0.5) * a + 0.12 * Math.sin(p1) + 0.09 * Math.sin(p2 + 1) * (0.6 + 0.4 * w()) + 0.06 * Math.sin(p3 + 2) * (0.6 + 0.4 * w2());
+      }
+    }
+  };
+}
+function genUWBubbles(o) {                               // sous l'eau : bulles étouffées (graves, lentes), en petites grappes qui montent
+  const { seed = 111, rate = 0.9 } = o;
+  return b => {
+    const rg = mkRnd(seed), t1 = (b.off + b.n) / SR; let t = b.off / SR + rg();
+    while (t < t1) {
+      const m = 2 + Math.floor(rg() * 7), pan = rg() * 1.6 - 0.8; let tb = t, f = 240 + 500 * rg();
+      for (let j = 0; j < m; j++) { const d = 0.03 + 0.07 * rg(), s0 = Math.floor(tb * SR), L = Math.floor(d * 4 * SR), a = 0.3 + 0.7 * rg(); let ph = 0; for (let i = 0; i < L; i++) { const x = i / SR, fr = f * (1 + 0.9 * (1 - Math.exp(-x / (d * 0.6)))); ph += TAU * fr / SR; put(s0 + i, a * 0.4 * Math.sin(ph) * Math.exp(-x / d) * Math.min(1, i / 16), pan + 0.1 * Math.sin(j), 0.6); } tb += 0.05 + 0.16 * rg(); f *= 1.04 + 0.1 * rg(); }
+      t += -Math.log(1 - rg()) / rate;
+    }
+  };
+}
+function genFarCrackle(o) {                              // sous l'eau : petits craquements électriques lointains (grappes de micro-claquements 1,2-3,2 kHz, très réverbérés, et un « zzt » sourd)
+  const { seed = 121, rate = 0.5, mulAmp = null } = o;
+  return b => {
+    const rg = mkRnd(seed), t1 = (b.off + b.n) / SR, save = rnd; rnd = rg; let t = b.off / SR + rg() * 2;
+    while (t < t1) {
+      const ga = mulAmp ? mulAmp(t) : 1, m = 4 + Math.floor(rg() * 11), span = 0.12 + 0.4 * rg(), pan = rg() * 1.8 - 0.9;
+      for (let j = 0; j < m; j++) { const tj = t + span * Math.pow(rg(), 1.4); tone(tj, 0.012, { f0: 1200 + 2000 * rg(), gain: ga * (0.25 + 0.75 * rg()), att: 0.0005, rel: 0.004, dec: 0.002, pan: clamp(pan + rr(-0.2, 0.2), -1, 1), send: 0.8 }); }
+      nzb(t, span + 0.04, { f0: 900, f1: 1500, q: 1.2, gain: 0.05 * ga, att: 0.01, rel: 0.05, am: 0.9, arate: 38, pan, send: 0.7 });
+      t += -Math.log(1 - rg()) / rate;
     }
     rnd = save;
   };

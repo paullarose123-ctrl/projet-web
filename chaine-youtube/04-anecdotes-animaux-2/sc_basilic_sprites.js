@@ -130,7 +130,7 @@ function ba_runLeg(ph) {
 function ba_runPose(o, t) {
   const ph = o.ph ?? t * 3.3, spd = o.spd ?? 1, a = ba_runLeg(ph), b = ba_runLeg(ph + 0.5), bob = 0.5 - 0.5 * Math.cos(TAU * 2 * (ph - 0.05));
   return {
-    hx: 0, hy: -29 - 2.4 * bob, ta: -0.60 + 0.05 * Math.sin(TAU * 2 * ph + 1.0), tl: 38, arch: 1.2, na: -0.42 + 0.04 * Math.sin(TAU * 2 * ph + 2.0), nl: 8, ha: -0.04 + 0.05 * Math.sin(TAU * 2 * ph + 2.6),
+    hx: 0, hy: -28 - 2.4 * bob, ta: -0.54 + 0.05 * Math.sin(TAU * 2 * ph + 1.0), tl: 38, arch: 1.2, na: -0.42 + 0.04 * Math.sin(TAU * 2 * ph + 2.0), nl: 8, ha: -0.04 + 0.05 * Math.sin(TAU * 2 * ph + 2.6),
     tailA: 3.14 + 0.16 + 0.05 * Math.sin(TAU * ph + 0.4), tailC: -0.10, tw: 0.17 * spd, tph: ph, tlen: 118,
     Lx: a.x, Ly: a.y, Lt: a.th, Ls: a.sp, Fx: b.x, Fy: b.y, Ft: b.th, Fs: b.sp, lk: 1,
     Ax: -9.5 + 1.2 * Math.sin(TAU * ph + 0.3), Ay: 7.5 + 1.5 * Math.sin(TAU * ph + 1), Bx: -10.5 + 1.2 * Math.sin(TAU * ph + 3.4), By: 5.5 + 1.5 * Math.sin(TAU * ph + 4),
@@ -170,7 +170,7 @@ function ba_solve(P, t, o) {
   K.chainW = [5.0, 5.5, 7.6, 11.4 * br, 12.6 * br, 11.6 * br, 10.0, ...K.tailW.slice(1)];
   K.torso = [N0, spine(0.78), spine(0.5), spine(0.22), H]; K.torsoW = [7.6, 11.4 * br, 12.6 * br, 11.6 * br, 10.0];
   // pattes arrière : hanche un peu sous l'épine
-  const hipJ = (() => { const s = spine(0.06); return [s[0] - nT[0] * 2.4, s[1] - nT[1] * 2.4]; })(), l1 = 17 * P.lk, l2 = 21 * P.lk, reach = 0.985 * (l1 + l2);
+  const hipJ = (() => { const s = spine(0.06); return [s[0] - nT[0] * 2.4, s[1] - nT[1] * 2.4]; })(), l1 = 17 * P.lk, l2 = 21 * P.lk, reach = 0.95 * (l1 + l2);
   const leg = (x, y, th, sp) => {
     let dx = x - hipJ[0], dy = y - hipJ[1]; const d = Math.hypot(dx, dy); if (d > reach) { dx *= reach / d; dy *= reach / d; }
     const ank = [hipJ[0] + dx, hipJ[1] + dy], knee = ba_ik(hipJ, ank, l1, l2, -1);
@@ -259,11 +259,13 @@ function ba_lizard(cx, cy, s, t, o = {}) {
 
   // 1. membres éloignés (plus sombres, derrière le corps)
   const drawLeg = (lg, CC, near) => {
-    const pts = [lg.hip, lg.knee, lg.ank], lp = ba_union(ba_limbPts(pts, [8.6 * (0.6 + 0.4 * P.lk), 5.2, 3.0], 5), ba_elp(lg.hip[0] + 0.5, lg.hip[1] + 0.5, 6.0 * (0.6 + 0.4 * P.lk), 5.4 * (0.6 + 0.4 * P.lk), P.ta, 14));
+    const kk = 0.6 + 0.4 * P.lk, mid1 = [lerp(lg.hip[0], lg.knee[0], 0.5), lerp(lg.hip[1], lg.knee[1], 0.5)], mid2 = [lerp(lg.knee[0], lg.ank[0], 0.5), lerp(lg.knee[1], lg.ank[1], 0.5)];
+    const lp = ba_poly(ba_limbPts([lg.hip, mid1, lg.knee, mid2, lg.ank], [10.8 * kk, 9.4 * kk, 6.4 * kk, 4.6, 3.2], 4));
     c.fillStyle = CC.base; c.fill(lp);
-    if (near) { ink(lp, CC.line, 0.55); dk(lp, CC.shade, 1.6); dk(lp, CC.dark, 0.8); lt(lp, CC.lit, 1.3); rimL(lp, 0.9); } else { dk(lp, CC.shade, 1.4); }
+    if (near) { ink(lp, CC.line, 0.55); dk(lp, CC.shade, 1.6); dk(lp, CC.dark, 0.8); lt(lp, CC.lit, 1.4); rimL(lp, 0.9); } else { dk(lp, CC.shade, 1.4); }
+    const hb = ba_poly(ba_elp(lg.hip[0] + 0.5, lg.hip[1] + 0.4, 6.4 * kk, 5.8 * kk, P.ta, 16)); c.fillStyle = CC.base; c.fill(hb);
+    if (near) { lt(hb, CC.lit, 1.4); dk(hb, CC.shade, 1.4); }
     ba_foot(c, CC, lg.ank[0], lg.ank[1], lg.th, lg.sp, { fs: 1 });
-    if (near) { c.save(); c.translate(lg.ank[0], lg.ank[1]); c.rotate(lg.th); c.restore(); }
   };
   const drawArm = (ar, CC, near) => {
     const ap = ba_poly(ba_limbPts([ar.sh, ar.el, ar.hand], [5.0, 3.4, 2.6], 4));

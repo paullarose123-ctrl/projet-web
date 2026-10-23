@@ -13,6 +13,21 @@ const an_css = (c, a = 1) => { const r = an_rgb(c); return a >= 1 ? `rgb(${r[0] 
 const an_ss = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 function an_h(i, s = 0) { let h = Math.imul(i | 0, 374761393) + Math.imul(s | 0, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 function an_snap(c) { const r = an_rgb(c); return PAL_HEX[LUT[((r[0] >> 3) << 10) | ((r[1] >> 3) << 5) | (r[2] >> 3)]]; }
+// calque restreint à un rectangle bb = [x0, y0, x1, y1] (même résultat que layerBegin / layerEnd du moteur, sans parcourir tout l'écran)
+function an_layerBegin(bb) { Y.setTransform(1, 0, 0, 1, 0, 0); Y.globalAlpha = 1; Y.globalCompositeOperation = 'source-over'; Y.filter = 'none'; Y.clearRect(bb[0] - 2, bb[1] - 2, bb[2] - bb[0] + 4, bb[3] - bb[1] + 4); }
+function an_layerEnd(bb, o = {}) {
+  const x0 = Math.max(0, Math.floor(bb[0]) - 1), y0 = Math.max(0, Math.floor(bb[1]) - 1), x1 = Math.min(LW, Math.ceil(bb[2]) + 1), y1 = Math.min(LH, Math.ceil(bb[3]) + 1), w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return;
+  const id = Y.getImageData(x0, y0, w, h), d = id.data;
+  for (let i = 3; i < d.length; i += 4) { const a = d[i]; if (a) d[i] = a >= 128 ? 255 : 0; }
+  if (o.outline) {
+    const oc = an_rgb(o.outline), add = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = y * w + x; if (d[p * 4 + 3]) continue; if ((x > 0 && d[(p - 1) * 4 + 3]) || (x < w - 1 && d[(p + 1) * 4 + 3]) || (y > 0 && d[(p - w) * 4 + 3]) || (y < h - 1 && d[(p + w) * 4 + 3])) add.push(p); }
+    for (const p of add) { d[p * 4] = oc[0]; d[p * 4 + 1] = oc[1]; d[p * 4 + 2] = oc[2]; d[p * 4 + 3] = 255; }
+  }
+  Y.putImageData(id, x0, y0);
+  L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(lay, x0, y0, w, h, x0, y0, w, h);
+}
 const an_lt = [0.3, -0.95];                                         // direction DE la lumière dans l'eau (vient du haut, un peu de la droite)
 
 // polygone tramé (Bayer) : même remplissage pair-impair que poly() ; dens 0..1
@@ -106,7 +121,8 @@ function an_eel(cx, cy, s, t, o = {}) {
     for (let q = 0; q < rays.length; q++) { const [b, tp] = rays[q]; if (q % 2 === 0) lineP(b[0], b[1], tp[0], tp[1], an_css(q % 4 === 0 ? fr : fq), 1); }
     for (let q = 1; q < rays.length; q++) { const a = rays[q - 1][1], b = rays[q][1]; lineP(a[0], a[1], b[0], b[1], an_css(fr), 1); }
   }
-  layerBegin();
+  const bb = [bbx[0] - 14 * s - 6, bbx[1] - 24 * s - 6, bbx[2] + 14 * s + 6, bbx[3] + 24 * s + 6];
+  an_layerBegin(bb);
   const c = Y; c.lineJoin = 'round';
   // ── nageoire pectorale : petit éventail couché le long du flanc, derrière l'ouïe ──
   { const i0 = idx(0.112) | 0, b = E(i0, -0.5), n = nUp[i0], tg = MV(T[i0][0], T[i0][1]), fa = Math.sin(TAU * (3.4 * t + 0.3)) * 1.4;
@@ -137,7 +153,7 @@ function an_eel(cx, cy, s, t, o = {}) {
     c.beginPath(); c.ellipse(pp[0], pp[1], rx, ry, ang, 0, TAU); c.fill();
   }
   const zfr = Math.floor(t * 30 + 1e-6), zo = zap > 0.25 ? (an_h(zfr, 5) < 0.5 ? CY[4] : CY[3]) : null;
-  layerEnd({ outline: o.outline || (zo && an_h(zfr, 9) < zap ? zo : '#07100f') });
+  an_layerEnd(bb, { outline: o.outline || (zo && an_h(zfr, 9) < zap ? zo : '#07100f') });
   if (zap > 0.05) { L.save(); L.setTransform(1, 0, 0, 1, 0, 0); for (let k = 0; k < 6; k++) { const p = EE(lerp(0.08, 0.92, k / 5), 0.3); rgrad(p[0], p[1], 1, 15 * s, [[0, `rgba(150,230,250,${0.16 * zap})`], [1, 'rgba(60,160,200,0)']], 1, 'lighter'); } L.restore(); }
 
   // ═══ détails nets ═══
@@ -217,6 +233,132 @@ function an_discharge(eel, t, I, o = {}) {
   for (let k = 0; k < Math.round(6 + 10 * I); k++) {
     const sf = lerp(sf0, sf1, r()), a = eel.E(sf, 0), ang = r() * TAU, d = 6 + r() * reach * 0.8, x = a[0] + Math.cos(ang) * d, y = a[1] + Math.sin(ang) * d;
     px(x, y, r() < 0.5 ? WH[3] : YE[3]); if (r() < 0.35) { px(x - 1, y, YE[2]); px(x + 1, y, YE[2]); px(x, y - 1, YE[2]); px(x, y + 1, YE[2]); }
+  }
+}
+
+// ───────────────────────── le tétra (petit poisson argenté et rouge) ─────────────────────────
+// profil : abscisse locale (museau à +17, pédoncule à −13) → demi-épaisseur
+const AN_TET = [[17.5, 0.0], [16.5, 1.3], [14.5, 2.7], [11, 3.9], [6, 4.6], [0, 4.8], [-6, 4.1], [-10, 2.7], [-13, 1.5]];
+function an_tetHalf(x) { if (x >= 17.5) return 0; if (x <= -13) return 1.5; return tab(AN_TET.slice().reverse(), x); }
+// (cx, cy) = centre du corps ; s = échelle (1 : 37 px de long avec la queue ; 3 : 110 px) ; o.pose 'swim' | 'flee' ; o.stun 0..1 (paralysie : raidi, il se retourne ventre en l'air) ; o.rot (rad) ; o.flip (regarde à gauche) ; o.ph ; o.fog ; o.tremble 0..1
+function an_tetra(cx, cy, s, t, o = {}) {
+  const fl = o.flip ? -1 : 1, rot = o.rot || 0, stun = clamp(o.stun ?? 0), fog = clamp(o.fog ?? 0), fogC = o.fogCol || '#1f6a74', fast = o.pose === 'flee' ? 1.9 : 1, ph = o.ph ?? 0;
+  const A = (1 - stun) * 1.5 * fast * (o.amp ?? 1) + (o.tremble ?? 0) * 0.5, fq = 4.2 * fast, tm = (o.tremble ?? stun * 0.25);
+  const roll = stun * (o.roll ?? 1), cosR = Math.cos(Math.PI * roll), ys = (0.42 + 0.58 * Math.abs(cosR)) * (cosR < 0 ? -1 : 1);                      // retournement : vu de profil, le poisson s'aplatit (vu de dessus) puis revient ventre en l'air
+  const cr = Math.cos(rot), sr = Math.sin(rot);
+  const bend = x => A * Math.sin(TAU * (fq * t + ph) - 0.26 * x) * Math.pow(clamp((17 - x) / 34), 1.3) + tm * Math.sin(TAU * (22 * t + ph) + x * 0.5) * 0.35;
+  const Mx = (x, y) => { const lx = fl * x, ly = y * 1; return [cx + s * (lx * cr - ly * sr), cy + s * (lx * sr + ly * cr)]; };
+  const P = (x, f) => { const h = an_tetHalf(x), y = bend(x) + f * h * ys; return Mx(x, y); };
+  const bb = [cx - 24 * s, cy - 18 * s, cx + 24 * s, cy + 18 * s];
+  const k = (c) => fog > 0 ? an_mix(c, fogC, fog) : c;
+  an_layerBegin(bb); const c = Y;
+  const xs = []; for (let x = 17.5; x >= -13; x -= 1.5) xs.push(x); xs.push(-13);
+  // nageoire caudale fourchue + dorsale + anale + pectorale (translucides, rouge pâle)
+  const tailW = (1.2 + 0.5 * Math.sin(TAU * (fq * t + ph) - 3.2) * (1 - stun)) * 1.0;
+  { const root = [-12.5, bend(-12.5)], up = [-20.5, bend(-20.5) - 5.6 - tailW], dn = [-20.5, bend(-20.5) + 5.6 + tailW], mid = [-17, bend(-17)];
+    c.fillStyle = an_css(k([222, 84, 80])); c.beginPath(); for (const [i, q] of [root, up, mid, dn, root].entries()) { const m = Mx(q[0], q[1]); i ? c.lineTo(m[0], m[1]) : c.moveTo(m[0], m[1]); } c.fill();
+    const dorsal = [[3, bend(3) - 4.4 * ys], [-1, bend(-1) - 8.2 * ys], [-6, bend(-6) - 3.6 * ys]]; c.fillStyle = an_css(k([90, 110, 126])); c.beginPath(); dorsal.forEach((q, i) => { const m = Mx(q[0], q[1]); i ? c.lineTo(m[0], m[1]) : c.moveTo(m[0], m[1]); }); c.fill();
+    const anal = [[-3, bend(-3) + 4 * ys], [-8, bend(-8) + 6.6 * ys], [-10.5, bend(-10.5) + 2.6 * ys]]; c.fillStyle = an_css(k([230, 100, 96])); c.beginPath(); anal.forEach((q, i) => { const m = Mx(q[0], q[1]); i ? c.lineTo(m[0], m[1]) : c.moveTo(m[0], m[1]); }); c.fill();
+  }
+  // corps : argent, puis bande bleu-vert, rouge de l'arrière, dos sombre (couches du ventre vers le dos)
+  const band = (f0, colFn) => {
+    const path = new Path2D(); xs.forEach((x, i) => { const p = P(x, 1); i ? path.lineTo(p[0], p[1]) : path.moveTo(p[0], p[1]); }); for (let i = xs.length - 1; i >= 0; i--) { const p = P(xs[i], f0); path.lineTo(p[0], p[1]); } path.closePath();
+    const g = c.createLinearGradient(Mx(17, 0)[0], Mx(17, 0)[1], Mx(-13, 0)[0], Mx(-13, 0)[1]); for (const q of [0, 0.25, 0.5, 0.75, 1]) g.addColorStop(q, an_css(k(colFn(17 - 30 * q))));
+    c.fillStyle = g; c.fill(path);
+  };
+  const flip = cosR < 0 ? -1 : 1;                                                         // ventre en l'air : l'ordre des couleurs du dos au ventre est inversé
+  const layers = flip > 0 ? [[-1, x => [226, 234, 242]], [-0.55, x => x > -1 ? [196, 208, 224] : an_mix([196, 208, 224], [232, 56, 60], an_ss(-1, -5, x))], [-0.1, x => x > -4 ? [116, 226, 244] : an_mix([116, 226, 244], [58, 70, 80], an_ss(-4, -12, x))], [0.42, x => [70, 84, 96]], [0.75, x => [44, 54, 64]]]
+    : [[-1, x => [44, 54, 64]], [-0.75, x => [70, 84, 96]], [-0.42, x => x > -4 ? [116, 226, 244] : an_mix([116, 226, 244], [58, 70, 80], an_ss(-4, -12, x))], [0.1, x => x > -1 ? [196, 208, 224] : an_mix([196, 208, 224], [232, 56, 60], an_ss(-1, -5, x))], [0.55, x => [226, 234, 242]]];
+  for (const [f0, fn] of layers) band(f0, fn);
+  // nageoire pectorale (un petit éventail devant le milieu du corps)
+  { const b = P(8.5, -0.1), tip = Mx(3, bend(3) + 3.4 * ys + Math.sin(TAU * (6 * t + ph)) * 0.8 * (1 - stun)); c.fillStyle = an_css(k([214, 222, 232])); c.beginPath(); c.moveTo(b[0], b[1] - 0.4 * s); c.lineTo(tip[0], tip[1]); c.lineTo(b[0] - 0.4 * s, b[1] + 0.6 * s); c.fill(); }
+  an_layerEnd(bb, { outline: o.outline || '#0a1620' });
+  // détails nets : œil, ligne latérale brillante, reflet
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const eye = P(11.2, ys > 0 ? 0.0 : 0.0), er = Math.max(1, Math.round(1.55 * s * 0.8));
+  disc(eye[0], eye[1], er + 1, an_css(k([236, 240, 244]))); disc(eye[0] + fl * 0.4, eye[1], er, '#0a1620'); px(eye[0] - er * 0.4, eye[1] - er * 0.6, '#ffffff');
+  if (stun > 0.3) { const hi = P(11.2, 0); lineP(hi[0] - 2 * s, hi[1] - 2.4 * s, hi[0] - 1 * s, hi[1] - 2.4 * s, CY[4], 1); }
+  const m0 = P(17, 0.1), m1 = P(14, 0.2); lineP(m0[0], m0[1], m1[0], m1[1], '#0a1620', 1);
+  return { head: P(17, 0), tail: P(-13, 0), body: Mx(0, bend(0)), eye, bbox: bb };
+}
+
+// ═══════════════════════════════════════ L'EAU ═══════════════════════════════════════
+// eau trouble vert-bleu : clair sous la surface, de plus en plus sombre en profondeur
+const AN_WATER = [[0, '#3c948a'], [0.22, '#25808a'], [0.5, '#17586a'], [0.78, '#0f3a4e'], [1, '#0a2438']];
+function an_wcol(y, y0 = 0, y1 = LH) { const f = clamp((y - y0) / (y1 - y0)); let i = 0; while (i + 2 < AN_WATER.length && f > AN_WATER[i + 1][0]) i++; const a = AN_WATER[i], b = AN_WATER[i + 1]; return an_mix(a[1], b[1], clamp((f - a[0]) / (b[0] - a[0]))); }
+// fond d'eau : dégradé de y0 à y1 (o.dark 0..1 assombrit tout)
+function an_water(y0 = 0, y1 = LH, o = {}) {
+  const dk = o.dark ?? 0; vgrad(0, y0, LW, y1 - y0, AN_WATER.map(([f, c]) => [f, an_hex(an_mix(c, '#04121e', dk))]));
+}
+// troncs d'une forêt inondée : colonnes sombres qui se fondent dans l'eau avec la distance ; list : [x monde, largeur, éloignement 0..1, inclinaison, graine]
+const AN_TRUNKS = [[-60, 20, 0.85, 0.05, 1], [10, 30, 0.7, -0.04, 2], [70, 16, 0.9, 0.03, 3], [150, 36, 0.62, 0.05, 4], [215, 18, 0.88, -0.03, 5], [290, 40, 0.55, -0.05, 6], [350, 22, 0.8, 0.04, 7], [430, 34, 0.66, 0.0, 8]];
+function an_trunks(t, o = {}) {
+  const cam = o.cam || 0, par = o.par ?? 0.5, list = o.list || AN_TRUNKS, y0 = o.top ?? -10, y1 = o.floor ?? 430, rc = o.rayCol || '#7fc8b0';
+  for (const [x0, w, d, lean, sd] of list) {
+    const x = x0 - cam * par * (1 - d * 0.55), f = 0.32 + 0.55 * d, steps = 14, L1 = [], R1 = [];
+    for (let k = 0; k <= steps; k++) {
+      const yy = y0 + (y1 - y0) * k / steps, fl = Math.pow(Math.max(0, (k / steps - 0.82) / 0.18), 2), ww = (w * (0.8 + 0.2 * k_n1(k * 0.7, sd))) / 2 * (1 + 0.5 * k / steps) + fl * w * 0.9, cx = x + lean * (yy - y0);
+      L1.push([cx - ww - fl * w * 0.3, yy]); R1.push([cx + ww + fl * w * 0.3, yy]);
+    }
+    const pts = L1.concat(R1.reverse()), g = L.createLinearGradient(0, y0, 0, y1), c0 = an_mix([30, 44, 38], an_wcol(y0), f), c1 = an_mix([20, 28, 26], an_wcol((y0 + y1) / 2), f), c2 = an_mix([14, 20, 20], an_wcol(y1), f * 0.9);
+    g.addColorStop(0, an_css(c0)); g.addColorStop(0.5, an_css(c1)); g.addColorStop(1, an_css(c2));
+    L.fillStyle = g; L.beginPath(); pts.forEach((p, i) => i ? L.lineTo(p[0], p[1]) : L.moveTo(p[0], p[1])); L.closePath(); L.fill();
+    // côté éclairé par la surface : bande claire à droite, écorce striée
+    L.fillStyle = an_css(an_mix(c1, rc, 0.28 * (1 - d * 0.5)), 0.55);
+    L.beginPath(); for (let k = 0; k <= steps; k++) { const p = R1[steps - k]; k ? L.lineTo(p[0] - 1, p[1]) : L.moveTo(p[0] - 1, p[1]); } for (let k = steps; k >= 0; k--) { const p = R1[steps - k]; L.lineTo(p[0] - 4 - (1 - d) * 3, p[1]); } L.closePath(); L.fill();
+  }
+}
+// racines pendantes (jacinthes d'eau) accrochées à la surface : fibres sombres à barbes ; o.y0 = surface, o.n, o.len
+function an_roots(t, o = {}) {
+  const cam = o.cam || 0, par = o.par ?? 0.9, y0 = o.y0 ?? 0, n = o.n ?? 16, len = o.len ?? 50, seed = o.seed ?? 3, r = rng(seed * 17 + 4), cols = o.cols || [GR[0], GR[1], '#1a5a3a'];
+  for (let i = 0; i < n; i++) {
+    const x = r() * (LW + 120) - 40 - cam * par, l = len * (0.45 + 0.8 * r()), sw = 2 + 3 * r(), ph = r() * TAU, c = cols[i % cols.length];
+    let px0 = x, py0 = y0; const seg = Math.max(6, Math.round(l / 5));
+    for (let k = 1; k <= seg; k++) {
+      const f = k / seg, nx = x + Math.sin(t * 0.8 + ph + f * 2.2) * sw * f * 1.4 + (r() - 0.5) * 0.6, ny = y0 + l * f;
+      lineP(px0, py0, nx, ny, c, f < 0.5 ? 2 : 1);
+      if (k % 2 === 0 && f < 0.92) { const s2 = (k % 4 === 0 ? -1 : 1), bl = 3 + 5 * (1 - f) * r(); lineP(nx, ny, nx + s2 * bl, ny + bl * 0.6, c, 1); }
+      px0 = nx; py0 = ny;
+    }
+  }
+}
+// herbes aquatiques (rubans qui ondulent) plantées sur le fond y ; o.n, o.h
+function an_blades(t, o = {}) {
+  const cam = o.cam || 0, par = o.par ?? 1, y = o.y ?? 450, n = o.n ?? 40, h = o.h ?? 60, seed = o.seed ?? 5, r = rng(seed * 29 + 1), cols = o.cols || [GR[0], GR[1], GR[2], GR[3]], rim = o.rim ?? GR[4];
+  const wrap = LW + 100;
+  for (let i = 0; i < n; i++) {
+    const bx = r() * wrap - 50, hh = h * (0.5 + 0.7 * r()), ph = r() * TAU, w0 = 2 + Math.floor(r() * 2), ci = Math.min(cols.length - 1, Math.floor(r() * cols.length)), c = cols[ci], lean = (r() - 0.5) * 14;
+    const x = bx - cam * par; if (x < -30 || x > LW + 30) continue;
+    const seg = Math.max(8, Math.round(hh / 5)); let ax = x, ay = y;
+    for (let k = 1; k <= seg; k++) {
+      const f = k / seg, nx = x + lean * f + Math.sin(t * 1.1 + ph + f * 2.6) * 7 * f * f + Math.sin(t * 0.6 + ph * 1.7) * 3 * f, ny = y - hh * f;
+      lineP(ax, ay, nx, ny, c, f < 0.75 ? w0 : 1);
+      if (f > 0.1 && f < 0.9 && k % 3 === 0 && ci >= 2) px(nx + 1, ny, rim);
+      ax = nx; ay = ny;
+    }
+  }
+}
+// fond : vase sombre en pente douce avec feuilles mortes, branches englouties et cailloux ; o.y = ligne du fond (à gauche), o.slope
+function an_bed(t, o = {}) {
+  const cam = o.cam || 0, par = o.par ?? 1, y = o.y ?? 430, seed = o.seed ?? 7, r = rng(seed * 41 + 9), dk = o.dark ?? 0;
+  const top = x => y + 6 * Math.sin((x + cam * par) * 0.03 + seed) + 3 * Math.sin((x + cam * par) * 0.11) + (o.slope ?? 0) * x;
+  L.fillStyle = an_css(an_mix('#1c3a34', '#04121e', dk)); L.beginPath(); L.moveTo(0, LH); for (let x = 0; x <= LW; x += 6) L.lineTo(x, top(x)); L.lineTo(LW, LH); L.closePath(); L.fill();
+  L.fillStyle = an_css(an_mix('#2c5a48', '#04121e', dk)); L.beginPath(); L.moveTo(0, LH); for (let x = 0; x <= LW; x += 6) L.lineTo(x, top(x) + 3 + 2 * Math.sin(x * 0.07 + 1)); L.lineTo(LW, LH); L.closePath(); L.fill();
+  for (let i = 0; i < 40; i++) {                                                  // feuilles mortes et cailloux
+    const x = r() * (LW + 100) - 50 - cam * par, yy = top(x) + 6 + r() * (LH - top(x) - 8), c = [WO[2], WO[3], OC[2], GR[1], '#3a4a3a', WO[1]][i % 6];
+    ell(x, yy, 2 + r() * 4, 1 + Math.floor(r() * 2), c);
+  }
+}
+// bulles qui montent (anneaux clairs à reflet), positions déterministes ; o.n, o.y0 (haut), o.y1 (bas)
+function an_bubbles(t, o = {}) {
+  const n = o.n ?? 16, cam = o.cam || 0, par = o.par ?? 1, y0 = o.y0 ?? 0, y1 = o.y1 ?? LH, seed = o.seed ?? 6, r = rng(seed * 19 + 7), H = y1 - y0 + 30, sp0 = o.speed ?? 1;
+  for (let i = 0; i < n; i++) {
+    const bx = r() * (LW + 60) - 30, sp = (14 + 18 * r()) * sp0, ph = r() * H, sz = r() < 0.2 ? 3 : r() < 0.55 ? 2 : 1, wob = 2 + 3 * r(), w = 1 + 2 * r();
+    const yy = y1 + 15 - ((ph + sp * t) % H), x = bx - cam * par + Math.sin(t * w + i) * wob, X = Math.round(x), Y = Math.round(yy);
+    if (X < -4 || X > LW + 4 || Y < y0 - 4 || Y > y1 + 4) continue;
+    if (sz === 1) px(X, Y, CY[4]);
+    else if (sz === 2) { px(X, Y - 1, CY[3]); px(X - 1, Y, CY[3]); px(X + 1, Y, CY[3]); px(X, Y + 1, CY[2]); px(X - 1, Y - 1, WH[3]); }
+    else { for (const [dx, dy] of [[-1, -2], [0, -2], [1, -2], [-2, -1], [2, -1], [-2, 0], [2, 0], [-2, 1], [2, 1], [-1, 2], [0, 2], [1, 2]]) px(X + dx, Y + dy, dy > 0 ? CY[2] : CY[4]); px(X - 1, Y - 1, WH[3]); }
   }
 }
 
