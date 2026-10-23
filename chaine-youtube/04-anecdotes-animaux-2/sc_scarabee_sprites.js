@@ -852,3 +852,32 @@ function sb_cutaway(t, p, o = {}) {
   if (p.jet > 0) { const [nx, ny] = W(sb_CUT.nozzle[0], sb_CUT.nozzle[1] + 2); sb_jet(nx, ny, Math.PI / 2, t, t - ((t * 14) % 1) / 14 - Math.floor(1) * 0, { dur: 99, len: 70 * z, hz: 14, size: 0.9 * z, gravity: 20 }); }
   return { cham: W(chx, chy).concat([crx * z, cry * z]), pA: W(sb_CUT.pA[0], sb_CUT.pA[1]).concat([sb_CUT.pA[2] * z, sb_CUT.pA[3] * z]), pB: W(sb_CUT.pB[0], sb_CUT.pB[1]).concat([sb_CUT.pB[2] * z, sb_CUT.pB[3] * z]), nozzle: W(sb_CUT.nozzle[0], sb_CUT.nozzle[1]), z, W };
 }
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 7. ICÔNE DU CARNET (17 × 17, couleurs exactes) : le scarabée vu de dessus, tête en haut
+// ════════════════════════════════════════════════════════════════════════════════════════
+const sb_ICON = [
+  '...a.........a...',
+  '....a.......a....',
+  '.....aoooooa.....',
+  '.O....oOOLo....O.',
+  '.O...ooooooo...O.',
+  '..O..oOOLLLo..O..',
+  '...OoOOOLLLLoO...',
+  '....oDOOOLLLo....',
+  '...ooooooooooo...',
+  '.OOonbbbdBHhHoOO.',
+  'O.onnbbbdBHhHHo.O',
+  '..onnbbbdBHhHHo..',
+  '..onnbbbdBHhHHo..',
+  '.O.onnnbdbBHBo.O.',
+  'O..OonnbdbBHoO..O',
+  '..O.ooooooooo.O..',
+  '..O...oAAAo...O..',
+];
+function sb_icon(cx, cy) {
+  const pal = { o: '#05040f', a: OC[3], O: OC[4], L: OC[5], D: OC[2], A: AM[7], b: NI[5], B: BL[2], h: BL[4], H: BL[3], n: NI[4], d: NI[2] };
+  const x0 = Math.round(cx) - 8, y0 = Math.round(cy) - 8;
+  for (let j = 0; j < 17; j++) for (let i = 0; i < 17; i++) { const ch = sb_ICON[j][i]; if (ch !== '.') px(x0 + i, y0 + j, pal[ch]); }
+}
+ICONES[0] = sb_icon;

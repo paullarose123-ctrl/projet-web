@@ -448,3 +448,43 @@ function ba_runFx(t, o) {
     ba_slap(wx, o.wy + (near ? 2 : -2), tn, t, { size: o.size ?? s * 0.85, dir, cam: o.cam, seed: n + 40, layer: o.layer });
   }
 }
+
+// ───────────────────────── gros plan en coupe : le pied qui claque l'eau et la poche d'air ─────────────────────────
+// Repère « eau » : la surface est fixe, le pied entre, pousse (il glisse à peine : il appuie sur l'eau), sort avant que la poche ne se referme ; la hanche avance de BA_HIPV px (s = 1) par cycle.
+const BA_HIPV = 46;
+function ba_footWater(phi) {
+  const a = ba_runLeg(phi), px_ = a.x + BA_HIPV * phi, tipX = px_ + Math.cos(a.th) * 15, tipY = a.y + Math.sin(a.th) * 15 * 0.9;
+  return { ax: px_, ay: a.y, th: a.th, sp: a.sp, tipX, tipY, phi };
+}
+// poche d'air et eau autour du pied ; (X0, wy) = abscisse du pied à φ = 0,05 et surface (écran) ; sm = échelle ; p 0..1 = progression du pas (0 : le pied arrive, 0,5 : il se retire, 1 : les rides)
+// o.under : dessine l'eau en coupe (sinon seulement la poche), o.xPan : décalage horizontal de la caméra (px écran)
+function ba_pocketGeom(sm, p) {
+  const phi = lerp(0.0, 0.64, p), steps = 28; let D = 0, cxs = 0, n = 0;
+  for (let i = 0; i <= steps; i++) { const f = ba_footWater(phi * i / steps); D = Math.max(D, f.tipY, f.ay + 4); if (i > 3) { cxs += f.ax + 5; n++; } }
+  const f0 = ba_footWater(0.05);
+  return { phi, D: Math.max(0, D) * sm + 10, cx: f0.ax * sm + 4, ok: phi > 0.045 };
+}
+function ba_pocket(X0, wy, sm, p, t, o = {}) {
+  const G = ba_pocketGeom(sm, p), phi = G.phi; if (!G.ok) return;
+  const open = clamp(prog(phi, 0.05, 0.2)), pinch = clamp(prog(phi, 0.5, 0.64)), Wm = 11.5 * sm * (0.55 + 0.45 * open) * (1 + 0.1 * Math.sin(p * 9));
+  const pts = [], N = 26, D = G.D * (0.35 + 0.65 * open), cx0 = X0 + (G.cx - 17.3 * sm - 4) * 0 - 4;
+  const pd = D * 0.85 * pinch;                                                              // profondeur sous laquelle la poche est encore ouverte (le haut se referme)
+  const L_ = [], R_ = [];
+  for (let i = 0; i <= N; i++) {
+    const d = i / N * D, wv = Wm * Math.sqrt(Math.max(0, 1 - Math.pow(d / D, 1.7))), neck = d < pd ? clamp(1 - (pd - d) / (0.25 * D + 1)) * 0 : 1;
+    const closed = d < pd ? 0 : clamp((d - pd) / (0.3 * D + 4)), w2 = wv * (d < pd ? 0 : (0.25 + 0.75 * closed)), ctr = cx0 - 0.14 * d + (d < pd ? 0 : 0);
+    L_.push([ctr - w2, wy + d]); R_.push([ctr + w2, wy + d]);
+  }
+  if (pinch >= 0.99) return;
+  const path = new Path2D(); path.moveTo(L_[0][0], L_[0][1]); L_.forEach(q => path.lineTo(q[0], q[1])); R_.slice().reverse().forEach(q => path.lineTo(q[0], q[1])); path.closePath();
+  L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
+  // bord sombre, intérieur d'air (clair, dégradé), ménisque blanc
+  L.lineJoin = 'round'; L.lineWidth = 4; L.strokeStyle = CY[0]; L.stroke(path);
+  const gr = L.createLinearGradient(0, wy, 0, wy + D); gr.addColorStop(0, '#d8f4fc'); gr.addColorStop(0.5, '#b0f0f8'); gr.addColorStop(1, '#70d0e4'); L.fillStyle = gr; L.fill(path);
+  L.save(); L.clip(path);
+  L.fillStyle = 'rgba(31,122,150,0.35)'; L.fillRect(X0 - 80, wy + D * 0.55, 160, D);                       // le fond de la poche : air vu à travers l'eau, plus froid
+  L.restore();
+  L.lineWidth = 1; L.strokeStyle = WH[3]; L.beginPath(); for (let i = 1; i < N - 1; i++) { const q = L_[i]; i > 1 ? L.lineTo(q[0] + 2, q[1]) : L.moveTo(q[0] + 2, q[1]); } L.stroke();
+  L.strokeStyle = CY[4]; L.beginPath(); for (let i = 1; i < N - 1; i++) { const q = R_[i]; i > 1 ? L.lineTo(q[0] - 2, q[1]) : L.moveTo(q[0] - 2, q[1]); } L.stroke();
+  L.restore();
+}

@@ -1,7 +1,7 @@
 // Fabrique les fichiers d'événements d'essai du sonorisateur (dans build/test/) :
 //   events_test.json   un exemplaire de chaque type d'événement (anciens et nouveaux), espacés de 1,5 s (+ un type inconnu), des « step » sur les sols, un « logo » en fin
 //   events_reel.json   un jeu d'événements plausible calé sur build/timeline.json (plans de BRIEF-EP2.md), pour mesurer le film entier
-//   solo_<type>.json   un seul événement, pour les mesures de clic / de fin
+//   solo_<type>.json   un seul événement (1 s après la fin de la voix : aucune parole dessous, donc pas de baisse de niveau), pour les mesures de clic / de fin
 //   node son_essai.mjs [timeline.json]
 import fs from 'fs';
 const TLF = process.argv[2] || 'build/timeline.json';
@@ -54,5 +54,5 @@ a(T0 + 0.48, 'logo'); a(T0 + 0.98, 'letters'); a(T0 + 1.8, 'label');
 E.sort((x, y) => x.t - y.t);
 fs.writeFileSync(`${OUTDIR}/events_reel.json`, JSON.stringify({ dur: DUR, fps: 30, events: E, shots }, null, 1));
 // ─ un événement seul, par type (mesure du début / de la fin, sans musique)
-types.push(['step']); const seen = new Set(); for (const [type, v] of types) { if (seen.has(type) || type === 'bogus') continue; seen.add(type); fs.writeFileSync(`${OUTDIR}/solo_${type}.json`, JSON.stringify({ dur: 12, fps: 30, events: [{ t: 1, type, v: v ?? 1 }, { t: 11, type: 'logo', v: 1 }], shots: [] }, null, 1)); }
+types.push(['step']); const seen = new Set(); for (const [type, v] of types) { if (seen.has(type) || type === 'bogus') continue; seen.add(type); fs.writeFileSync(`${OUTDIR}/solo_${type}.json`, JSON.stringify({ dur: VOICE_END + 14, fps: 30, events: [{ t: VOICE_END + 1, type, v: v ?? 1 }, { t: VOICE_END + 12, type: 'logo', v: 1 }], shots: [] }, null, 1)); }
 console.log('events_test.json', ev.length, 'événements, durée', (endT + 6).toFixed(1), '| events_reel.json', E.length, 'événements, durée', DUR.toFixed(2), '| solos', seen.size);

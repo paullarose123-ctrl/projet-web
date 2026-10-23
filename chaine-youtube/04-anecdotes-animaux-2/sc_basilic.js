@@ -184,14 +184,22 @@ function ba_world(t, cam, o = {}) {
   if (o.near !== false) ba_putBand(ba_band('near', BA_PW, 110, ba_buildNear), wy1 - 26 - cy, 1.15, cam);
 }
 
-// feuilles du premier plan : dessinées à chaque image, elles ploient avec le vent. side : 'bl' | 'br' | 'tl' | 'tr'
+// feuilles du premier plan : dessinées à chaque image, elles ploient avec le vent et défilent avec la caméra (périodiques : 620 px de monde)
+const BA_FGL = [   // x (monde), y, longueur, angle, largeur, ton (0 sombre, 1 clair), graine, courbure
+  [-10, 500, 120, -1.05, 21, 0, 3, 0.5], [14, 495, 105, -0.55, 18, 1, 4, 0.55], [-6, 505, 95, -1.5, 16, 1, 5, 0.3],
+  [285, 500, 125, -2.1, 22, 1, 6, 0.5], [262, 498, 100, -2.65, 18, 0, 7, 0.55], [292, 505, 90, -1.7, 16, 0, 8, 0.3],
+  [450, 505, 110, -1.3, 20, 0, 9, 0.4], [150, 512, 70, -1.25, 15, 1, 10, 0.3],
+];
 function ba_fgLeaves(t, cam, o = {}) {
-  const cy = o.camY || 0, par = o.par ?? 1.35, W = ba_wind(t);
-  const T = [GR[0], GR[1], GR[2], GR[3], GR[5]], T2 = [GR[0], GR[2], LM[2], LM[3], LM[5]];
+  const cy = o.camY || 0, par = o.par ?? 1.35, W = ba_wind(t), PER = 620, T = [GR[0], GR[1], GR[2], GR[3], GR[5]], T2 = [GR[0], GR[2], LM[2], LM[3], LM[5]];
+  const only = o.only;                                                                      // 'l' | 'r' : un seul côté (plans fixes)
   L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
-  const lf = (x, y, len, ang, wid, tn, seed, bend) => ba_leaf(L, x - cam * par, y - cy, len, ang + W * 0.06 * Math.sin(t * 1.3 + seed), wid, tn, { seed, bend });
-  if (o.bl !== false) { lf(-10, 500, 120, -1.05, 21, T, 3, 0.5); lf(14, 495, 105, -0.55, 18, T2, 4, 0.55); lf(-6, 505, 95, -1.5, 16, T2, 5, 0.3); }
-  if (o.br !== false) { lf(285, 500, 125, -2.1, 22, T2, 6, 0.5); lf(262, 498, 100, -2.65, 18, T, 7, 0.55); lf(292, 505, 90, -1.7, 16, T, 8, 0.3); }
+  for (const [x, y, len, ang, wid, tn, sd, bend] of BA_FGL) {
+    if (only === 'l' && x > 200) continue; if (only === 'r' && x < 200) continue;
+    const xs = ((((x + 150) - cam * par) % PER) + PER) % PER - 150;
+    if (xs < -140 || xs > LW + 140) continue;
+    ba_leaf(L, xs, y - cy, len * (o.k ?? 1), ang + W * 0.06 * Math.sin(t * 1.3 + sd), wid * (o.k ?? 1), tn ? T2 : T, { seed: sd, bend });
+  }
   L.restore();
 }
 const ba_wind = t => 0.5 * Math.sin(t * 1.1) + 0.3 * Math.sin(t * 2.3 + 1.7);
@@ -311,14 +319,93 @@ function ba_c1b(u, t, sh) {
 }
 function ba_c1bUi(u, t, sh) { hudTracker(1, 1, 1); hudLieu(1); }
 
+// ───────────────────────── plans de course (c2_course, c2_pattes, c3_ombre) : le basilic file à la surface, la caméra le suit ─────────────────────────
+// C : t0 (début du plan), x0 (abscisse monde de la hanche à t0), v (px/s), s, wy (surface sous le basilic), f (cycles/s), ph0 (phase à t0), scr0 → scr1 (abscisse écran de la hanche), tScr (durée du glissement)
+function ba_runState(t, C) {
+  const hip = C.x0 + C.v * (t - C.t0), ph = C.ph0 + C.f * (t - C.t0), scr = lerp(C.scr0, C.scr1, eio(prog(t, C.t0, C.t0 + (C.tScr ?? 1.2))));
+  return { hip, ph, cam: hip - scr, scr };
+}
+function ba_footTimes(C, tA, tB) {                                         // instants des claquements dans [tA, tB[ (pour les événements de bruitage)
+  const out = []; for (let n = Math.floor((C.ph0 - 0.05) / 0.5) - 1; ; n++) { const tn = C.t0 + (0.05 + n * 0.5 - C.ph0) / C.f; if (tn >= tB) break; if (tn >= tA) out.push([tn, n]); } return out;
+}
+function ba_runScene(t, C, hooks = {}) {
+  const st = ba_runState(t, C), cam = st.cam, s = C.s;
+  ba_world(t, cam, { camY: 0, flow: 6 });
+  ba_atmos(t, cam, 0, { dust: C.dust ?? 38, rays: C.rays ?? 0.3 });
+  if (hooks.back) hooks.back(t, cam, st);
+  const fx = { t0: C.t0, ph0: C.ph0, f: C.f, x0: C.x0, v: C.v, dir: 1, s, wy: C.wy, cam, ahead: 22, size: s * 0.8 };
+  ba_runFx(t, { ...fx, layer: 'under' });
+  const K = ba_lizard(st.scr, C.wy, s, t, { pose: 'run', ph: st.ph, spd: 1, over: hooks.over && hooks.over(t, st), tint: [C.wy, '14,40,34', 0.6], reflect: { y: C.wy, a: 0.42, depth: 40 * s + 60 }, seed: 2 });
+  ba_runFx(t, { ...fx, layer: 'over' });
+  if (hooks.front) hooks.front(t, cam, st, K);
+  ba_fgLeaves(t, cam, { camY: 0, par: 1.3 });
+  k_leaves(t, { n: 4, cam, wind: 9, y0: 0, y1: 400, cols: [GR[4], LM[4], AM[6]], seed: 3 });
+  vignette(0.5, 120, 330, LW / 2, LH / 2 - 20, '5,20,16');
+  return { st, K, cam };
+}
+let ba_C2 = null, ba_C3 = null, ba_C2b = null;
+
+// plan 3 : c2_course — le lézard Jésus-Christ, en entier, à pleine vitesse
+function ba_c2a(u, t, sh) { ba_runScene(t, ba_C2); }
+function ba_c2aUi(u, t, sh) {
+  const A = ba_A; hudTracker(1, 1, 1); hudLieu(1);
+  if (t > A.jc) tagBox(8, 38, 'LE LÉZARD JÉSUS-CHRIST', 'white', Math.ceil((t - A.jc) * 40));
+}
+// plan 4 : c2_pattes — gros plan sur les longues pattes arrière
+function ba_c2b(u, t, sh) { ba_runScene(t, ba_C2b); }
+function ba_c2bUi(u, t, sh) {
+  const A = ba_A; hudTracker(1, 1, 1); hudLieu(1);
+  if (t > A.pattes) tagBox(8, 38, '20 PAS PAR SECONDE', 'blue', Math.ceil((t - A.pattes) * 40));
+}
+
+// plan 5 : c2_pas — la poche d'air, en coupe et au ralenti
+function ba_c2cState(u, sh) { const dur = sh.t1 - sh.t0, p = clamp(u / (dur * 0.86)); return { p: eio(p) * 0.65 + p * 0.35 }; }
+function ba_c2c(u, t, sh) {
+  const { p } = ba_c2cState(u, sh), wy = 282, sm = 2.7, phi = lerp(0.0, 0.64, p), X0 = 104, f05 = ba_footWater(0.05), xOrig = X0 - f05.ax * sm, pan = 0.5 * BA_HIPV * phi * sm;
+  // fond : forêt floue, lumière
+  vgrad(0, 0, LW, LH, [[0, '#c4ecb8'], [0.5, '#62ae72'], [1, '#2a6648']]);
+  ba_putBand(ba_band('far', BA_PW, 190, ba_buildFar), 30, 0.1, pan * 0.3);
+  ba_putBand(ba_band('mid', BA_PW, 215, ba_buildMid), 0, 0.28, pan * 0.5);
+  { const c = ba_tmpCv || (ba_tmpCv = mkCanvas()), x = ba_tmpCv.getContext('2d'); x.clearRect(0, 0, LW, LH); x.drawImage(low, 0, 0, LW, wy); L.save(); L.setTransform(1, 0, 0, 1, 0, 0); L.fillStyle = '#62ae72'; L.fillRect(0, 0, LW, wy); L.filter = 'blur(2.2px)'; L.drawImage(c, 0, 0, LW, wy, 0, 0, LW, wy); L.filter = 'none'; L.restore(); }
+  k_glow(150, 70, 100, '255,240,170', 0.3);
+  // eau en coupe : dégradé du vert sous la surface au bleu profond, rayons, particules
+  vgrad(0, wy, LW, LH - wy, [[0, '#2a6648'], [0.12, '#1f7a96'], [0.45, '#124a66'], [1, '#10102e']]);
+  for (let i = 0; i < 14; i++) { const x = ((ba_h(i, 4) * 340 - pan * 0.7 + t * 4 * (0.3 + ba_h(i, 5))) % 340 + 340) % 340 - 35, y = wy + 14 + ba_h(i, 6) * 150; px(x, y, i % 3 ? CY[2] : CY[3]); }
+  for (let i = 0; i < 6; i++) { const x = ((ba_h(i, 14) * 300 - pan * 0.5) % 300 + 300) % 300 - 20, w = 2 + ba_h(i, 15) * 6; R(x, wy + 6 + i * 3 + ba_h(i, 16) * 5, w, 1, CY[3]); }
+  ba_pocket(xOrig + f05.ax * sm - pan, wy, sm, p, t);
+  L.save(); L.translate(0, 0);
+  ba_lizard(xOrig + BA_HIPV * phi * sm - pan, wy, sm, t, { pose: 'run', ph: phi, spd: 0.3, seed: 2, rim: 1, noEye: false });
+  L.restore();
+  // surface : liseré clair, rides vues par la tranche, gerbe, jet de l'effondrement
+  const sx = xOrig + f05.ax * sm - pan;
+  R(0, wy - 1, LW, 1, CY[4]); R(0, wy, LW, 1, WH[3]); for (let x = 0; x < LW; x += 3) if (ba_h(x, 9) < 0.5) px(x + ((t * 20) | 0) % 3, wy + 1, CY[3]);
+  ba_slap(sx + pan, wy, 0.0 + sh.t0 + (sh.t1 - sh.t0) * 0.86 * 0.075 / 0.65 * 0.5, t, { size: 2.2, dir: 1, cam: pan, seed: 5, sq: 0.07, layer: 'over' });
+  vignette(0.45, 120, 330, LW / 2, LH / 2 - 20, '5,10,24');
+}
+let ba_tmpCv = null;
+function ba_c2cUi(u, t, sh) {
+  const A = ba_A, { p } = ba_c2cState(u, sh);
+  tagBox(8, 14, 'RALENTI', 'blue', Math.ceil(u * 40));
+  if (p > 0.16) tagBox(8, 34, "PAS D'AIR SOUS LE PIED", 'white', Math.ceil((p - 0.16) * 120));
+}
+
 function buildBasilic(S) {
   const A = ba_A;
   A.t0 = S.t0; A.il = wt('c1', 'il'); A.courir = wt('c1', 'courir'); A.sur = wt('c1', 'sur'); A.eau = wt('c1', "l'eau"); A.c2 = wt('c2', 'Surnommé');
   A.tongue = wt('c1', 'lézard') + 0.1; A.flare = wt('c1', 'complètement'); A.look = wt('c1', 'capacité');
+  A.jc = wt('c2', 'Jésus-Christ'); A.utilise = wt('c2', 'utilise'); A.pattes = wt('c2', 'pattes'); A.pour = wt('c2', 'pour'); A.c3 = wt('c3', 'Et');
   ba_jumpInit();
   const K = ba_J, J = BA_J, evSlaps = [];
   for (let n = 0; ; n++) { const tn = K.tD + n * 0.5 / J.f; if (tn >= A.c2 - 0.1) break; evSlaps.push([tn, 'slap', 1]); }
   shot('c1_branche', S.t0, { draw: ba_c1a, ui: ba_c1aUi, ev: [[A.tongue + 0.05, 'blip', 0.5]] });
   shot('c1_saut', A.il - 0.1, { draw: ba_c1b, ui: ba_c1bUi, ev: [[K.tL + 0.02, 'hop', 1], [K.tL + 0.05, 'whoosh', 0.5], [K.tD, 'splash', 1.3], ...evSlaps] });
-  shot('c2_fin', A.c2 - 0.1, { draw(u, t) { vgrad(0, 0, LW, LH, [[0, '#1a4636'], [1, '#0e2a22']]); } });
+  const tA = A.c2 - 0.1, tB = A.utilise - 0.1, tC = A.pour - 0.1, tD = A.c3 - 0.1;
+  ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.25, wy: 318, f: 3.3, ph0: 0.2, scr0: 165, scr1: 112, tScr: 1.3, dust: 40 };
+  ba_C2b = { t0: tB, x0: ba_C2.x0 + 250 * (tB - tA), v: 250, s: 2.25, wy: 338, f: 3.3, ph0: ba_C2.ph0 + 3.3 * (tB - tA), scr0: 100, scr1: 92, tScr: 1.6, dust: 30 };
+  const ev2 = ba_footTimes(ba_C2, tA, tB).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
+  const ev2b = ba_footTimes(ba_C2b, tB, tC).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.7]] : [])]);
+  shot('c2_course', tA, { draw: ba_c2a, ui: ba_c2aUi, ev: [[tA + 0.02, 'whoosh', 1.2], [A.jc, 'label', 1], ...ev2] });
+  shot('c2_pattes', tB, { draw: ba_c2b, ui: ba_c2bUi, ev: [[A.pattes, 'label', 1], ...ev2b] });
+  shot('c2_pas', tC, { draw: ba_c2c, ui: ba_c2cUi, ev: [[tC + 0.1, 'label', 1]] });
+  shot('c3_fin', tD, { draw(u, t) { vgrad(0, 0, LW, LH, [[0, '#1a4636'], [1, '#0e2a22']]); } });
 }

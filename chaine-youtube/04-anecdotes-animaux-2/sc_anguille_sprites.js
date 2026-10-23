@@ -378,6 +378,7 @@ function an_water(y0 = 0, y1 = LH, o = {}) {
 }
 // troncs d'une forêt inondée : colonnes sombres qui se fondent dans l'eau avec la distance ; list : [x monde, largeur, éloignement 0..1, inclinaison, graine]
 const AN_TRUNKS = [[-60, 20, 0.85, 0.05, 1], [10, 30, 0.7, -0.04, 2], [70, 16, 0.9, 0.03, 3], [150, 36, 0.62, 0.05, 4], [215, 18, 0.88, -0.03, 5], [290, 40, 0.55, -0.05, 6], [350, 22, 0.8, 0.04, 7], [430, 34, 0.66, 0.0, 8]];
+const AN_THIN = AN_TRUNKS.map(a => [a[0], a[1] * 0.6, Math.min(0.95, a[2] + 0.1), a[3], a[4]]);                  // mêmes troncs, plus fins et plus lointains
 function an_trunks(t, o = {}) {
   const cam = o.cam || 0, par = o.par ?? 0.5, list = o.list || AN_TRUNKS, y0 = o.top ?? -10, y1 = o.floor ?? 430, rc = o.rayCol || '#7fc8b0';
   for (const [x0, w, d, lean, sd] of list) {
