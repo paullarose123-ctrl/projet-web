@@ -120,11 +120,11 @@ function buildScarabee(S) {
     shot('b3_proie', T.b3a, {
       draw(u, t, sh) {
         sb_scene(u, t, 0);
-        const hp = clamp((t - tHop0) / hopDur), cx = 282 + 110 - sb_toadHopX(hp, 110);
+        const hp = clamp((t - tHop0) / hopDur), cx = 312 + 110 - sb_toadHopX(hp, 110);
         const lunge = sm(prog(t, tLunge, tLunge + 0.2)) * (1 - 0.0), tg = sm(prog(t, A.att + 0.02, A.att + 0.14)) * 0.4 * (1 - sm(prog(t, A.att + 0.3, A.att + 0.5)));
-        sb_toad(cx, 350, 2.2, t, { flip: true, hop: hp < 1 ? hp : undefined, lunge: lunge * (1 - sm(prog(t, A.att + 0.34, A.att + 0.6)) * 0.5), tongue: tg, seed: 5 });
+        sb_toad(cx, 350, 1.9, t, { flip: true, hop: hp < 1 ? hp : undefined, lunge: lunge * (1 - sm(prog(t, A.att + 0.34, A.att + 0.6)) * 0.5), tongue: tg, seed: 5 });
         // le scarabée marche, ralentit à l'arrivée du crapaud, se fige ; la pointe commence à se redresser
-        const dd = sb_dist(u, 0.35, 0.7), bx = 56 + dd * 1.4;
+        const dd = sb_dist(u, 0.35, 0.7), bx = 40 + dd * 1.4;
         const aimK = 0.62 * sm(prog(t, A.att - 0.08, A.att + 0.35)), up = 0.0;
         sb_beetle(bx, sb_GY + 7, 1.4, t, { pose: 'walk', ph: sb_walkPh(dd), settle: prog(u, 0.4, 0.78), aimK, tip: aimK * 0.9 });
         sb_fg(u, t, 0);
@@ -186,8 +186,8 @@ function buildScarabee(S) {
         const sc = 1.45, bx = 62, by = sb_GY + 8, camS = 3 * bump(t, tHit, tHit + 0.05, tHit + 0.2, tHit + 0.5) * Math.sin(t * 70);
         sb_scene(u, t, 0);
         const rec = eob(prog(t, tHit, tHit + 0.34)), unl = 1 - sm(prog(t, tHit, tHit + 0.18)), sk = prog(t, tHit + 0.28, tHit + 1.5), shake = Math.sin((t - tHit) * 40) * (1 - sk) * (t > tHit + 0.28 ? 1 : 0);
-        const tg = 0.34 * (1 - sm(prog(t, T.b4a, T.b4a + 0.25))) * unl, cxT = 290 + 18 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
-        const toad = sb_toad(cxT, 350, 2.2, t, { flip: true, lunge: 1 * unl, tongue: tg, recoil: rec * 0.95, shake, seed: 5, mouth: 0.9 * unl });
+        const tg = 0.34 * (1 - sm(prog(t, T.b4a, T.b4a + 0.25))) * unl, cxT = 312 + 18 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
+        const toad = sb_toad(cxT, 350, 1.9, t, { flip: true, lunge: 1 * unl, tongue: tg, recoil: rec * 0.95, shake, seed: 5, mouth: 0.9 * unl });
         const fire = prog(t, tFire, tFire + 0.05) * (1 - prog(t, tFire + 1.5, tFire + 1.65));
         const tipK = 0.72 + 0.28 * sm(prog(t, A.il4, A.proj + 0.12));
         const m = sb_beetle(bx + camS * 0.5, by, sc, t, { pose: 'aim', aimK: 1, tip: tipK, aim: -0.3, hot: sm(prog(t, T.b4a, A.proj + 0.2)) * (1 - 0.5 * prog(t, tFire + 1.5, tFire + 1.8)), fire });

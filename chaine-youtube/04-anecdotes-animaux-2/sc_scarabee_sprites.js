@@ -521,7 +521,7 @@ function sb_toad(cx, cy, s, t, o = {}) {
   if (mouthK > 0.04) { const inner = polyPath([Th(24.5, -18.4), Th(42, -18.8), Th(57.5, -18.6), rj([57.5, -18.6]), rj([42, -18.8]), rj([24.5, -18.4])]); sb_fill(c, inner, C.m1); }
   c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(jaw);
   part(jaw, SKN, [2.0, 0.9], [2.4, 1.0]);
-  c.save(); c.clip(jaw); { const th = sb_spline([rj([26, -10.6]), rj([40, -9.6]), rj([52, -10.8]), rj([54, -2]), rj([36, 3]), rj([22, -2])]); sb_fill(c, th, C.c2); sb_cres(c, jaw, ll, 1.6, C.c3); sb_cres(c, jaw, ll, 1.8, C.o4, true); } c.restore();
+  c.save(); c.clip(jaw); { const th = sb_spline([rj([26, -7.4]), rj([40, -6.2]), rj([51, -7.4]), rj([54, 0]), rj([36, 5]), rj([22, 0])]); sb_fill(c, th, C.c2); sb_cres(c, jaw, ll, 1.6, C.c3); sb_cres(c, jaw, ll, 1.8, C.o4, true); } c.restore();
   // langue : bande rose qui part du plancher de la gueule, bout collant renflé
   const tg = clamp(sb_fin(o.tongue, 0));
   if (tg > 0.02) {
