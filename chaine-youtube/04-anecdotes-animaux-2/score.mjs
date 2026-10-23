@@ -52,27 +52,39 @@ function put(i, v, pan, send) {
   if (i < B.lo) B.lo = i; if (i > B.hi) B.hi = i;
 }
 function emit(buf, t0, pan = 0, send = 0.3, gain = 1) {       // écrit un tampon mono ; 1 ms de montée et 12 ms de descente garanties : pas de clic
+  logOn(t0, 'emit', gain);
   const s0 = Math.floor(t0 * SR), len = buf.length, fo = Math.min(len, Math.floor(0.012 * SR));
   for (let i = 0; i < len; i++) { let v = buf[i] * gain; if (i < 48) v *= i / 48; if (i > len - fo) v *= (len - i) / fo; put(s0 + i, v, pan, send); }
 }
 
 // ───────── phrases de la voix, sections, événements ─────────
 const PHR = TLJ.phrases, P = {}; PHR.forEach(p => P[p.id] = p);
-const ORDER = ['q', 'trois', 'g1', 'g2', 'g3', 'g4', 'l1', 'l2', 'l3', 'l4', 'y1', 'y2', 'y3', 'y4', 'fin'];
+const ORDER = ['i1', 'b1', 'b2', 'b3', 'b4', 'c1', 'c2', 'c3', 'e1', 'e2', 'e3', 'fin'];
 const ph = id => P[id] || (() => { warn('phrase manquante : ' + id + ' (repli sur le rang)'); return PHR[Math.min(PHR.length - 1, Math.max(0, ORDER.indexOf(id)))]; })();
 const END = PHR[PHR.length - 1].t1, VOICE_END = END;
-const norm = s => String(s).normalize('NFC').toLowerCase().replace(/[.,:;!?…]/g, '');
-const wt = (id, txt, k = 0) => { const w = ph(id).words.filter(w => norm(w.w) === norm(txt))[k]; if (!w) { warn(`mot absent ${id} « ${txt} » : repli sur le début de la phrase`); return ph(id).t0; } return w.t0; };
-const wt1 = (id, txt, k = 0) => { const w = ph(id).words.filter(w => norm(w.w) === norm(txt))[k]; return w ? w.t1 : ph(id).t1; };
+const norm = s => String(s).normalize('NFC').toLowerCase().replace(/[’‘]/g, "'").replace(/[.,:;!?…]/g, '');
+const strip = s => norm(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+// mot d'une phrase : `txt` est un mot ou une liste de graphies possibles (« 100 » ou « cent », « 860 » ou « huit ») ; casse, ponctuation et accents tolérés
+const findWord = (id, txt, k = 0) => { const W = ph(id).words; for (const a of Array.isArray(txt) ? txt : [txt]) { let c = W.filter(w => norm(w.w) === norm(a)); if (!c.length) c = W.filter(w => strip(w.w) === strip(a)); if (c[k]) return c[k]; } return null; };
+const wt = (id, txt, k = 0) => { const w = findWord(id, txt, k); if (!w) { warn(`mot absent ${id} « ${Array.isArray(txt) ? txt.join('|') : txt} » : repli sur le début de la phrase`); return ph(id).t0; } return w.t0; };
+const wt1 = (id, txt, k = 0) => { const w = findWord(id, txt, k); return w ? w.t1 : ph(id).t1; };
+const lastW = id => { const W = ph(id).words; return W[W.length - 1]; };     // le dernier mot d'une phrase (« degrés », « explosion », « volts »… : à garder dégagé)
 const evs = type => EVENTS.filter(e => e.type === type);
 const evIn = (type, a, b) => EVENTS.find(e => e.type === type && e.t >= a && e.t < b) || null;
 const at = type => { const e = evs(type)[0]; if (!e) throw new Error('événement manquant : ' + type); return e.t; };
 const LEAD = 0.12, CARD_T = 2.0;                         // comme shots.js
 const SEG = {
-  intro: [0, ph('g1').t0 - LEAD], gre: [ph('g1').t0 - LEAD, ph('l1').t0 - LEAD], lez: [ph('l1').t0 - LEAD, ph('y1').t0 - LEAD],
-  lyc: [ph('y1').t0 - LEAD, ph('fin').t0 - LEAD], fin: [ph('fin').t0 - LEAD, VOICE_END + CARD_T], sortie: [VOICE_END + CARD_T, DUR],
+  intro: [0, ph('b1').t0 - LEAD], sca: [ph('b1').t0 - LEAD, ph('c1').t0 - LEAD], bas: [ph('c1').t0 - LEAD, ph('e1').t0 - LEAD],
+  ang: [ph('e1').t0 - LEAD, ph('fin').t0 - LEAD], fin: [ph('fin').t0 - LEAD, VOICE_END + CARD_T], sortie: [VOICE_END + CARD_T, DUR],
 };
-const segAt = t => t < SEG.intro[1] ? 'intro' : t < SEG.gre[1] ? 'gre' : t < SEG.lez[1] ? 'lez' : t < SEG.lyc[1] ? 'lyc' : t < SEG.fin[1] ? 'fin' : 'sortie';
+const segAt = t => t < SEG.intro[1] ? 'intro' : t < SEG.sca[1] ? 'sca' : t < SEG.bas[1] ? 'bas' : t < SEG.ang[1] ? 'ang' : t < SEG.fin[1] ? 'fin' : 'sortie';
+// Mots de fin de phrase : la reconnaissance de parole les relit mal quand une note ou un bruitage tombe dessus (leçon de l'épisode 1 : « yeux », « nez »).
+// ZONES = intervalle où aucune attaque de musique n'est posée ; PROT = zone élargie où la musique et les ambiances baissent (voir la fin du fichier).
+const ZONES = PHR.map(p => { const w = p.words[p.words.length - 1]; return [w.t0 - 0.06, w.t1 + 0.05]; });
+const inZone = t => ZONES.find(z => t > z[0] && t < z[1]) || null;
+const clearT = (t, maxShift = 0.7) => { const z = inZone(t); return z && z[1] - t <= maxShift ? z[1] + 0.01 : t; };       // un coup de musique calé sur un mot final est reporté juste après le mot
+const MLOG = [];                                         // --check : attaques de musique (kind, gain) avec leur date
+const logOn = (t0, kind, g) => { if (OPT.check && B === BUS.music) MLOG.push([t0, kind, g]); };
 
 // ───────── filtres, hasard lent ─────────
 class Filt {                                             // filtre à variables d'état (TPT) : lp, hp, bp (gain 1 au centre), bpn (bande normalisée en densité spectrale)
@@ -89,7 +101,7 @@ const interp = (pts, u) => { let k = 0; while (k < pts.length - 2 && u > pts[k +
 // ───────── briques sonores communes ─────────
 function tone(t0, dur, o = {}) {                         // sinusoïde (avec harmoniques) à glissando, enveloppe attaque / décroissance / fin
   const { f0 = 440, f1 = f0, curve = 1, gain = 0.1, att = 0.004, rel = 0.02, dec = 0, harm = [1], pan = 0, panTo = null, send = 0.3, vib = 0, vrate = 6, am = 0, arate = 10 } = o;
-  const s0 = Math.floor(t0 * SR), len = Math.max(2, Math.floor(dur * SR)); let ph = 0;
+  logOn(t0, 'tone', gain); const s0 = Math.floor(t0 * SR), len = Math.max(2, Math.floor(dur * SR)); let ph = 0;
   for (let i = 0; i < len; i++) {
     const x = i / SR, u = i / len, f = f0 * Math.pow(f1 / f0, Math.pow(u, curve)) * (vib ? 1 + vib * Math.sin(TAU * vrate * x) : 1); ph += TAU * f / SR;
     let v = 0; for (let k = 0; k < harm.length; k++) v += harm[k] * Math.sin((k + 1) * ph);
@@ -99,7 +111,7 @@ function tone(t0, dur, o = {}) {                         // sinusoïde (avec har
 }
 function nzb(t0, dur, o = {}) {                          // rafale de bruit filtré (lp / bp / hp) à fréquence glissante, enveloppe attaque / décroissance / fin, modulation d'amplitude facultative
   const { type = 'bp', f0 = 1000, f1 = f0, q = 1, gain = 0.1, att = 0.005, rel = 0.05, dec = 0, pan = 0, panTo = null, send = 0.3, curve = 1, am = 0, arate = 14, nrm = true } = o;
-  const s0 = Math.floor(t0 * SR), len = Math.max(2, Math.floor(dur * SR)), F = new Filt();
+  logOn(t0, 'noise', gain); const s0 = Math.floor(t0 * SR), len = Math.max(2, Math.floor(dur * SR)), F = new Filt();
   for (let i = 0; i < len; i++) {
     const x = i / SR, u = i / len; if ((i & 7) === 0) F.set(f0 * Math.pow(f1 / f0, Math.pow(u, curve)), q);
     F.run(rnd() * 2 - 1); const y = type === 'lp' ? F.lp : type === 'hp' ? F.hp : (nrm ? F.bp * Math.sqrt(q) : F.bp);
