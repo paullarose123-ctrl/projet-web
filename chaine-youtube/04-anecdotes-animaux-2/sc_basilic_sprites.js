@@ -100,11 +100,11 @@ function ba_pal(dim = 0, far = 0) {
 // A*, B* : mains proche et éloignée (position) ; sail : hauteur du voile dorsal (1 = repos) ; crest : hauteur du plumet de la tête ; mouth : ouverture de la gueule ; sx : étalement latéral.
 const BA_POSES = {
   sit: { hx: -17, hy: -8.5, ta: -0.16, tl: 36, arch: 1.4, na: -0.62, nl: 8, ha: -0.20, tailA: 3.06, tailC: 0.50, tw: 0.05, tph: 0, tlen: 118,
-    Lx: -3, Ly: -0.8, Lt: 0.08, Ls: 0.55, Fx: -9, Fy: -0.8, Ft: 0.08, Fs: 0.45, lk: 0.64, Ax: 6, Ay: 13, Bx: 0.5, By: 13, sail: 1, crest: 1, mouth: 0 },
+    Lx: -12.5, Ly: -1.2, Lt: 0.0, Ls: 0.5, Kx: -7, Ky: -4.2, Fx: -6, Fy: -1.2, Ft: 0.0, Fs: 0.45, KFx: -1, KFy: -4.4, lk: 0.64, Ax: 6, Ay: 13, Bx: 0.5, By: 13, sail: 1, crest: 1, mouth: 0 },
   look: { hx: -17, hy: -8.5, ta: -0.30, tl: 36, arch: 1.0, na: -0.85, nl: 8.5, ha: -0.42, tailA: 3.06, tailC: 0.55, tw: 0.05, tph: 0, tlen: 118,
-    Lx: -3, Ly: -0.8, Lt: 0.08, Ls: 0.55, Fx: -9, Fy: -0.8, Ft: 0.08, Fs: 0.45, lk: 0.64, Ax: 5, Ay: 13.5, Bx: -0.5, By: 13.5, sail: 1.12, crest: 1.1, mouth: 0 },
+    Lx: -12.5, Ly: -1.2, Lt: 0.0, Ls: 0.5, Kx: -7, Ky: -4.2, Fx: -6, Fy: -1.2, Ft: 0.0, Fs: 0.45, KFx: -1, KFy: -4.4, lk: 0.64, Ax: 5, Ay: 13.5, Bx: -0.5, By: 13.5, sail: 1.12, crest: 1.1, mouth: 0 },
   crouch: { hx: -15, hy: -9.5, ta: -0.08, tl: 34, arch: 3.0, na: -0.30, nl: 7.5, ha: 0.12, tailA: 3.04, tailC: 0.35, tw: 0.03, tph: 0, tlen: 118,
-    Lx: -2, Ly: -0.8, Lt: 0.1, Ls: 0.8, Fx: -8, Fy: -0.8, Ft: 0.1, Fs: 0.7, lk: 0.78, Ax: 6, Ay: 12, Bx: 1, By: 12.5, sail: 0.85, crest: 0.9, mouth: 0 },
+    Lx: -10, Ly: -1.2, Lt: 0.0, Ls: 0.8, Kx: -3, Ky: -6.2, Fx: -4, Fy: -1.2, Ft: 0.0, Fs: 0.7, KFx: 2, KFy: -6.4, lk: 0.78, Ax: 6, Ay: 12, Bx: 1, By: 12.5, sail: 0.85, crest: 0.9, mouth: 0 },
   leap: { hx: 0, hy: -30, ta: -0.50, tl: 38, arch: 1.5, na: -0.45, nl: 8, ha: -0.12, tailA: 3.30, tailC: -0.2, tw: 0.08, tph: 0, tlen: 118,
     Lx: -26, Ly: -22, Lt: 2.9, Ls: 0.1, Fx: -22, Fy: -36, Ft: 2.8, Fs: 0.1, lk: 1, Ax: 13, Ay: -2, Bx: 11, By: -4, sail: 0.7, crest: 0.8, mouth: 0 },
   fall: { hx: 0, hy: -30, ta: -0.62, tl: 38, arch: 0.5, na: -0.40, nl: 8, ha: 0.0, tailA: 3.22, tailC: 0.2, tw: 0.08, tph: 0, tlen: 118,
@@ -171,12 +171,12 @@ function ba_solve(P, t, o) {
   K.torso = [N0, spine(0.78), spine(0.5), spine(0.22), H]; K.torsoW = [7.6, 11.4 * br, 12.6 * br, 11.6 * br, 10.0];
   // pattes arrière : hanche un peu sous l'épine
   const hipJ = (() => { const s = spine(0.06); return [s[0] - nT[0] * 2.4, s[1] - nT[1] * 2.4]; })(), l1 = 17 * P.lk, l2 = 21 * P.lk, reach = 0.95 * (l1 + l2);
-  const leg = (x, y, th, sp) => {
+  const leg = (x, y, th, sp, kx, ky) => {
     let dx = x - hipJ[0], dy = y - hipJ[1]; const d = Math.hypot(dx, dy); if (d > reach) { dx *= reach / d; dy *= reach / d; }
-    const ank = [hipJ[0] + dx, hipJ[1] + dy], knee = ba_ik(hipJ, ank, l1, l2, -1);
+    const ank = [hipJ[0] + dx, hipJ[1] + dy], knee = kx != null ? [kx, ky] : ba_ik(hipJ, ank, l1, l2, -1);
     return { hip: hipJ, knee, ank, th, sp, tip: [ank[0] + Math.cos(th) * 15, ank[1] + Math.sin(th) * 15 * 0.9] };
   };
-  K.legN = leg(P.Lx, P.Ly, P.Lt, P.Ls); K.legF = leg(P.Fx, P.Fy, P.Ft, P.Fs);
+  K.legN = leg(P.Lx, P.Ly, P.Lt, P.Ls, P.Kx, P.Ky); K.legF = leg(P.Fx, P.Fy, P.Ft, P.Fs, P.KFx, P.KFy);
   // bras : épaule sous l'épine, main = position relative à l'épaule
   const sh = (() => { const s = spine(0.86); return [s[0] - nT[0] * 2.6, s[1] - nT[1] * 2.6]; })();
   const arm = (rx, ry) => { let dx = rx, dy = ry; const d = Math.hypot(dx, dy), r = 15.2; if (d > r) { dx *= r / d; dy *= r / d; } const hand = [sh[0] + dx, sh[1] + dy], el = ba_ik(sh, hand, 7.4, 7.8, 1); return { sh, el, hand }; };
@@ -238,6 +238,7 @@ function ba_hand(c, C, x, y, th, o = {}) {
 function ba_lizard(cx, cy, s, t, o = {}) {
   const fl = o.flip ? -1 : 1, P = ba_getPose(o, t), K = ba_solve(P, t, o), rot = o.rot || 0, C = ba_pal(o.dim || 0), Cf = ba_pal(o.dim || 0, 1);
   const hx = P.hx, hy = P.hy, cr = Math.cos(rot), sr = Math.sin(rot);
+  if (o.hip) { cx = o.hip[0] - fl * s * hx; cy = o.hip[1] - s * hy; }                      // o.hip : position ÉCRAN de la hanche (au lieu du point d'appui)
   const T = (x, y) => { const dx = x - hx, dy = y - hy; return [cx + fl * s * (hx + dx * cr - dy * sr), cy + s * (hy + dx * sr + dy * cr)]; };
   // lumière (vecteur vers la source, en écran) → repère du modèle
   const Ls = o.light || [0.5, -0.86], ln = Math.hypot(Ls[0], Ls[1]) || 1, lx0 = Ls[0] / ln * fl, ly0 = Ls[1] / ln;
@@ -369,7 +370,7 @@ function ba_eye(x, y, r, open, fl, C) {
   if (open < 0.25) { R(X - ri, Yy, ri * 2 + 1, 1, C.dark); R(X - ri, Yy - 1, ri * 2 + 1, 1, C.base); return; }
   disc(X, Yy, ri, AM[8]);
   if (ri >= 2) { R(X - ri + 1, Yy + 1, ri * 2 - 1, 1, AM[6]); px(X + fl * (ri - 1), Yy, AM[6]); }                       // ombre du bas de l'iris
-  const pr = ri >= 3 ? 1 : 0; R(X + fl * 1 - pr, Yy - pr, 1 + pr * 1, 1 + pr * 2 - (pr ? 0 : 0), '#05040f');
+  if (ri >= 3) R(X + (fl > 0 ? 0 : -1) + fl, Yy - 1, 2, 2, '#05040f'); else px(X + fl, Yy, '#05040f');
   px(X - fl * Math.max(0, ri - 2), Yy - Math.max(1, ri - 1), AM[10]);                                                 // reflet
   if (open < 0.7) R(X - ri, Yy - ri, ri * 2 + 1, Math.max(1, Math.round(ri * (1 - open))), C.base);
 }
@@ -384,4 +385,66 @@ function ba_reflect(wy, a, t, o = {}) {
     L.globalAlpha = fade; L.drawImage(lay, B[0], sy, B[2] - B[0], 1, B[0] + dx, Math.round(wy) + dy, B[2] - B[0], 1);
   }
   L.restore();
+}
+
+// ───────────────────────── l'eau qui claque : anneaux, gerbe, gouttes, trou d'air ─────────────────────────
+// (wx, wy) = point d'impact sur la surface (wx : abscisse du MONDE, l'écran affiche wx − cam) ; t0 = instant du claquement ; t ≥ t0.
+// o : size (1), dir (+1 si le basilic va vers la droite : la gerbe part vers l'arrière), cam, seed, layer 'under' (anneaux, trou d'air, bulles : avant le basilic) | 'over' (gerbe et gouttes : après) | 'both'
+function ba_slap(wx, wy, t0, t, o = {}) {
+  const a = t - t0; if (a < 0 || a > 1.7) return;
+  const sz = o.size ?? 1, X = Math.round(wx - (o.cam || 0)), Yw = Math.round(wy), dir = o.dir ?? 1, sd = (o.seed ?? 1) * 17, layer = o.layer || 'both', sq = o.sq ?? 0.3;
+  L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
+  if (layer !== 'over') {
+    for (let k = 0; k < 3; k++) {                                                          // anneaux concentriques qui s'élargissent et s'effacent
+      const d = 0.07 * k; if (a < d) continue;
+      const q = a - d, r = (1 - Math.exp(-q * 3.2)) * (31 - 6 * k) * sz, life = 1 - q / 1.35; if (life <= 0 || r < 1) continue;
+      const n = Math.max(14, Math.round(r * 2.4));
+      for (let j = 0; j < n; j++) {
+        const ang = j / n * TAU; if (k_bay(j * 3 + k, k + sd) > life * 1.5) continue;
+        const front = Math.sin(ang) > 0;
+        L.fillStyle = life > 0.6 ? (front ? WH[3] : CY[4]) : life > 0.3 ? (front ? CY[4] : CY[3]) : CY[2];
+        L.fillRect(Math.round(X + Math.cos(ang) * r), Math.round(Yw + Math.sin(ang) * r * sq), 1, 1);
+      }
+    }
+    if (a < 0.55) {                                                                         // trou d'air : ellipse sombre à bord clair qui se referme
+      const q = a / 0.55, rx = Math.max(0.5, 6 * sz * (1 - q * q)), ry = Math.max(0.5, rx * 0.34);
+      L.fillStyle = NI[1]; L.beginPath(); L.ellipse(X, Yw, rx + 0.6, ry + 0.6, 0, 0, TAU); L.fill();
+      L.fillStyle = GR[0]; L.beginPath(); L.ellipse(X, Yw, rx, ry, 0, 0, TAU); L.fill();
+      if (rx > 2) { L.fillStyle = CY[3]; L.fillRect(Math.round(X - rx * 0.6), Math.round(Yw + ry), Math.round(rx * 1.2), 1); }
+    }
+    for (let i = 0; i < 4; i++) {                                                          // bulles qui crèvent à la surface, après le retrait du pied
+      const d = 0.28 + 0.12 * i + 0.05 * ba_h(i, sd), q = a - d; if (q < 0 || q > 0.4) continue;
+      const bx = X + Math.round((ba_h(i, sd + 3) - 0.5) * 16 * sz), by = Yw + Math.round((ba_h(i, sd + 4) - 0.3) * 3 * sz);
+      L.fillStyle = q < 0.28 ? CY[4] : CY[3]; L.fillRect(bx, by, 2, 1); if (q < 0.28) { L.fillStyle = WH[3]; L.fillRect(bx, by - 1, 1, 1); }
+    }
+  }
+  if (layer !== 'under') {
+    if (a < 0.4) {                                                                          // gerbe : lames d'eau en couronne basse, vers l'arrière
+      const q = a / 0.4, hh = Math.sin(Math.PI * Math.min(1, q * 1.15)) * (1 - q * 0.3);
+      for (let j = 0; j < 9; j++) {
+        const h = (9 - Math.abs(j - 3.5) * 1.8) * sz * hh * (0.75 + 0.5 * ba_h(j, sd + 7)); if (h < 1) continue;
+        const bx = X - dir * Math.round((1 + j * 1.5) * sz) + Math.round(dir * q * 3 * sz * -1), top = Yw - Math.round(h);
+        L.fillStyle = WH[3]; L.fillRect(bx, top, 1, 1); L.fillStyle = CY[4]; L.fillRect(bx, top + 1, 1, Math.max(0, Math.round(h * 0.5))); L.fillStyle = CY[3]; L.fillRect(bx, top + 1 + Math.round(h * 0.5), 1, Math.max(0, Yw - top - 1 - Math.round(h * 0.5)));
+      }
+    }
+    const nD = Math.round(11 * Math.min(1.5, sz + 0.2));
+    for (let i = 0; i < nD; i++) {                                                          // gouttes balistiques
+      const h1 = ba_h(i, sd + 11), h2 = ba_h(i, sd + 12), h3 = ba_h(i, sd + 13);
+      const vx = -dir * (6 + 42 * h1) * sz + (h2 - 0.5) * 18 * sz, vy = -(30 + 52 * h3) * sz, g = 330 * sz;
+      const xx = X + vx * a, yy = Yw + vy * a + 0.5 * g * a * a; if (yy > Yw + 1) continue;
+      const big = a < 0.3 && sz >= 0.8 && h2 > 0.35 ? 2 : 1;
+      L.fillStyle = a < 0.4 ? WH[3] : CY[4]; L.fillRect(Math.round(xx), Math.round(yy), big, big); if (big === 2) { L.fillStyle = CY[3]; L.fillRect(Math.round(xx) + 1, Math.round(yy) + 1, 1, 1); }
+    }
+  }
+  L.restore();
+}
+// la traînée de pas d'un basilic qui court : un claquement par pas, aux instants et aux endroits où le pied touche l'eau.
+// o : t0 (instant où la phase vaut ph0), ph0, f (cycles/s), x0 (abscisse monde de la hanche à t0), v (px/s, monde), dir, s, wy (surface), cam, layer, size, ahead (px devant la hanche où le pied touche, à s = 1)
+function ba_runFx(t, o) {
+  const f = o.f ?? 3.3, ph0 = o.ph0 ?? 0, s = o.s ?? 1, dir = o.dir ?? 1, ph = ph0 + f * (t - o.t0), nMax = Math.floor((ph - 0.05) / 0.5), nMin = nMax - Math.ceil(1.7 * f * 2) - 1;
+  for (let n = nMin; n <= nMax; n++) {
+    const phn = 0.05 + n * 0.5, tn = o.t0 + (phn - ph0) / f; if (tn < (o.tFrom ?? -1e9) || tn > t) continue;
+    const near = ((n % 2) + 2) % 2 === 0, hip = o.x0 + dir * o.v * (tn - o.t0), wx = hip + dir * s * (o.ahead ?? 22);
+    ba_slap(wx, o.wy + (near ? 2 : -2), tn, t, { size: o.size ?? s * 0.85, dir, cam: o.cam, seed: n + 40, layer: o.layer });
+  }
 }

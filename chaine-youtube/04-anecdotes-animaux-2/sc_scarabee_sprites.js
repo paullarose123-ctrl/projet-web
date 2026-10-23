@@ -399,3 +399,456 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   const Hh = Th(41, -20), M = Th(42.6, -16.2), Bk = Tb(-4, -39);
   return { tip: nz, tipDir: dirS, head: [sx(Hh[0]), sy(Hh[1])], eye: E, mouth: [sx(M[0]), sy(M[1])], back: [sx(Bk[0]), sy(Bk[1])], mask: info.mask, bbox: info.bbox, antenna: [sx(antEnd[0]), sy(antEnd[1])] };
 }
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 3. LE CRAPAUD (Bufo bufo) : le prédateur. Repère : x vers l'avant (le museau), y vers le bas, sol y = 0, 1 unité = 1 px à s = 1 (corps ≈ 100 de long)
+// ════════════════════════════════════════════════════════════════════════════════════════
+function sb_ikSide(hx, hy, ax, ay, L1, L2, sgn) {                                  // genou / coude du côté x croissant (sgn = 1) ou décroissant (−1)
+  const dx = ax - hx, dy = ay - hy, d0 = Math.hypot(dx, dy) || 0.001, mx = L1 + L2 - 0.02, mn = Math.abs(L1 - L2) + 0.05;
+  const d = clamp(d0, mn, mx), a = Math.atan2(dy, dx), A = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+  const k1 = [hx + L1 * Math.cos(a + A), hy + L1 * Math.sin(a + A)], k2 = [hx + L1 * Math.cos(a - A), hy + L1 * Math.sin(a - A)];
+  return { k: (k1[0] > k2[0]) === (sgn > 0) ? k1 : k2, k1, k2, a: [hx + dx / d0 * d, hy + dy / d0 * d] };
+}
+const sb_TORSO = [[-44, -8], [-50, -18], [-49, -31], [-41, -42], [-27, -49], [-10, -50], [5, -46.5], [17, -40], [25, -31], [27, -20], [23, -11], [10, -6.5], [-14, -6], [-32, -6.6]];
+const sb_THEAD = [[11, -39], [21, -45.5], [33, -47], [44, -43.5], [53, -37], [59.5, -28.5], [60.5, -22.5], [55, -19.2], [44, -18.2], [32, -18], [22, -19], [13, -24]];
+const sb_TJAW = [[24, -18.1], [40, -18.7], [55, -18.4], [58.5, -14.6], [52, -9.4], [39, -7.6], [27, -9.4], [20.5, -14]];
+const sb_TPIV = [-30, -12], sb_TNECK = [21, -27], sb_TJH = [24.5, -18.4];
+const sb_TDEF = { hipN: [-31, -21], hipF: [-26, -22.5], shoN: [17, -20], shoF: [22, -21] };
+function sb_toadHopX(ph, dist = 80) { return dist * sm(clamp((ph - 0.26) / 0.54)); }
+function sb_toadHopY(ph, h = 26) { const q = clamp((ph - 0.28) / 0.52); return -h * 4 * q * (1 - q); }
+
+function sb_toad(cx, cy, s, t, o = {}) {
+  o = o || {};
+  const flip = o.flip ? -1 : 1, side = o.light ?? 1, outline = '#05040f', C = sb_C, sil = o.sil || null, seed = o.seed ?? 5;
+  const lunge = clamp(sb_fin(o.lunge, 0)), recoil = clamp(sb_fin(o.recoil, 0)), shake = clamp(sb_fin(o.shake, 0), -1, 1), wipe = clamp(sb_fin(o.wipe, 0));
+  const hop = o.hop !== undefined ? clamp(sb_fin(o.hop, 0)) : -1;
+  const br = o.breath ?? (0.5 + 0.5 * Math.sin(t * 3.4)), blinkA = ((t * 0.31 + sb_h(seed, 2)) % 1);
+  const blink = o.squint !== undefined ? 0 : (blinkA > 0.94 ? Math.sin((blinkA - 0.94) / 0.06 * Math.PI) : 0);
+  const squint = clamp(o.squint !== undefined ? sb_fin(o.squint, 0) : 0.85 * recoil);
+  const lidQ = clamp(Math.max(squint, blink));
+  const mouthK = clamp(Math.max(sb_fin(o.mouth, 0), lunge > 0 ? Math.min(1, lunge * 1.25) : 0, recoil * 0.35));
+  // phases du saut : accroupie → poussée → vol → réception
+  let crouch = 0, land = 0, hopPitch = 0;
+  if (hop >= 0) { crouch = bump(hop, 0, 0.14, 0.22, 0.3); const q = clamp((hop - 0.28) / 0.52); land = bump(hop, 0.78, 0.84, 0.88, 1.0); hopPitch = hop < 0.28 ? -0.06 * crouch : 0.2 - 0.46 * q; }
+  const ext = hop >= 0 ? clamp(sm(prog(hop, 0.14, 0.3)) * (1 - sm(prog(hop, 0.76, 0.88)))) : 0;       // pattes arrière tendues
+  const reach = hop >= 0 ? clamp(sm(prog(hop, 0.2, 0.34)) * (1 - sm(prog(hop, 0.74, 0.84)))) : 0;     // bras tendus vers l'avant
+  const pitch = hopPitch - 0.07 * lunge + 0.2 * recoil + 0.05 * land;
+  const dxBody = 9 * lunge - 7 * recoil, dyBody = 3.2 * crouch + 3.4 * land + 2.4 * lunge - 1.2 * recoil + 0.45 * br * (hop >= 0 ? 0 : 1);
+  const headRot = -0.28 * recoil + 0.2 * shake + 0.05 * Math.sin(t * 2.2) * (1 - recoil) - 0.12 * ext;
+  const headDx = 12 * lunge - 5 * recoil + 3.4 * shake, headDy = 2.2 * lunge - 3 * recoil;
+  const lsx = side * 0.62, lsy = -0.78, ln = Math.hypot(lsx, lsy), Ls = [lsx / ln, lsy / ln], ll = [Ls[0] * flip, Ls[1]];
+  const Tb = (x, y) => { const q = sb_rotAbout(x, y, sb_TPIV[0], sb_TPIV[1], pitch); return [q[0] + dxBody, q[1] + dyBody]; };
+  const Th = (x, y) => { const q = sb_rotAbout(x, y, sb_TNECK[0], sb_TNECK[1], headRot); return Tb(q[0] + headDx, q[1] + headDy); };
+  const sx = x => cx + flip * s * x;
+  const liftY = hop >= 0 ? sb_toadHopY(hop, o.hopH ?? 24) : 0, hk = clamp(-liftY / 60);
+  const shA = (o.shadow ?? 0.34) * (sil ? 0 : 1);
+  if (shA > 0) sb_shadow(cx - flip * s * 6, cy + 0.8 * s, (50 + 6 * lunge) * s * (1 - hk * 0.2), 4.6 * s * (1 - hk * 0.2), shA * (1 - hk * 0.5));
+  layerBegin(); const c = Y; c.setTransform(flip * s, 0, 0, s, cx, cy + liftY * s);
+  const cw = 1.7 / s, minW = 1.5 / s;
+  const part = (path, tones, wl = [3, 1.3], ws = [3.4, 1.4]) => { sb_fill(c, path, tones[0]); sb_cres(c, path, ll, wl[0], tones[1]); sb_cres(c, path, ll, wl[1], tones[2]); sb_cres(c, path, ll, ws[0], tones[3], true); sb_cres(c, path, ll, ws[1], tones[4], true); };
+  const SKN = [C.p4, C.p5, C.c2, C.p3, C.p2], SKF = [C.p3, C.p4, C.p5, C.p2, C.p1];
+  // ── patte arrière : cuisse repliée le long du flanc, jambe en arrière, pied à plat ; dans le saut tout se tend vers l'arrière
+  const hind = (hipB, far) => {
+    const hip = Tb(hipB[0], hipB[1]);
+    const foldA = [-44 + (far ? 3 : 0), -3.6], extA = [-84 + (far ? 3 : 0), -12 + (far ? 2 : 0)];
+    const ank = [lerp(foldA[0], extA[0], ext), lerp(foldA[1], extA[1], ext)];
+    const ik = sb_ikSide(hip[0], hip[1], ank[0], ank[1], 29, 30, 1), kf = ik.k1[0] > ik.k2[0] ? ik.k1 : ik.k2, ku = ik.k1[1] < ik.k2[1] ? ik.k1 : ik.k2;
+    const kn = [lerp(kf[0], ku[0], ext), lerp(kf[1], ku[1], ext)], an = ik.a;
+    const tones = far ? SKF : SKN;
+    const fdir = [lerp(1, -0.9, ext), lerp(0.05, 0.42, ext)], fl = Math.hypot(fdir[0], fdir[1]); fdir[0] /= fl; fdir[1] /= fl;
+    const ball = [an[0] + fdir[0] * 13, an[1] + fdir[1] * 13];
+    const toes = [];
+    for (let k = 0; k < 5; k++) { const sp = (k - 2) * 0.2, a = Math.atan2(fdir[1], fdir[0]) + sp, len = 8.4 * [0.6, 0.8, 0.92, 1, 0.8][k]; toes.push([ball, [ball[0] + Math.cos(a) * len * 0.5, ball[1] + Math.sin(a) * len * 0.5], [ball[0] + Math.cos(a) * len, ball[1] + Math.sin(a) * len]]); }
+    const thP = sb_seg([hip, [(hip[0] + kn[0]) / 2, (hip[1] + kn[1]) / 2 - 1.0], kn], [18, 16, 10.5]);
+    const shP = sb_seg([kn, [(kn[0] + an[0]) / 2, (kn[1] + an[1]) / 2], an], [10.5, 8.6, 6.0]);
+    const ftP = sb_seg([an, [(an[0] + ball[0]) / 2, (an[1] + ball[1]) / 2], ball], [6.0, 5.2, 4.6]);
+    for (let k = 4; k >= 0; k--) { const tp = sb_seg(toes[k], [Math.max(minW * 1.3, 2.9), Math.max(minW * 1.2, 2.4), Math.max(minW, 1.5)]); if (!far) { c.strokeStyle = C.p1; c.lineWidth = cw * 0.8; c.stroke(tp); } part(tp, tones, [0.8, 0.4], [0.8, 0.4]); }
+    if (!far && s >= 1.2) { const web = polyPath([toes[0][2], toes[1][2], toes[2][2], toes[3][2], toes[4][2], ball]); c.globalAlpha = 0.55; sb_fill(c, web, C.p3); c.globalAlpha = 1; }
+    if (!far) { c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(ftP); c.stroke(shP); }
+    part(ftP, tones, [1.1, 0.5], [1.2, 0.5]);
+    part(shP, tones, [1.8, 0.8], [2.2, 0.9]);
+    if (!far) { c.strokeStyle = C.p1; c.lineWidth = cw; c.stroke(thP); }
+    part(thP, tones, [3.2, 1.3], [3.8, 1.6]);
+    if (!far) {
+      c.save(); c.clip(thP); const r = rng(seed * 31 + 7);
+      for (let i = 0; i < 8; i++) { const f = 0.12 + r() * 0.78, q = [hip[0] + (kn[0] - hip[0]) * f + (r() - 0.5) * 8, hip[1] + (kn[1] - hip[1]) * f + (r() - 0.5) * 8], e = sb_ell(q[0], q[1], 1.1 + r() * 1.2, 0.9 + r() * 0.9, r() * 3); sb_fill(c, e, C.p2); sb_cres(c, e, ll, 0.5, C.p5); }
+      c.restore();
+      c.save(); c.clip(shP); c.strokeStyle = C.p1; c.lineWidth = 1.5; for (const f of [0.3, 0.55, 0.8]) { const q = [kn[0] + (an[0] - kn[0]) * f, kn[1] + (an[1] - kn[1]) * f]; c.beginPath(); c.moveTo(q[0] - 3, q[1] - 5); c.lineTo(q[0] + 2, q[1] + 5); c.stroke(); } c.restore();
+    }
+    return { kn, an, ball };
+  };
+  // ── bras : droit, quatre doigts écartés ; tendu vers l'avant dans le saut ; remonte vers la gueule pour s'essuyer
+  const arm = (shoB, far, wipeK) => {
+    const shoT = Tb(shoB[0], shoB[1]);
+    let wr = Tb(shoB[0] + 10 + lunge * 6 - recoil * 2, -1.8);
+    if (reach > 0) { const q = Tb(shoB[0] + 26, -16 - 4 * (1 - reach)); wr = [lerp(wr[0], q[0], reach), lerp(wr[1], q[1], reach)]; }
+    if (wipeK > 0) { const m = Th(55, -17); wr = [lerp(wr[0], m[0] - 1, wipeK), lerp(wr[1], m[1] + 3 - 4 * Math.sin(t * 22) * wipeK, wipeK)]; }
+    const ik = sb_ikSide(shoT[0], shoT[1], wr[0], wr[1], 14, 15.5, -1), el = ik.k, w2 = ik.a, tones = far ? SKF : SKN;
+    const upP = sb_seg([shoT, [(shoT[0] + el[0]) / 2, (shoT[1] + el[1]) / 2], el], [8.0, 7.0, 5.8]);
+    const foP = sb_seg([el, [(el[0] + w2[0]) / 2, (el[1] + w2[1]) / 2], w2], [5.8, 5.0, 4.0]);
+    const fa = Math.atan2(w2[1] - el[1], w2[0] - el[0]);
+    for (let k = 0; k < 4; k++) { const a = (wipeK > 0.3 || reach > 0.3 ? fa : 0.1) + (k - 1.5) * 0.22, len = 8.2 * [0.8, 1, 1, 0.78][k], p = [[w2[0], w2[1]], [w2[0] + Math.cos(a) * len * 0.55, w2[1] + Math.sin(a) * len * 0.55 + 0.3], [w2[0] + Math.cos(a) * len, w2[1] + Math.sin(a) * len + 0.5]];
+      const fp = sb_seg(p, [Math.max(minW * 1.2, 2.6), Math.max(minW * 1.1, 2.3), Math.max(minW, 1.6)]); if (!far) { c.strokeStyle = C.p1; c.lineWidth = cw * 0.8; c.stroke(fp); } part(fp, tones, [0.7, 0.3], [0.7, 0.3]); }
+    if (!far) { c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(foP); c.stroke(upP); }
+    part(foP, tones, [1.4, 0.6], [1.6, 0.7]);
+    part(upP, tones, [1.8, 0.8], [2.0, 0.9]);
+    return { el, w2 };
+  };
+  hind(sb_TDEF.hipF, true);
+  arm(sb_TDEF.shoF, true, 0);
+  // ── corps : peau brune verruqueuse
+  const torso = sb_spline(sb_TORSO.map(p => Tb(p[0], p[1] + (p[1] > -14 && p[0] > -40 ? -br * 0.5 : 0))));
+  c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(torso);
+  part(torso, SKN, [5.2, 2.2], [6.0, 2.6]);
+  c.save(); c.clip(torso);
+  { const bp = sb_spline([Tb(-52, -10.5), Tb(-36, -9.2), Tb(-20, -10.4), Tb(-2, -9.4), Tb(14, -10), Tb(30, -14), Tb(34, 6), Tb(0, 14), Tb(-54, 8)]);
+    sb_fill(c, bp, C.c2); sb_cres(c, torso, ll, 2.4, C.c3); sb_cres(c, torso, ll, 1.0, C.c4); sb_cres(c, torso, ll, 3.0, C.o4, true); }
+  const r = rng(seed * 97 + 11);
+  for (let i = 0; i < 9; i++) { const q = Tb(-46 + r() * 64, -46 + r() * 20), e = sb_ell(q[0], q[1], 3.4 + r() * 5.4, 2.2 + r() * 3.0, (r() - 0.5) * 1.2); c.globalAlpha = 0.9; sb_fill(c, e, i % 4 === 0 ? C.l1 : i % 3 === 0 ? C.p1 : C.p2); c.globalAlpha = 1; }
+  for (let i = 0; i < 34; i++) { const q = Tb(-48 + r() * 72, -49 + r() * 36), e = sb_ell(q[0], q[1], 1.1 + r() * 1.7, 0.9 + r() * 1.2, r() * 3), warm = r() < 0.4;
+    sb_fill(c, e, warm ? C.o3 : C.p4); sb_cres(c, e, ll, 0.7, warm ? C.o5 : C.p5); sb_cres(c, e, ll, 0.8, C.p2, true); }
+  // glande parotoïde : gros haricot en relief derrière l'œil, pores sombres
+  { const par = sb_spline([Th(0, -42), Th(11, -47), Th(20, -45), Th(23, -39), Th(15, -34.5), Th(4, -36)]);
+    c.strokeStyle = C.p1; c.lineWidth = cw * 0.9; c.stroke(par); part(par, [C.p4, C.p5, C.p5, C.p2, C.p1], [2.2, 1.0], [2.4, 1.0]);
+    c.save(); c.clip(par); const rr = rng(seed * 13 + 5); for (let i = 0; i < 10; i++) { const q = Th(3 + rr() * 18, -45 + rr() * 9); sb_fill(c, sb_ell(q[0], q[1], 0.6 + rr() * 0.5, 0.45 + rr() * 0.35, 0), C.p1); } c.restore(); }
+  c.restore();
+  // ── mâchoire inférieure (pivote autour de la commissure), intérieur de la gueule, langue
+  const jawA = -0.62 * mouthK, rj = p => { const q = sb_rotAbout(p[0], p[1], sb_TJH[0], sb_TJH[1], jawA); return Th(q[0], q[1]); };
+  const jawPts = sb_TJAW.map(rj), jaw = sb_spline(jawPts);
+  const headP = sb_spline(sb_THEAD.map(p => Th(p[0], p[1])));
+  if (mouthK > 0.04) { const inner = polyPath([Th(24.5, -18.4), Th(42, -18.8), Th(57.5, -18.6), rj([57.5, -18.6]), rj([42, -18.8]), rj([24.5, -18.4])]); sb_fill(c, inner, C.m1); }
+  c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(jaw);
+  part(jaw, SKN, [2.0, 0.9], [2.4, 1.0]);
+  c.save(); c.clip(jaw); { const th = sb_spline([rj([26, -10.6]), rj([40, -9.6]), rj([52, -10.8]), rj([54, -2]), rj([36, 3]), rj([22, -2])]); sb_fill(c, th, C.c2); sb_cres(c, jaw, ll, 1.6, C.c3); sb_cres(c, jaw, ll, 1.8, C.o4, true); } c.restore();
+  // langue : bande rose qui part du plancher de la gueule, bout collant renflé
+  const tg = clamp(sb_fin(o.tongue, 0));
+  if (tg > 0.02) {
+    const L0 = 66 * tg, pts = [Th(40, -12.8), Th(40 + L0 * 0.34, -14.2), Th(40 + L0 * 0.7, -16 + 3 * tg), Th(40 + L0, -17 + 6 * tg * tg)];
+    const tp = sb_seg(pts, [7.2, 6.4, 5.8, 7.4]);
+    c.strokeStyle = C.m1; c.lineWidth = cw; c.stroke(tp); part(tp, [C.m2, C.c2, C.c3, C.h3, C.h2], [1.4, 0.7], [1.6, 0.7]);
+    const e = pts[3], bulb = sb_ell(e[0] + 1.2, e[1], 4.2, 3.9, 0); c.strokeStyle = C.m1; c.lineWidth = cw; c.stroke(bulb); part(bulb, [C.m2, C.c2, C.c3, C.h3, C.h2], [1.3, 0.6], [1.4, 0.6]);
+  }
+  // ── tête (dessus du crâne, lèvre supérieure), arcade, bouche, narine
+  c.strokeStyle = C.p1; c.lineWidth = cw; c.lineJoin = 'round'; c.stroke(headP);
+  part(headP, SKN, [4.6, 2.0], [5.2, 2.3]);
+  c.save(); c.clip(headP);
+  { const r2 = rng(seed * 53 + 3); for (let i = 0; i < 10; i++) { const q = Th(16 + r2() * 42, -45 + r2() * 20), e = sb_ell(q[0], q[1], 0.9 + r2() * 1.2, 0.7 + r2() * 0.9, r2() * 3); sb_fill(c, e, r2() < 0.4 ? C.o3 : C.p4); sb_cres(c, e, ll, 0.5, C.p5); sb_cres(c, e, ll, 0.6, C.p2, true); }
+    const brw = sb_seg([Th(25, -46.5), Th(35, -50), Th(44, -46), Th(52, -39)], [3.6, 4.0, 3.4, 2.2]); part(brw, [C.p4, C.p5, C.p5, C.p3, C.p2], [1.4, 0.6], [1.5, 0.6]);
+    const mouthLine = [Th(60, -23.4), Th(52, -19.6), Th(40, -18.6), Th(29, -18.7), Th(23.4, -16.6)];
+    sb_stroke(c, mouthLine, Math.max(1.0, minW * 0.9), C.p0); sb_stroke(c, mouthLine.map(p => [p[0], p[1] - 1.1]), Math.max(0.7, minW * 0.6), C.p5);
+    const nr = Th(56.4, -31); sb_fill(c, sb_ell(nr[0], nr[1], 1.4, 0.95, -0.5), C.p0); }
+  c.restore();
+  // ── œil : bossage cutané, globe doré à pupille horizontale, paupière qui se ferme
+  const E0 = Th(36.5, -43.6), er = 6.0;
+  {
+    const bump_ = sb_ell(E0[0], E0[1], er + 1.5, er + 1.1, headRot); c.strokeStyle = C.p1; c.lineWidth = cw; c.stroke(bump_); part(bump_, SKN, [1.8, 0.8], [2.0, 0.9]);
+    const open = 1 - lidQ, gy = E0[1] + 0.6, globe = sb_ell(E0[0], gy, er, er * 0.92, 0);
+    if (open > 0.12) {
+      c.save(); c.clip(globe); sb_fill(c, globe, C.k);
+      const iris = sb_ell(E0[0], gy, er - 0.9, (er - 0.9) * 0.92, 0); sb_fill(c, iris, C.a6); sb_cres(c, iris, ll, 1.9, C.a8); sb_cres(c, iris, ll, 0.8, C.a9); sb_cres(c, iris, ll, 1.5, C.a5, true);
+      sb_fill(c, sb_ell(E0[0], gy, er * 0.66, Math.max(0.7, 1.6 * (0.3 + 0.7 * open)), 0), C.k);
+      const topY = E0[1] - er - 1, lidY = topY + (2 * er + 2) * clamp(lidQ * 0.7), botY = E0[1] + er + 2 - (2 * er + 2) * clamp(lidQ * 0.24);
+      c.fillStyle = C.p3; c.beginPath(); c.rect(E0[0] - er - 2, topY - 2, 2 * er + 4, lidY - topY + 2); c.fill(); c.beginPath(); c.rect(E0[0] - er - 2, botY, 2 * er + 4, 12); c.fill();
+      c.strokeStyle = C.p1; c.lineWidth = 1.0; c.beginPath(); c.moveTo(E0[0] - er - 1, lidY); c.lineTo(E0[0] + er + 1, lidY - 0.4 * lidQ); c.stroke();
+      c.restore();
+    } else { sb_fill(c, globe, C.p3); sb_cres(c, globe, ll, 1.4, C.p4); sb_cres(c, globe, ll, 1.5, C.p2, true); }
+    c.strokeStyle = C.p0; c.lineWidth = Math.max(0.9, minW * 0.9); c.lineCap = 'round';
+    if (lidQ > 0.55) { c.beginPath(); c.moveTo(E0[0] - er + 0.5, gy + 0.9); c.quadraticCurveTo(E0[0], gy + 3.0 - 0.4 * (1 - lidQ) * 3 - 0.3, E0[0] + er - 0.5, gy + 0.2); c.stroke();
+      for (let k = 0; k < 3; k++) { c.lineWidth = Math.max(0.7, minW * 0.7); c.beginPath(); c.moveTo(E0[0] - er + 0.6 + k * 0.4, gy - 1.6 - k * 1.5); c.lineTo(E0[0] + er - 1.0 - k * 0.5, gy - 2.8 - k * 1.5 + 1.0); c.stroke(); } }
+  }
+  hind(sb_TDEF.hipN, false);
+  arm(sb_TDEF.shoN, false, wipe);
+  // ── passage pixel
+  const bx = cx - 90 * s - 10, bx2 = cx + 90 * s + 10;
+  const info = sb_finish([Math.min(bx, bx2) - 20, cy + liftY * s - 62 * s - 6, Math.max(bx, bx2) + 20, cy + liftY * s + 8 * s + 12], { Ls, rim: o.rim, rimO: o.rimO ?? SK[4], sil, outline, rimW: s >= 2.4 ? 2 : 1 });
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  const ES = [Math.round(cx + flip * s * E0[0]), Math.round(cy + (liftY + E0[1] + 0.6) * s)];
+  if (!sil && lidQ < 0.5) { const q = Math.max(1, Math.round(er * s * 0.3)); R(ES[0] + Math.round(Ls[0] * er * s * 0.42), ES[1] + Math.round(Ls[1] * er * s * 0.42), q, q, WH[3]); if (s >= 1.8) px(ES[0] - Math.round(Ls[0] * er * s * 0.3), ES[1] - Math.round(Ls[1] * er * s * 0.3), AM[10]); }
+  const J = q => [sx(q[0]), cy + (liftY + q[1]) * s];
+  return { eye: ES, mouth: J(Th(59, -20)), nose: J(Th(57.5, -29)), head: J(Th(38, -32)), throat: J(Th(38, -8)), mask: info.mask, bbox: info.bbox, tongue: tg > 0.02 ? J(Th(40 + 66 * tg + 1.2, -17 + 6 * tg * tg)) : null };
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 4. LE JET PULSÉ ET LA VAPEUR : pixels tramés (tampon) posés sur L
+// ════════════════════════════════════════════════════════════════════════════════════════
+let sb_BUF = null;
+function sb_buf() {
+  if (!sb_BUF) { const c = mkCanvas(LW, LH), x = c.getContext('2d', { willReadFrequently: true }), id = x.createImageData(LW, LH); sb_BUF = { c, x, id, d: new Uint32Array(id.data.buffer) }; }
+  sb_BUF.d.fill(0); return sb_BUF;
+}
+function sb_flush(b) { b.x.putImageData(b.id, 0, 0); L.setTransform(1, 0, 0, 1, 0, 0); L.globalAlpha = 1; L.globalCompositeOperation = 'source-over'; L.drawImage(b.c, 0, 0); }
+const sb_u32M = {};
+const sb_u32 = c => { const r = sb_rgb(c), k = r.join(','); return sb_u32M[k] ?? (sb_u32M[k] = (0xFF000000 | (r[2] << 16) | (r[1] << 8) | r[0]) >>> 0); };
+function sb_pxB(b, x, y, col) { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= LW || y >= LH) return; b.d[y * LW + x] = col; }
+function sb_rectB(b, x, y, w, h, col) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) sb_pxB(b, x + i, y + j, col); }
+// disque tramé : densité maximale dens au centre, qui décroît vers le bord ; deux tons (cœur / bord)
+function sb_puffB(b, cx, cy, r, dens, core, edge) {
+  const x0 = Math.floor(cx - r), x1 = Math.ceil(cx + r), y0 = Math.floor(cy - r), y1 = Math.ceil(cy + r), cc = sb_u32(core), ce = sb_u32(edge);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (x < 0 || y < 0 || x >= LW || y >= LH) continue;
+    const dx = x + 0.5 - cx, dy = y + 0.5 - cy, f = Math.sqrt(dx * dx + dy * dy) / r; if (f >= 1) continue;
+    const dd = dens * (1 - f * f); if (sb_bay(x, y) < dd) b.d[y * LW + x] = f < 0.5 ? cc : ce;
+  }
+}
+// étincelle en croix (éclat à la buse)
+function sb_starB(b, x, y, r, col, col2) { for (let k = -r; k <= r; k++) { sb_pxB(b, x + k, y, col); sb_pxB(b, x, y + k, col); } for (let k = -Math.floor(r / 2); k <= Math.floor(r / 2); k++) { sb_pxB(b, x + k, y + k, col2); sb_pxB(b, x + k, y - k, col2); } sb_pxB(b, x, y, WH[3]); }
+
+// segment épais dans le tampon
+function sb_lineB(b, x0, y0, x1, y1, w, col) {
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0))), o = Math.floor(w / 2);
+  for (let k = 0; k <= n; k++) { const f = k / n, x = Math.round(x0 + (x1 - x0) * f), y = Math.round(y0 + (y1 - y0) * f); for (let j = 0; j < w; j++) for (let i = 0; i < w; i++) sb_pxB(b, x - o + i, y - o + j, col); }
+}
+// jet pulsé : bouffées émises à la cadence o.hz depuis t0 pendant o.dur ; chaque bouffée = capsule de liquide brûlant (blanc-jaune au cœur, ambre aux bords) qui file en ralentissant,
+// gouttelettes qui s'en détachent et nuage de vapeur qui grossit ; un éclat à la buse à chaque bouffée
+function sb_jet(x, y, ang, t, t0, o = {}) {
+  o = o || {};
+  const dur = o.dur ?? 1.6, len = o.len ?? 120, hz = o.hz ?? 14, size = o.size ?? 1, steam = o.steam ?? 1, g = o.gravity ?? 60, seed = o.seed ?? 1, life = o.life ?? 0.6, spread = o.spread ?? 0.16;
+  const age0 = t - t0; if (age0 < 0 || age0 > dur + life) return;
+  const b = sb_buf(), ca = Math.cos(ang), sa = Math.sin(ang), v = len / 0.3;
+  const cH = sb_u32(YE[3]), cW = sb_u32(WH[3]), cA = sb_u32(AM[8]), cO = sb_u32(AM[7]), cC = sb_u32(CY[4]), cK = sb_u32(RD[3]);
+  const n = Math.floor(Math.min(age0, dur) * hz) + 1;
+  const posAt = (k, a, an, sp) => { const dd = v * sp * (1 - Math.exp(-a * 4.6)) / 4.6; return [x + Math.cos(an) * dd, y + Math.sin(an) * dd + 0.5 * g * a * a]; };
+  const k0 = Math.max(0, n - Math.ceil(life * hz) - 2);
+  // vapeur d'abord (derrière), puis liquide
+  for (let k = k0; k < n; k++) {
+    const te = t0 + k / hz; if (te > t0 + dur) break;
+    const a = t - te; if (a < 0 || a > life) continue;
+    const f = a / life;
+    if (steam > 0) {
+      const q = posAt(k, a, ang, 0.74), r = (3.2 + 17 * Math.pow(f, 0.6)) * size * steam;
+      sb_puffB(b, q[0] + (sb_h(k, seed + 1) - 0.5) * 7 * size, q[1] - 24 * a * a - 6 * f * size, r, 0.95 * Math.pow(1 - f, 0.9), WH[3], f > 0.5 ? NE[3] : WH[2]);
+    }
+  }
+  for (let k = k0; k < n; k++) {
+    const te = t0 + k / hz; if (te > t0 + dur) break;
+    const a = t - te; if (a < 0 || a > life) continue;
+    const f = a / life, rs = sb_h(k, seed + 2) - 0.5, an = ang + rs * spread * 0.6;
+    // capsule : tête et queue de la bouffée
+    if (f < 0.7) {
+      const q1 = posAt(k, a, an, 1), q0 = posAt(k, Math.max(0, a - 0.034), an, 1), w = Math.max(2, Math.round((4.2 - 3 * f) * size));
+      sb_lineB(b, q0[0], q0[1], q1[0], q1[1], w + 2, f < 0.25 ? cA : cO);
+      sb_lineB(b, q0[0], q0[1], q1[0], q1[1], w, f < 0.35 ? cH : cW);
+      if (w >= 3) sb_lineB(b, q0[0], q0[1], q1[0], q1[1], Math.max(1, w - 2), cW);
+    }
+    // gouttelettes : six par bouffée, balistiques, petites comètes (tête claire, queue ambre)
+    for (let q = 0; q < 6; q++) {
+      const ra = (sb_h(k * 9 + q, seed + 3) - 0.5) * 2 * spread * (0.5 + f * 1.6), sp = 0.55 + sb_h(k * 9 + q, seed + 5) * 0.55, an2 = ang + ra;
+      for (let tail = 0; tail < 3; tail++) {
+        const aa = Math.max(0, a - 0.02 - tail * 0.016), pp = posAt(k, aa, an2, sp), col = tail === 0 ? (f < 0.5 ? cH : cW) : tail === 1 ? cA : cO;
+        if (f > 0.8 && tail > 0) continue;
+        if (size >= 1.2 && tail === 0) sb_rectB(b, pp[0] - 1, pp[1] - 1, 2, 2, col); else sb_pxB(b, pp[0], pp[1], col);
+      }
+    }
+  }
+  // éclat à la buse à chaque nouvelle bouffée (très bref : l'image « pulse »)
+  const kk = Math.floor(Math.min(age0, dur) * hz), ph = age0 - kk / hz;
+  if (age0 <= dur && ph < 0.06) { sb_puffB(b, x + ca * 3, y + sa * 3, 6 * size, 1, WH[3], YE[3]); sb_starB(b, Math.round(x + ca * 3), Math.round(y + sa * 3), Math.round(7 * size), cH, cC); }
+  sb_flush(b);
+}
+// colonne de vapeur qui monte (thermomètre, abdomen, peau qui fume)
+function sb_steam(x, y, t, o = {}) {
+  o = o || {}; const n = o.n ?? 6, w = o.w ?? 6, hgt = o.h ?? 44, a = o.a ?? 0.8, seed = o.seed ?? 2, per = o.period ?? 1.7;
+  const b = sb_buf();
+  for (let k = 0; k < n; k++) {
+    const f = (((t / per + k / n + sb_h(k, seed) * 0.2) % 1) + 1) % 1, yy = y - f * hgt, xx = x + Math.sin(f * 5 + k * 1.9 + t * 1.2) * w * (0.4 + f) + (sb_h(k, seed + 7) - 0.5) * w;
+    const r = (2.4 + 9 * f) * (o.size ?? 1);
+    sb_puffB(b, xx, yy, r, a * Math.min(1, f * 5) * (1 - f) * 1.15, WH[3], f > 0.5 ? NE[3] : WH[2]);
+  }
+  sb_flush(b);
+}
+// éclaboussure d'impact du jet sur une peau : gouttes brûlantes + vapeur ; née à t0, dure ≈ 0,8 s ; dir = direction moyenne des gouttes (rad)
+function sb_splashHit(x, y, t, t0, o = {}) {
+  o = o || {}; const a = t - t0, life = 0.8; if (a < 0 || a > life) return;
+  const f = a / life, b = sb_buf(), dir = o.dir ?? -Math.PI / 2, size = o.size ?? 1, n = o.n ?? 12, seed = o.seed ?? 4, g = 150;
+  for (let k = 0; k < n; k++) {
+    const an = dir + (sb_h(k, seed) - 0.5) * 2.4, sp = (50 + sb_h(k, seed + 1) * 90) * size, px_ = x + Math.cos(an) * sp * a, py_ = y + Math.sin(an) * sp * a + 0.5 * g * a * a;
+    const col = f < 0.4 ? sb_u32(YE[3]) : f < 0.7 ? sb_u32(AM[8]) : sb_u32(WH[2]);
+    sb_pxB(b, px_, py_, col); if (f < 0.6) sb_pxB(b, px_ - Math.cos(an) * 1.5, py_ - Math.sin(an) * 1.5, sb_u32(AM[7]));
+    if (size >= 1.3 && f < 0.5) sb_pxB(b, px_ + 1, py_, col);
+  }
+  for (let k = 0; k < 3; k++) { const ff = clamp((a - k * 0.06) / 0.6); if (ff <= 0) continue; sb_puffB(b, x + (sb_h(k, seed + 9) - 0.5) * 12 * size, y - 10 * ff * size - k * 3, (4 + 11 * ff) * size, 0.8 * (1 - ff), WH[3], WH[2]); }
+  if (a < 0.1) sb_starB(b, Math.round(x), Math.round(y), Math.round(6 * size * (1 - a / 0.1) + 2), YE[3], WH[2]);
+  sb_flush(b);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 5. LE THERMOMÈTRE (dans ui : pixels nets) — tube de verre, liquide rouge, graduations ; option : bécher d'eau qui bout (bulles, vapeur)
+// ════════════════════════════════════════════════════════════════════════════════════════
+function sb_thermo(x, y, h, v, t, o = {}) {
+  o = o || {}; v = clamp(sb_fin(v, 0));
+  const K = '#05040f', cx = Math.round(x + 14), yTop = Math.round(y + 8), bcy = Math.round(y + h - 9), yBot = bcy - 9;
+  const level = Math.round(yBot - (yBot - yTop) * v), hot = o.hot ?? sm(prog(v, 0.8, 1));
+  // ── bécher : paroi arrière, eau, bulles (le tube passe devant)
+  const fl = !!o.flask, bx0 = cx - 17, bx1 = cx + 21, by0 = bcy - 24, by1 = bcy + 11, wy = by0 + 9;
+  if (fl) {
+    R(bx0 - 1, by0 - 1, bx1 - bx0 + 3, by1 - by0 + 3, K); R(bx0, by0, bx1 - bx0 + 1, by1 - by0 + 1, NI[2]);
+    R(bx0 + 1, wy, bx1 - bx0 - 1, by1 - wy, CY[1]);
+    for (let i = bx0 + 1; i < bx1; i++) { const wv = Math.round(Math.sin(i * 0.9 + t * 7) * 0.9 + 0.2); R(i, wy + (wv > 0 ? 0 : -1), 1, 1, CY[4]); if (wv > 0) px(i, wy + 1, CY[3]); }
+    R(bx0 + 1, wy + 2, 1, by1 - wy - 3, CY[2]); R(bx1 - 1, wy + 2, 1, by1 - wy - 3, CY[0]);
+    const nb = o.bubbles ?? 9 * hot;
+    for (let k = 0; k < 11; k++) { if (k >= nb) break; const ph = (((t * (1.1 + sb_h(k, 3) * 0.6) + sb_h(k, 5)) % 1) + 1) % 1, bxp = bx0 + 3 + Math.floor(sb_h(k, 7) * (bx1 - bx0 - 6)), byp = Math.round(by1 - 3 - ph * (by1 - wy - 3));
+      if (Math.abs(bxp - cx) < 6) continue; const r = sb_h(k, 11) < 0.4 ? 2 : 1;
+      if (r === 2) { px(bxp - 1, byp, CY[4]); px(bxp + 1, byp, CY[4]); px(bxp, byp - 1, CY[4]); px(bxp, byp + 1, CY[4]); px(bxp - 1, byp - 1, WH[3]); } else { px(bxp, byp, WH[3]); px(bxp + 1, byp, CY[4]); }
+      if (ph > 0.9) { px(bxp - 2, wy - 2, WH[2]); px(bxp + 2, wy - 3, WH[2]); px(bxp, wy - 3, CY[4]); } }
+  }
+  // ── tube
+  R(cx - 5, yTop - 1, 11, bcy - yTop, K); disc(cx, bcy, 9, K);
+  R(cx - 4, yTop, 9, bcy - yTop, NI[3]); disc(cx, bcy, 8, NI[3]);
+  px(cx - 4, yTop, K); px(cx + 4, yTop, K);
+  R(cx - 3, yTop + 2, 1, Math.max(0, yBot - yTop - 4), ST[6]); R(cx + 3, yTop + 3, 1, Math.max(0, yBot - yTop - 6), NI[5]);
+  // liquide
+  const liq = hot > 0.7 ? RD[4] : RD[3];
+  R(cx - 1, level, 3, bcy - level, liq); R(cx - 1, level, 1, bcy - level, RD[5]); R(cx + 1, level, 1, bcy - level, RD[2]); R(cx - 1, level - 1, 3, 1, RD[5]);
+  disc(cx, bcy, 6, RD[2]); disc(cx, bcy, 5, liq); px(cx - 2, bcy - 2, RD[5]); px(cx - 2, bcy - 1, RD[5]); px(cx - 1, bcy - 3, WH[2]);
+  // graduations (à droite) : un trait court tous les 10 °C, un long avec le nombre tous les 20 °C
+  for (let T = 20; T <= 100; T += 10) {
+    const yy = Math.round(yBot - (yBot - yTop) * (T - 20) / 80); if (fl && yy > by0 - 3) continue;
+    const major = T % 20 === 0, lit = level <= yy + 1, col = lit ? (T === 100 && hot > 0.8 ? YE[3] : WH[2]) : ST[5];
+    R(cx + 6, yy, major ? 6 : 3, 1, col);
+    if (major && T !== 20) ptext(String(T), cx + 14, yy - 3, T === 100 ? (hot > 0.5 ? YE[3] : AM[8]) : ST[7], 1, K);
+  }
+  if (o.label != null) ptextC(String(o.label), cx + 6, y - 9, hot > 0.8 ? YE[3] : WH[3], 1, K);
+  // vapeur au-dessus du bécher / du tube quand ça bout
+  if (hot > 0.55) for (let k = 0; k < 14; k++) {
+    const f = (((t * 0.8 + k / 14) % 1) + 1) % 1, sxp = (fl ? cx + 2 : cx) + Math.round(Math.sin(f * 6 + k * 2.1) * (3 + 7 * f) + (sb_h(k, 3) - 0.5) * 10), syp = Math.round((fl ? by0 - 4 : yTop - 4) - f * (fl ? 44 : 34));
+    const a = (1 - f) * hot; if (sb_bay(sxp + k, syp) < a * 1.25) { px(sxp, syp, f < 0.4 ? WH[3] : WH[2]); if (f < 0.6 && sb_h(k, 9) < 0.7) { px(sxp + 1, syp, NE[3]); px(sxp, syp + 1, NE[3]); } }
+  }
+  if (fl) { R(bx0 - 2, by0 - 1, 3, 1, ST[6]); R(bx1 - 1, by0 - 1, 3, 1, ST[6]); R(bx0 + 1, by0 + 2, 1, 6, WH[2]); R(bx0 + 1, wy + 6, 1, 7, WH[1]); }
+  return { top: yTop, bulb: [cx, bcy], x: cx, level, box: [bx0, by0, bx1, by1], w: fl ? (bx1 - bx0 + 3) : 40 };
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 6. LA COUPE DE L'ABDOMEN (planche du carnet, fond nuit) : deux réservoirs → deux conduits → chambre de réaction (enzymes) → conduit de sortie → buse
+// ════════════════════════════════════════════════════════════════════════════════════════
+// calque Y → palette entière du moteur (tons exacts, léger tramage), puis posé sur L
+function sb_snapPal(amp = 8) {
+  const id = Y.getImageData(0, 0, LW, LH), d = id.data;
+  for (let y = 0, p = 0; y < LH; y++) for (let x = 0; x < LW; x++, p++) {
+    const i = p * 4; if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
+    const of = (sb_bay(x, y) - 0.5) * amp, q = PAL[LUT[((clamp(d[i] + of, 0, 255) >> 3) << 10) | ((clamp(d[i + 1] + of, 0, 255) >> 3) << 5) | (clamp(d[i + 2] + of, 0, 255) >> 3)]];
+    d[i] = q[0]; d[i + 1] = q[1]; d[i + 2] = q[2]; d[i + 3] = 255;
+  }
+  Y.putImageData(id, 0, 0); L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(lay, 0, 0);
+}
+const sb_CUT = { cham: [135, 214, 46, 40], pA: [78, 104, 37, 27], pB: [192, 104, 37, 27], nozzle: [135, 306], top: 50 };
+const sb_SHELL = [[135, 50], [190, 54], [232, 72], [252, 104], [250, 140], [232, 172], [214, 204], [190, 238], [168, 268], [152, 292], [146, 308], [124, 308], [118, 292], [102, 268], [80, 238], [56, 204], [38, 172], [20, 140], [18, 104], [38, 72], [80, 54]];
+const sb_DUCTA = [[78, 128], [82, 148], [100, 162], [118, 174]], sb_DUCTB = [[192, 128], [188, 148], [170, 162], [152, 174]];
+function sb_pathLen(pts) { let l = 0; for (let i = 1; i < pts.length; i++) l += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return l; }
+function sb_pathAt(pts, u) { const tot = sb_pathLen(pts); let d = clamp(u) * tot; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (d <= l || i === pts.length - 1) { const f = l ? clamp(d / l) : 0; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f]; } d -= l; } return pts[pts.length - 1]; }
+// p : { fill 0..1 niveau des réservoirs, flow 0..1 avancée des liquides dans les conduits (>1 : ils sont arrivés), mix 0..1 chambre remplie et mélangée, enz 0..1 enzymes actives,
+//       heat 0..1 température, flash 0..1 éclair, boom 0..1 progression de l'étoile (0 : absente), boomFade 0..1, jet 0..1 pulsations à la buse, hl 'A'|'B'|'both'|null (réservoir mis en valeur) }
+// o : { zoom, fx, fy (point du monde au centre), cx, cy (centre écran), shake (px) } ; renvoie les positions ÉCRAN { cham, pA, pB, nozzle, z }
+function sb_cutaway(t, p, o = {}) {
+  p = p || {}; o = o || {};
+  const z = o.zoom ?? 1, fx = o.fx ?? 135, fy = o.fy ?? 184, scx = (o.cx ?? 135) + (o.shake ? (sb_h(Math.round(t * 30), 31) - 0.5) * 2 * o.shake : 0), scy = (o.cy ?? 196) + (o.shake ? (sb_h(Math.round(t * 30), 32) - 0.5) * 2 * o.shake : 0);
+  const W = (x, y) => [scx + (x - fx) * z, scy + (y - fy) * z];
+  const fill = clamp(sb_fin(p.fill, 0.85)), flow = sb_fin(p.flow, 0), mix = clamp(sb_fin(p.mix, 0)), enz = clamp(sb_fin(p.enz, 0)), heat = clamp(sb_fin(p.heat, 0)), flash = clamp(sb_fin(p.flash, 0));
+  const [chx, chy, crx, cry] = sb_CUT.cham;
+  // ── fond de planche : nuit, quadrillage fin qui suit la caméra, coins de page
+  vgrad(0, 0, LW, LH, [[0, NI[0]], [0.55, NI[1]], [1, NI[2]]]);
+  { const g = 12 * z, ox = ((scx - fx * z) % g + g) % g, oy = ((scy - fy * z) % g + g) % g; L.save(); L.fillStyle = 'rgba(88,120,204,0.16)';
+    for (let x = ox; x < LW; x += g) L.fillRect(Math.round(x), 0, 1, LH); for (let y = oy; y < LH; y += g) L.fillRect(0, Math.round(y), LW, 1); L.restore(); }
+  // ── PASSE 1 : corps, réservoirs, conduits, chambre
+  layerBegin(); const c = Y; c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
+  const shell = sb_spline(sb_SHELL);
+  c.fillStyle = DU[0]; c.fill(shell);
+  { const r = rng(7); c.save(); c.clip(shell); for (let i = 0; i < 26; i++) { const x = 30 + r() * 210, y = 60 + r() * 230; c.globalAlpha = 0.55; sb_fill(c, sb_ell(x, y, 5 + r() * 9, 3 + r() * 6, r() * 3), DU[1]); } c.globalAlpha = 1;
+    for (let i = 0; i < 14; i++) { const x = 40 + r() * 190, y = 70 + r() * 220; c.strokeStyle = DU[2]; c.lineWidth = 0.9; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - 0.5) * 22, y + (r() - 0.5) * 22); c.stroke(); } c.restore(); }
+  // paroi (cuticule orange) : trois traits superposés
+  c.lineJoin = 'round'; c.strokeStyle = '#05040f'; c.lineWidth = 12; c.stroke(shell); c.strokeStyle = OC[1]; c.lineWidth = 10; c.stroke(shell); c.strokeStyle = OC[3]; c.lineWidth = 7; c.stroke(shell);
+  c.save(); c.translate(-1, -1); c.strokeStyle = OC[5]; c.lineWidth = 1.6; c.stroke(shell); c.restore();
+  // élytres : calotte bleu-noir qui coiffe le haut
+  { const cap = sb_spline([[28, 82], [60, 58], [135, 48], [210, 58], [242, 82]], false); c.strokeStyle = '#05040f'; c.lineWidth = 15; c.lineCap = 'round'; c.stroke(cap); c.strokeStyle = NI[5]; c.lineWidth = 12; c.stroke(cap);
+    c.strokeStyle = BL[2]; c.lineWidth = 7; c.stroke(cap); const hl = sb_spline([[44, 70], [80, 55], [135, 50]], false); c.strokeStyle = BL[4]; c.lineWidth = 2.2; c.stroke(hl); c.lineCap = 'butt'; }
+  // réservoirs : poches de verre, liquide qui ondule, bulles, reflet
+  const pouch = (pc, col, hi, dk, hl, seed, label) => {
+    const [px_, py_, rx, ry] = pc, el = sb_ell(px_, py_, rx, ry, 0), top = py_ + ry - 2 * ry * fill;
+    c.fillStyle = NI[1]; c.fill(el);
+    c.save(); c.clip(el);
+    c.fillStyle = col; c.beginPath(); c.moveTo(px_ - rx - 2, top);
+    for (let x = -rx - 2; x <= rx + 2; x += 3) c.lineTo(px_ + x, top + Math.sin(x * 0.28 + t * 3 + seed) * 1.6);
+    c.lineTo(px_ + rx + 2, py_ + ry + 3); c.lineTo(px_ - rx - 2, py_ + ry + 3); c.closePath(); c.fill();
+    sb_cres(c, el, [0.0, -1.0], 5, hi); sb_cres(c, el, [0, -1], 6, dk, true);
+    c.strokeStyle = hi; c.lineWidth = 1.3; c.beginPath(); for (let x = -rx; x <= rx; x += 3) { const yy = top + Math.sin(x * 0.28 + t * 3 + seed) * 1.6; if (x === -rx) c.moveTo(px_ + x, yy); else c.lineTo(px_ + x, yy); } c.stroke();
+    for (let k = 0; k < 7; k++) { const ph = (((t * (0.22 + sb_h(k, seed) * 0.2) + sb_h(k, seed + 2)) % 1) + 1) % 1, bx = px_ - rx * 0.7 + sb_h(k, seed + 3) * rx * 1.4, by = py_ + ry - ph * (py_ + ry - top - 2), r_ = 1.1 + sb_h(k, seed + 4) * 1.6;
+      if (by < top + 1.5) continue; c.strokeStyle = hl; c.lineWidth = 0.9; c.beginPath(); c.arc(bx, by, r_, 0, TAU); c.stroke(); }
+    c.restore();
+    const lit = (p.hl === 'both' || p.hl === label) ? 1 : 0;
+    c.strokeStyle = '#05040f'; c.lineWidth = 5; c.stroke(el); c.strokeStyle = lit ? WH[3] : ST[6]; c.lineWidth = 3; c.stroke(el);
+    c.strokeStyle = WH[3]; c.lineWidth = 1.6; c.lineCap = 'round'; c.beginPath(); c.ellipse(px_, py_, rx - 5, ry - 5, 0, Math.PI * 1.08, Math.PI * 1.42); c.stroke(); c.lineCap = 'butt';
+  };
+  pouch(sb_CUT.pA, AM[7], AM[8], AM[5], AM[10], 1, 'A');
+  pouch(sb_CUT.pB, CY[2], CY[3], CY[0], WH[3], 4, 'B');
+  // conduits de verre ; liquide qui avance (trait en pointillés), gouttes qui coulent, vanne
+  const duct = (pts, col, hi) => {
+    const cv = sb_curve(pts, 6), sp = sb_spline(pts, false), L0 = sb_pathLen(cv);
+    c.lineCap = 'butt'; c.lineJoin = 'round';
+    c.strokeStyle = '#05040f'; c.lineWidth = 11; c.stroke(sp); c.strokeStyle = ST[6]; c.lineWidth = 9; c.stroke(sp); c.strokeStyle = NI[1]; c.lineWidth = 6.4; c.stroke(sp);
+    const fl_ = clamp(flow);
+    if (fl_ > 0.01) { c.save(); c.setLineDash([L0 * fl_, 9999]); c.strokeStyle = col; c.lineWidth = 6.4; c.stroke(sp); c.strokeStyle = hi; c.lineWidth = 1.6; c.save(); c.translate(-1, -1); c.stroke(sp); c.restore(); c.restore();
+      for (let k = 0; k < 4; k++) { const u = ((t * 0.9 + k / 4) % 1) * fl_, q = sb_pathAt(cv, u); sb_fill(c, sb_ell(q[0], q[1], 2.1, 2.1, 0), hi); } }
+    const v = sb_pathAt(cv, 0.38), v2 = sb_pathAt(cv, 0.42), an = Math.atan2(v2[1] - v[1], v2[0] - v[0]);
+    c.save(); c.translate(v[0], v[1]); c.rotate(an + Math.PI / 2); c.fillStyle = '#05040f'; c.fillRect(-8, -3.2, 16, 6.4); c.fillStyle = ST[4]; c.fillRect(-7, -2.2, 14, 4.4); c.fillStyle = ST[7]; c.fillRect(-7, -2.2, 14, 1.2); c.fillStyle = GR[4]; c.fillRect(-1.6, -4.4, 3.2, 8.8); c.restore();
+  };
+  duct(sb_DUCTA, AM[7], AM[9]); duct(sb_DUCTB, CY[2], WH[3]);
+  // conduit de sortie et buse (cuticule orange)
+  { const ex = sb_spline([[135, 252], [135, 276], [135, 296]], false); c.lineCap = 'butt'; c.strokeStyle = '#05040f'; c.lineWidth = 15; c.stroke(ex); c.strokeStyle = OC[3]; c.lineWidth = 12; c.stroke(ex); c.strokeStyle = OC[5]; c.lineWidth = 2; c.save(); c.translate(-3.5, 0); c.stroke(ex); c.restore(); c.strokeStyle = NI[0]; c.lineWidth = 5.4; c.stroke(ex);
+    if (p.jet > 0 || heat > 0.2) { c.strokeStyle = heat > 0.7 ? AM[8] : AM[5]; c.lineWidth = 3; c.globalAlpha = clamp(heat * 1.2); c.stroke(ex); c.globalAlpha = 1; }
+    c.fillStyle = '#05040f'; c.beginPath(); c.moveTo(121, 290); c.lineTo(149, 290); c.lineTo(153, 309); c.lineTo(117, 309); c.closePath(); c.fill(); c.fillStyle = OC[3]; c.beginPath(); c.moveTo(123, 291); c.lineTo(147, 291); c.lineTo(150.5, 307.5); c.lineTo(119.5, 307.5); c.closePath(); c.fill(); c.fillStyle = OC[5]; c.fillRect(123, 291, 3, 16); c.fillStyle = NI[0]; c.fillRect(131, 298, 8, 10);
+    c.strokeStyle = OC[1]; c.lineWidth = 1.2; for (const yy of [296, 302]) { c.beginPath(); c.moveTo(121, yy); c.lineTo(149, yy); c.stroke(); } }
+  // chambre de réaction : paroi épaisse à reflet, contenu qui se mélange, enzymes autour
+  const cham = sb_ell(chx, chy, crx, cry, 0);
+  c.fillStyle = NI[1]; c.fill(cham);
+  c.save(); c.clip(cham);
+  if (mix > 0.02) {
+    const top = chy + cry - 2 * cry * clamp(mix * 1.15), hh = clamp(heat);
+    c.fillStyle = AM[6]; c.beginPath(); c.rect(chx - crx, top, crx, 2 * cry); c.fill(); c.fillStyle = CY[1]; c.beginPath(); c.rect(chx, top, crx, 2 * cry); c.fill();
+    // mélange : tourbillon de deux couleurs qui tournent (un seul disque si le mélange est total)
+    const sw = clamp(mix * 1.4 - 0.3);
+    for (let k = 0; k < 14; k++) { const a = k / 14 * TAU + t * (1.4 + 3 * hh) * (k % 2 ? 1 : -1) * 0.6, rr = (0.2 + 0.7 * ((k * 0.37) % 1)) * crx * 0.9, x = chx + Math.cos(a) * rr, y = chy + Math.sin(a) * rr * 0.85;
+      if (y < top) continue; c.globalAlpha = 0.85 * sw; sb_fill(c, sb_ell(x, y, 6 + (k % 3) * 2, 3.2 + (k % 2) * 1.6, a), k % 2 ? AM[8] : CY[3]); }
+    c.globalAlpha = 1;
+    // la chaleur vire le liquide à l'orange puis au blanc-jaune
+    if (hh > 0.2) { c.globalAlpha = sm(prog(hh, 0.2, 1)) * 0.92; c.fillStyle = hh > 0.8 ? YE[3] : hh > 0.5 ? AM[8] : hh > 0.25 ? RD[3] : RD[2]; c.beginPath(); c.rect(chx - crx, top, 2 * crx, 2 * cry); c.fill(); c.globalAlpha = 1; }
+    // bulles
+    const nb = Math.round(5 + 22 * sw * (0.4 + hh)); for (let k = 0; k < nb; k++) { const ph = (((t * (0.5 + sb_h(k, 3) * 0.7) + sb_h(k, 5)) % 1) + 1) % 1, bx = chx - crx * 0.8 + sb_h(k, 7) * crx * 1.6, by = chy + cry - ph * (chy + cry - top), r_ = 1.0 + sb_h(k, 9) * 2.2; if (by < top) continue;
+      c.strokeStyle = WH[3]; c.lineWidth = 0.9; c.beginPath(); c.arc(bx, by, r_, 0, TAU); c.stroke(); }
+  }
+  sb_cres(c, cham, [0, -1], 6, 'rgba(255,255,255,0.18)'); c.restore();
+  // enzymes : « pacmans » verts qui bâillent (bouche tournée vers le centre) le long de la paroi interne
+  { const n = 12; for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.26, ex = chx + Math.cos(a) * (crx - 8.5), ey = chy + Math.sin(a) * (cry - 8.5), pulse = 0.5 + 0.5 * Math.sin(t * 8 + k * 1.3), r_ = 4.3 + enz * 1.6 * pulse, mo = 0.35 + enz * 0.55 * pulse, ang = Math.atan2(chy - ey, chx - ex);
+      c.save(); c.translate(ex, ey); c.rotate(ang); c.fillStyle = '#05040f'; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r_ + 1.2, mo, TAU - mo); c.closePath(); c.fill();
+      c.fillStyle = enz > 0.3 && pulse > 0.6 ? LM[6] : LM[4]; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r_, mo, TAU - mo); c.closePath(); c.fill(); c.fillStyle = LM[5]; c.beginPath(); c.arc(-r_ * 0.35, -r_ * 0.35, r_ * 0.28, 0, TAU); c.fill(); c.restore(); } }
+  c.strokeStyle = '#05040f'; c.lineWidth = 8.4; c.stroke(cham); c.strokeStyle = ST[5]; c.lineWidth = 6.4; c.stroke(cham);
+  c.strokeStyle = heat > 0.55 ? AM[8] : ST[7]; c.lineWidth = 2; c.stroke(sb_ell(chx, chy, crx + 0.2, cry + 0.2, 0));
+  c.strokeStyle = WH[3]; c.lineWidth = 1.6; c.lineCap = 'round'; c.beginPath(); c.ellipse(chx, chy, crx - 2, cry - 2, 0, Math.PI * 1.1, Math.PI * 1.45); c.stroke(); c.lineCap = 'butt';
+  sb_snapPal(8);
+  // ── lueur de la réaction (additive, avant les éclats) : la chambre rougeoie puis blanchit
+  { const [gx, gy] = W(chx, chy), hh = clamp(heat), a = 0.55 * hh + 0.9 * flash;
+    if (a > 0.02) { rgrad(gx, gy, 4, 120 * z * 0.8 + 30, [[0, flash > 0.3 ? 'rgba(255,255,230,1)' : 'rgba(255,214,120,1)'], [0.35, 'rgba(255,128,48,0.8)'], [1, 'rgba(255,60,40,0)']], Math.min(1, a), 'lighter'); } }
+  // ── PASSE 2 : éclair, étoile de la réaction, étincelles
+  layerBegin(); c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
+  if (flash > 0.02) {
+    const fr = Math.round(t * 30), bolt = []; const x0 = chx - 14 + sb_h(fr, 5) * 6, y0 = chy - cry + 6;
+    for (let k = 0; k <= 8; k++) { const f = k / 8; bolt.push([lerp(x0, chx + 14, f) + (k % 2 ? 1 : -1) * (6 + 6 * sb_h(fr * 9 + k, 6)) * (k === 0 || k === 8 ? 0 : 1), lerp(y0, chy + cry - 6, f)]); }
+    c.lineJoin = 'miter'; c.lineCap = 'round';
+    for (const [w, col] of [[9 * flash + 2, CY[2]], [6 * flash + 1.5, CY[4]], [3 * flash + 1, YE[3]], [1.4, WH[3]]]) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); bolt.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); }
+    for (let k = 0; k < 3; k++) { const b0 = bolt[2 + k * 2], an = (sb_h(fr + k, 8) - 0.5) * 3 + (k % 2 ? 0.9 : -0.9) + Math.PI / 2; c.strokeStyle = CY[4]; c.lineWidth = 1.6; c.beginPath(); c.moveTo(b0[0], b0[1]); c.lineTo(b0[0] + Math.cos(an) * 14, b0[1] + Math.sin(an) * 14); c.lineTo(b0[0] + Math.cos(an + 0.5) * 24, b0[1] + Math.sin(an + 0.5) * 24); c.stroke(); }
+  }
+  const boom = clamp(sb_fin(p.boom, 0)), bf = clamp(sb_fin(p.boomFade, 0));
+  if (boom > 0.01 && bf < 0.99) {
+    const grow = eob(clamp(boom * 1.4)), R0 = (30 + 62 * grow), fr = Math.round(t * 30), nsp = 14;
+    const star = (R, k2, rot) => { const pts = []; for (let k = 0; k < nsp * 2; k++) { const a = rot + k * Math.PI / nsp, rr = (k % 2 ? R * k2 * (0.85 + 0.3 * sb_h(k + fr, 2)) : R * (0.8 + 0.4 * sb_h(k * 3 + 1, 7))); pts.push([chx + Math.cos(a) * rr, chy + Math.sin(a) * rr]); } return polyPath(pts); };
+    c.globalAlpha = 1 - bf;
+    for (const [rf, k2, col] of [[1.0, 0.5, RD[2]], [0.88, 0.5, RD[4]], [0.7, 0.52, AM[7]], [0.5, 0.55, YE[2]], [0.3, 0.6, WH[3]]]) { c.fillStyle = col; c.fill(star(R0 * rf, k2, 0.12 + t * 0.4 * (rf < 0.5 ? -1 : 1) * 0)); }
+    c.strokeStyle = '#05040f'; c.lineWidth = 1.2; c.stroke(star(R0, 0.5, 0.12));
+    // anneau de choc et étincelles
+    c.strokeStyle = WH[2]; c.lineWidth = 2.2; c.beginPath(); c.arc(chx, chy, R0 * (1.2 + 0.5 * boom), 0, TAU); c.stroke();
+    for (let k = 0; k < 18; k++) { const a = k / 18 * TAU + sb_h(k, 4), d0 = R0 * 1.05, d1 = R0 * (1.25 + 0.7 * boom + sb_h(k, 6) * 0.4); c.strokeStyle = k % 3 ? YE[3] : WH[3]; c.lineWidth = 1.6; c.beginPath(); c.moveTo(chx + Math.cos(a) * d0, chy + Math.sin(a) * d0); c.lineTo(chx + Math.cos(a) * d1, chy + Math.sin(a) * d1); c.stroke(); }
+    c.globalAlpha = 1;
+  }
+  sb_snapPal(4);
+  // jet à la buse
+  if (p.jet > 0) { const [nx, ny] = W(sb_CUT.nozzle[0], sb_CUT.nozzle[1] + 2); sb_jet(nx, ny, Math.PI / 2, t, t - ((t * 14) % 1) / 14 - Math.floor(1) * 0, { dur: 99, len: 70 * z, hz: 14, size: 0.9 * z, gravity: 20 }); }
+  return { cham: W(chx, chy).concat([crx * z, cry * z]), pA: W(sb_CUT.pA[0], sb_CUT.pA[1]).concat([sb_CUT.pA[2] * z, sb_CUT.pA[3] * z]), pB: W(sb_CUT.pB[0], sb_CUT.pB[1]).concat([sb_CUT.pB[2] * z, sb_CUT.pB[3] * z]), nozzle: W(sb_CUT.nozzle[0], sb_CUT.nozzle[1]), z, W };
+}

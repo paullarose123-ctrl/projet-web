@@ -1,0 +1,25 @@
+from PIL import Image
+RAMP={'NI':['#05040f','#0a0a1f','#10102e','#171a45','#202a62','#2c3c84','#3d55aa','#5878cc','#82a2e4','#b0c8f4'],
+'BL':['#0e1850','#18288a','#2540c0','#3f66e4','#6e96f6'],'OC':['#3a1810','#68301a','#964a26','#c06a34','#e08c4a','#f2b274'],
+'AM':['#140a05','#25120a','#3c1d0e','#5a2c12','#7f4016','#a85a1a','#d07a1e','#f2a02a','#ffc84a','#ffe08a','#fff2c4'],'WH':['#cfc6b4','#e8e0cc','#fff8e8','#ffffff'],'SK':['#5a3226','#84543a','#b27a54','#dba67c','#f4cfa6'],'NE':['#8aa0c0','#a8bcd8','#c4d4ea','#dde8f6','#f0f6ff']}
+pal={'o':'#05040f','a':RAMP['OC'][4],'O':RAMP['OC'][3],'L':RAMP['OC'][5],'D':RAMP['OC'][2],'A':RAMP['AM'][7],
+ 'b':RAMP['NI'][5],'B':RAMP['BL'][2],'h':RAMP['BL'][4],'H':RAMP['BL'][3],'n':RAMP['NI'][4],'d':RAMP['NI'][2],'w':RAMP['WH'][3],'s':RAMP['SK'][4]}
+half=[
+"...a.....",
+"....a....",
+".....aooo",
+"......oOL",
+".....oooo",
+".....oOLL",
+"....oOOLL",
+"....oDOOL",
+"...ooooo.",
+"...oBBBBd",
+"..obBBHHd",
+"..obBBHhd",
+"..obbBBHd",
+"..onbbBBd",
+"...onbbBd",
+"...oonnnd",
+"....ooooO",
+]

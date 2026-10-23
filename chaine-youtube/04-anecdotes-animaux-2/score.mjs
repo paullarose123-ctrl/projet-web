@@ -151,6 +151,7 @@ function ksString(f, len, o = {}) {                      // corde de Karplus-Str
   for (let i = 0; i < nI; i++) { dl[i] = (ex[i] - mean) - (i >= pk ? (ex[i - pk] - mean) : 0); mx = Math.max(mx, Math.abs(dl[i])); } for (let i = 0; i < nI; i++) dl[i] /= mx;
   const g = Math.pow(10, -3 / (t60 * f)), out = new Float32Array(len); let w = nI % M, yp = 0;
   for (let n = 0; n < len; n++) { let r = w - D; if (r < 0) r += M; const i0 = Math.floor(r), fr = r - i0, i1 = i0 + 1 === M ? 0 : i0 + 1, y = dl[i0] * (1 - fr) + dl[i1] * fr; out[n] = y; dl[w] = g * (a * y + (1 - a) * yp); yp = y; if (++w === M) w = 0; }
+  { let px = 0, py = 0; for (let n = 0; n < len; n++) { const x = out[n]; py = x - px + 0.9974 * py; px = x; out[n] = py; } }       // bloque la composante continue de la pincée (écart de moyenne : certaines pincées « poussent » la corde d'un côté, ce qui fait un coup sourd inaudible mais pèse sur le niveau)
   return out;
 }
 function dull(buf, fStart, fEnd, tau) {                  // filtre passe-bas dont la coupure descend (une corde brillante à l'attaque devient ronde en s'éteignant)
@@ -300,7 +301,9 @@ function pizz(t0, n, o = {}) {                           // corde pincée d'orch
   const { gain = 0.06, pan = 0, send = 0.3, t60 = 0.5, a = 0.58, bright = 1 } = o, f = hz(n), len = Math.floor(Math.min(1.8, t60 * 1.7 + 0.15) * SR), buf = ksString(f, len, { a, t60, pos: 0.14, exc: 0.85 });
   dull(buf, clamp(f * 9 * bright, 1200, 5200), clamp(f * 2.2, 260, 1300), 0.07); bodyRes(buf, 0.5);
   const sn = lpNoise(Math.floor(0.004 * SR), 0.1); for (let i = 0; i < sn.length; i++) buf[i] += sn[i] * 0.3 * (1 - i / sn.length);
-  emit(buf, t0, pan, send, gain * 1.5);
+  let e = 1e-12; for (let i = 0; i < 7200 && i < len; i++) e += buf[i] * buf[i]; const r0 = Math.sqrt(e / 7200), lim = 3.5 * r0;       // niveau normalisé (RMS des 150 premières ms, pointes écrêtées en douceur) : chaque note a le même niveau quel que soit le hasard de la pincée
+  e = 1e-12; for (let i = 0; i < len; i++) { buf[i] = lim * Math.tanh(buf[i] / lim); if (i < 7200) e += buf[i] * buf[i]; }
+  emit(buf, t0, pan, send, gain * 1.5 * 0.1 / Math.sqrt(e / 7200));
 }
 function boing(t0, f0, o = {}) {                         // ressort : sinus à vibrato de hauteur rapide qui s'amortit (« boi-oi-oing »), harmoniques creuses, ressort métallique (partiels légèrement désaccordés)
   const { gain = 0.06, dur = 0.75, pan = 0, send = 0.4, depth = 0.55, rate = 12.5, tau = 0.28 } = o;
@@ -503,125 +506,137 @@ function genHoots(o) { const { seed = 51, times = [], gain = 0.05, f = 1 } = o; 
 // ───────── musique ─────────
 const grid = (a, b, nominal) => { const n = Math.max(1, Math.round((b - a) / nominal)), d = (b - a) / n; return { n, d, t: k => a + k * d }; };      // pas élastiques : un nombre entier de temps entre deux repères de la voix
 const firstEv = (types, a, b) => { for (const ty of types) { const e = evIn(ty, a, b); if (e) return e.t; } return null; };
-function finger(a, b, chord, o = {}) {                   // arpège de guitare nylon sur une grille élastique de croches
-  const { nominal = 0.395, pat = [0, 2, 3, 4, 3, 2, 3, 2], gain = 0.05, accent = 1.35, pan = 0.12, fadeIn = 0, t60 = 1.8 } = o, g = grid(a, b, nominal);
-  for (let k = 0; k < g.n; k++) { const idx = pat[k % pat.length]; if (idx === null) continue; const nt = chord[Math.min(idx, chord.length - 1)], e = k % 8 === 0 ? accent : k % 4 === 0 ? 1.1 : 1; nylon(g.t(k), nt, { gain: gain * e * (fadeIn ? 0.5 + 0.5 * k / g.n : 1), pan: pan + 0.12 * Math.sin(k * 1.7), t60, send: 0.35 }); }
-}
-const PENTA_A = ['A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'C6'];
+const lastEv = (types, a, b) => { let r = null; for (const e of EVENTS) if (types.includes(e.type) && e.t >= a && e.t < b) r = e.t; return r; };
+const beatsOf = (a, b, bpm) => { const r = []; let t = a; while (t < b - 1e-6) { r.push(t); t += 60 / (typeof bpm === 'function' ? bpm(t) : bpm); } return r; };
 const T_LOGO = at('logo');                               // seul événement obligatoire : le son de marque
+const rise = (u, k = 1.6) => Math.pow(clamp(u), k);
 
-function musIntro() {                                    // INTRO : curiosité, quelque chose de cristallin et de mystérieux, un cœur qui bat doucement
-  rnd = mkRnd(101); B = BUS.music; const [, s1] = SEG.intro, tT = ph('trois').t0, tRev = wt('q', 'revenir'), tVie = wt('q', 'vie');
-  pad(0, tT - 0.15, ['A2', 'E3', 'B3', 'C4'], { gain: 0.05, att: 1.6, rel: 1.4, bright: 0.12, trem: 0.1 });
-  pad(tT - 0.15, s1 - tT + 0.35, ['F2', 'C3', 'A3', 'E4', 'G4'], { gain: 0.05, att: 0.6, rel: 1.7, bright: 0.2 });
-  for (let x = 0.35, k = 0; x < tRev - 0.2; x += 1.1, k++) thumpMusic(x, 0.5 + 0.5 * Math.min(1, k / 2));                    // cœur doux (le battement visible est un événement)
-  glass(wt('q', 'savais'), 'E5', { gain: 0.05, pan: -0.3 }); glass(wt('q', 'certains'), 'B5', { gain: 0.045, pan: 0.3 }); glass(wt('q', 'animaux'), 'A5', { gain: 0.045, pan: -0.2 });
-  [['E5', 0, -0.3], ['A5', 0.12, 0], ['C6', 0.24, 0.3]].forEach(([n, d, p]) => glass(tRev + d, n, { gain: 0.05, pan: p }));       // « revenir » : petite montée
-  glass(tVie, 'E6', { gain: 0.075, tau: 3.6, pan: 0.1 }); glass(tVie + 0.03, 'A5', { gain: 0.05, tau: 3.6, pan: -0.2 }); harp(tVie + 0.06, 'E4', { gain: 0.05 }); harp(tVie + 0.2, 'A4', { gain: 0.04 });       // reflet chaud
-  glass(wt('q', 'après'), 'B5', { gain: 0.035, pan: 0.25 }); glass(wt('q', 'gelé'), 'A5', { gain: 0.035, pan: -0.25 });
-  // « Voici trois anecdotes… » : kalimba curieux sur la pentatonique de la mineur
-  const seq = ['A3', 'E4', 'C4', 'E4', 'A4', 'E4', 'C4', 'D4'], g = grid(tT + 0.05, wt('trois', 'animaux') - 0.1, 0.36);
-  for (let k = 0; k < g.n; k++) kalimba(g.t(k), seq[k % seq.length], { gain: 0.045 + 0.02 * k / g.n, pan: Math.sin(k * 1.5) * 0.4, decay: 1.1 });
-  flute(wt('trois', 'incroyables'), 0.5, 'E5', { gain: 0.04 }); flute(wt('trois', 'incroyables') + 0.55, 0.5, 'A5', { gain: 0.042 });
-  kalimba(wt('trois', 'animaux'), 'A5', { gain: 0.06, decay: 2 }); kalimba(wt('trois', 'animaux') + 0.14, 'E6', { gain: 0.04, decay: 2 });
+function musIntro() {                                    // INTRO : curieuse, cinématographique (« comme dans un film ») : cordes pincées et verre, une petite montée ; ré dorien
+  rnd = mkRnd(101); B = BUS.music; const [, s1] = SEG.intro, F = lastW('i1'), w = (x, k) => wt('i1', x, k), tTell = w('tellement'), tRise = F.t0 - 0.2;
+  pad(0, s1 + 0.2, ['D2', 'A2', 'C3', 'F3', 'A3'], { gain: 0.04, att: 1.6, rel: 1.3, bright: 0.12, trem: 0.1 });
+  glass(0.12, 'A5', { gain: 0.05, pan: -0.3 }); glass(w('trois'), 'D6', { gain: 0.045, pan: 0.3 }); glass(w('animaux'), 'F6', { gain: 0.04, pan: -0.15 });
+  pizz(0.3, 'D3', { gain: 0.1, t60: 0.8 }); pizz(w('possèdent'), 'A2', { gain: 0.1, t60: 0.8 });
+  { const fig = ['D4', null, 'F4', 'A4', null, 'G4', 'E4', null, 'F4', 'A4', 'C5', null], g = grid(w('Voici') + 0.3, tTell - 0.05, 0.36);        // figure curieuse, avec des silences
+    for (let k = 0; k < g.n; k++) if (fig[k % fig.length]) pizz(g.t(k), fig[k % fig.length], { gain: 0.05 + 0.012 * k / g.n, pan: 0.45 * Math.sin(k * 1.9), t60: 0.35 }); }
+  { const up = ['D5', 'F5', 'A5', 'C6', 'D6', 'F6', 'A6', 'C7'];                                        // la petite montée, de « tellement » à « d'un » : harpe puis verre
+    up.forEach((n, k) => { const t = tTell + (tRise - tTell) * k / (up.length - 1), g = 0.032 + 0.028 * k / (up.length - 1); if (k < 4) harp(t, n, { gain: g * 1.1, pan: -0.4 + 0.2 * k, t60: 1.6 }); else glass(t, n, { gain: g, pan: -0.5 + 0.15 * k, tau: 2.2 }); });
+    tone(tTell, tRise - tTell + 0.1, { f0: 220, f1: 1760, curve: 1.8, gain: 0.014, att: (tRise - tTell) * 0.6, rel: 0.12, harm: [1, 0.2, 0.05], am: 0.4, arate: 5, send: 0.5 });
+    nzb(tTell, tRise - tTell + 0.05, { type: 'hp', f0: 3000, f1: 8000, gain: 0.008, att: (tRise - tTell) * 0.7, rel: 0.1, send: 0.5 }); }
+  const t = F.t1 + 0.07;                                 // après « film ! » : le titre
+  glass(t, 'D6', { gain: 0.06, tau: 3 }); glass(t + 0.03, 'A5', { gain: 0.045, tau: 3, pan: -0.2 }); harp(t + 0.05, 'D4', { gain: 0.05 });
 }
-function musAlaska() {                                   // ALASKA : cristalline et froide ; tension qui descend au grave quand le cœur s'arrête ; lumière majeure au dégel
-  rnd = mkRnd(202); B = BUS.music; const [s0, s1] = SEG.gre, tg1 = ph('g1').t0, tg2 = ph('g2').t0, tg3 = ph('g3').t0, tg4 = ph('g4').t0;
-  const tCoeur = wt('g2', 'cœur'), tArr = wt('g2', "s'arrête"), tResp = wt1('g2', 'respirer'), tSuc = wt('g3', 'sucre'), tSurv = wt('g3', 'survit');
-  pad(s0 + 0.2, tCoeur - s0 + 0.0, ['A2', 'D3', 'F3', 'A3'], { gain: 0.048, att: 1.6, rel: 1.2, bright: 0.12 });
-  // g1 : gouttes de verre, lentes
-  [[0.2, 'A5', -0.3], [1.0, 'F5', 0.25], [1.8, 'D6', -0.1], [2.85, 'C6', 0.3], [3.55, 'A5', -0.25]].forEach(([d, n, p]) => glass(s0 + d, n, { gain: 0.05, pan: p }));
-  harp(s0 + 0.3, 'D3', { gain: 0.045 }); harp(s0 + 2.4, 'A3', { gain: 0.04 });
-  const tSF = wt('g1', 'science-fiction'); [['A5', 0], ['D6', 0.11], ['F6', 0.22], ['A6', 0.33]].forEach(([n, d], k) => glass(tSF + d, n, { gain: 0.045 + 0.005 * k, pan: -0.3 + 0.2 * k, tau: 2.6 }));
-  // g2 : le givre gagne (cloches descendantes), puis le cœur s'arrête : tout s'efface vers le grave
-  [['A5', 'corps'], ['F5', 'gèle'], ['D5', 'son']].forEach(([n, w], k) => glass(wt('g2', w, w === 'son' ? 0 : 0), n, { gain: 0.045, pan: 0.2 - 0.2 * k }));
-  pad(tg2 + 0.2, tArr - tg2 + 0.2, ['A2', 'D3', 'F3', 'C4'], { gain: 0.045, att: 0.7, rel: 0.9, bright: 0.05 });
-  glass(tCoeur, 'C5', { gain: 0.045, tau: 1.8 });
-  drone(tArr - 0.1, 3.0, NOTE('D3'), NOTE('D1'), { gain: 0.08, att: 0.2, rel: 1.8, glide: [0.0, 0.55], send: 0.5, h: [0.45, 0.75, 0.45, 0.2] });             // tension qui descend au grave
-  glass(tArr + 0.04, 'D7', { gain: 0.03, tau: 1.2, pan: 0.4 });
-  glass(tResp + 0.45, 'A6', { gain: 0.03, tau: 3.5, pan: -0.2 });                                                                    // un dernier tintement suspendu
-  // g3 : l'espoir (sucre protecteur) — la nappe se rouvre, la harpe monte
-  pad(tg3 - 0.1, tSurv - tg3 + 0.15, ['A2', 'E3', 'A3', 'B3'], { gain: 0.05, att: 1.0, rel: 0.8, bright: 0.25 });          // ré sus2 : ouvert, ni majeur ni mineur
-  ['D4', 'A4', 'B4', 'D5', 'E5', 'A5', 'B5', 'D6'].forEach((n, k) => harp(tSuc + 0.12 + k * 0.17, n, { gain: 0.04 + 0.002 * k, pan: -0.5 + k * 0.14, t60: 2.2 }));
-  glass(wt('g3', 'cellules') + 0.02, 'E6', { gain: 0.04, tau: 2.2, pan: 0.2 });
-  pad(tSurv - 0.05, tg4 - tSurv + 0.25, ['A2', 'E3', 'A3', 'C#4', 'E4'], { gain: 0.06, att: 0.18, rel: 0.5, bright: 0.4 });
-  [['A5', 0, -0.3], ['C#6', 0.04, 0], ['E6', 0.08, 0.3]].forEach(([n, d, p]) => glass(tSurv + d, n, { gain: 0.06, pan: p, tau: 2.4 }));
-  // g4 : lumière — ré majeur, kalimba, harpe, flûte
-  pad(tg4 - 0.1, s1 - tg4 + 0.8, ['A2', 'D3', 'F#3', 'A3', 'E4'], { gain: 0.058, att: 0.25, rel: 1.4, bright: 0.38 });
-  glass(tg4 + 0.02, 'D6', { gain: 0.07, tau: 3 }); glass(tg4 + 0.06, 'A6', { gain: 0.05, tau: 3, pan: 0.2 });
-  const mel = ['D5', 'F#5', 'A5', null, 'B5', 'A5', 'F#5', null, 'D5', 'F#5', 'A5', 'B5', 'D6', null, 'A5', 'F#5'], gm = grid(tg4 + 0.4, s1 - 0.5, 0.31);
-  for (let k = 0; k < gm.n; k++) if (mel[k % mel.length]) kalimba(gm.t(k), mel[k % mel.length], { gain: 0.05, pan: Math.sin(k * 1.3) * 0.5, decay: 1.2 });
-  const hp = ['D3', 'A3', 'F#4', 'A3'], gh = grid(tg4 + 0.2, s1 - 0.4, 0.62); for (let k = 0; k < gh.n; k++) harp(gh.t(k), hp[k % 4], { gain: 0.04, pan: -0.25 });
-  const tD = wt('g4', 'dégèle'); [['D7', 0, 0.3], ['A6', 0.07, -0.2], ['F#6', 0.14, 0.15], ['E6', 0.21, -0.35]].forEach(([n, d, p]) => glass(tD + d, n, { gain: 0.035, tau: 1.8, pan: p }));
-  flute(tD + 0.05, 0.55, 'F#5', { gain: 0.045 }); flute(wt('g4', 'reprend'), 0.5, 'A5', { gain: 0.045 }); flute(wt('g4', 'vie'), 0.45, 'B5', { gain: 0.045 }); flute(wt('g4', 'rien'), 0.4, 'D6', { gain: 0.045 }); flute(wt('g4', "n'était"), 1.0, 'A5', { gain: 0.05 });
+
+function musSca() {                                      // SCARABÉE : sous-bois doré ; pizzicato malicieux et marimba (mi mineur pentatonique) ; la tension monte au mélange, claquement sec, soulagement comique (sol majeur)
+  rnd = mkRnd(202); B = BUS.music; const [s0, s1] = SEG.sca, b1 = ph('b1'), b2 = ph('b2'), b3 = ph('b3'), b4 = ph('b4'), L1 = lastW('b1'), L2 = lastW('b2'), L3 = lastW('b3'), L4 = lastW('b4');
+  const w1 = (x, k) => wt('b1', x, k), w2 = (x, k) => wt('b2', x, k), w3 = (x, k) => wt('b3', x, k), w4 = (x, k) => wt('b4', x, k), Ep = pent('E4', P_MIN);         // E4 G4 A4 B4 D5 | E5 G5 A5 B5 D6
+  const tip = (t, g = 1, pan = 0) => [[0, 0], [0.15, 1], [0.30, 3], [0.52, 1], [0.67, 5]].forEach(([d, i]) => marimba(t + d, Ep(i), { gain: 0.046 * g, tau: 0.22, pan: pan + 0.1 * i }));      // le thème malicieux (sur la pointe des pieds)
+  // b1 : « Tu savais qu'un petit scarabée pouvait projeter du liquide à 100 degrés ? » : sparse, puis le thermomètre monte
+  pad(s0 - 0.1, L1.t0 - s0 - 0.15, ['E2', 'B2', 'D3', 'G3'], { gain: 0.036, att: 0.9, rel: 0.6, bright: 0.12 });
+  pizz(b1.t0 + 0.02, 'E2', { gain: 0.1, t60: 0.7 }); pizz(w1('pouvait'), 'B2', { gain: 0.09, t60: 0.6 }); pizz(w1('projeter'), 'E2', { gain: 0.08, t60: 0.6 });
+  tip(w1('petit'), 1, -0.3);
+  { const tLiq = w1('liquide'), t100 = w1(['100', 'cent']); for (let k = 0; k < 6; k++) marimba(tLiq + (t100 - 0.05 - tLiq) * k / 5, Ep(k), { gain: 0.036 + 0.008 * k, tau: 0.3, pan: -0.2 + 0.08 * k }); glass(t100 + 0.02, 'E6', { gain: 0.04, tau: 2.2, pan: 0.2 }); }
+  marimba(L1.t1 + 0.08, 'B4', { gain: 0.04, tau: 0.3 }); marimba(L1.t1 + 0.2, 'E5', { gain: 0.045, tau: 0.5, pan: 0.2 });
+  // b2 : « C'est le cas du scarabée bombardier ! » : le scarabée se redresse fièrement ; le mot final reste libre
+  pizz(b2.t0, 'E3', { gain: 0.1, t60: 0.6 }); marimba(w2('cas'), Ep(1), { gain: 0.05, tau: 0.3, pan: -0.2 });
+  [0, 2, 3, 5].forEach((i, k) => marimba(w2('scarabée') + 0.1 * k, Ep(i + 3), { gain: 0.046, tau: 0.3, pan: 0.1 * k }));
+  pizz(L2.t1 + 0.07, 'E2', { gain: 0.14, t60: 0.9 }); marimba(L2.t1 + 0.07, 'E3', { gain: 0.06, tau: 0.5 });        // « bom ! »
+  // b3 : le prédateur s'approche (pas lourds, demi-ton qui gronde), puis le mélange : deux lignes qui se rejoignent, roulement qui accélère, silence sur « explosion », claquement sec
+  const tPred = w3('prédateur'), tMel = w3('mélange'), tAbd = w3('abdomen'), tExp = L3.t0, tEnd = tExp - 0.14;
+  pad(b3.t0 - 0.05, tMel - b3.t0 + 0.1, ['E2', 'F2', 'B2', 'C#3'], { gain: 0.032, att: 0.5, rel: 0.4, bright: 0.05 });
+  { const g = grid(b3.t0 + 0.05, tMel - 0.1, 0.5); for (let k = 0; k < g.n; k++) { bassPluck(g.t(k), k % 2 ? 'F2' : 'E2', { gain: 0.11, t60: 0.7 }); if (k) wood(g.t(k) - g.d / 2, 0.22, 900, 0.3); } }
+  { const n = 6, dt = (tAbd - tMel) / (n - 1); for (let k = 0; k < n; k++) { marimba(tMel + k * dt, Ep(k), { gain: 0.04 + 0.005 * k, tau: 0.3, pan: -0.55 }); if (k < n - 1) marimba(tMel + (k + 0.5) * dt, Ep(10 - k), { gain: 0.04 + 0.005 * k, tau: 0.3, pan: 0.55 }); } }
+  pad(tMel, tEnd - tMel + 0.05, ['E2', 'B2', 'F3', 'Bb3'], { gain: 0.034, att: (tEnd - tMel) * 0.85, rel: 0.12, bright: 0.1 });
+  { const a = tAbd + 0.05; let t = a, k = 0; while (t < tEnd) { const u = (t - a) / (tEnd - a); marimba(t, Ep(5 + Math.min(5, Math.floor(u * 6))), { gain: 0.03 + 0.04 * u, tau: 0.16, pan: 0.3 * Math.sin(k * 2.1) }); t += 1 / lerp(6, 22, rise(u, 1.4)); k++; } }
+  tone(tAbd, tEnd - tAbd, { f0: 330, f1: 1320, curve: 1.6, gain: 0.022, att: (tEnd - tAbd) * 0.8, rel: 0.06, harm: [1, 0.3], am: 0.5, arate: 11, send: 0.4 });
+  nzb(tAbd, tEnd - tAbd, { f0: 500, f1: 3500, q: 1.1, gain: 0.035, att: (tEnd - tAbd) * 0.8, rel: 0.06, curve: 1.6, send: 0.4 });
+  { let t = tAbd; while (t < tEnd - 0.1) { const u = (t - tAbd) / (tEnd - tAbd); dLow(t, 0.45 + 0.35 * u); t += lerp(0.55, 0.22, u); } }
+  { const tb = lastEv(['bang'], b3.t0, b4.t0), tS = clearT(tb ?? tExp, 0.8), tSnap = Math.max(tS, tEnd + 0.02);       // « claquement sec » sur la réaction (reporté après « explosion » si le bang tombe sur le mot)
+    wood(tSnap, 1.1, 1700, 0); tone(tSnap, 0.06, { f0: 2700, f1: 1700, gain: 0.07, att: 0.0005, rel: 0.02, dec: 0.014, harm: [1, 0.5] }); nzb(tSnap, 0.03, { type: 'hp', f0: 3000, gain: 0.12, att: 0.0004, rel: 0.02, send: 0.15 }); dHi(tSnap, 0.9); }
+  // b4 : le jet (crépitement de marimba qui monte d'un cran à chaque mot-clé), puis la reculade du prédateur (pizzicati qui descendent en ralentissant) : soulagement comique, sol majeur
+  const tPro = w4('projette'), tJet = w4('jet'), tBr = w4('brûlant'), tPour = w4('pour'), tFuir = w4('fuir');
+  pad(b4.t0 + 0.1, tPour - b4.t0 + 0.2, ['E2', 'B2', 'E3', 'G3'], { gain: 0.034, att: 0.8, rel: 0.5, bright: 0.15 });
+  { let t = tPro, k = 0; while (t < tPour - 0.05) { const u = (t - tPro) / (tPour - tPro); marimba(t, Ep(t < tJet ? 5 : t < tBr ? 6 : 8), { gain: 0.03 + 0.03 * u, tau: 0.14, pan: 0.35 * Math.sin(k * 1.7) }); t += 1 / 13; k++; } }
+  { const g = grid(tPro, tPour, 0.09); for (let k = 0; k < g.n; k++) shaker(g.t(k), { gain: 0.012 + 0.02 * k / g.n, pan: 0.4 * Math.sin(k) }); }
+  dLow(tJet, 0.75); dMid(tBr, 0.5);
+  { const down = ['B3', 'A3', 'G3', 'F#3', 'E3', 'D3'], lim = L4.t0 - 0.1; let t = tPour + 0.03; down.forEach((n, k) => { if (t < lim) pizz(t, n, { gain: 0.085, t60: 0.4, pan: 0.2 - 0.07 * k }); t += 0.09 + 0.02 * k * k * 0.5; }); if (tFuir + 0.12 < lim) wood(tFuir + 0.12, 0.4, 700, -0.2); }
+  { const t = L4.t1 + 0.07;                              // l'ennemi est parti : sol majeur, le scarabée repart tranquillement
+    pad(t - 0.04, Math.max(0.3, s1 - t + 0.5), ['G2', 'D3', 'G3', 'B3', 'D4'], { gain: 0.04, att: 0.15, rel: 0.8, bright: 0.25 });
+    [['G4', 0], ['D5', 0.1], ['G5', 0.2], ['B5', 0.3]].forEach(([n, d], k) => marimba(t + d, n, { gain: 0.045, tau: 0.5, pan: -0.2 + 0.15 * k })); pizz(t, 'G2', { gain: 0.1, t60: 0.9 }); glass(t + 0.05, 'D6', { gain: 0.035, tau: 2 }); }
 }
-function musMexique() {                                  // MEXIQUE : chaude ; guitare nylon, shaker, pulsation tranquille ; un peu de mystère ; montée au jet puis coup comique
-  rnd = mkRnd(303); B = BUS.music; const [s0, s1] = SEG.lez, tl1 = ph('l1').t0, tl2 = ph('l2').t0, tl3 = ph('l3').t0, tl4 = ph('l4').t0;
-  const AM = ['A2', 'E3', 'A3', 'C4', 'E4'], GM = ['G2', 'D3', 'G3', 'B3', 'D4'], FM = ['F2', 'C3', 'F3', 'A3', 'C4'], EM = ['E2', 'B2', 'E3', 'G#3', 'B3', 'E4'];
-  const tSq = firstEv(['squirt'], tl2, tl3) ?? wt('l2', 'yeux'), tGr = firstEv(['yelp', 'shake', 'splat'], tl4, SEG.lyc[0]) ?? wt('l4', 'désagréable');
-  // l1 : le désert au crépuscule (andalouse : la sol fa mi)
-  const c1 = [[tl1, wt('l1', 'lézards'), AM, 0.045], [wt('l1', 'lézards'), wt('l1', 'arme'), GM, 0.045], [wt('l1', 'arme'), wt('l1', 'improbable'), FM, 0.045], [wt('l1', 'improbable'), tl2 - 0.05, EM, 0.05]];
-  c1.forEach(([a, b, ch, g], k) => finger(a, b, ch, { gain: g, fadeIn: k === 0, pat: [0, 2, 3, null, 4, 3, 2, null] }));
-  for (let x = tl1 + 0.1; x < tl2 - 0.3; x += 0.79 * 2) dLow(x, 0.5);
-  { const g = grid(tl1 + 0.3, tl2 - 0.2, 0.395); for (let k = 0; k < g.n; k++) shaker(g.t(k), { gain: 0.022 * (k % 2 ? 1.15 : 0.7), pan: k % 2 ? 0.3 : -0.3, accent: k % 2 ? 1.2 : 0.8 }); }
-  flute(wt('l1', 'improbable'), 1.3, 'E4', { gain: 0.04, vib: 0.01 }); glass(wt('l1', 'improbable') + 0.2, 'G#5', { gain: 0.03, pan: 0.3 });
-  // l2 : la menace (la-sib), puis montée jusqu'au jet
-  const tIls = wt('l2', 'ils'); pad(tl2 - 0.1, tSq - tl2 - 0.1, ['A2', 'Bb2', 'F3', 'D4'], { gain: 0.04, att: 0.9, rel: 0.4, bright: 0.05 });
-  [0, 0.4, 0.8, 1.2].forEach((d, k) => nylon(tl2 + 0.1 + d, k % 2 ? 'Bb2' : 'A2', { gain: 0.055, t60: 1.2 }));
-  { const g = grid(tIls, tSq, 0.32); const up = ['A2', 'E3', 'A3', 'C4', 'E4', 'A4', 'C5', 'E5', 'A5', 'C6', 'E6']; for (let k = 0; k < g.n; k++) { const u = k / g.n; nylon(g.t(k), up[Math.min(up.length - 1, Math.floor(u * up.length))], { gain: 0.045 + 0.02 * u, t60: 1.2 }); shaker(g.t(k) + 0.1, { gain: 0.012 + 0.03 * u, accent: 1 }); if (k > g.n * 0.4) shaker(g.t(k) + 0.05, { gain: 0.012 + 0.025 * u }); } }
-  { const g = grid(wt('l2', 'projeter'), tSq - 0.05, 0.14); for (let k = 0; k < g.n; k++) dHi(g.t(k), 0.2 + 0.5 * k / g.n, { f: 300 + 14 * k }); }
-  [['A2', 0], ['E3', 0.012], ['A3', 0.024], ['C4', 0.036], ['E4', 0.048], ['A4', 0.06]].forEach(([n, d]) => nylon(tSq + d, n, { gain: 0.08, t60: 2.4 }));      // accord plaqué au jet
-  dMid(tSq, 0.9); dLow(tSq, 0.8); glass(tSq + 0.02, 'A5', { gain: 0.04, tau: 2 }); glass(tSq + 0.05, 'E6', { gain: 0.03, tau: 2, pan: 0.3 });
-  // l3 : la règle, gamme pentatonique qui monte jusqu'à « mètre »
-  { const a = wt('l3', 'jet'), b = wt('l3', 'mètre'), n = 6, idx = [0, 1, 2, 3, 4, 5]; idx.forEach((i, k) => marimba(a + (b - a) * k / n, PENTA_A[i + 3], { gain: 0.06, pan: -0.3 + 0.12 * k }));
-    marimba(b, PENTA_A[9], { gain: 0.07 }); glass(b + 0.02, 'A5', { gain: 0.04, tau: 2.4 }); finger(b, tl4 - 0.05, AM, { gain: 0.045, nominal: 0.395 }); }
-  // l4 : « Et le plus fou ? » — pizzicati malicieux ; la grimace du coyote : coup comique
-  const tCe = wt('l4', 'Ce');
-  [['E3', 0], ['A2', 0.4]].forEach(([n, d]) => bassPluck(tl4 + 0.05 + d, n, { gain: 0.13, t60: 0.9 })); wood(wt('l4', 'fou') + 0.05, 0.6, 900, -0.2);
-  { const g = grid(tCe, tGr - 0.15, 0.395); const ns = ['A2', 'C3', 'E3', 'G3', 'A3']; for (let k = 0; k < g.n; k++) { nylon(g.t(k), ns[k % ns.length], { gain: 0.045, t60: 1 }); if (k % 2) wood(g.t(k) + 0.1, 0.35, 1100, 0.3); } }
-  reed(tGr, NOTE('Bb3'), NOTE('A3'), 0.22, { gain: 0.07 }); reed(tGr + 0.26, NOTE('A3'), NOTE('Ab3'), 0.22, { gain: 0.07 }); reed(tGr + 0.52, NOTE('Ab3'), NOTE('G3'), 0.22, { gain: 0.07 }); reed(tGr + 0.78, NOTE('G3'), NOTE('E3'), 0.85, { gain: 0.08, growl: 0.5 });
-  wood(tGr, 0.8, 800, 0); dLow(tGr + 0.02, 0.7);
-  { const t2 = tGr + 1.7, a = Math.min(t2, s1 - 1.2); ['E5', 'D5', 'C5', 'A4'].forEach((n, k) => marimba(a + k * 0.14, n, { gain: 0.04, pan: 0.2 })); }
-  const tPre = wt('l4', 'prédateurs'); [['A2', 0], ['E3', 0.02], ['A3', 0.04], ['C#4', 0.06], ['E4', 0.08]].forEach(([n, d]) => nylon(tPre + d, n, { gain: 0.06, t60: 2.4 })); wood(tPre + 0.5, 0.6, 1000);
-  pad(tPre - 0.1, s1 - tPre + 0.5, ['A2', 'E3', 'A3', 'C#4'], { gain: 0.04, att: 0.5, rel: 1.2, bright: 0.2 });
+
+function musBas() {                                      // BASILIC : jungle ; tambours doux, kalimba rapide qui accompagne la course, flûte légère ; accélération sur l'eau, soulagement sur l'autre rive (la majeur pentatonique)
+  rnd = mkRnd(303); B = BUS.music; const [s0, s1] = SEG.bas, c1 = ph('c1'), c2 = ph('c2'), c3 = ph('c3'), L1 = lastW('c1'), L2 = lastW('c2'), L3 = lastW('c3');
+  const w1 = (x, k) => wt('c1', x, k), w2 = (x, k) => wt('c2', x, k), w3 = (x, k) => wt('c3', x, k), Ap = pent('A3', P_MAJ);          // A3 B3 C#4 E4 F#4 | A4 B4 C#5 E5 F#5 | A5 B5 C#6
+  const cell = [5, 7, 8, 7, 5, 6, 7, 8, 10, 8, 7, 5, 6, 7, 5, 3];                                    // 16 doubles croches (A4 C#5 E5 C#5 | A4 B4 C#5 E5 | A5 E5 C#5 A4 | B4 C#5 A4 E4)
+  const kal16 = (t, k, g, oct = 0, pan = 0) => { const i = cell[k % 16]; kalimba(t, oct ? semi(Ap(i), 12) : Ap(i), { gain: g * (k % 4 === 0 ? 1.25 : k % 2 ? 0.75 : 1), decay: 0.65, pan: pan + 0.3 * Math.sin(k * 0.9), send: 0.3, bright: 0.7 }); };
+  // c1 : la rivière en forêt, puis « il peut courir sur l'eau » : le tempo s'emballe ; silence sur « l'eau »
+  const tPeut = w1('peut'), lim1 = L1.t0 - 0.1;
+  pad(s0 - 0.1, tPeut - s0 + 0.3, ['A2', 'E3', 'A3', 'C#4', 'E4'], { gain: 0.036, att: 0.8, rel: 0.5, bright: 0.2 });
+  beatsOf(s0 + 0.1, tPeut - 0.1, 94).forEach((t, k) => { if (k % 2 === 0) dLow(t, k % 4 === 0 ? 0.55 : 0.4); else dMid(t, 0.28, { f: 210 }); shaker(t + 30 / 94, { gain: 0.012, pan: -0.3 + 0.6 * (k % 2) }); });
+  flute(w1('Amérique'), 0.55, 'E5', { gain: 0.04 }); flute(w1('centrale'), 0.75, 'F#5', { gain: 0.04 });
+  [['lézard', 5], ['possède', 7], ['capacité', 8], ['folle', 10]].forEach(([wd, i], k) => kalimba(w1(wd), Ap(i), { gain: 0.05, decay: 1.1, pan: -0.3 + 0.2 * k }));
+  { const a = tPeut - 0.05, b = L1.t0 - 0.12, bpm = t => lerp(100, 152, sm((t - a) / (b - a))); let k = 0; for (const t of beatsOf(a, b, bpm)) { const u = (t - a) / (b - a); dLow(t, 0.5 + 0.3 * u); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / bpm(t) / 4; if (tt > lim1 || (u < 0.5 && j % 2)) continue; kal16(tt, k * 4 + j, 0.036 + 0.02 * u); } if (u > 0.4) dHi(t + 30 / bpm(t), 0.35 + 0.3 * u); k++; } }
+  // c2 : la course, 128 bpm ; « Jésus-Christ » : un instant de grâce (verre, la course se retient) ; elle s'arrête avant « rivières » ; petit roulement ensuite
+  const tJes = w2('Jésus-Christ'), tRiv = L2.t0, limC = tRiv - 0.12, hold = t => t > tJes - 0.04 && t < tJes + 0.55;
+  pad(c2.t0 - 0.05, tRiv - c2.t0 - 0.05, ['A2', 'E3', 'A3', 'B3', 'E4'], { gain: 0.034, att: 0.4, rel: 0.5, bright: 0.2 });
+  { let k = 0; for (const t of beatsOf(c2.t0 - 0.02, limC, 128)) { const bt = 60 / 128; if (!hold(t)) { if (k % 4 === 0 || k % 4 === 2) dLow(t, k % 4 === 0 ? 0.6 : 0.45); else dMid(t, 0.38, { f: 215 + 18 * (k % 8 === 1) }); if (t + bt / 2 <= limC) shaker(t + bt / 2, { gain: 0.016, pan: -0.3 + 0.6 * (k % 2) }); } for (let j = 0; j < 4; j++) { const tt = t + j * bt / 4; if (tt > limC || hold(tt)) continue; kal16(tt, k * 4 + j, 0.04, 0); } k++; } }
+  [['E6', 0], ['A6', 0.09], ['C#7', 0.18], ['E7', 0.27]].forEach(([n, d], k) => glass(tJes + d, n, { gain: 0.03, tau: 1.8, pan: -0.3 + 0.2 * k })); flute(tJes + 0.05, 0.5, 'A5', { gain: 0.036 });
+  { const t = L2.t1 + 0.07; dMid(t, 0.5, { f: 230 }); dMid(t + 0.12, 0.5, { f: 260 }); dLow(t + 0.24, 0.7); }
+  // c3 : l'ombre du rapace (danger, la mineure), puis la fuite à 150 bpm vers l'autre rive ; le mot final reste libre, soulagement ensuite
+  const tEch = w3('échapper'), lim3 = L3.t0 - 0.1;
+  pad(c3.t0 - 0.02, tEch - c3.t0 + 0.2, ['A2', 'E3', 'A3', 'C4'], { gain: 0.036, att: 0.15, rel: 0.3, bright: 0.1 });
+  dLow(c3.t0 + 0.02, 0.55); dLow(w3('ça'), 0.5); flute(w3('tout'), 0.45, 'C5', { gain: 0.032, vib: 0.012 });
+  { let k = 0; for (const t of beatsOf(tEch - 0.04, lim3, 150)) { const u = clamp((t - tEch) / (lim3 - tEch)); dLow(t, 0.6); dMid(t + 60 / 300, 0.36, { f: 230 }); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / 150 / 4; if (tt > lim3) continue; kal16(tt, k * 4 + j, 0.036 + 0.014 * u, 1); } k++; } }
+  { const t = L3.t1 + 0.07;                              // l'autre rive : ouf
+    ['E6', 'C#6', 'A5', 'E5', 'C#5', 'A4'].forEach((n, k) => kalimba(t + 0.04 + 0.13 * k, n, { gain: 0.05 - 0.005 * k, decay: 1.2, pan: 0.25 - 0.08 * k })); glass(t, 'A5', { gain: 0.04, tau: 2.4 }); glass(t + 0.04, 'C#6', { gain: 0.03, tau: 2.4, pan: 0.2 }); glass(t + 0.08, 'E6', { gain: 0.03, tau: 2.4, pan: -0.2 });
+    flute(t + 0.1, 0.5, 'A5', { gain: 0.036 }); dLow(t, 0.4); pad(t - 0.04, Math.max(0.2, s1 - t), ['A2', 'E3', 'A3', 'C#4'], { gain: 0.034, att: 0.2, rel: 0.5, bright: 0.2 }); }
 }
-function musAfrique() {                                  // AFRIQUE : kalimba et marimba (pentatonique de sol), petits tambours qui accélèrent, pulsation de marche qui s'emballe
-  rnd = mkRnd(404); B = BUS.music; const [s0, s1] = SEG.lyc, ty1 = ph('y1').t0, ty2 = ph('y2').t0, ty3 = ph('y3').t0, ty4 = ph('y4').t0;
-  const tRun = firstEv(['run'], ty4 - 1, s1) ?? wt('y4', 'nez'), tOui = ty4;
-  pad(s0 + 0.4, ty2 - s0 - 0.1, ['D3', 'A3', 'B3', 'G3'], { gain: 0.04, att: 1.3, rel: 1.0, bright: 0.12 });
-  // y1 : l'aube, très clairsemé ; un appel de flûte lointain
-  flute(s0 + 0.3, 1.3, 'D5', { gain: 0.032, send: 0.85 }); flute(s0 + 1.7, 1.2, 'B4', { gain: 0.03, send: 0.85 }); flute(s0 + 3.0, 1.6, 'G4', { gain: 0.03, send: 0.85 });
-  [['Afrique', 'D5', -0.3], ['lycaons', 'A4', 0.3], ['façon', 'E5', -0.2], ['particulière', 'B4', 0.25], ['décisions', 'D5', 0]].forEach(([w, n, p]) => kalimba(wt('y1', w), n, { gain: 0.05, pan: p, decay: 1.5 }));
-  [['G3', 0], ['B3', 0.12], ['D4', 0.24]].forEach(([n, d]) => marimba(wt('y1', 'éternuent') + d, n, { gain: 0.05 })); dLow(wt('y1', 'éternuent') + 0.05, 0.6);
-  // tempo : 84 à 108 ; à la course de la meute, ça s'emballe
-  const bpm = t => t < ty3 ? 84 : t < tRun ? lerp(84, 112, sm((t - ty3) / (tRun - ty3))) : lerp(128, 142, clamp((t - tRun) / 3));
-  const beats = []; { let t = ty2 - 0.1; while (t < s1 - 0.1) { beats.push(t); t += 60 / bpm(t); } }
-  pad(ty2 - 0.1, s1 - ty2 + 0.4, ['D3', 'G3', 'B3', 'D4'], { gain: 0.036, att: 0.7, rel: 1.0, bright: 0.2 });
-  beats.forEach((t, k) => {
-    const u = clamp((t - ty2) / (s1 - ty2)), run = t >= tRun;
-    if (k % 2 === 0) dLow(t, 0.55 + 0.25 * u + (run ? 0.1 : 0), { pan: -0.2 }); else dMid(t, 0.4 + 0.2 * u, { f: 215 + 20 * (k % 4 === 1 ? 1 : 0), pan: 0.25 });
-    const half = 30 / bpm(t); shaker(t + half, { gain: 0.016 + 0.014 * u, pan: -0.3 + 0.6 * (k % 2), accent: 1 }); if (bpm(t) > 105) { shaker(t + half / 2, { gain: 0.012 }); shaker(t + half * 1.5, { gain: 0.012 }); }
-    if (t > ty3 - 0.1 && k % 2 === 1) wood(t + half, 0.4 + 0.2 * u, 1150, 0.35);
-    const o8 = ['G3', 'B3', 'D4', 'G3', 'B3', 'D4', 'E4', 'D4'];                                                                       // 3 + 3 + 2 sur huit croches
-    for (let j = 0; j < 2; j++) { const tt = t + j * half, st = (k * 2 + j) % 8; if (t < ty2 + 0.1 && j === 0) continue; const hi = run ? 12 : 0; marimba(tt, hi ? NOTE(o8[st]) * 2 : o8[st], { gain: (st % 3 === 0 ? 0.05 : 0.036) * (0.7 + 0.5 * u), pan: -0.25 + 0.5 * (st / 7) }); }
-  });
-  // appels du kalimba, de plus en plus hauts avec les éternuements
-  [['rassemblent', 'D6'], ['rassemblent', 'B5', 0.3], ['rassemblent', 'G5', 0.6]].forEach(([w, n, d = 0]) => kalimba(wt('y2', w) + d, n, { gain: 0.05, pan: 0.3, decay: 1.4 }));
-  [["d'éternuements", 'A5'], ['plus', 'B5', 1], ['groupe', 'D6'], ['chances', 'E6'], ['partir', 'G6']].forEach(([w, n, k = 0], i) => kalimba(wt('y3', w, k), n, { gain: 0.05 + 0.004 * i, pan: -0.3 + 0.15 * i, decay: 1.2 }));
-  for (const e of EVENTS) if (e.type === 'sneeze' && e.t >= ty3 && e.t < ty4) dHi(e.t + 0.12, 0.5, { f: 330 * Math.pow(1.06, clamp(e.v, 0.8, 1.3) * 4) });
-  // y4 : le gag (« voter avec son nez ») puis la meute file vers le soleil
-  [['Oui', 'G5'], ['lycaons', 'E6'], ['voter', 'D6'], ['nez', 'G6']].forEach(([w, n], i) => kalimba(wt('y4', w) + (w === 'nez' || w === 'voter' ? 0.30 : 0), n, { gain: 0.055, pan: -0.3 + 0.2 * i, decay: 1.3 }));
-  flute(tRun - 0.05, 0.35, 'E5', { gain: 0.04 }); flute(tRun + 0.4, 0.35, 'D5', { gain: 0.04 }); flute(tRun + 0.8, 0.35, 'B4', { gain: 0.04 }); flute(tRun + 1.2, 0.3, 'D5', { gain: 0.04 });
-  const tNez = wt('y4', 'nez'); [['G2', 0], ['D3', 0.02], ['G3', 0.04], ['B3', 0.06], ['D4', 0.08]].forEach(([n, d]) => nylon(Math.max(tNez + 0.3, tRun) + d + 0.1, n, { gain: 0.06, t60: 2.4 }));      // l'accord arrive APRÈS « nez » (il le couvrait)
-  glass(Math.max(tNez + 0.3, tRun) + 0.12, 'G6', { gain: 0.04, tau: 2.4 });
+
+function musAng() {                                      // ANGUILLE : mystérieuse, grave et électrique ; nappe grave, ronflement, verre, petites notes aiguës qui crépitent ; montée avec les volts, ressort sur la prise, coup final sur la décharge (sol mineur)
+  rnd = mkRnd(404); B = BUS.music; const [s0, s1] = SEG.ang, e1 = ph('e1'), e2 = ph('e2'), e3 = ph('e3'), L1 = lastW('e1'), L2 = lastW('e2'), L3 = lastW('e3');
+  const w1 = (x, k) => wt('e1', x, k), w2 = (x, k) => wt('e2', x, k), w3 = (x, k) => wt('e3', x, k), Gp = pent('G2', P_MIN);          // G2 Bb2 C3 D3 F3 | G3 Bb3 C4 D4 F4 | G4 ... | G5 Bb5 C6 D6 F6 | G6 Bb6 C7 D7 F7
+  // e1 : nappe grave, gouttes de verre, premières étincelles à « électrique », puis la montée jusqu'à « 860 » ; silence sur « volts », cascade ensuite
+  const tAma = w1('Amazonie'), tAng = w1("d'anguille"), tEle = w1('électrique'), tPeut = w1('peut'), t860 = w1(['860', 'huit']), tVol = L1.t0, tTop = tVol - 0.12;
+  pad(s0 - 0.1, L2.t1 - s0 + 0.2, ['G2', 'D3', 'G3', 'Bb3', 'D4'], { gain: 0.036, att: 1.4, rel: 0.9, bright: 0.18, trem: 0.14 });
+  hum(s0, e1.t1 - s0 - 0.2, 'G2', { gain: 0.03, att: 1.2, rel: 0.9 });
+  glass(tAma, 'D6', { gain: 0.045, tau: 3.2, pan: -0.3 }); glass(w1('espèce'), 'G5', { gain: 0.035, tau: 3, pan: 0.3 }); glass(tAng, 'Bb5', { gain: 0.04, tau: 3, pan: 0 });
+  pizz(tAng, 'G2', { gain: 0.11, t60: 1.0 }); pizz(tEle, 'D2', { gain: 0.1, t60: 1.0 });
+  { let t = tEle, k = 0; while (t < tTop) { const u = clamp((t - tEle) / (tTop - tEle)); zing(t, Gp(15 + Math.min(7, Math.floor(u * 8))), { gain: 0.022 + 0.03 * u, pan: Math.sin(k * 2.3) * 0.7, sparks: 2 + Math.round(4 * u) }); t += lerp(0.5, 0.085, rise(u, 0.9)); k++; } }
+  tone(tPeut, tTop - tPeut, { f0: 98, f1: 880, curve: 1.8, gain: 0.02, att: (tTop - tPeut) * 0.85, rel: 0.06, harm: [1, 0.4, 0.2], am: 0.45, arate: 9, send: 0.4 });
+  nzb(tPeut, tTop - tPeut, { type: 'hp', f0: 2500, f1: 9000, gain: 0.012, att: (tTop - tPeut) * 0.85, rel: 0.05, am: 0.7, arate: 30, send: 0.4 });
+  { let t = w1('produire'); while (t < tTop - 0.1) { const u = clamp((t - tPeut) / (tTop - tPeut)); dLow(t, 0.4 + 0.4 * u); t += lerp(0.6, 0.2, u); } }
+  { const t = L1.t1 + 0.07;                              // la décharge est annoncée : cascade qui retombe
+    [24, 22, 21, 20, 18, 16].forEach((i, k) => zing(t + 0.07 * k, Gp(i), { gain: 0.04 - 0.004 * k, pan: 0.6 - 0.2 * k, sparks: 3 })); glass(t, 'G6', { gain: 0.04, tau: 2, pan: 0.2 }); pizz(t, 'G2', { gain: 0.1, t60: 1.2 }); }
+  // e2 : « presque quatre fois la tension d'une prise » : le ressort (la barre bondit), un second rebond sur « prise » ; mot final libre
+  const tQua = w2('quatre'), tPri = w2('prise');
+  { const g = grid(e2.t0, L2.t0 - 0.12, 0.5); for (let k = 0; k < g.n; k++) pizz(g.t(k), k % 2 ? 'D3' : 'G2', { gain: 0.085, t60: 0.5, pan: -0.15 }); }
+  boing(tQua, NOTE('G4'), { gain: 0.05, dur: 0.8 }); boing(tPri + 0.02, NOTE('D5'), { gain: 0.036, dur: 0.55, depth: 0.45 }); zing(tPri + 0.45, Gp(21), { gain: 0.03, pan: 0.3 });
+  glass(w2('presque'), 'D6', { gain: 0.03, tau: 2.2, pan: -0.3 });
+  zing(L2.t1 + 0.07, Gp(23), { gain: 0.03, pan: -0.4 });
+  // e3 : « paralyser » : tout se fige (un seul fil de verre) ; « proies » : étincelles clairsemées ; « et se » : la menace monte ; silence sur « défendre » ; coup final sur la décharge
+  const tPar = w3('paralyser'), tPro = w3('proies'), tEt = w3('et'), tDef = L3.t0, tTop3 = tDef - 0.12;
+  pad(e3.t0 - 0.05, tPar - e3.t0 + 0.1, ['G2', 'D3', 'Bb3', 'Db4'], { gain: 0.034, att: 0.4, rel: 0.3, bright: 0.1 });
+  { const g = grid(e3.t0, tPar - 0.05, 0.55); for (let k = 0; k < g.n; k++) bassPluck(g.t(k), k % 2 ? 'D2' : 'G2', { gain: 0.1, t60: 0.8 }); }
+  zing(tPar, Gp(22), { gain: 0.05, sparks: 6 }); zing(tPar + 0.06, Gp(24), { gain: 0.035, sparks: 4, pan: 0.5 }); glass(tPar + 0.1, 'D7', { gain: 0.03, tau: 3.5, pan: -0.3 });
+  [[tPro + 0.1, 20], [tPro + 0.38, 23], [tPro + 0.7, 21]].forEach(([t, i], k) => { if (t < tEt - 0.05) zing(t, Gp(i), { gain: 0.022, pan: 0.5 - 0.5 * k, sparks: 3 }); });
+  hum(tPar + 0.1, tTop3 - tPar, 'G2', { gain: 0.03, att: 0.4, rel: 0.2 });
+  tone(tEt, tTop3 - tEt, { f0: 98, f1: 392, curve: 1.6, gain: 0.025, att: (tTop3 - tEt) * 0.8, rel: 0.05, harm: [1, 0.5, 0.25], am: 0.5, arate: 8, send: 0.4 });
+  nzb(tEt, tTop3 - tEt, { f0: 300, f1: 3000, q: 1, gain: 0.04, att: (tTop3 - tEt) * 0.85, rel: 0.05, curve: 1.5, send: 0.4 });
+  { let t = tEt; while (t < tTop3 - 0.1) { const u = clamp((t - tEt) / (tTop3 - tEt)); dLow(t, 0.5 + 0.35 * u); t += lerp(0.38, 0.17, u); } }
+  { const tz = lastEv(['zap'], e3.t0, SEG.ang[1]), t = Math.max(clearT(tz ?? tDef, 0.8), tTop3 + 0.1);      // le coup final (reporté juste après « défendre » s'il tombe sur le mot)
+    thud(t, 0.5); dLow(t, 1); tone(t, 0.5, { f0: 98, f1: 49, curve: 0.5, gain: 0.12, att: 0.003, rel: 0.1, dec: 0.18, harm: [1, 0.5, 0.25], send: 0.25 });
+    [['G6', 0, -0.3], ['Bb6', 0.03, 0.3], ['D7', 0.06, 0]].forEach(([n, d, p]) => glass(t + d, n, { gain: 0.045, tau: 1.3, pan: p })); [24, 23, 22, 20, 18, 16, 15].forEach((i, k) => zing(t + 0.05 * k, Gp(i), { gain: 0.045 - 0.004 * k, pan: -0.6 + 0.2 * k, sparks: 4 }));
+    pad(t - 0.02, Math.max(0.2, s1 - t), ['G2', 'D3', 'G3', 'Bb3'], { gain: 0.04, att: 0.05, rel: 0.7, bright: 0.2 }); }
 }
-function musFin() {                                      // QUESTION FINALE : légère, curieuse, suspendue (sur la dominante ; la marque résout en ré)
-  rnd = mkRnd(505); B = BUS.music; const [s0, s1] = SEG.fin, tf = ph('fin').t0, tSur = wt('fin', 'surpris');
+
+function musFin() {                                      // QUESTION FINALE : légère, curieuse, suspendue (sur la dominante de ré) ; la marque résout en ré majeur
+  rnd = mkRnd(505); B = BUS.music; const [s0, s1] = SEG.fin, F = lastW('fin'), w = (x, k) => wt('fin', x, k), tSup = w('super-pouvoir');
   pad(s0 - 0.1, T_LOGO - s0 - 0.5, ['A2', 'E3', 'B3', 'E4'], { gain: 0.05, att: 0.7, rel: 0.35, bright: 0.2 });
-  [['Alors', 'E5', -0.3], ['laquelle', 'A5', 0.3], ['trois', 'B5', -0.2], ['anecdotes', 'E5', 0.2]].forEach(([w, n, p]) => kalimba(wt('fin', w), n, { gain: 0.05, pan: p, decay: 1.3 }));
-  kalimba(wt('fin', 'plus'), 'A4', { gain: 0.045 }); kalimba(tSur, 'A5', { gain: 0.055, decay: 1.6 }); kalimba(tSur + 0.22, 'B5', { gain: 0.06, decay: 2.2 });
-  glass(tSur + 0.5, 'E6', { gain: 0.04, tau: 3.2, pan: 0.2 }); flute(tSur + 0.3, Math.max(0.6, s1 - tSur - 0.5), 'E5', { gain: 0.035, send: 0.7 });
-  glass(s1 - 0.8, 'A6', { gain: 0.03, tau: 2.5, pan: -0.2 });
+  [['Alors', 'E5', -0.3], ['lequel', 'A5', 0.3], ['trois', 'B5', -0.2], ['animaux', 'E5', 0.2]].forEach(([wd, n, p]) => kalimba(w(wd), n, { gain: 0.05, pan: p, decay: 1.3 }));
+  kalimba(w('plus'), 'A4', { gain: 0.045 }); kalimba(tSup, 'A5', { gain: 0.055, decay: 1.6 }); kalimba(tSup + 0.22, 'B5', { gain: 0.06, decay: 2.2 });
+  glass(w('possède'), 'E6', { gain: 0.03, tau: 3, pan: 0.2 });
+  const t = F.t1 + 0.07;                                 // après « impressionnant ? » : la question reste en l'air (le si)
+  glass(t, 'B6', { gain: 0.04, tau: 3.2, pan: 0.2 }); flute(t + 0.05, Math.max(0.6, T_LOGO - t - 0.6), 'E5', { gain: 0.035, send: 0.7 }); glass(Math.min(s1 - 0.8, t + 1.0), 'A6', { gain: 0.03, tau: 2.5, pan: -0.2 });
 }
 function musSortie() {                                   // SORTIE : l'accord de ré de la marque (comme la vidéo 2) qui résout la suspension
   rnd = mkRnd(606); B = BUS.music;
@@ -629,45 +644,67 @@ function musSortie() {                                   // SORTIE : l'accord de
 }
 
 // ───────── ambiances de la vidéo : sections et sous-sections ─────────
+function cicadaBursts(a, b, seed, g0 = 1) {              // vagues de cigales qui se chevauchent (3 à 6 s chacune) entre a et b
+  const rg = mkRnd(seed), out = []; let t = a - rg() * 2;
+  while (t < b) { const d = 3 + 3 * rg(); out.push([t, d, g0 * (0.6 + 0.4 * rg()), rg() * 1.2 - 0.6]); t += d * (0.35 + 0.3 * rg()); }
+  return out;
+}
+function diveTime() {                                    // instant où l'on passe sous l'eau dans le segment de l'anguille (plan « sous l'eau » de la liste des plans, sinon premier splash / bulles / décharge, sinon « une espèce »)
+  const [aS, aE] = SEG.ang, e1 = ph('e1'), limit = wt('e1', "d'anguille") + 0.2;
+  const shot = (EV.shots || []).find(s => s && Number.isFinite(s.t0) && s.t0 > aS + 0.3 && s.t0 < aE - 1 && /sous|under|dive|plong|subm|immerg|fond|subaqu|water|eau/i.test(String(s.id)) && !/^e1_(surf|ciel|crep)/i.test(String(s.id)));
+  if (shot) return shot.t0;
+  const sp = evIn('splash', aS, e1.t1), bu = evIn('bubbles', aS, e1.t1), zp = evIn('zap', aS, e1.t1), c = [sp && sp.t, bu && bu.t - 0.1, zp && zp.t - 0.25].filter(x => Number.isFinite(x) && x > aS + 0.4);
+  return c.length ? Math.min(limit, ...c) : wt('e1', 'une') - 0.1;
+}
 function ambiances() {
-  B = BUS.amb; const [, iEnd] = SEG.intro, [gS, gE] = SEG.gre, [lS, lE] = SEG.lez, [yS, yE] = SEG.lyc, [fS, fE] = SEG.fin;
-  const tTrois = ph('trois').t0, tg2 = ph('g2').t0, tg3 = ph('g3').t0, tg4 = ph('g4').t0, tCoeur = wt('g2', 'cœur'), tArr = wt('g2', "s'arrête"), tResp = wt1('g2', 'respirer'), tSurv = wt('g3', 'survit');
-  const tSpring = tg4 - 0.12, tSq = firstEv(['squirt'], ph('l2').t0, ph('l3').t0) ?? wt('l2', 'yeux'), tMen = wt('l2', 'menacés'), tIls = wt('l2', 'ils');
-  // ─ hiver : vent froid + souffle de neige (intro, g1, g2, g3) ; le vent retombe quand le cœur s'arrête
-  const hiverEnd = tSpring + 0.9, dip = x => x < tTrois ? 1 : x < tCoeur ? lerp(1, 0.85, sm((x - tTrois) / 0.5)) : x < tArr + 0.8 ? lerp(0.85, 0.5, sm((x - tCoeur) / (tArr + 0.8 - tCoeur))) : x < tg3 ? 0.5 : x < tSurv ? lerp(0.5, 0.65, sm((x - tg3) / (tSurv - tg3))) : lerp(0.65, 0.08, sm((x - tSurv) / (tSpring - tSurv + 0.5)));
-  layer(0, hiverEnd, { name: 'wind_hiver', rms: -33.5, fi: 0.4, fo: 0.5, send: 0.3, mul: dip }, genWind({ f0: 330, q: 2.2, whistle: 0.3, rumble: 0.5, seed: 11, depth: 1.0, hiss: 0.02 }));
-  layer(0, hiverEnd, { name: 'hush_hiver', rms: -47, fi: 0.4, fo: 0.8, send: 0.25, mul: x => dip(x) * 0.9 + 0.1 }, genHush({ seed: 12 }));
-  layer(0, hiverEnd, { name: 'sparkle_hiver', rms: -55, fi: 1, fo: 1, send: 0.4, mul: x => x < tCoeur || x > tResp ? 1 : 0.3 }, genSparkle({ seed: 13, rate: 2.2 }));
-  // plan « trois » (aube en lisière de prairie) : quelques oiseaux très lointains par-dessus le vent froid
-  layer(tTrois - 0.1, iEnd + 0.3, { name: 'birds_trois', rms: -54, fi: 0.5, fo: 0.4, send: 0, mul: null }, genBirds({ seed: 14, rate: () => 0.9, species: [['tsit', 1], ['whistle', 1], ['chick', 1]], gain: 0.05, far: 0.9, scale: [0.85, 1.0], sendFar: 0.9, sendNear: 0.9 }));
-  // ─ dégel : ruisseau de fonte, gouttes, oiseaux de printemps de plus en plus nombreux, léger vent doux
-  const sprS = tSurv - 0.8, sprE = gE + 0.25;
-  layer(sprS, sprE, { name: 'stream', rms: -38, fi: 1.6, fo: 0.5, send: 0.25, mul: x => 0.2 + 0.8 * sm((x - sprS) / (tg4 + 1 - sprS)) }, genStream({ seed: 31, bubbles: 70, drips: 0.5 }));
-  layer(tg4 - 0.2, sprE, { name: 'birds_print', rms: -44, fi: 0.5, fo: 0.5, send: 0, mul: null }, genBirds({ seed: 42, rate: x => lerp(0.5, 1.2, clamp((x - tg4) / (gE - tg4))), species: [['tsit', 1.2], ['whistle', 1], ['trill', 0.8], ['chick', 0.8], ['warble', 0.6]], gain: 0.07, far: 0.45, scale: [0.9, 1.15] }));
-  layer(tg4 - 0.1, sprE, { name: 'wind_print', rms: -47, fi: 1, fo: 0.5, send: 0.3 }, genWind({ f0: 520, q: 1.2, whistle: 0.05, rumble: 0.2, seed: 15, depth: 0.7 }));
-  // ─ désert du soir : grillons, cigales, vent chaud, sable, un hibou au loin ; les grillons se taisent quand le coyote approche
-  const dS = lS - 0.15, dE = lE + 0.25, hush = x => x < tMen ? 1 : x < tSq + 1.2 ? 0.28 : lerp(0.28, 1, sm((x - tSq - 1.2) / 1.2));
-  layer(dS, dE, { name: 'crickets_d', rms: -41, fi: 0.5, fo: 0.5, send: 0.2, mul: hush }, genCrickets({ n: 6, seed: 3, fc: [4150, 4850], rate: [1.7, 3.1], pulses: [3, 5], pr: [36, 52] }));
-  layer(dS, dE, { name: 'cicada_d', rms: -48, fi: 0.8, fo: 0.8, send: 0.5, mul: hush }, genCicada({ seed: 5, bursts: [[lS + 1.0, 3.6, 1, -0.5], [lS + 6.8, 3.0, 0.9, 0.55], [tSq + 2.2, 3.4, 1, -0.4], [lE - 5.2, 3.2, 1, 0.4]] }));
-  layer(dS, dE, { name: 'wind_d', rms: -35.5, fi: 0.6, fo: 0.6, send: 0.3 }, genWind({ f0: 280, q: 1.6, whistle: 0.08, rumble: 0.4, seed: 16, depth: 0.8, wf: 1000, rate: 0.8 }));
-  layer(dS, dE, { name: 'hush_d', rms: -47, fi: 0.8, fo: 0.8, send: 0.3 }, genHush({ seed: 17, f: 3200 }));
-  layer(dS, dE, { name: 'hoots_d', rms: -54, fi: 0.1, fo: 0.1, send: 0 }, genHoots({ seed: 18, times: [[lS + 3.2, -0.6], [lE - 3.0, 0.6]], gain: 0.06, f: 1 }));
-  // ─ savane à l'aube : insectes qui s'éteignent, oiseaux qui s'éveillent, vent dans les herbes (se lève quand la meute court)
-  const aS = yS - 0.15, aE = fE - 0.8, tRun = firstEv(['run'], ph('y4').t0 - 1, yE) ?? wt('y4', 'nez'), fade = x => x < yE ? 1 : lerp(1, 0.55, sm((x - yE) / 0.6));
-  layer(aS, aE, { name: 'crickets_s', rms: -41, fi: 0.5, fo: 0.9, send: 0.2, mul: x => lerp(1, 0.4, sm((x - yS) / (yE - yS))) * fade(x) }, genCrickets({ n: 5, seed: 7, fc: [3200, 3800], rate: [1.2, 2.2], pulses: [4, 7], pr: [26, 38] }));
-  layer(aS, aE, { name: 'cicada_s', rms: -48, fi: 0.8, fo: 0.8, send: 0.5, mul: x => lerp(1, 0.4, sm((x - yS) / (yE - yS))) * fade(x) }, genCicada({ seed: 8, f: 5600, bursts: [[yS + 0.8, 3.4, 1, -0.45], [yS + 5.5, 3.2, 0.9, 0.5], [yS + 10, 3.0, 0.8, -0.3]] }));
-  layer(aS, aE, { name: 'birds_s', rms: -42.5, fi: 0.5, fo: 0.9, send: 0.3, mul: x => lerp(0.6, 1, sm((x - yS) / (yE - yS))) * fade(x) }, genBirds({ seed: 43, rate: x => lerp(0.5, 0.9, clamp((x - yS) / (yE - yS))), species: [['coo', 1], ['hoopoe', 0.8], ['rasp', 0.7], ['whistle', 1], ['trill', 0.8], ['tsit', 1]], gain: 0.07, far: 0.7, scale: [0.85, 1.1] }));
-  layer(aS, aE, { name: 'wind_s', rms: -37.5, fi: 0.6, fo: 0.9, send: 0.3, mul: x => (x < tRun ? lerp(0.8, 1, sm((x - yS) / (yE - yS))) : 1.25) * fade(x) }, genWind({ f0: 760, q: 0.9, whistle: 0.03, rumble: 0.25, seed: 19, depth: 0.9, hiss: 0.1, wf: 2300, rate: 0.9 }));
-  layer(aS, aE, { name: 'hush_s', rms: -48, fi: 0.8, fo: 0.9, send: 0.3, mul: x => (x < tRun ? 0.7 : 1.3) * fade(x) }, genHush({ seed: 20, f: 2600 }));
+  B = BUS.amb; const [, iE] = SEG.intro, [sS, sE] = SEG.sca, [bS, bE] = SEG.bas, [aS, aE] = SEG.ang, [fS, fE] = SEG.fin;
+  const tPred = wt('b3', 'prédateur'), tFuir = wt('b4', 'fuir'), tEch = wt('c3', 'échapper'), dive = diveTime();
+  // ─ prairie / sous-bois doré (intro et scarabée) : vent doux dans l'herbe, grillons et sauterelles, mouches qui passent, oiseaux lointains ; les insectes se taisent quand le prédateur arrive
+  const pE = sE + 0.25, calm = x => x < tPred ? 1 : x < tFuir + 0.3 ? lerp(1, 0.4, sm((x - tPred) / 0.6)) : lerp(0.4, 1, sm((x - tFuir - 0.3) / 1.6));
+  layer(0, pE, { name: 'wind_prairie', rms: -36.5, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 430, q: 1.3, whistle: 0.04, rumble: 0.25, seed: 211, depth: 0.7, hiss: 0.12, wf: 1800, rate: 0.8 }));
+  layer(0, pE, { name: 'crickets_prairie', rms: -39.5, fi: 0.8, fo: 0.5, send: 0.2, mul: calm }, genCrickets({ n: 5, seed: 212, fc: [3700, 4500], rate: [1.5, 2.8], pulses: [3, 5], pr: [34, 48] }));
+  layer(0, pE, { name: 'hoppers_prairie', rms: -46, fi: 1, fo: 0.5, send: 0.3, mul: calm }, genCrickets({ n: 3, seed: 213, fc: [5600, 6800], rate: [0.45, 0.8], pulses: [14, 26], pr: [70, 100] }));
+  layer(0, pE, { name: 'flies', rms: -41.5, fi: 0.6, fo: 0.5, send: 0.25, mul: x => calm(x) }, genFlies({ seed: 214, rate: 0.4 }));
+  layer(0, pE, { name: 'birds_prairie', rms: -44.5, fi: 0.8, fo: 0.5, send: 0, mul: calm }, genBirds({ seed: 215, rate: () => 0.4, species: [['whistle', 1], ['chick', 1], ['warble', 0.8], ['tsit', 1], ['trill', 0.7]], gain: 0.06, far: 0.6, scale: [0.9, 1.1] }));
+  layer(0, pE, { name: 'hush_prairie', rms: -48, fi: 0.8, fo: 0.5, send: 0.3 }, genHush({ seed: 216, f: 3000 }));
+  // ─ forêt tropicale au bord d'une rivière (basilic) : rivière, cigales, rainettes, oiseaux tropicaux, gouttes sur les grandes feuilles, vent dans les feuilles larges ; tout se tait un peu quand le rapace passe
+  const jS = bS - 0.25, jE = bE + 0.25, hawk = x => x < tEch ? 1 : lerp(1, 0.45, sm((x - tEch) / 0.5));
+  layer(jS, jE, { name: 'river', rms: -36.5, fi: 0.5, fo: 0.5, send: 0.3 }, genStream({ seed: 231, bubbles: 28, drips: 0.2, fa: 1500, fb: 480, hiss: 0.08, bubF: 260, dripF: [800, 1800] }));
+  layer(jS, jE, { name: 'cicadas_jungle', rms: -40.5, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 232, f: 4700, bursts: cicadaBursts(jS, jE, 232) }));
+  layer(jS, jE, { name: 'cicadas_hi_jungle', rms: -47, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 233, f: 7100, bursts: cicadaBursts(jS, jE, 233, 0.9) }));
+  layer(jS, jE, { name: 'frogs_jungle', rms: -42, fi: 0.8, fo: 0.5, send: 0.3, mul: hawk }, genTreeFrogs({ n: 6, seed: 234, f: [1900, 3300], rate: [5, 9], series: [3, 9], gap: [1.5, 5], croakers: 3 }));
+  layer(jS, jE, { name: 'birds_jungle', rms: -43.5, fi: 0.8, fo: 0.5, send: 0, mul: hawk }, genBirds({ seed: 235, rate: () => 0.75, species: [['parrot', 1], ['oriole', 1.2], ['toucan', 0.7], ['tinamou', 0.35], ['whistle', 0.8], ['warble', 0.8], ['tsit', 0.5]], gain: 0.07, far: 0.5, scale: [0.85, 1.15] }));
+  layer(jS, jE, { name: 'drops_jungle', rms: -49, fi: 0.8, fo: 0.5, send: 0.6 }, genDrops({ seed: 236, rate: 1.0 }));
+  layer(jS, jE, { name: 'leaves_jungle', rms: -40.5, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 1000, q: 0.8, whistle: 0, rumble: 0.05, seed: 237, depth: 0.8, hiss: 0.5, wf: 2600, rate: 0.9 }));
+  // ─ Amazonie au crépuscule, à la surface (grenouilles, insectes, eau qui clapote, un oiseau au loin), puis SOUS L'EAU (bourdonnement sourd étouffé, bulles, petits craquements électriques lointains)
+  const sfE = dive + 0.35, uS = dive - 0.2, uE = aE + 0.25;
+  if (sfE > aS - 0.15 + 0.3) {
+    layer(aS - 0.15, sfE, { name: 'water_dusk', rms: -37, fi: 0.5, fo: 0.35, send: 0.3 }, genStream({ seed: 241, bubbles: 14, drips: 0.15, fa: 1100, fb: 380, hiss: 0.05, bubF: 220, dripF: [700, 1500] }));
+    layer(aS - 0.15, sfE, { name: 'frogs_dusk', rms: -40, fi: 0.5, fo: 0.35, send: 0.3 }, genTreeFrogs({ n: 7, seed: 242, f: [1700, 2900], rate: [4, 7], series: [4, 12], gap: [0.8, 3], croakers: 5 }));
+    layer(aS - 0.15, sfE, { name: 'insects_dusk', rms: -43, fi: 0.5, fo: 0.35, send: 0.2 }, genCrickets({ n: 5, seed: 243, fc: [3300, 4200], rate: [1.3, 2.4], pulses: [4, 7], pr: [28, 40] }));
+    layer(aS - 0.15, sfE, { name: 'birds_dusk', rms: -50, fi: 0.5, fo: 0.35, send: 0 }, genBirds({ seed: 244, rate: () => 0.5, species: [['oriole', 1], ['tinamou', 0.6], ['whistle', 1]], gain: 0.06, far: 0.8, scale: [0.85, 1.05], sendFar: 0.9, sendNear: 0.9 }));
+    layer(aS - 0.15, sfE, { name: 'wind_dusk', rms: -43, fi: 0.5, fo: 0.35, send: 0.3 }, genWind({ f0: 700, q: 1, whistle: 0, rumble: 0.1, seed: 245, depth: 0.6, hiss: 0.3, wf: 2000, rate: 0.7 }));
+  }
+  layer(uS, uE, { name: 'uw_hum', rms: -34.5, fi: 0.45, fo: 0.5, send: 0.4 }, genUWHum({ seed: 251 }));
+  layer(uS, uE, { name: 'uw_flow', rms: -41, fi: 0.45, fo: 0.5, send: 0.3 }, genWind({ f0: 170, q: 0.8, whistle: 0, rumble: 0.9, seed: 252, depth: 0.9, hiss: 0, rate: 0.6 }));
+  layer(uS, uE, { name: 'uw_bubbles', rms: -42, fi: 0.45, fo: 0.5, send: 0.6 }, genUWBubbles({ seed: 253, rate: 0.9 }));
+  layer(uS, uE, { name: 'uw_crackle', rms: -44, fi: 0.8, fo: 0.5, send: 0.7, mul: x => lerp(0.6, 1.3, sm((x - uS) / Math.max(1, aE - uS))) }, genFarCrackle({ seed: 254, rate: 0.5 }));
+  // ─ question finale : une prairie légère (vent, oiseaux, quelques grillons) qui s'éteint dans la seconde qui suit la dernière parole : le plan de sortie est propre
+  const qS = fS - 0.25, qE = fE - 0.8, fade = x => x < VOICE_END ? 1 : lerp(1, 0.55, sm((x - VOICE_END) / 0.6));
+  layer(qS, qE, { name: 'wind_fin', rms: -37.5, fi: 0.5, fo: 0.9, send: 0.3, mul: fade }, genWind({ f0: 480, q: 1.2, whistle: 0.04, rumble: 0.2, seed: 261, depth: 0.7, hiss: 0.12, wf: 1900, rate: 0.8 }));
+  layer(qS, qE, { name: 'birds_fin', rms: -44, fi: 0.5, fo: 0.9, send: 0, mul: fade }, genBirds({ seed: 262, rate: () => 0.55, species: [['whistle', 1], ['chick', 1], ['warble', 0.8], ['tsit', 1]], gain: 0.06, far: 0.5, scale: [0.9, 1.1] }));
+  layer(qS, qE, { name: 'crickets_fin', rms: -42, fi: 0.5, fo: 0.9, send: 0.2, mul: fade }, genCrickets({ n: 4, seed: 263, fc: [3700, 4400], rate: [1.4, 2.4], pulses: [3, 5], pr: [34, 48] }));
+  layer(qS, qE, { name: 'hush_fin', rms: -48, fi: 0.5, fo: 0.9, send: 0.3, mul: fade }, genHush({ seed: 264, f: 3000 }));
 }
 
 // ───────── bruitages : un son par type d'événement (crête finale visée en dBFS dans LV) ─────────
 const LV = {                                             // niveau de l'événement avant mastering, exprimé en « crête finale visée » (dBFS) corrigée de l'écart mesuré dû à la réverbération : la crête finale mesurée est dans son_notes.md
   ding: -11.8, no: -10, label: -10, blip: -12, counter: -10, pop: -10, scribble: -12.8, page: -10.1, scan: -11.9, zoom: -11.2, whoosh: -8.4, reveal: -7.5, suspense: -11.3, wind: -11, snowfall: -14, frost: -11.7, crack: -7, drip: -10, thaw: -12.9,
   heartbeat: -8, beep: -10.4, flatline: -11.8, glow: -11.3, sparkle: -11.3, ribbit: -7, hop: -10, step: -10, sniff: -10.1, squirt: -7, splat: -6, yelp: -7.1, shake: -9, sneeze: -6, yip: -8.1, run: -10, ruler: -10.2, bird: -12.3, vote: -8.1,
+  zap: -5.5, splash: -7.5, slap: -10, steam: -10.5, bang: -6.5, bubbles: -11.5, flop: -9, heat: -11.5, buzz: -12.5,       // épisode 2
   endCard: -9.6, logo: -5.6, letters: -8.7, swoosh: -9, thud: -7, stamp: -8,
 };
-const surfaceAt = t => { const s = segAt(t); return s === 'lez' ? 'sand' : t < ph('trois').t0 ? 'snow' : s === 'intro' ? 'grass' : s === 'gre' ? (t < ph('g4').t0 - 0.2 ? 'snow' : 'wet') : 'grass'; };
+const surfaceAt = t => { const sg = segAt(t); return sg === 'bas' ? (t >= wt('c1', 'courir') - 0.2 ? 'water' : 'wet') : sg === 'ang' ? 'wet' : 'grass'; };       // herbe et litière (prairie, intro, fin), boue de berge, eau peu profonde (le basilic court), fond vaseux
 const durOf = (v, d = 1) => clamp(v > 0 ? v : d, 0.12, 12);
 const SFX = {
   // interface (celles de la chaîne)
@@ -702,11 +739,10 @@ const SFX = {
   sparkle(x) { const sc = ['B6', 'D7', 'E7', 'G7', 'A7', 'B7'], up = rnd() < 0.5; for (let k = 0; k < 4; k++) glass(x + k * 0.055, sc[up ? 1 + k : 4 - k], { gain: 0.05, tau: 0.45, pan: rr(-0.6, 0.6), send: 0.5 }); },
   // grenouille, déplacements
   ribbit(x, v) { const s = clamp(v, 0.7, 1.4); croak(x, 0.1, 58 * s, 70 * s, 380 * s, 1300 * s, 0.9); croak(x + 0.16, 0.14, 66 * s, 92 * s, 470 * s, 1600 * s, 1); nzb(x + 0.1, 0.06, { type: 'lp', f0: 260, gain: 0.03, att: 0.01, rel: 0.03 }); },
-  hop(x) { const sf = surfaceAt(x); tone(x, 0.12, { f0: 130, f1: 70, curve: 0.5, gain: 0.12, att: 0.002, rel: 0.03, dec: 0.04, send: 0.15 }); if (sf === 'snow') nzb(x, 0.08, { type: 'lp', f0: 1500, f1: 400, gain: 0.07, att: 0.003, rel: 0.05 }); else { nzb(x, 0.1, { f0: 2200, f1: 1500, q: 1, gain: 0.1, att: 0.003, rel: 0.07 }); for (let k = 0; k < 5; k++) nzb(x + 0.01 + 0.02 * k * (0.5 + rnd()), 0.012, { type: 'hp', f0: 3000 + 2000 * rnd(), gain: 0.04, att: 0.0005, rel: 0.007, pan: rr(-0.4, 0.4) }); } },
+  hop(x) { const sf = surfaceAt(x); tone(x, 0.12, { f0: 130, f1: 70, curve: 0.5, gain: 0.12, att: 0.002, rel: 0.03, dec: 0.04, send: 0.15 }); if (sf === 'water') { nzb(x, 0.12, { f0: 1300, f1: 500, q: 0.8, gain: 0.14, att: 0.002, rel: 0.07, send: 0.3 }); tone(x + 0.01, 0.12, { f0: 200, f1: 520, curve: 0.5, gain: 0.07, att: 0.002, rel: 0.03, dec: 0.04, send: 0.4 }); } else { nzb(x, 0.1, { f0: 2200, f1: 1500, q: 1, gain: 0.1, att: 0.003, rel: 0.07 }); for (let k = 0; k < 5; k++) nzb(x + 0.01 + 0.02 * k * (0.5 + rnd()), 0.012, { type: 'hp', f0: 3000 + 2000 * rnd(), gain: 0.04, att: 0.0005, rel: 0.007, pan: rr(-0.4, 0.4) }); } },
   step(x) {
     const sf = surfaceAt(x), s = 0.85 + 0.3 * rnd(), pan = rr(-0.25, 0.25);
-    if (sf === 'snow') { nzb(x, 0.14, { f0: 1500 * s, f1: 700, q: 0.9, gain: 0.12, att: 0.004, rel: 0.09, pan }); for (let k = 0; k < 6; k++) nzb(x + 0.01 + k * 0.016 * (0.6 + 0.8 * rnd()), 0.01, { type: 'hp', f0: 2500 + 2500 * rnd(), gain: 0.05, att: 0.0004, rel: 0.006, pan }); tone(x, 0.1, { f0: 110, f1: 70, gain: 0.07, att: 0.003, rel: 0.03, dec: 0.04, pan }); }
-    else if (sf === 'sand') { nzb(x, 0.16, { f0: 3500 * s, f1: 2200, q: 0.6, gain: 0.07, att: 0.006, rel: 0.1, pan }); tone(x, 0.09, { f0: 100, f1: 65, gain: 0.07, att: 0.003, rel: 0.03, dec: 0.04, pan }); nzb(x + 0.02, 0.08, { type: 'lp', f0: 900, f1: 300, gain: 0.05, att: 0.01, rel: 0.05, pan }); }
+    if (sf === 'water') { nzb(x, 0.1, { f0: 1100 * s, f1: 500, q: 0.9, gain: 0.14, att: 0.002, rel: 0.06, pan, send: 0.3 }); tone(x + 0.01, 0.07, { f0: 260, f1: 540, gain: 0.05, att: 0.002, rel: 0.02, dec: 0.02, pan, send: 0.4 }); for (let k = 0; k < 3; k++) tone(x + 0.03 + 0.02 * k, 0.03, { f0: 1800 + 1500 * rnd(), f1: 1000, gain: 0.025, att: 0.0008, rel: 0.01, dec: 0.008, pan: rr(-0.5, 0.5), send: 0.4 }); }
     else if (sf === 'wet') { nzb(x, 0.1, { type: 'lp', f0: 900 * s, f1: 300, gain: 0.15, att: 0.004, rel: 0.07, pan }); tone(x + 0.03, 0.06, { f0: 200, f1: 420, gain: 0.04, att: 0.002, rel: 0.02, dec: 0.02, pan }); tone(x, 0.1, { f0: 110, f1: 70, gain: 0.08, att: 0.003, rel: 0.03, dec: 0.04, pan }); }
     else { nzb(x, 0.13, { f0: 2500 * s, f1: 1600, q: 0.6, gain: 0.07, att: 0.01, rel: 0.09, pan }); tone(x, 0.1, { f0: 120, f1: 70, gain: 0.08, att: 0.003, rel: 0.03, dec: 0.04, pan }); for (let k = 0; k < 3; k++) nzb(x + 0.02 * k, 0.01, { type: 'hp', f0: 4000, gain: 0.03, att: 0.0004, rel: 0.006, pan }); }
   },
@@ -726,10 +762,64 @@ const SFX = {
     for (let r = 0; r < nR; r++) { const off = rnd() * step, pan = -0.7 + 1.4 * r / (nR - 1); for (let t = off; t < d; t += step * (0.96 + 0.08 * rnd())) { const e = sm(t / (d * 0.35)) * sm((d - t) / (d * 0.3)); if (e < 0.02) continue; tone(x + t, 0.09, { f0: 100, f1: 58, gain: 0.07 * e, att: 0.003, rel: 0.03, dec: 0.035, pan, send: 0.25 }); nzb(x + t, 0.08, { f0: 1800 + 400 * rnd(), q: 0.7, gain: 0.04 * e, att: 0.003, rel: 0.05, pan }); } }
     nzb(x, d, { f0: 1200, f1: 1600, q: 0.5, gain: 0.03, att: d * 0.35, rel: d * 0.35, pan: -0.5, panTo: 0.5, send: 0.3 }); },
   ruler(x, v) { const n = v >= 3 ? Math.round(v) : 12, sp = 0.045; for (let k = 0; k < n; k++) { const major = k % 5 === 0, t = x + k * sp; if (major) { tone(t, 0.05, { f0: 1500, f1: 1150, gain: 0.1, att: 0.0008, rel: 0.01, dec: 0.014, harm: [1, 0.4], pan: 0.1, send: 0.2 }); } nzb(t, 0.01, { f0: 3200 + 60 * k, q: 3, gain: 0.07, att: 0.0003, rel: 0.007, pan: 0.1 }); } nzb(x, n * sp, { f0: 1500, f1: 2600, q: 0.8, gain: 0.02, att: 0.05, rel: 0.1 }); },
-  bird(x, v) { const ty = Math.round(clamp(v, 0, 3)), sc = segAt(x), s = sc === 'lez' ? 0.85 : sc === 'lyc' ? 0.95 : 1.05, o = { gain: 0.12, pan: rr(-0.5, 0.5), send: 0.5 };
+  bird(x, v) { const ty = Math.round(clamp(v, 0, 3)), sc = segAt(x), s = sc === 'bas' ? 0.88 : sc === 'ang' ? 0.95 : 1.05, o = { gain: 0.12, pan: rr(-0.5, 0.5), send: 0.5 };
     if (ty === 0) BIRD.tsit(x, s, o); else if (ty === 1) BIRD.whistle(x, s, o); else if (ty === 2) BIRD.trill(x, s, o);
     else { nzb(x, 0.35, { f0: 900, f1: 2400, q: 0.8, gain: 0.1, att: 0.01, rel: 0.15, am: 0.9, arate: 14, pan: -0.3, panTo: 0.5, send: 0.3 }); BIRD.chick(x + 0.12, s, o); } },
   vote(x) { nzb(x, 0.16, { f0: 2500, f1: 1200, q: 1, gain: 0.08, att: 0.01, rel: 0.08, pan: -0.2, panTo: 0.1 }); tone(x + 0.16, 0.12, { f0: 160, f1: 90, curve: 0.5, gain: 0.18, att: 0.002, rel: 0.03, dec: 0.05, harm: [1, 0.4], send: 0.2 }); nzb(x + 0.16, 0.05, { type: 'lp', f0: 500, gain: 0.1, att: 0.001, rel: 0.03 }); marimba(x + 0.28, 'G5', { gain: 0.08, tau: 0.4 }); marimba(x + 0.37, 'D6', { gain: 0.08, tau: 0.5 }); },
+  // ─ épisode 2 : électricité, eau, vapeur, insecte
+  zap(x, v) {                                            // décharge électrique : claquement large bande, arc (dent de scie nasale hachée par un papillotement irrégulier + bruit clair), zip descendant, étincelles ; grondement si forte ; v = intensité 0,5 à 2
+    const s = clamp(v, 0.4, 2.2), d = 0.16 + 0.13 * s;
+    nzb(x, 0.009, { type: 'hp', f0: 1800, gain: 0.5, att: 0.0002, rel: 0.006, send: 0.2 });
+    { const len = Math.floor(d * SR), buf = new Float32Array(len), A = new Filt().set(1700, 1.4), Bq = new Filt().set(3900, 1.2), C = new Filt().set(600, 2); let ph = 0, gl = 0, mx = 1e-9;
+      for (let i = 0; i < len; i++) { const xs = i / SR, u = i / len, f = 125 * (1 - 0.3 * u) * (1 + 0.04 * Math.sin(TAU * 31 * xs)); ph += f / SR; if (ph >= 1) ph -= 1; gl += ((rnd() * 2 - 1) - gl) * 0.035; const gate = clamp(0.5 + 5 * gl, 0.08, 1), saw = ph * 2 - 1, nz = rnd() * 2 - 1;
+        A.run(saw + nz * 0.5); Bq.run(nz); C.run(saw); buf[i] = (A.bp + 0.55 * Bq.bp + 0.5 * C.bp) * gate * Math.min(1, i / 24) * Math.pow(1 - u, 0.8); mx = Math.max(mx, Math.abs(buf[i])); }
+      emit(buf, x + 0.004, rr(-0.15, 0.15), 0.25, 0.16 / mx); }
+    tone(x + 0.002, 0.07, { f0: 4200, f1: 700, curve: 0.5, gain: 0.07, att: 0.0005, rel: 0.02, dec: 0.03, harm: [1, 0.3], pan: 0.1, send: 0.3 });
+    const n = Math.round(6 + 12 * s); for (let k = 0; k < n; k++) { const t = x + 0.01 + (d + 0.08) * Math.pow(rnd(), 1.3); tone(t, 0.01, { f0: 1500 + 5500 * rnd(), gain: 0.06 * (0.3 + 0.7 * rnd()), att: 0.0004, rel: 0.004, dec: 0.002, pan: rr(-0.8, 0.8), send: 0.3 }); nzb(t, 0.004, { type: 'hp', f0: 4000, gain: 0.05, att: 0.0003, rel: 0.003, pan: rr(-0.8, 0.8) }); }
+    if (s > 1.05) tone(x, 0.3, { f0: 95, f1: 48, curve: 0.55, gain: 0.2 * (s - 0.9), att: 0.002, rel: 0.08, dec: 0.09, harm: [1, 0.4], send: 0.2 });
+    return 0.5 + 0.5 * clamp((s - 0.5) / 1.5); },
+  splash(x, v) {                                         // éclaboussure d'eau : « plouf » (bruit 350-1800 Hz qui retombe), bulle grave qui monte, gerbe de gouttelettes qui retombent ; v = taille (grave et longue si grande)
+    const s = clamp(v, 0.4, 2.2), f = 1 / Math.pow(s, 0.35);
+    nzb(x, 0.04 + 0.05 * s, { f0: 1800 * f, f1: 500 * f, q: 0.8, gain: 0.25, att: 0.002, rel: 0.03, dec: 0.02 + 0.015 * s, send: 0.3 });
+    nzb(x + 0.005, 0.12 + 0.18 * s, { type: 'lp', f0: 1400 * f, f1: 250, gain: 0.2, att: 0.004, rel: 0.09, dec: 0.07 + 0.05 * s, send: 0.3 });
+    tone(x + 0.012, 0.18 + 0.12 * s, { f0: 140 * f, f1: 430 * f, curve: 0.5, gain: 0.1, att: 0.003, rel: 0.04, dec: 0.05 + 0.03 * s, harm: [1, 0.2], send: 0.4 });
+    nzb(x, 0.1 + 0.22 * s, { type: 'hp', f0: 3500, gain: 0.05, att: 0.004, rel: 0.08, dec: 0.05 + 0.05 * s, send: 0.3 });
+    const n = Math.round(8 + 14 * s); for (let k = 0; k < n; k++) { const t = x + 0.04 + (0.15 + 0.45 * s) * Math.pow(rnd(), 1.2), fr = 1200 + 2300 * rnd(); tone(t, 0.05, { f0: fr, f1: fr * 0.6, gain: 0.04 * (0.4 + 0.6 * rnd()), att: 0.001, rel: 0.012, dec: 0.012, pan: rr(-0.7, 0.7), send: 0.35 }); } },
+  slap(x) {                                              // pied qui claque l'eau : « plac » bref (claquement 900-1500 Hz, petit « bloc » grave, quelques gouttes)
+    nzb(x, 0.03, { f0: 1500, f1: 900, q: 1.1, gain: 0.25, att: 0.0008, rel: 0.02, dec: 0.01, pan: rr(-0.2, 0.2), send: 0.2 });
+    tone(x, 0.06, { f0: 520, f1: 240, curve: 0.5, gain: 0.1, att: 0.001, rel: 0.02, dec: 0.02, harm: [1, 0.25], send: 0.25 });
+    nzb(x + 0.012, 0.06, { type: 'hp', f0: 3500, gain: 0.05, att: 0.002, rel: 0.03, dec: 0.02, send: 0.2 });
+    for (let k = 0; k < 3; k++) tone(x + 0.03 + 0.02 * k, 0.03, { f0: 2000 + 1500 * rnd(), f1: 1200, gain: 0.03, att: 0.0008, rel: 0.01, dec: 0.008, pan: rr(-0.5, 0.5), send: 0.35 }); },
+  steam(x, v) {                                          // vapeur qui siffle : bruit 3-9 kHz pulsé, filet sifflé étroit vers 5 kHz, souffle grave, quelques bulles qui éclatent ; durée v
+    const d = durOf(v, 1);
+    nzb(x, d, { type: 'hp', f0: 3200, f1: 4500, gain: 0.1, att: 0.04, rel: d * 0.45, am: 0.35, arate: 24, pan: -0.15, panTo: 0.15, send: 0.3 });
+    nzb(x, d, { f0: 5200, f1: 4300, q: 14, gain: 0.07, att: 0.06, rel: d * 0.4, send: 0.2 });
+    nzb(x, d, { f0: 1800, f1: 900, q: 0.7, gain: 0.04, att: 0.05, rel: d * 0.5 });
+    for (let k = 0; k < Math.round(3 + 6 * d); k++) tone(x + d * 0.8 * rnd(), 0.05, { f0: 500 + 700 * rnd(), f1: 1500 + 800 * rnd(), curve: 0.5, gain: 0.03, att: 0.001, rel: 0.01, dec: 0.014, pan: rr(-0.6, 0.6), send: 0.4 }); },
+  bang(x) {                                              // petite détonation sèche : claquement, corps 2,6 → 0,9 kHz, « boum » 230 → 70 Hz très bref, presque sans réverbération
+    nzb(x, 0.012, { type: 'hp', f0: 1500, gain: 0.5, att: 0.0002, rel: 0.008, send: 0.1 });
+    nzb(x, 0.09, { f0: 2600, f1: 900, q: 0.7, gain: 0.3, att: 0.0005, rel: 0.05, dec: 0.02, send: 0.12 });
+    tone(x, 0.12, { f0: 230, f1: 70, curve: 0.45, gain: 0.3, att: 0.001, rel: 0.04, dec: 0.035, harm: [1, 0.4], send: 0.1 });
+    nzb(x + 0.015, 0.12, { type: 'lp', f0: 700, f1: 200, gain: 0.12, att: 0.003, rel: 0.07, dec: 0.04, send: 0.2 }); },
+  bubbles(x, v) {                                        // grappe de bulles qui montent (sinus 350-2100 Hz qui montent vite, plus serrées au début) ; durée v
+    const d = durOf(v, 1), n = Math.round(10 + 14 * d);
+    for (let k = 0; k < n; k++) { const t = x + d * Math.pow(rnd(), 1.5), f = 350 * Math.pow(6, rnd()), dd = 0.02 + 0.05 * rnd(); tone(t, dd * 4, { f0: f, f1: f * (1.8 + 0.4 * rnd()), curve: 0.5, gain: 0.2 * (0.3 + 0.7 * rnd() * rnd()), att: 0.001, rel: 0.01, dec: dd, pan: rr(-0.7, 0.7), send: 0.4 }); }
+    nzb(x, d, { f0: 700, q: 0.8, gain: 0.02, att: d * 0.3, rel: d * 0.4, am: 0.8, arate: 9, send: 0.3 }); },
+  flop(x, v) {                                           // poisson qui se débat : claquements mouillés irréguliers, de plus en plus faibles, éclaboussures ; v = intensité
+    const s = clamp(v, 0.5, 2), n = 3 + Math.round(2 * s); let t = x;
+    for (let k = 0; k < n; k++) { const g = Math.pow(0.8, k), pan = rr(-0.4, 0.4);
+      nzb(t, 0.045, { f0: 900 + 500 * rnd(), f1: 500, q: 0.9, gain: 0.2 * g, att: 0.0015, rel: 0.03, dec: 0.015, pan, send: 0.25 }); tone(t, 0.1, { f0: 160, f1: 80, gain: 0.1 * g, att: 0.002, rel: 0.03, dec: 0.03, send: 0.2 });
+      nzb(t + 0.02, 0.1, { type: 'hp', f0: 3000, gain: 0.05 * g, att: 0.003, rel: 0.06, dec: 0.025, pan, send: 0.3 }); for (let j = 0; j < 2; j++) tone(t + 0.04 + 0.02 * j, 0.03, { f0: 1500 + 1500 * rnd(), f1: 900, gain: 0.03 * g, att: 0.0008, rel: 0.01, dec: 0.008, pan: rr(-0.6, 0.6), send: 0.4 });
+      t += 0.07 + 0.09 * rnd(); } },
+  heat(x, v) {                                           // montée de chaleur : sifflement grave qui monte et grossit (bruit étroit 220 → 1100 Hz), grondement 70 → 150 Hz, crépitements de plus en plus serrés ; durée v
+    const d = durOf(v, 1.2);
+    nzb(x, d, { f0: 220, f1: 1100, q: 9, gain: 0.1, att: d * 0.8, rel: d * 0.15, curve: 1.3, send: 0.3 }); nzb(x, d, { f0: 330, f1: 1700, q: 7, gain: 0.05, att: d * 0.8, rel: d * 0.15, curve: 1.3, pan: 0.2 });
+    tone(x, d, { f0: 70, f1: 150, curve: 1.2, gain: 0.07, att: d * 0.7, rel: d * 0.2, harm: [1, 0.5, 0.25], am: 0.3, arate: 6 });
+    const n = Math.round(6 + 10 * d); for (let k = 0; k < n; k++) tone(x + d * (1 - Math.pow(rnd(), 1.5)), 0.01, { f0: 1800 + 2700 * rnd(), gain: 0.04 * (0.3 + 0.7 * rnd()), att: 0.0004, rel: 0.004, dec: 0.003, pan: rr(-0.6, 0.6), send: 0.3 }); },
+  buzz(x, v) {                                           // battements d'ailes d'insecte : ronflement ≈ 150-220 Hz aux harmoniques adoucis, vibrato lent, passage de gauche à droite ; durée v
+    const d = durOf(v, 1), f0 = 150 + 70 * rnd(), len = Math.floor(d * SR), s0 = Math.floor(x * SR), F = new Filt().set(1100, 0.9), p0 = rr(-0.7, -0.2), p1 = rr(0.2, 0.7); let ph = 0;
+    for (let i = 0; i < len; i++) { const xs = i / SR, u = i / len, f = f0 * (1 + 0.06 * Math.sin(TAU * 5.3 * xs) + 0.03 * Math.sin(TAU * 11 * xs + 1)); ph += TAU * f / SR; let w = 0; for (let h = 1; h <= 9; h++) w += Math.sin(h * ph + h * h * 0.05) / Math.pow(h, 0.7);
+      F.run(w); put(s0 + i, 0.15 * (F.lp * 0.6 + F.bp * 0.7) * sm(xs / 0.04) * sm((d - xs) / 0.12) * (0.78 + 0.22 * Math.sin(TAU * 3 * xs)), p0 + (p1 - p0) * u, 0.2); } },
   // marque (identique à la vidéo 2)
   endCard(x) { for (let k = 0; k < 28; k++) blip(x + k / 26, 2400, 2200, 0.012, { gain: 0.012 }); bell(x + 0.2, 'D5', { gain: 0.05, decay: 3 }); },
   logo(x) { thud(x, 0.4); thud(x + 0.36, 0.16); thud(x + 0.58, 0.08); [['D5', 0], ['F#5', 0.07], ['A5', 0.14], ['D6', 0.21]].forEach(([n, d]) => bell(x + d, n, { gain: 0.055, decay: 1.8 })); noise(x, 0.4, { type: 'hp', f0: 6000, f1: 9000, gain: 0.03, att: 0.01, rel: 0.3 }); },
@@ -747,19 +837,24 @@ function croak(t0, dur, r0, r1, f1, f2, g) {             // coassement : impulsi
 // ───────── exécution ─────────
 const finalToPre = d => Math.atanh(clamp(dbv(d), 0, 0.98)) / 1.4;     // crête finale visée (après tanh(1,4 x)) → crête avant mastering
 const CAP = mkBus(Math.floor(16 * SR), 0);
-// Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : mesuré sur le film, le jet de sang
-// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »). Les sons de réussite et de marque restent entiers.
+// Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : épisode 1, mesuré, le jet de sang
+// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »), et −5 dB de plus sur le DERNIER mot d'une phrase
+// (« degrés », « explosion », « volts »…). Les sons de réussite et de marque restent entiers.
 const DUCK_EXEMPT = new Set(['ding', 'no', 'endCard', 'logo', 'letters']);
 const WORDS_ALL = TLJ.phrases.flatMap(p => p.words);
-function duckFactor(t, type) {
-  if (DUCK_EXEMPT.has(type)) return 1;
-  let ov = 0; const a = t, b = t + 0.9;
+const FINALS = TLJ.phrases.map(p => p.words[p.words.length - 1]);
+function duckDb(t, type) {
+  if (DUCK_EXEMPT.has(type)) return 0;
+  let ov = 0, ovF = 0; const a = t, b = t + 0.9;
   for (const w of WORDS_ALL) { const x0 = w.t0 - 0.04, x1 = w.t1 + 0.10; ov += Math.max(0, Math.min(b, x1) - Math.max(a, x0)); }
-  return Math.pow(10, -11 * Math.min(1, ov / 0.9) / 20);
+  for (const w of FINALS) ovF += Math.max(0, Math.min(t + 0.5, w.t1 + 0.05) - Math.max(t, w.t0 - 0.04));
+  return -11 * Math.min(1, ov / 0.9) - 5 * Math.min(1, ovF / 0.3);
 }
+const duckFactor = (t, type) => Math.pow(10, duckDb(t, type) / 20);
+const SLOG = [];                                         // --check : bruitages dont le début tombe sur un mot final
 // les bruitages « de bruit » (éternuement, jet, éclaboussure, couinement, reniflement, secousse, urne) dont le début tombe DANS un mot sont retardés jusqu'à la fin du mot (au plus 0,35 s) :
 // mesuré, l'éternuement tombait sur « nez » (la chute de la blague) et la reconnaissance de parole lisait « nom ».
-const SHIFT_TYPES = new Set(['sneeze', 'squirt', 'splat', 'yelp', 'sniff', 'shake', 'vote']);
+const SHIFT_TYPES = new Set(['squirt', 'splat', 'yelp', 'sniff', 'shake', 'vote', 'steam', 'bubbles', 'flop', 'buzz']);
 function shiftOffWord(t, type) {
   if (!SHIFT_TYPES.has(type)) return t;
   for (const w of WORDS_ALL) if (t > w.t0 + 0.02 && t < w.t1 - 0.03 && w.t1 + 0.03 - t <= 0.35) return w.t1 + 0.03;
@@ -770,7 +865,7 @@ function runSfx() {
   for (const e of EVENTS) {
     idx++; const fn = SFX[e.type]; if (!fn) { unknown[e.type] = (unknown[e.type] || 0) + 1; continue; }
     rnd = mkRnd(7000 + idx * 7919 + e.type.length * 31);
-    const et = shiftOffWord(e.t, e.type), off = Math.max(0, Math.floor((et - 0.4) * SR)); CAP.off = off; CAP.lo = 1e12; CAP.hi = -1; B = CAP;
+    const et = shiftOffWord(e.t, e.type), off = Math.max(0, Math.floor((et - 0.4) * SR)); if (OPT.check) { const z = inZone(et) || inZone(et + 0.05); if (z) SLOG.push(`${e.type} @${e.t.toFixed(2)}${et !== e.t ? ' → ' + et.toFixed(2) : ''} (${duckDb(et, e.type).toFixed(1)} dB)`); } CAP.off = off; CAP.lo = 1e12; CAP.hi = -1; B = CAP;
     let rel = 1; try { const r = fn(et, e.v); if (typeof r === 'number') rel = r; if (e.type === 'label' && e.t >= SEG.sortie[0]) rel = 0.65; } catch (err) { warn(`bruitage ${e.type} @${e.t} : ${err.message}`); }
     B = BUS.music; if (CAP.hi < 0) continue;
     let pk = 0; for (let i = CAP.lo; i <= CAP.hi; i++) pk = Math.max(pk, Math.abs(CAP.L[i]), Math.abs(CAP.R[i]));
@@ -784,26 +879,27 @@ function demo() {                                        // --only demo : un exe
   add('kalimba', 'A4', t => kalimba(t, 'A4')); add('kalimba', 'D6', t => kalimba(t, 'D6')); add('marimba', 'A4', t => marimba(t, 'A4')); add('marimba', 'G3', t => marimba(t, 'G3')); add('glass', 'A5', t => glass(t, 'A5')); add('glass', 'E6', t => glass(t, 'E6'));
   add('nylon', 'A2', t => nylon(t, 'A2')); add('nylon', 'A3', t => nylon(t, 'A3')); add('nylon', 'E4', t => nylon(t, 'E4')); add('harp', 'A4', t => harp(t, 'A4')); add('harp', 'D6', t => harp(t, 'D6')); add('bass', 'A1', t => bassPluck(t, 'A1'));
   add('flute', 'A5', t => flute(t, 1.2, 'A5')); add('flute', 'E4', t => flute(t, 1.2, 'E4')); add('reed', 'A3', t => reed(t, NOTE('A3'), NOTE('G3'), 0.9)); add('pad', 'D3', t => pad(t, 1.6, ['D3', 'A3', 'F#4'], { gain: 0.06 })); add('drone', 'D2', t => drone(t, 1.5, NOTE('D3'), NOTE('D1')));
+  for (const n of ['D2', 'G2', 'B2', 'D3', 'E3', 'G3', 'A3', 'B3', 'D4', 'E4', 'A4']) add('pizz', n, t => pizz(t, n)); add('boing', 'G4', t => boing(t, NOTE('G4'))); add('hum', 'G2', t => hum(t, 1.2, 'G2')); add('zing', 'G6', t => zing(t, NOTE('G6'))); add('zing', 'D7', t => zing(t, NOTE('D7')));
   add('shaker', null, t => { for (let k = 0; k < 4; k++) shaker(t + k * 0.3, { gain: 0.03 }); }); add('drums', null, t => { dLow(t); dMid(t + 0.5); dHi(t + 1); wood(t + 1.5); }); add('heart', null, t => thumpMusic(t));
   for (const b of Object.keys(BIRD)) add('bird_' + b, null, t => BIRD[b](t, 1, { gain: 0.1, pan: 0, send: 0.3 }));
   fs.mkdirSync('build/test', { recursive: true }); fs.writeFileSync('build/test/demo.json', JSON.stringify(list, null, 1));
 }
 const want = k => !ONLY || ONLY === k;
 if (ONLY === 'demo') demo();
-if (ONLY !== 'demo' && want('music')) { musIntro(); musAlaska(); musMexique(); musAfrique(); musFin(); musSortie(); }
+if (ONLY !== 'demo' && want('music')) { musIntro(); musSca(); musBas(); musAng(); musFin(); musSortie(); }
 if (ONLY !== 'demo' && want('amb')) ambiances();
 if (ONLY !== 'demo' && want('sfx')) runSfx();
 
-// ───────── la chute de la blague : musique et ambiances baissées de 8 dB sur « nez » ─────────
-// (mesuré : musique et ambiances ensemble faisaient lire « nom » par la reconnaissance de parole, alors que chacune seule laisse lire « nez »)
+// ───────── mots de fin de phrase : musique et ambiances baissées autour du dernier mot (−7 dB musique, −4 dB ambiances, rampes de 70 ms) ─────────
+// (épisode 1, mesuré : musique et ambiances ensemble faisaient lire « nom » pour « nez » alors que chacune seule laissait lire « nez » ; ici c'est systématique, sur tous les mots finaux)
 {
-  const nez = P.y4.words.filter(w => norm(w.w) === 'nez')[0];
-  if (nez) {
-    const a0 = nez.t0 - 0.25, a1 = nez.t1 + 0.35, ramp = 0.06, lo = Math.pow(10, -8 / 20);
-    for (const k of ['music', 'amb']) {
-      const b = BUS[k];
+  const ramp = 0.07;
+  for (const [k, dB] of [['music', -7], ['amb', -4]]) {
+    const b = BUS[k], lo = dbv(dB);
+    for (const w of FINALS) {
+      const a0 = w.t0 - 0.06, a1 = w.t1 + 0.10;
       for (let i = Math.max(0, Math.floor((a0 - ramp) * SR)); i < Math.min(N, Math.floor((a1 + ramp) * SR)); i++) {
-        const x = i / SR, f = Math.min(1, Math.max(0, (x - (a0 - ramp)) / ramp), Math.max(0, (a1 + ramp - x) / ramp)), g = 1 - (1 - lo) * f;
+        const x = i / SR, f = Math.min(1, Math.max(0, (x - (a0 - ramp)) / ramp), Math.max(0, (a1 + ramp - x) / ramp)), g = 1 - (1 - lo) * sm(f);
         b.L[i] *= g; b.R[i] *= g; b.SL[i] *= g; b.SR[i] *= g;
       }
     }
@@ -847,4 +943,10 @@ wav(OUT, [mast.music, mast.amb, mast.sfx]);
 wav(OUT.replace(/\.wav$/, '_music.wav'), stems.music);
 wav(OUT.replace(/\.wav$/, '_sfx.wav'), stems.sfx);
 if (OPT.stems) { wav(OUT.replace(/\.wav$/, '_musiconly.wav'), [mast.music]); wav(OUT.replace(/\.wav$/, '_amb.wav'), [mast.amb]); }
+if (OPT.check) {
+  const hits = MLOG.filter(([t, k, g]) => inZone(t) && g > 0).sort((x, y) => x[0] - y[0]);
+  console.log(`--check : ${hits.length} attaque(s) de musique sur un mot final` + (hits.length ? ' :' : ' (zones dégagées)')); for (const [t, k, g] of hits) console.log(`   musique ${k} @${t.toFixed(2)} gain ${g}`);
+  console.log(`--check : ${SLOG.length} bruitage(s) dont le début tombe sur un mot final` + (SLOG.length ? ' :' : '')); for (const l of SLOG) console.log('   ' + l);
+  console.log('mots finaux : ' + FINALS.map(w => `${w.w} ${w.t0.toFixed(2)}-${w.t1.toFixed(2)}`).join(' · '));
+}
 console.log('score :', OUT, (N / SR).toFixed(2), 's, crête', peak.toFixed(3), g < 1 ? '(baissée de ' + vdb(g).toFixed(1) + ' dB)' : '');
