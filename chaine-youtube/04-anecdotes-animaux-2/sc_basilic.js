@@ -438,8 +438,8 @@ function ba_c3Draw(u, t, sh, o = {}) {
   }
   // caïman : approche en rase-eau (yeux et narines), puis jaillit
   const tE = L3.tP - 0.1, rise = t < tE ? 0.04 + 0.04 * Math.sin(t * 4) : t < L3.tP + 0.2 ? lerp(0.08, 1, eob(prog(t, tE, L3.tP + 0.18))) : 1 - sm(prog(t, L3.tP + 0.62, L3.tP + 1.15));
-  const lunge = eo(prog(t, tE, L3.tP + 0.32)), hipRun = t < L3.tJ ? st.hip[0] : L3.hipJ + K.v * (t - L3.tJ) * 0;
-  const caiX = (t < tE ? (L3.x0 + K.v * (t - L3.tR0)) - 170 - 30 * (1 - clamp((t - L3.tR0) / (tE - L3.tR0))) : L3.hipJ - 195 + 62 * lunge) - cam;
+  const lunge = eo(prog(t, tE, L3.tP + 0.32)), runLine = L3.x0 + K.v * (Math.min(t, tE) - L3.tR0);
+  const caiX = runLine - 130 + 14 * lunge - cam;
   const caiOpen = t < L3.tP ? 0 : t < L3.tP + 0.38 ? sm(prog(t, L3.tP, L3.tP + 0.22)) : 1 - eo(prog(t, L3.tP + 0.38, L3.tP + 0.5));
   if (t > L3.tR0 && caiX > -140) {
     if (t < L3.tP + 1.4) {

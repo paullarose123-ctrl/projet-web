@@ -223,7 +223,7 @@ function sb_pose(o, t) {
     if (st > 0) { P.bob *= 1 - st; P.pitch *= 1 - st; }
   }
   // se redresse fièrement : le corps monte sur des pattes tendues, le nez se relève, les antennes s'écartent
-  P.pitch += 0.17 * up; P.raise += 4.2 * up; P.headRot -= 0.1 * up; P.antA -= 0.4 * up; P.antW += 0.4 * up;
+  P.pitch += 0.24 * up; P.raise += 6.0 * up; P.headRot -= 0.12 * up; P.antA -= 0.35 * up; P.antW += 0.5 * up;
   if (up > 0) { for (const side of ['n', 'f']) { P.toes[side].F[0] += 1.5 * up; P.toes[side].H[0] -= 2.5 * up; } }
   // pose de tir : l'arrière monte, le nez descend, les pattes avant s'arc-boutent, les arrière se tendent
   P.pitch += -0.15 * aimK; P.raise += 2.4 * aimK; P.headRot += 0.14 * aimK; P.antA += 0.2 * aimK; P.antW += 0.15 * aimK;

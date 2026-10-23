@@ -25,7 +25,7 @@ function sb_wrap(x, cam, par = 1, W = 440) { return ((x - cam * par) % W + W) % 
 function sb_scene(u, t, cam, o = {}) {
   const gy = o.gy ?? sb_GY, E = 'savannaDawn';
   vgrad(0, 0, LW, gy, [[0, AM[4]], [0.3, AM[6]], [0.62, AM[8]], [1, AM[9]]]);
-  rgrad(228 - cam * 0.03, 170, 4, 120, [[0, 'rgba(255,250,214,1)'], [0.3, 'rgba(255,228,150,0.75)'], [1, 'rgba(255,190,70,0)']], 0.9, 'lighter');
+  rgrad(228 - cam * 0.03, 170, 4, 118, [[0, 'rgba(255,242,196,1)'], [0.3, 'rgba(255,224,138,0.8)'], [0.65, 'rgba(255,200,74,0.4)'], [1, 'rgba(255,170,42,0)']], 1, 'source-over');
   { const r = rng(21); L.save(); for (let i = 0; i < 28; i++) { const x = sb_wrap(r() * 440, cam, 0.04 + r() * 0.06), y = 20 + r() * 200, rad = 3 + r() * 9; L.globalAlpha = 0.07 + r() * 0.12; L.fillStyle = r() < 0.5 ? '#fff2c4' : '#ffc84a'; L.beginPath(); L.arc(x, y, rad, 0, TAU); L.fill(); } L.restore(); }
   // prairie lointaine floue (le défilement des bandes est borné par flore.js : on lui donne une caméra réduite)
   vgrad(0, gy - 90, LW, 92, [[0, 'rgba(120,150,56,0)'], [0.35, 'rgba(120,156,56,0.55)'], [1, 'rgba(52,80,26,0.95)']]);
@@ -74,7 +74,7 @@ function buildScarabee(S) {
     const ev = [[A.liquide, 'pop', 1], [tRise, 'heat', tTop - tRise + 0.3], [A.cent, 'label', 1], [tTop, 'steam', 1.1], [tTop, 'bubbles', 1.2], [tTop, 'ding', 1], ...[1, 2, 3, 4, 5].map(k => [lerp(tRise, tTop, k / 6), 'counter', k]), ...steps.filter(e => e[0] < T.b2 - 0.2)];
     shot('b1_chaud', T.b1, {
       draw(u, t, sh) {
-        const d = sb_WALK.speed * u, sc = 2.0, bx = 52 + 16 * u, cam = d * sc - (bx - 52);
+        const d = sb_WALK.speed * u, sc = 2.0, bx = 88 + 10 * u, cam = d * sc - (bx - 88);
         sb_scene(u, t, cam);
         sb_beetle(bx, sb_GY + 7, sc, t, { pose: 'walk', ph: sb_walkPh(d) });
         sb_fg(u, t, cam);
@@ -99,7 +99,7 @@ function buildScarabee(S) {
       draw(u, t, sh) {
         const cam = 8 * u, up = eob(prog(t, A.scar2 - 0.1, A.scar2 + 0.42)), flick = bump(t, A.bomb + 0.02, A.bomb + 0.12, A.bomb + 0.22, A.bomb + 0.42) * 0.5;
         sb_scene(u, t, cam);
-        const m = sb_beetle(122 - 4 * u, sb_GY + 8, 2.45, t, { pose: 'stand', up: clamp(up, 0, 1.12), tip: flick, sheen: ((t - A.bomb) * 1.5 + 0.1) });
+        const m = sb_beetle(108 - 3 * u, sb_GY + 8, 2.2, t, { pose: 'stand', up: clamp(up, 0, 1.12), tip: flick, sheen: ((t - A.bomb) * 1.5 + 0.1) });
         // éclat sur le dos au moment où le nom est prononcé
         const g = bump(t, A.bomb + 0.1, A.bomb + 0.2, A.bomb + 0.3, A.bomb + 0.55);
         if (g > 0.02) { const bx = Math.round(m.back[0] + 14), by = Math.round(m.back[1] + 2), r = Math.round(2 + 6 * g); for (let k = -r; k <= r; k++) { px(bx + k, by, WH[3]); px(bx, by + k, WH[3]); } for (let k = -(r >> 1); k <= (r >> 1); k++) { px(bx + k, by + k, YE[3]); px(bx + k, by - k, YE[3]); } }

@@ -519,7 +519,7 @@ function ba_birdShadow(x, y, t, o = {}) {
 function ba_caiman(x, wy, s, t, o = {}) {
   const fl = o.flip ? -1 : 1, rise = clamp(o.rise ?? 1), pitch = o.pitch ?? -0.42, op = clamp(o.open ?? 0), C = ba_pal(o.dim || 0);
   const col = { top: LM[1], base: LM[2], lit: LM[3], dark: GR[0], deep: NI[0], band: GR[1], belly: SK[4], bellyS: SK[3], tooth: WH[3], mouth: RD[1], tongue: RD[3], eye: YE[2] };
-  const J = [28 * s * rise + 4, -(10 + 40 * rise) * s + (1 - rise) * 6 * s];          // jonction crâne-cou (relative au point d'entrée du cou)
+  const J = [28 * s * rise + 4, lerp(12, -34, rise) * s];          // jonction crâne-cou (relative au point d'entrée du cou)
   const cp = Math.cos(pitch), sp = Math.sin(pitch), H = (px_, py_) => [J[0] + (px_ * cp - py_ * sp) * s, J[1] + (px_ * sp + py_ * cp) * s];
   const X0 = x - 60 * s, X1 = x + 110 * s; ba_BB = [Math.max(0, Math.floor(Math.min(X0, x - 40))), Math.max(0, Math.floor(wy - 120 * s - 20)), Math.min(LW, Math.ceil(Math.max(X1, x + 80))), Math.min(LH, Math.ceil(wy + 40))];
   if (fl < 0) { ba_BB[0] = Math.max(0, Math.floor(x - 110 * s)); ba_BB[2] = Math.min(LW, Math.ceil(x + 60 * s)); }

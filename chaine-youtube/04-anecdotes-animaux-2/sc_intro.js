@@ -216,7 +216,7 @@ function in_casesUi(u, t, sh) {
     const ta = in_rel('flip' + k, sh) + 0.3;
     if (u > ta) { const cx = in_CX + k * (in_CW + in_CG) + in_CW / 2; tagBox(cx, in_CY + in_CH + 6, in_LIEUX[k][0], in_LIEUX[k][1], Math.ceil((u - ta) * 36), true); }
   }
-  const gp = (u - in_rel('animaux0', sh) - 0.62) / 0.45;
+  const gp = (u - in_rel('animaux0', sh) - 0.2) / 0.34;
   if (gp > 0 && gp < 1) { const cx = 100 - k_pan(u, 0, -6, 'o', 2.9) * 1.1; in_star(cx + 14.7 + 0.045 * (347 - 177) + 4, 177, Math.round(6 * Math.sin(gp * Math.PI))); }
   const n = Math.max(0, Math.floor((u - tV - 0.05) * 38));
   if (n > 0) {
@@ -327,7 +327,7 @@ function buildIntro(S) {
       [in_A.pop0 - 0.02, 'pop', 1], [in_A.pop1 - 0.02, 'pop', 1], [in_A.pop2 - 0.02, 'pop', 1],
       [in_A.flip0 + 0.16, 'pop', 1], [in_A.flip1 + 0.16, 'pop', 1], [in_A.flip2 + 0.16, 'pop', 1],
       [in_A.flip0 + 0.3, 'label', 1], [in_A.flip1 + 0.3, 'label', 1], [in_A.flip2 + 0.3, 'label', 1], [in_A.flip2 + 0.2, 'reveal', 1],
-      [in_A.animaux0 + 0.1, 'whoosh', 0.45], [in_A.animaux0 + 0.62, 'sparkle', 1]],
+      [in_A.animaux0 + 0.1, 'whoosh', 0.45], [in_A.animaux0 + 0.3, 'sparkle', 1]],
   });
   shot('i_film', t1, {
     draw: in_filmDraw, ui: in_clapUi,

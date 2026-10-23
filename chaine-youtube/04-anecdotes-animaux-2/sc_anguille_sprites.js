@@ -477,7 +477,7 @@ function an_shoal(t, o = {}) {
 // lisière de forêt amazonienne en silhouettes (quatre plans de houppiers arrondis qui se fondent dans le ciel) ; y = ligne de l'eau ; o.cam, o.seed, o.sunX (le feuillage s'abaisse là pour laisser voir le soleil)
 function an_forest(t, o = {}) {
   const y = o.y ?? 190, cam = o.cam || 0, seed = o.seed ?? 3, sunX = o.sunX ?? 196;
-  const layers = [{ par: 0.10, h: 34, col: [168, 92, 126], rim: 0.55, sd: 1, r0: 7, r1: 12 }, { par: 0.20, h: 50, col: [112, 60, 118], rim: 0.45, sd: 2, r0: 8, r1: 13 }, { par: 0.34, h: 44, col: [50, 38, 78], rim: 0.35, sd: 3, r0: 8, r1: 14 }, { par: 0.55, h: 26, col: [14, 30, 38], rim: 0.2, sd: 4, r0: 7, r1: 11 }];
+  const layers = [{ par: 0.10, h: 34, col: [168, 92, 126], rim: 0.55, sd: 1, r0: 7, r1: 12 }, { par: 0.20, h: 50, col: [112, 60, 118], rim: 0.45, sd: 2, r0: 8, r1: 13 }, { par: 0.34, h: 44, col: [50, 38, 78], rim: 0.35, sd: 3, r0: 5, r1: 10 }, { par: 0.55, h: 26, col: [14, 30, 38], rim: 0.2, sd: 4, r0: 4, r1: 8 }];
   for (const Ly of layers) {
     const r = rng(seed * 31 + Ly.sd * 7), col = Ly.col, rimC = an_mix(col, [255, 200, 120], Ly.rim);
     const circles = [];
@@ -608,4 +608,5 @@ ICONES[2] = function (cx, cy) {
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const ch = g[y][x]; if (ch !== '.') R(x0 + x, y0 + y, 1, 1, AN_ICOL[ch]); }
 };
 
-INITS.push(() => { });
+// préchauffage : les caches du ciel et des nuages se construisent avant le premier plan (aucun pixel ne change)
+INITS.push(() => { try { an_sky(0.5, { wl: 188 }); } catch (e) { } clearL(); });
