@@ -389,23 +389,110 @@ function ba_c2cUi(u, t, sh) {
   if (p > 0.16) tagBox(8, 34, "PAS D'AIR SOUS LE PIED", 'white', Math.ceil((p - 0.16) * 120));
 }
 
+// ───────────────────────── plans 6 et 7 : c3_ombre, c3_fuite ─────────────────────────
+// Une seule action continue (ba_c3At) montrée en deux plans : l'ombre d'un oiseau de proie rattrape le basilic ; le caïman jaillit, le basilic bondit sur le tronc de l'autre rive et grimpe.
+const BA_L3 = { s: 1.3, wy: 322, v: 268, f: 3.5, ang: -0.3, logTop: 318 };
+let ba_L3 = null;
+function ba_c3Init(S) {
+  const A = ba_A, tR0 = A.c3 - 0.1, tP = A.pred, tJ = tP - 0.14, K = BA_L3, tLand = tJ + 0.34, tEnd = S.t1;
+  const xLb = 700, hipJ = xLb - 40;                                         // pointe du tronc (monde) ; hanche au début du bond
+  ba_L3 = { tR0, tP, tJ, tLand, tEnd, xLb, hipJ, x0: hipJ - K.v * (tJ - tR0), dLand: 60, dEnd: 168, tClimb: 0.95 };
+}
+function ba_logPt(d, h) { const a = BA_L3.ang; return [ba_L3.xLb + d * Math.cos(a) + h * Math.sin(a), BA_L3.logTop + d * Math.sin(a) - h * Math.cos(a)]; }
+function ba_c3At(t) {
+  const L3 = ba_L3, K = BA_L3, s = K.s, a = K.ang, climbT = t - L3.tLand;
+  let hip, pose, pose2, mix, rot = 0, ph = 0.1 + K.f * (t - L3.tR0), onLog = false, air = false;
+  const hAbove = 7.8 * s;
+  if (t < L3.tJ) { hip = [L3.x0 + K.v * (t - L3.tR0), K.wy - 28 * s]; pose = 'run'; }
+  else if (t < L3.tLand) {                                                  // bond du bas du tronc : accroupi → étiré → reçu sur le dos du tronc
+    const q = (t - L3.tJ) / (L3.tLand - L3.tJ), p0 = [L3.hipJ, K.wy - 28 * s], p1 = ba_logPt(L3.dLand, hAbove); air = true;
+    hip = [lerp(p0[0], p1[0], q), lerp(p0[1], p1[1], eo(q) ) - 4 * 22 * q * (1 - q)];
+    const ps = ba_seq(t, [[L3.tJ - 0.001, 'run'], [L3.tJ + 0.1, 'leap', eo], [L3.tLand - 0.12, 'leap'], [L3.tLand, 'crouch', eio]]); pose = ps.pose; pose2 = ps.pose2; mix = ps.mix; rot = lerp(0, a, sm(q));
+  } else {                                                                    // il grimpe : suite de petits bonds (accroupi ↔ étiré), puis il se dresse
+    const e = 1 - Math.pow(1 - clamp(climbT / L3.tClimb), 2.4), d = lerp(L3.dLand, L3.dEnd, e), hop = Math.abs(Math.sin(climbT * TAU * 2.1)) * (1 - e) * 5 * s;
+    const p1 = ba_logPt(d, hAbove + hop); hip = p1; onLog = true; rot = a;
+    const cyc = 0.5 - 0.5 * Math.cos(climbT * TAU * 2.1), settle = sm(prog(climbT, L3.tClimb * 0.82, L3.tClimb * 1.1));
+    if (climbT < L3.tClimb * 0.9) { pose = 'crouch'; pose2 = 'leap'; mix = cyc * (1 - e * 0.6); } else { pose = 'crouch'; pose2 = 'look'; mix = settle; }
+  }
+  const scr = lerp(150, 100, sm(prog(t, L3.tJ - 0.05, L3.tEnd)));
+  const cam = hip[0] - scr + (t >= L3.tJ ? 0 : 0);
+  return { hip, pose, pose2, mix, rot, ph, air, onLog, cam, scr, climbT };
+}
+function ba_c3Cam(t) { const L3 = ba_L3, K = BA_L3, st = ba_c3At(t); return st.cam; }
+// la caméra ne doit pas sauter d'un régime à l'autre : on la calcule avec la hanche de la COURSE tant que le basilic court, puis avec la hanche réelle
+function ba_c3Draw(u, t, sh, o = {}) {
+  const L3 = ba_L3, K = BA_L3, s = K.s, st = ba_c3At(t), cam = st.cam, wy = K.wy, A = ba_A;
+  ba_world(t, cam, { camY: 0, flow: 7 });
+  ba_atmos(t, cam, 0, { dust: 34, rays: 0.3 });
+  // l'oiseau de proie : dans la trouée lumineuse, puis son ombre rattrape le basilic par la gauche
+  const u0 = t - L3.tR0, bx = -40 + 175 * u0, shx = bx - 25 + 20 * Math.sin(u0 * 2);
+  if (o.bird !== false) { k_bird(bx + 30 * 0 - cam * 0, 66 + 5 * Math.sin(u0 * 2.3), t, { kind: 'soar', dir: 1, s: 1.7, col: NI[0], col2: ST[1], rim: AM[9], cam: 0, par: 0 }); }
+  const dimK = clamp(1 - Math.abs((st.hip[0] - cam) - shx) / 70) * (t < L3.tJ + 0.1 ? 1 : 0);                        // le basilic traverse l'ombre : plus sombre
+  const shadowA = 0.5 * (1 - clamp(prog(t, L3.tJ, L3.tJ + 0.4)));
+  // tronc de l'autre rive (monde) : branche retournée et inclinée, pointe cassée dans l'eau
+  const lx = L3.xLb - cam;
+  if (lx < LW + 40) {
+    L.save(); L.setTransform(1, 0, 0, 1, 0, 0); L.translate(lx, K.logTop); L.rotate(K.ang); L.scale(-1, 1);
+    L.drawImage(ba_band('branch', BA_BR.w, BA_BR.h, ba_buildBranch), -(BA_BR.w - 28), -BA_BR.top); L.restore();
+    for (let i = 0; i < 9; i++) { const ang = i / 9 * TAU + 0.4, rr = 10 + 6 * Math.sin(t * 1.4 + i); px(lx + 2 + Math.cos(ang) * rr * 1.4, K.wy + 4 + Math.sin(ang) * rr * 0.28, (i + ((t * 5) | 0)) % 3 ? CY[4] : WH[3]); }   // écume au pied du tronc
+  }
+  // caïman : approche en rase-eau (yeux et narines), puis jaillit
+  const tE = L3.tP - 0.1, rise = t < tE ? 0.04 + 0.04 * Math.sin(t * 4) : t < L3.tP + 0.2 ? lerp(0.08, 1, eob(prog(t, tE, L3.tP + 0.18))) : 1 - sm(prog(t, L3.tP + 0.62, L3.tP + 1.15));
+  const lunge = eo(prog(t, tE, L3.tP + 0.32)), hipRun = t < L3.tJ ? st.hip[0] : L3.hipJ + K.v * (t - L3.tJ) * 0;
+  const caiX = (t < tE ? (L3.x0 + K.v * (t - L3.tR0)) - 170 - 30 * (1 - clamp((t - L3.tR0) / (tE - L3.tR0))) : L3.hipJ - 195 + 62 * lunge) - cam;
+  const caiOpen = t < L3.tP ? 0 : t < L3.tP + 0.38 ? sm(prog(t, L3.tP, L3.tP + 0.22)) : 1 - eo(prog(t, L3.tP + 0.38, L3.tP + 0.5));
+  if (t > L3.tR0 && caiX > -140) {
+    if (t < L3.tP + 1.4) {
+      ba_slap(caiX + cam + 70, wy - 4, L3.tP - 0.12, t, { size: 2.3, dir: 1, cam, seed: 12, layer: 'under', sq: 0.26 });
+      if (t < tE + 0.1) { for (let k = 0; k < 4; k++) ba_slap(caiX + cam + 20 + k * 6 + 70, wy - 4, t - 0.2 - k * 0.11, t, { size: 0.9, dir: 1, cam, seed: 3 + k, layer: 'under' }); }
+      const g = ba_caiman(caiX, wy - 4, 1.3, t, { rise, open: caiOpen, pitch: -0.5 + 0.12 * lunge });
+      if (rise > 0.3) ba_slap(caiX + cam + 40, wy - 4, L3.tP - 0.12, t, { size: 2.1, dir: -1, cam, seed: 12, layer: 'over' });
+    }
+  }
+  if (shadowA > 0.02 && o.shadow !== false) ba_birdShadow(shx, wy + 8, t, { s: 1.5, dir: 1, a: shadowA, squash: 0.5 });
+  // le basilic : sa course, son bond, sa grimpée
+  const fx = { t0: L3.tR0, ph0: 0.1, f: K.f, x0: L3.x0, v: K.v, dir: 1, s, wy, cam, ahead: 22, size: s * 0.8 };
+  if (t < L3.tJ + 0.05) ba_runFx(t, { ...fx, layer: 'under', tFrom: L3.tR0 - 2 });
+  const lo = { pose: st.pose, pose2: st.pose2, mix: st.mix ?? 0, ph: st.ph, rot: st.rot, spd: 1, seed: 2, dim: dimK * 0.55 };
+  if (st.onLog || st.air) ba_lizard(0, 0, s, t, { ...lo, hip: [st.hip[0] - cam, st.hip[1]], tint: st.air && st.hip[1] > wy - 10 ? [wy, '14,40,34', 0.6] : undefined });
+  else ba_lizard(st.hip[0] - cam, wy, s, t, { ...lo, over: { }, tint: [wy, '14,40,34', 0.6], reflect: { y: wy, a: 0.42, depth: 40 * s + 60 } });
+  if (t < L3.tJ + 0.05) ba_runFx(t, { ...fx, layer: 'over', tFrom: L3.tR0 - 2 });
+  if (t > L3.tJ - 0.02 && t < L3.tJ + 0.8) ba_slap(L3.hipJ + 20, wy + 2, L3.tJ, t, { size: 1.7, dir: 1, cam, seed: 31, layer: 'both' });      // la dernière poussée sur l'eau
+  ba_fgLeaves(t, cam, { camY: 0, par: 1.3 });
+  k_leaves(t, { n: 4, cam, wind: 9, y0: 0, y1: 400, cols: [GR[4], LM[4], AM[6]], seed: 3 });
+  vignette(0.5, 120, 330, LW / 2, LH / 2 - 20, '5,20,16');
+}
+function ba_c3aUi(u, t, sh) { hudTracker(1, 1, 1); hudLieu(1); if (t < ba_A.c3 + 0.9) tagBox(8, 38, '≈ 1,5 M/S', 'blue', Math.ceil((t - ba_A.c3 + 0.1) * 40)); }
+function ba_c3bUi(u, t, sh) {
+  const L3 = ba_L3, tick = Math.max(wt1('c3', 'prédateurs'), L3.tLand + 0.7);
+  hudTracker(1, t > tick ? 2 : 1, 1); hudLieu(1);
+  if (t > tick) { const p = prog(t, tick, tick + 0.4); }
+}
+const ba_c3a = (u, t, sh) => ba_c3Draw(u, t, sh);
+const ba_c3b = (u, t, sh) => ba_c3Draw(u, t, sh);
+
 function buildBasilic(S) {
   const A = ba_A;
   A.t0 = S.t0; A.il = wt('c1', 'il'); A.courir = wt('c1', 'courir'); A.sur = wt('c1', 'sur'); A.eau = wt('c1', "l'eau"); A.c2 = wt('c2', 'Surnommé');
   A.tongue = wt('c1', 'lézard') + 0.1; A.flare = wt('c1', 'complètement'); A.look = wt('c1', 'capacité');
   A.jc = wt('c2', 'Jésus-Christ'); A.utilise = wt('c2', 'utilise'); A.pattes = wt('c2', 'pattes'); A.pour = wt('c2', 'pour'); A.c3 = wt('c3', 'Et');
-  ba_jumpInit();
+  A.ech = wt('c3', 'échapper'); A.pred = wt('c3', 'prédateurs');
+  ba_jumpInit(); ba_c3Init(S);
   const K = ba_J, J = BA_J, evSlaps = [];
   for (let n = 0; ; n++) { const tn = K.tD + n * 0.5 / J.f; if (tn >= A.c2 - 0.1) break; evSlaps.push([tn, 'slap', 1]); }
   shot('c1_branche', S.t0, { draw: ba_c1a, ui: ba_c1aUi, ev: [[A.tongue + 0.05, 'blip', 0.5]] });
   shot('c1_saut', A.il - 0.1, { draw: ba_c1b, ui: ba_c1bUi, ev: [[K.tL + 0.02, 'hop', 1], [K.tL + 0.05, 'whoosh', 0.5], [K.tD, 'splash', 1.3], ...evSlaps] });
-  const tA = A.c2 - 0.1, tB = A.utilise - 0.1, tC = A.pour - 0.1, tD = A.c3 - 0.1;
-  ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.25, wy: 318, f: 3.3, ph0: 0.2, scr0: 165, scr1: 112, tScr: 1.3, dust: 40 };
+  const tA = A.c2 - 0.1, tB = A.utilise - 0.1, tC = A.pour - 0.1, tD = A.c3 - 0.1, tE = A.ech - 0.1;
+  ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.3, wy: 318, f: 3.3, ph0: 0.2, scr0: 170, scr1: 132, tScr: 1.3, dust: 40 };
   ba_C2b = { t0: tB, x0: ba_C2.x0 + 250 * (tB - tA), v: 250, s: 2.25, wy: 338, f: 3.3, ph0: ba_C2.ph0 + 3.3 * (tB - tA), scr0: 100, scr1: 92, tScr: 1.6, dust: 30 };
   const ev2 = ba_footTimes(ba_C2, tA, tB).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
   const ev2b = ba_footTimes(ba_C2b, tB, tC).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.7]] : [])]);
   shot('c2_course', tA, { draw: ba_c2a, ui: ba_c2aUi, ev: [[tA + 0.02, 'whoosh', 1.2], [A.jc, 'label', 1], ...ev2] });
   shot('c2_pattes', tB, { draw: ba_c2b, ui: ba_c2bUi, ev: [[A.pattes, 'label', 1], ...ev2b] });
   shot('c2_pas', tC, { draw: ba_c2c, ui: ba_c2cUi, ev: [[tC + 0.1, 'label', 1]] });
-  shot('c3_fin', tD, { draw(u, t) { vgrad(0, 0, LW, LH, [[0, '#1a4636'], [1, '#0e2a22']]); } });
+  const L3 = ba_L3, evA = ba_footTimes({ t0: L3.tR0, ph0: 0.1, f: BA_L3.f }, tD, tE).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
+  const evB = ba_footTimes({ t0: L3.tR0, ph0: 0.1, f: BA_L3.f }, tE, L3.tJ).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
+  const tick = Math.max(wt1('c3', 'prédateurs'), L3.tLand + 0.7);
+  shot('c3_ombre', tD, { draw: ba_c3a, ui: ba_c3aUi, ev: [[tD + 0.05, 'whoosh', 1], [tD + 0.1, 'label', 1], [tD + 0.35, 'bird', 2], ...evA] });
+  shot('c3_fuite', tE, { draw: ba_c3b, ui: ba_c3bUi, ev: [...evB, [L3.tJ, 'hop', 1], [L3.tJ + 0.02, 'splash', 1.2], [L3.tP - 0.05, 'splash', 1.6], [L3.tP + 0.38, 'bang', 1], [L3.tP + 0.4, 'splash', 1.4], [L3.tLand, 'hop', 1], [tick, 'ding', 1]] });
 }

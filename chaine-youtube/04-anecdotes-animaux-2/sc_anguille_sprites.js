@@ -190,7 +190,7 @@ function an_bolt(x0, y0, x1, y1, seed, o = {}) {
   const pts = [[x0, y0]];
   let off = 0;
   for (let k = 1; k < segs; k++) {
-    const f = k / segs, env = Math.sin(Math.PI * f) ** 0.6; off = -off * 0.5 + (r() - 0.5) * 2 * jag * env * (1 / Math.sqrt(Math.max(1, segs / 5)));      // coudes francs : le décalage change de côté
+    const f = k / segs, env = Math.sin(Math.PI * f) ** 0.6, big = r() < 0.25 ? 2.2 : 1; off = off * 0.45 + (r() - 0.5) * 2 * jag * env * big * (1 / Math.sqrt(Math.max(1, segs / 5)));      // marche aléatoire : de longs coudes, quelques sursauts
     pts.push([x0 + (x1 - x0) * f + nx * off, y0 + (y1 - y0) * f + ny * off]);
   }
   pts.push([x1, y1]);
@@ -225,12 +225,12 @@ function an_discharge(eel, t, I, o = {}) {
     an_bolt(a0[0], a0[1], x1, y1, seed + k * 101, { w: (k < tg.length ? 1.2 : 0.9) * (0.7 + 0.5 * I), branch: 0.55 + 0.3 * I, jag: 0.17 });
   }
   // crépitement le long du corps : petits arcs courts
-  for (let k = 0; k < Math.round(4 + 8 * I); k++) {
+  for (let k = 0; k < Math.round(o.crackle ?? (4 + 8 * I)); k++) {
     const sf = lerp(sf0, sf1, r()), f = r() < 0.5 ? 1 : -1, a = eel.E(sf, f), b = [a[0] + (r() - 0.5) * 16, a[1] + (r() - 0.5) * 12 + f * 4];
     an_bolt(a[0], a[1], b[0], b[1], seed + 900 + k, { w: 0.6, branch: 0, jag: 0.3, glow: 0, step: 4 });
   }
   // étincelles
-  for (let k = 0; k < Math.round(6 + 10 * I); k++) {
+  for (let k = 0; k < Math.round(o.sparks ?? (6 + 10 * I)); k++) {
     const sf = lerp(sf0, sf1, r()), a = eel.E(sf, 0), ang = r() * TAU, d = 6 + r() * reach * 0.8, x = a[0] + Math.cos(ang) * d, y = a[1] + Math.sin(ang) * d;
     px(x, y, r() < 0.5 ? WH[3] : YE[3]); if (r() < 0.35) { px(x - 1, y, YE[2]); px(x + 1, y, YE[2]); px(x, y - 1, YE[2]); px(x, y + 1, YE[2]); }
   }
@@ -323,16 +323,16 @@ function an_caiman(cx, cy, s, t, o = {}) {
   for (let i = 0; i <= N; i++) { const p = E(i, 1); i ? body.lineTo(p[0], p[1]) : body.moveTo(p[0], p[1]); }
   for (let i = N; i >= 0; i--) { const p = S[i] < JS ? E(i, jf) : E(i, -1); body.lineTo(p[0], p[1]); }
   body.closePath();
-  c.fillStyle = an_css(kf([112, 120, 56])); c.fill(body);
+  c.fillStyle = an_css(kf([96, 100, 46])); c.fill(body);
   // couches de couleur : dos olive sombre, flancs vert-jaune, ventre crème (dégradé le long du corps pour la brillance)
   const strip = (f0, f1, col) => {
     const pth = new Path2D(); for (let i = 0; i <= N; i++) { const p = E(i, f1); i ? pth.lineTo(p[0], p[1]) : pth.moveTo(p[0], p[1]); } for (let i = N; i >= 0; i--) { const p = E(i, Math.max(f0, S[i] < JS ? jf : -2)); pth.lineTo(p[0], p[1]); } pth.closePath();
     c.fillStyle = an_css(kf(col)); c.fill(pth);
   };
-  strip(-1, -0.45, [196, 184, 104]);              // ventre
-  strip(-0.45, 0.2, [118, 128, 58]);              // flanc
-  strip(0.2, 1, [74, 86, 36]);                    // dos
-  strip(0.62, 1, [50, 60, 26]);
+  strip(-1, -0.45, [176, 164, 92]);               // ventre
+  strip(-0.45, 0.2, [96, 100, 46]);               // flanc
+  strip(0.2, 1, [60, 70, 32]);                    // dos
+  strip(0.62, 1, [42, 50, 24]);
   // bandes sombres sur le flanc et la queue
   for (let k = 0; k < 11; k++) {
     const sf0 = 0.32 + k * 0.057, sf1 = sf0 + 0.02; const pth = new Path2D(); for (let q = 0; q <= 4; q++) { const p = EE(sf0 + (sf1 - sf0) * q / 4, 0.95); q ? pth.lineTo(p[0], p[1]) : pth.moveTo(p[0], p[1]); } for (let q = 4; q >= 0; q--) { const p = EE(sf0 + (sf1 - sf0) * q / 4 + 0.012, -0.35 + (k > 6 ? 0.2 : 0)); pth.lineTo(p[0], p[1]); } pth.closePath();
@@ -351,7 +351,7 @@ function an_caiman(cx, cy, s, t, o = {}) {
   { const H = EE(JS, jf), th = open * 0.42 * fl, cs = Math.cos(th), sn = Math.sin(th), pts = [];
     for (let q = 0; q <= 8; q++) { const sf = JS * (1 - q / 8); pts.push(EE(sf, jf - 0.02)); } for (let q = 8; q >= 0; q--) { const sf = JS * (1 - q / 8); pts.push(EE(sf, -1.0)); }
     const rp = pts.map(p => [H[0] + (p[0] - H[0]) * cs - (p[1] - H[1]) * sn, H[1] + (p[0] - H[0]) * sn + (p[1] - H[1]) * cs]);
-    c.fillStyle = an_css(kf([204, 192, 112])); c.beginPath(); rp.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill();
+    c.fillStyle = an_css(kf([186, 174, 100])); c.beginPath(); rp.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill();
     if (open > 0.05) { const inner = [EE(JS, jf), EE(0.01, jf), ...rp.slice(0, 9).reverse().map(p => p)]; c.fillStyle = an_css(kf([150, 52, 52])); c.beginPath(); inner.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); }
     var jawPts = rp, hinge = H;
   }
@@ -364,7 +364,7 @@ function an_caiman(cx, cy, s, t, o = {}) {
   const eye = EE(0.125, 0.94), er = Math.max(2, Math.round(1.8 * s));
   disc(eye[0], eye[1], er, '#d8c84a'); R(eye[0] - 0.5, eye[1] - er * 0.8, 1, er * 1.6 + 1, '#05040f'); px(eye[0] - er * 0.6 * fl, eye[1] - er * 0.6, '#fff8d8');
   const nos = EE(0.012, 0.98); px(nos[0], nos[1], '#05040f');
-  for (let i = 4; i < N - 6; i++) { const a = lit[i]; if (a < 0.4) continue; const p = E(i, 1), q = E(i + 1, 1); lineP(p[0], p[1] + 1, q[0], q[1] + 1, an_css(kf([128, 142, 70])), 1); }
+  for (let i = 4; i < N - 6; i++) { const a = lit[i]; if (a < 0.4) continue; const p = E(i, 1), q = E(i + 1, 1); lineP(p[0], p[1] + 1, q[0], q[1] + 1, an_css(kf([112, 120, 60])), 1); }
   return { head: sc[0], eye, mouth: m0, tail: sc[N], E: (sf, f) => EE(sf, f), bbox: bbx, snout: m0 };
 }
 
@@ -485,22 +485,27 @@ function an_forest(t, o = {}) {
       const sx = wx - cam * Ly.par, dip = 1 - 0.78 * Math.exp(-Math.pow((sx - sunX) / 34, 2)) * (Ly.sd < 4 ? 1 : 0.4), n = k_n1(wx * 0.03, seed + Ly.sd * 5), rr = Ly.r0 + (Ly.r1 - Ly.r0) * r(), em = k_h(Math.floor(wx / 53), seed * 3 + Ly.sd) > 0.82 ? 1 : 0;
       circles.push([sx, y - (Ly.h * (0.35 + 0.65 * n) + (em ? 12 : 0)) * dip + rr * 0.3, em ? rr * 1.5 : rr]);
     }
-    L.fillStyle = an_css(col); L.fillRect(0, y - 4, LW, 8);
-    for (const [cx0, cy0, rr] of circles) { L.beginPath(); L.arc(cx0, cy0, rr, 0, TAU); L.fill(); L.fillRect(cx0 - rr * 0.8, cy0, rr * 1.6, y + 2 - cy0); }
-    // lumière du couchant sur le haut des houppiers (liseré chaud côté soleil)
-    L.fillStyle = an_css(rimC, 0.8); for (const [cx0, cy0, rr] of circles) { L.beginPath(); L.arc(cx0, cy0, rr, Math.PI * 1.05, Math.PI * 1.7); L.arc(cx0 + 1.5, cy0 + 2.2, rr, Math.PI * 1.7, Math.PI * 1.05, true); L.closePath(); L.fill(); }
+    const path = new Path2D(); path.rect(0, y - 4, LW, 8);
+    for (const [cx0, cy0, rr] of circles) { path.moveTo(cx0 + rr, cy0); path.arc(cx0, cy0, rr, 0, TAU); path.rect(cx0 - rr * 0.8, cy0, rr * 1.6, y + 2 - cy0); }
+    L.fillStyle = an_css(col); L.fill(path);
+    // dessus des houppiers éclairé par le couchant : dégradé du liseré chaud vers la masse sombre, borné aux houppiers
+    L.save(); L.clip(path); const gl = L.createLinearGradient(0, y - Ly.h - 24, 0, y - 6); gl.addColorStop(0, an_css(rimC, 0.85)); gl.addColorStop(0.55, an_css(rimC, 0.12)); gl.addColorStop(1, an_css(rimC, 0)); L.fillStyle = gl; L.fillRect(0, y - Ly.h - 30, LW, Ly.h + 26); L.restore();
     const g = L.createLinearGradient(0, y - 20, 0, y + 2); g.addColorStop(0, 'rgba(255,176,108,0)'); g.addColorStop(1, `rgba(255,170,100,${0.5 - Ly.rim * 0.5})`); L.fillStyle = g; L.fillRect(0, y - 20, LW, 22);
   }
-  // palmiers (silhouettes de premier plan de la lisière) : tronc fin, couronne de palmes arquées qui retombent
+  // palmiers (silhouettes de premier plan de la lisière) : tronc fin et courbe, couronne de palmes arquées qui retombent
+  L.save();
   for (const [px0, h0, sd] of (o.palms || [[30, 54, 1], [244, 62, 2]])) {
-    const x = px0 - cam * 0.55, top = y - h0, sw = Math.sin(t * 0.9 + sd) * 1.0, tx = x + sw * 0.5;
-    lineP(x, y, tx, top, '#0a1a22', 2);
-    for (let k = 0; k < 9; k++) {
-      const a = Math.PI * (1.0 + k / 8), l = 15 + (k % 2) * 4 + 2 * Math.sin(sd + k), dir = Math.cos(a), mx = tx + dir * l * 0.6, my = top - Math.abs(Math.sin(a)) * l * 0.55 - 1, ex = tx + dir * l * 1.05 + sw * 0.5, ey = top + 6 + Math.abs(dir) * 8 - Math.abs(Math.sin(a)) * 3;
-      lineP(tx, top, mx, my, '#0a1a22', 2); lineP(mx, my, ex, ey, '#0a1a22', 2); lineP(ex, ey, ex + dir * 2, ey + 3, '#0a1a22', 1);
+    const x = px0 - cam * 0.55, top = y - h0, sw = Math.sin(t * 0.9 + sd) * 1.0, tx = x + sw * 0.5 + (sd === 1 ? 4 : -4);
+    L.strokeStyle = '#0a1a22'; L.lineCap = 'round'; L.lineJoin = 'round'; L.lineWidth = 2.4; L.beginPath(); L.moveTo(x, y + 1); L.quadraticCurveTo(x + (tx - x) * 0.2, y - h0 * 0.5, tx, top); L.stroke();
+    for (let k = 0; k < 8; k++) {
+      const a = Math.PI * (1.04 + k / 7 * 0.92), dir = Math.cos(a), up = Math.abs(Math.sin(a)), l = 17 + (k % 2) * 4 + 2 * Math.sin(sd + k);
+      const c1x = tx + dir * l * 0.55, c1y = top - up * l * 0.75, ex = tx + dir * l * 1.05 + sw * 0.4, ey = top + 5 + Math.abs(dir) * 9;
+      L.lineWidth = 2.2; L.beginPath(); L.moveTo(tx, top); L.quadraticCurveTo(c1x, c1y, ex, ey); L.stroke();
+      L.lineWidth = 1; for (let q = 1; q <= 3; q++) { const f = q / 4, bx = (1 - f) * (1 - f) * tx + 2 * (1 - f) * f * c1x + f * f * ex, by = (1 - f) * (1 - f) * top + 2 * (1 - f) * f * c1y + f * f * ey; L.beginPath(); L.moveTo(bx, by); L.lineTo(bx + (dir > 0 ? 1 : -1) * 1.5, by + 4.5 - q * 0.6); L.stroke(); }
     }
-    disc(tx, top + 1, 2, '#0a1a22');
+    L.fillStyle = '#0a1a22'; L.beginPath(); L.arc(tx, top + 1, 2.4, 0, TAU); L.fill();
   }
+  L.restore();
 }
 // ciel du crépuscule + soleil bas + nuages + oiseaux ; wl = ligne de l'eau
 function an_sky(t, o = {}) {

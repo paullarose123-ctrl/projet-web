@@ -64,7 +64,7 @@ function an_p2(u, t, sh) {
   const Z = Math.max(an_pulse(t, an_A.z1, 0.3, 0.5), an_pulse(t, an_A.z2, 0.5, 0.9), an_pulse(t, an_A.z3, 0.22, 0.55));
   an_under(u, t, { cam, rays: 0.34 + 0.15 * Z });
   const hx = 238 + 14 * sm(clamp(u / 2.2)), hy = 262 - 28 * sm(clamp(u / 2.2)) + 3 * Math.sin(u * 1.6);
-  const e = an_eel(hx, hy, 1.15, t, { pose: 'swim', amp: 0.62, rot: -0.2, fog: 0.03, zap: Z });
+  const e = an_eel(hx, hy, 1.15, t, { pose: 'swim', amp: 0.8, freq: 1.05, rot: -0.2, fog: 0.03, zap: Z });
   an_flash(Z * 0.5);
   an_discharge(e, t, Z, { reach: 80, seed: 3, n: Math.round(2 + 4 * Z) });
   an_overlay(u, t, { cam });
@@ -132,14 +132,14 @@ function an_p4(u, t, sh) {
   if (sk > 0) an_socket(AN_XP + AN_WP / 2 - 2, AN_YB - hP / 2 + 3, 1.1 * eob(sk), t, { spark: prog(t, T.elec, T.elec + 0.1) * (1 - prog(t, T.fr + 0.4, T.fr + 0.8)) * 0.8 });
   // étincelles au sommet de la barre de l'anguille
   const fr = Math.floor(t * 30); for (let k = 0; k < 3; k++) if (an_h(fr + k, 8) < 0.55 * rise) an_bolt(AN_XE + AN_WE / 2 - 2, ay - 5, AN_XE + AN_WE / 2 - 2 + (an_h(fr, 10 + k) - 0.5) * 50, ay - 10 - an_h(fr, 12 + k) * 18, fr * 3 + k, { w: 0.6, branch: 0.3, jag: 0.3, step: 5, glow: 0.4 });
-  // petit drapeau tricolore (« française »)
-  const fa = eob(prog(t, T.fr, T.fr + 0.3)); if (fa > 0) { const fx = AN_XP + AN_WP - 4, fy = AN_YB - 4 - Math.round(12 * fa); R(fx - 1, fy - 1, 17, 12, '#05040f'); for (let i = 0; i < 15; i++) { const w = Math.round(Math.sin(t * 8 + i * 0.5) * 0.8); R(fx + i, fy + w, 1, 10, i < 5 ? BL[3] : i < 10 ? WH[3] : RD[3]); } R(fx - 2, fy - 1, 1, 14, ST[5]); }
+  // petit drapeau tricolore sur sa hampe, posé sur la ligne de base à côté de la prise (« française »)
+  const fa = eob(prog(t, T.fr, T.fr + 0.3)); if (fa > 0) { const fx = AN_XP + AN_WP + 8, fh = Math.round(34 * fa), fy = AN_YB - fh; R(fx - 1, fy - 1, 3, fh + 1, '#05040f'); R(fx, fy, 1, fh, ST[6]); R(fx - 1, fy - 3, 3, 2, YE[2]); if (fa > 0.5) { R(fx + 1, fy - 1, 22, 15, '#05040f'); for (let i = 0; i < 20; i++) { const w = Math.round(Math.sin(t * 8 + i * 0.45) * 1.0 * (i / 20)); R(fx + 2 + i, fy + w, 1, 13, i < 7 ? BL[3] : i < 14 ? WH[3] : RD[3]); } } }
   k_glints(t, { n: 10, y0: 60, y1: 330, rate: 1.5, col: WH[3], col2: CY[3] });
 }
 function an_p4Ui(u, t, sh) {
   an_hud(u, t, sh);
   const T = an_A, ea = prog(t, T.p0 + 0.1, T.p0 + 0.35);
-  if (ea > 0) { ptextC('ANGUILLE : 860 V', AN_XE + AN_WE / 2, AN_YB + 12, YE[3], 1, '#05040f', Math.ceil(ea * 30)); ptextC('860 V', AN_XE + AN_WE / 2 - 2, AN_YB - AN_HE - 22, CY[4], 2, '#05040f'); }
+  if (ea > 0) { ptextC('ANGUILLE : 860 V', AN_XE + AN_WE / 2, AN_YB + 12, YE[3], 1, '#05040f', Math.ceil(ea * 30)); ptextC('860 V', AN_XE + AN_WE / 2 - 2, AN_YB - AN_HE - 27, CY[4], 2, '#05040f'); }
   const pa = prog(t, T.prise, T.prise + 0.3); if (pa > 0) ptextC('PRISE : 230 V', AN_XP + AN_WP / 2, AN_YB + 12, BL[4], 1, '#05040f', Math.ceil(pa * 30));
   const labs = ['×1', '×2', '×3', '≈ ×4'], ts = [T.q0, T.q2, T.q3, T.q4];
   for (let k = 0; k < 4; k++) { if (k === 0 && t >= T.prise) continue; if (t < ts[k] + 0.1) continue; const hh = k < 3 ? AN_U : AN_U * (860 / 230 - 3), y = AN_YB - AN_U * k - hh / 2 - 3; ptextC(labs[k], AN_XP + AN_WP / 2, y, k === 3 ? YE[3] : BL[5 - 1], 1, '#05040f'); }
@@ -172,13 +172,13 @@ function an_p6(u, t, sh) {
   const e = an_eel(150, 262, 1.0, t, { pose: 'zap', rot: -0.4, zap: Math.min(1, Z + 0.1), bend: 0.8, ph: 0.4, amp: 0.1 });
   an_flash(Z * 0.8);
   // les tétras visés : plus grands qu'au plan précédent (gros plan) ; tournés comme le banc (vers la droite) ; ils se raidissent, se retournent et montent en flottant
-  const fish = [[214, 190, 2.3, 0.0, 0.0], [242, 256, 1.8, 0.7, 0.1], [196, 138, 1.4, 1.4, -0.1]], tg = [];
+  const fish = [[214, 190, 2.3, 0.0, 0.15], [242, 256, 1.8, 0.7, -0.45], [196, 138, 1.4, 1.4, 0.55]], tg = [];
   fish.forEach(([x, y, s, ph, r0], i) => {
     const st = an_stun(t, hit, i), fl = prog(t, hit + 0.3 + i * 0.07, hit + 1.2), drift = fl * (16 + 6 * i);
-    const o = an_tetra(x + 3 * Math.sin(t * 0.9 + ph) * (1 - st) + 6 * fl, y - drift + 2 * Math.sin(t * 0.7 + ph) * (1 - st), s, t, { ph, stun: st, rot: (r0 - 0.35 * st) * st, fog: 0.05, tremble: st > 0 && st < 1 ? 0.8 : 0.12 * st });
+    const o = an_tetra(x + 3 * Math.sin(t * 0.9 + ph) * (1 - st) + 6 * fl, y - drift + 2 * Math.sin(t * 0.7 + ph) * (1 - st), s, t, { ph, stun: st, rot: r0 * st, fog: 0.05, tremble: st > 0 && st < 1 ? 0.8 : 0.12 * st });
     tg.push(o.body);
   });
-  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 120, seed: 9, targets: Z > 0.05 ? tg.map(p => [p[0], p[1]]) : [], n: Math.round(3 + 6 * Z), from: 0.04, to: 0.5 });
+  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 120, seed: 9, targets: Z > 0.05 ? tg.map(p => [p[0], p[1]]) : [], n: Math.round(1 + 2 * Z), crackle: 3, sparks: 8, from: 0.04, to: 0.5 });
   an_overlay(u, t, { cam, vig: 0.55 });
 }
 
@@ -190,14 +190,14 @@ function an_p7(u, t, sh) {
   // les tétras paralysés flottent en haut, ventre en l'air
   [[58, 112, 1.2, 0.2], [112, 82, 1.0, 0.9], [26, 160, 1.0, 1.6]].forEach(([x, y, s, ph], i) => an_tetra(x - cam * 0.3, y - 2 * Math.sin(t * 0.8 + ph) - 4 * u, s, t, { stun: 1, rot: 0.25 + 0.12 * i + 0.05 * Math.sin(t + ph), ph, fog: 0.15, tremble: 0.1 }));
   // le caïman fonce vers la gauche, l'anguille décharge, il recule en tremblant, gueule ouverte, et sort du cadre
-  const go = eo(prog(t, f0, hit)), back = eo(prog(t, hit + 0.04, hit + 0.95));
-  const cx0 = 300 - 112 * go + 118 * back, cy0 = 206 + 4 * Math.sin(u * 3) - 8 * back;
-  const trem = clamp(d / 0.1) * (1 - prog(t, hit + 0.9, hit + 1.2)), open = 0.25 + 0.6 * sm(prog(t, hit - 0.3, hit)) * (1 - 0.35 * prog(t, hit + 0.5, hit + 1.1));
-  const c = an_caiman(cx0, cy0, 1.1, t, { flip: true, pose: d > 0 ? 'recoil' : 'swim', open, tremble: trem, fog: 0.2 - 0.12 * Z, ph: 0.3 });
-  const calm = prog(t, hit + 0.9, hit + 1.3);
-  const e = an_eel(168, 250, 0.9, t, { pose: Z > 0.1 ? 'zap' : 'tense', mix: calm, pose2: 'swim', rot: -0.28, zap: Math.min(1, Z + 0.05), bend: Z > 0.1 ? 0.9 : 0.4, fog: 0, ph: 0.8, amp: 0.1 + 0.2 * calm });
+  const go = eo(prog(t, f0, hit)), back = sm(prog(t, hit + 0.03, hit + 1.25));
+  const cx0 = 306 - 150 * go + 135 * back, cy0 = 208 + 4 * Math.sin(u * 3) - 10 * back;
+  const trem = clamp(d / 0.08) * (1 - 0.6 * prog(t, hit + 0.6, hit + 1.3)), open = 0.25 + 0.6 * sm(prog(t, hit - 0.3, hit)) * (1 - 0.35 * prog(t, hit + 0.5, hit + 1.1));
+  const calm = prog(t, hit + 1.0, hit + 1.4);
+  const e = an_eel(128, 268, 0.88, t, { pose: Z > 0.1 ? 'zap' : 'tense', mix: calm, pose2: 'swim', rot: -0.3, zap: Math.min(1, Z + 0.05), bend: Z > 0.1 ? 0.9 : 0.4, fog: 0, ph: 0.8, amp: 0.1 + 0.2 * calm });
   an_flash(Z * 0.9);
-  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 125, seed: 5, targets: Z > 0.05 && c.head[0] < 300 ? [[c.head[0] + 6, c.head[1] + 2], [c.eye[0], c.eye[1] - 2], [c.E(0.3, 0.2)[0], c.E(0.3, 0.2)[1]]] : [], n: Math.round(3 + 6 * Z), from: 0.06, to: 0.5 });
+  const c = an_caiman(cx0, cy0, 1.3, t, { flip: true, pose: d > 0 ? 'recoil' : 'swim', open, tremble: trem, fog: 0.2 - 0.12 * Z, ph: 0.3 });
+  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 125, seed: 5, targets: Z > 0.05 && c.head[0] < 300 ? [c.E(0.2, -0.2), c.E(0.36, 0.5), c.E(0.5, -0.3)] : [], n: Math.round(1 + 3 * Z), crackle: 3, sparks: 8, from: 0.06, to: 0.5 });
   an_overlay(u, t, { cam, vig: 0.55 });
 }
 function an_p7Ui(u, t, sh) {

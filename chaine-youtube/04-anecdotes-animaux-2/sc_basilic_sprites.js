@@ -488,3 +488,78 @@ function ba_pocket(X0, wy, sm, p, t, o = {}) {
   L.strokeStyle = CY[4]; L.beginPath(); for (let i = 1; i < N - 1; i++) { const q = R_[i]; i > 1 ? L.lineTo(q[0] - 2, q[1]) : L.moveTo(q[0] - 2, q[1]); } L.stroke();
   L.restore();
 }
+
+// ───────────────────────── le prédateur du ciel : l'ombre d'un oiseau de proie sur l'eau ─────────────────────────
+// (x, y) = centre de l'ombre sur la surface (écran) ; s = envergure/76 ; dir ±1 (cap) ; squash : écrasement vertical (perspective) ; a : opacité ; flap : 0..1 position des ailes (0 : planer)
+function ba_birdShadowPts(flap, t) {
+  const fl = Math.sin(t * 2.2) * 0.12 + flap * 0.4, wing = [], tips = [[-3, 39], [-8, 38], [-12, 35], [-15, 31], [-17, 26]];
+  wing.push([4, 3.4], [2.6, 14], [0, 26], [-1, 33 + fl * 4]);
+  tips.forEach((q, i) => wing.push([q[0] + 3 * (i % 2), q[1] + fl * 5 - (i % 2) * 1.8]));
+  wing.push([-18, 20], [-17, 12], [-15, 5], [-12, 3.2]);
+  return wing;
+}
+function ba_birdShadow(x, y, t, o = {}) {
+  const s = o.s ?? 1.6, dir = o.dir ?? 1, sq = o.squash ?? 0.5, a = o.a ?? 0.46, ph = o.flap ?? 0.0, W = ba_birdShadowPts(ph, t);
+  const draw = (k, al) => {
+    L.save(); L.setTransform(dir * s * k, 0, 0, s * sq * k, x, y); L.fillStyle = `rgba(5,4,15,${al})`;
+    L.beginPath();
+    for (const m of [1, -1]) { L.moveTo(5, 0); for (const q of m > 0 ? W : W.slice().reverse()) L.lineTo(q[0], q[1] * m); L.lineTo(-12, 0); }
+    L.fill();
+    L.beginPath(); L.ellipse(0, 0, 11, 3.6, 0, 0, TAU); L.fill();                                     // corps
+    L.beginPath(); L.moveTo(-10, -3); L.lineTo(-27, -7.5); L.lineTo(-29, 0); L.lineTo(-27, 7.5); L.lineTo(-10, 3); L.fill();     // queue en éventail
+    L.beginPath(); L.arc(13.5, 0, 2.7, 0, TAU); L.fill(); L.beginPath(); L.moveTo(15.5, -1.6); L.lineTo(20.5, 0.6); L.lineTo(15.5, 2); L.fill();   // tête et bec
+    L.restore();
+  };
+  draw(1.07, a * 0.45); draw(1, a);
+}
+
+// ───────────────────────── le caïman ─────────────────────────
+// (x, wy) = point où le cou entre dans l'eau (écran) ; s = échelle (1 → tête de 75 px) ; o : rise 0..1 (0 : seuls les yeux et les narines dépassent), pitch (rad, négatif = museau levé), open 0..1 (gueule),
+// flip, drip (0..1 : l'eau ruisselle de la tête), t0 (instant de l'éruption, pour les gouttes), dim
+function ba_caiman(x, wy, s, t, o = {}) {
+  const fl = o.flip ? -1 : 1, rise = clamp(o.rise ?? 1), pitch = o.pitch ?? -0.42, op = clamp(o.open ?? 0), C = ba_pal(o.dim || 0);
+  const col = { top: LM[1], base: LM[2], lit: LM[3], dark: GR[0], deep: NI[0], band: GR[1], belly: SK[4], bellyS: SK[3], tooth: WH[3], mouth: RD[1], tongue: RD[3], eye: YE[2] };
+  const J = [28 * s * rise + 4, -(10 + 40 * rise) * s + (1 - rise) * 6 * s];          // jonction crâne-cou (relative au point d'entrée du cou)
+  const cp = Math.cos(pitch), sp = Math.sin(pitch), H = (px_, py_) => [J[0] + (px_ * cp - py_ * sp) * s, J[1] + (px_ * sp + py_ * cp) * s];
+  const X0 = x - 60 * s, X1 = x + 110 * s; ba_BB = [Math.max(0, Math.floor(Math.min(X0, x - 40))), Math.max(0, Math.floor(wy - 120 * s - 20)), Math.min(LW, Math.ceil(Math.max(X1, x + 80))), Math.min(LH, Math.ceil(wy + 40))];
+  if (fl < 0) { ba_BB[0] = Math.max(0, Math.floor(x - 110 * s)); ba_BB[2] = Math.min(LW, Math.ceil(x + 60 * s)); }
+  ba_layerBegin();
+  const c = Y; c.setTransform(fl, 0, 0, 1, x, wy);
+  const poly_ = (pts, fill) => { const p = ba_poly(pts); c.fillStyle = fill; c.fill(p); return p; };
+  // cou et dos : chaîne du crâne vers l'eau, bosses de la crête dorsale
+  const neckPts = [[J[0] - 2 * s, J[1] + 2 * s], [J[0] - 22 * s * rise - 10 * s, J[1] + 12 * s], [J[0] - 40 * s * rise - 20 * s, J[1] + 26 * s + 6 * s * (1 - rise)], [-30 * s, 14 * s], [-48 * s, 24 * s]];
+  const nk = ba_poly(ba_limbPts(neckPts, [26 * s, 27 * s, 30 * s, 32 * s, 34 * s], 4)); c.fillStyle = col.base; c.fill(nk);
+  ba_cres(c, nk, col.lit, -1.4, -2.2, 1); ba_cres(c, nk, col.dark, 1.5, 3.0, 1);
+  c.fillStyle = col.dark; for (let i = 0; i < 8; i++) { const q = ba_cr(neckPts, 4)[i * 3 + 1]; if (!q) continue; c.beginPath(); c.moveTo(q[0] - 3 * s, q[1] - 11 * s); c.lineTo(q[0], q[1] - 17 * s); c.lineTo(q[0] + 3 * s, q[1] - 10 * s); c.closePath(); c.fill(); }
+  // tête : mâchoire supérieure et inférieure (rotée autour de la charnière)
+  c.save(); c.translate(J[0], J[1]); c.rotate(pitch); c.scale(s, s);
+  const UP = [[-10, -10], [-3, -16], [8, -18], [16, -16], [24, -13], [34, -11], [46, -9.5], [56, -9], [64, -9], [68, -6.5], [71, -3.5], [70, 0.5], [66, 3], [50, 4.2], [30, 5], [10, 6.5], [-8, 8]];
+  const LOW = [[-6, 7], [10, 6.8], [30, 5.2], [50, 4.6], [65, 3.6], [68, 6], [66, 9.5], [50, 11.5], [30, 12.5], [8, 14], [-6, 13]];
+  const hinge = [0, 8], ca = Math.cos(op * 0.62), sa = Math.sin(op * 0.62);
+  const lowR = LOW.map(([px_, py_]) => { const dx = px_ - hinge[0], dy = py_ - hinge[1]; return [hinge[0] + dx * ca - dy * sa, hinge[1] + dx * sa + dy * ca]; });
+  if (op > 0.05) {                                                                      // intérieur de la gueule
+    const inner = ba_poly([[2, 6.5], [66, 3.2], lowR[4], lowR[3], lowR[2], lowR[1], [4, 8]]); c.fillStyle = RD[1]; c.fill(inner);
+    c.fillStyle = RD[3]; c.beginPath(); c.ellipse(34, 6.8 + op * 5, 22, 2 + op * 2.5, 0.08 * op, 0, TAU); c.fill();
+    c.fillStyle = RD[0]; c.beginPath(); c.ellipse(6, 8, 6, 3, 0, 0, TAU); c.fill();
+  }
+  const lp = ba_poly(ba_crClosed(lowR, 2)); c.fillStyle = col.belly; c.fill(lp); ba_cres(c, lp, col.bellyS, 0, -2.2, 1); c.lineWidth = 0.8; c.strokeStyle = col.deep; c.lineJoin = 'round'; c.stroke(lp);
+  // dents (inférieures, vers le haut), très blanches
+  c.fillStyle = col.tooth;
+  for (let i = 0; i < 10; i++) { const f = i / 9, px_ = 14 + f * 50, py_ = lerp(6.8, 3.6, f), q = lowR[Math.min(3, Math.floor(f * 3))]; const bx = hinge[0] + (px_ - hinge[0]) * ca - (py_ + 0.4 - hinge[1]) * sa, by = hinge[1] + (px_ - hinge[0]) * sa + (py_ + 0.4 - hinge[1]) * ca; c.beginPath(); c.moveTo(bx - 1.3, by); c.lineTo(bx, by - 3.6 - (i % 2) * 1.2); c.lineTo(bx + 1.3, by); c.closePath(); c.fill(); }
+  const up = ba_poly(ba_crClosed(UP, 2)); c.fillStyle = col.base; c.fill(up);
+  ba_cres(c, up, col.lit, -1.2, -2.4, 1); ba_cres(c, up, col.dark, 1.2, 2.2, 1);
+  c.lineWidth = 0.9; c.strokeStyle = col.deep; c.lineJoin = 'round'; c.stroke(up);
+  c.fillStyle = col.tooth;                                                                // dents supérieures (vers le bas), décalées
+  for (let i = 0; i < 11; i++) { const f = i / 10, bx = 12 + f * 53, by = lerp(6.6, 3.4, f); c.beginPath(); c.moveTo(bx - 1.4, by - 0.4); c.lineTo(bx, by + 3.8 + ((i + 1) % 2) * 1.2); c.lineTo(bx + 1.4, by - 0.4); c.closePath(); c.fill(); }
+  c.fillStyle = col.band; for (const bx of [4, 20, 36, 52]) { c.beginPath(); c.moveTo(bx, -17 + (bx > 30 ? 6 : 0)); c.lineTo(bx + 6, -10); c.lineTo(bx + 2, -8.5); c.lineTo(bx - 4, -12); c.closePath(); c.fill(); }     // bandes sombres du museau
+  c.fillStyle = col.lit; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(20 + i * 8, -10.5 + i * 0.7, 0.9, 0, TAU); c.fill(); }                                                   // écailles claires
+  c.fillStyle = col.dark; c.beginPath(); c.ellipse(66.5, -5.2, 2.2, 1.8, 0, 0, TAU); c.fill();                                                                                   // narine
+  c.restore();
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, Math.round(wy) + 1, LW, LH); c.restore();        // la partie sous l'eau disparaît
+  ba_layerEnd({ outline: '#05040f' });
+  // œil : or, pupille verticale, arcade
+  const e = H(18, -13.4), ex = Math.round(x + fl * e[0]), ey = Math.round(wy + e[1]), er = Math.max(2, Math.round(3 * s));
+  if (ey < wy) { disc(ex, ey, er + 1, '#05040f'); disc(ex, ey, er, YE[2]); R(ex - 1, ey - er + 1, 2, er * 2 - 1, '#05040f'); px(ex - 1 * fl, ey - er + 1, WH[3]); R(ex - er, ey - er - 1, er * 2 + 1, 1, LM[1]); }
+  const ab = q => [x + fl * q[0], wy + q[1]];
+  return { J: ab(H(0, 0)), head: ab(H(40, -4)), mouth: ab(H(66, 3)), eye: [ex, ey] };
+}

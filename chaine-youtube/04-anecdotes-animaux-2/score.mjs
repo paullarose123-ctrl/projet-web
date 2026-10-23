@@ -494,8 +494,8 @@ function genFarCrackle(o) {                              // sous l'eau : petits 
     const rg = mkRnd(seed), t1 = (b.off + b.n) / SR, save = rnd; rnd = rg; let t = b.off / SR + rg() * 2;
     while (t < t1) {
       const ga = mulAmp ? mulAmp(t) : 1, m = 4 + Math.floor(rg() * 11), span = 0.12 + 0.4 * rg(), pan = rg() * 1.8 - 0.9;
-      for (let j = 0; j < m; j++) { const tj = t + span * Math.pow(rg(), 1.4); tone(tj, 0.012, { f0: 1200 + 2000 * rg(), gain: ga * (0.25 + 0.75 * rg()), att: 0.0005, rel: 0.004, dec: 0.002, pan: clamp(pan + rr(-0.2, 0.2), -1, 1), send: 0.8 }); }
-      nzb(t, span + 0.04, { f0: 900, f1: 1500, q: 1.2, gain: 0.05 * ga, att: 0.01, rel: 0.05, am: 0.9, arate: 38, pan, send: 0.7 });
+      for (let j = 0; j < m; j++) { const tj = t + span * Math.pow(rg(), 1.4); tone(tj, 0.012, { f0: 800 + 1500 * rg(), gain: ga * (0.25 + 0.75 * rg()), att: 0.0006, rel: 0.004, dec: 0.002, pan: clamp(pan + rr(-0.2, 0.2), -1, 1), send: 0.8 }); }
+      nzb(t, span + 0.04, { f0: 700, f1: 1100, q: 1.2, gain: 0.05 * ga, att: 0.01, rel: 0.05, am: 0.9, arate: 38, pan, send: 0.7 });
       t += -Math.log(1 - rg()) / rate;
     }
     rnd = save;
@@ -661,7 +661,7 @@ function ambiances() {
   const tPred = wt('b3', 'prédateur'), tFuir = wt('b4', 'fuir'), tEch = wt('c3', 'échapper'), dive = diveTime();
   // ─ prairie / sous-bois doré (intro et scarabée) : vent doux dans l'herbe, grillons et sauterelles, mouches qui passent, oiseaux lointains ; les insectes se taisent quand le prédateur arrive
   const pE = sE + 0.25, calm = x => x < tPred ? 1 : x < tFuir + 0.3 ? lerp(1, 0.4, sm((x - tPred) / 0.6)) : lerp(0.4, 1, sm((x - tFuir - 0.3) / 1.6));
-  layer(0, pE, { name: 'wind_prairie', rms: -36.5, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 430, q: 1.3, whistle: 0.04, rumble: 0.25, seed: 211, depth: 0.7, hiss: 0.12, wf: 1800, rate: 0.8 }));
+  layer(0, pE, { name: 'wind_prairie', rms: -37, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 430, q: 1.3, whistle: 0.04, rumble: 0.25, seed: 211, depth: 0.7, hiss: 0.12, wf: 1800, rate: 0.8 }));
   layer(0, pE, { name: 'crickets_prairie', rms: -39.5, fi: 0.8, fo: 0.5, send: 0.2, mul: calm }, genCrickets({ n: 5, seed: 212, fc: [3700, 4500], rate: [1.5, 2.8], pulses: [3, 5], pr: [34, 48] }));
   layer(0, pE, { name: 'hoppers_prairie', rms: -46, fi: 1, fo: 0.5, send: 0.3, mul: calm }, genCrickets({ n: 3, seed: 213, fc: [5600, 6800], rate: [0.45, 0.8], pulses: [14, 26], pr: [70, 100] }));
   layer(0, pE, { name: 'flies', rms: -41.5, fi: 0.6, fo: 0.5, send: 0.25, mul: x => calm(x) }, genFlies({ seed: 214, rate: 0.4 }));
@@ -669,31 +669,31 @@ function ambiances() {
   layer(0, pE, { name: 'hush_prairie', rms: -48, fi: 0.8, fo: 0.5, send: 0.3 }, genHush({ seed: 216, f: 3000 }));
   // ─ forêt tropicale au bord d'une rivière (basilic) : rivière, cigales, rainettes, oiseaux tropicaux, gouttes sur les grandes feuilles, vent dans les feuilles larges ; tout se tait un peu quand le rapace passe
   const jS = bS - 0.25, jE = bE + 0.25, hawk = x => x < tEch ? 1 : lerp(1, 0.45, sm((x - tEch) / 0.5));
-  layer(jS, jE, { name: 'river', rms: -36.5, fi: 0.5, fo: 0.5, send: 0.3 }, genStream({ seed: 231, bubbles: 28, drips: 0.2, fa: 1500, fb: 480, hiss: 0.08, bubF: 260, dripF: [800, 1800] }));
-  layer(jS, jE, { name: 'cicadas_jungle', rms: -40.5, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 232, f: 4700, bursts: cicadaBursts(jS, jE, 232) }));
-  layer(jS, jE, { name: 'cicadas_hi_jungle', rms: -47, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 233, f: 7100, bursts: cicadaBursts(jS, jE, 233, 0.9) }));
-  layer(jS, jE, { name: 'frogs_jungle', rms: -42, fi: 0.8, fo: 0.5, send: 0.3, mul: hawk }, genTreeFrogs({ n: 6, seed: 234, f: [1900, 3300], rate: [5, 9], series: [3, 9], gap: [1.5, 5], croakers: 3 }));
-  layer(jS, jE, { name: 'birds_jungle', rms: -43.5, fi: 0.8, fo: 0.5, send: 0, mul: hawk }, genBirds({ seed: 235, rate: () => 0.75, species: [['parrot', 1], ['oriole', 1.2], ['toucan', 0.7], ['tinamou', 0.35], ['whistle', 0.8], ['warble', 0.8], ['tsit', 0.5]], gain: 0.07, far: 0.5, scale: [0.85, 1.15] }));
+  layer(jS, jE, { name: 'river', rms: -38, fi: 0.5, fo: 0.5, send: 0.3 }, genStream({ seed: 231, bubbles: 28, drips: 0.2, fa: 1500, fb: 480, hiss: 0.08, bubF: 260, dripF: [800, 1800] }));
+  layer(jS, jE, { name: 'cicadas_jungle', rms: -43, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 232, f: 4700, bursts: cicadaBursts(jS, jE, 232) }));
+  layer(jS, jE, { name: 'cicadas_hi_jungle', rms: -49, fi: 0.8, fo: 0.5, send: 0.4, mul: hawk }, genCicada({ seed: 233, f: 7100, bursts: cicadaBursts(jS, jE, 233, 0.9) }));
+  layer(jS, jE, { name: 'frogs_jungle', rms: -44, fi: 0.8, fo: 0.5, send: 0.3, mul: hawk }, genTreeFrogs({ n: 6, seed: 234, f: [1900, 3300], rate: [5, 9], series: [3, 9], gap: [1.5, 5], croakers: 3 }));
+  layer(jS, jE, { name: 'birds_jungle', rms: -44.5, fi: 0.8, fo: 0.5, send: 0, mul: hawk }, genBirds({ seed: 235, rate: () => 0.75, species: [['parrot', 1], ['oriole', 1.2], ['toucan', 0.7], ['tinamou', 0.35], ['whistle', 0.8], ['warble', 0.8], ['tsit', 0.5]], gain: 0.07, far: 0.5, scale: [0.85, 1.15] }));
   layer(jS, jE, { name: 'drops_jungle', rms: -49, fi: 0.8, fo: 0.5, send: 0.6 }, genDrops({ seed: 236, rate: 1.0 }));
-  layer(jS, jE, { name: 'leaves_jungle', rms: -40.5, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 1000, q: 0.8, whistle: 0, rumble: 0.05, seed: 237, depth: 0.8, hiss: 0.5, wf: 2600, rate: 0.9 }));
+  layer(jS, jE, { name: 'leaves_jungle', rms: -42, fi: 0.8, fo: 0.5, send: 0.3 }, genWind({ f0: 1000, q: 0.8, whistle: 0, rumble: 0.05, seed: 237, depth: 0.8, hiss: 0.5, wf: 2600, rate: 0.9 }));
   // ─ Amazonie au crépuscule, à la surface (grenouilles, insectes, eau qui clapote, un oiseau au loin), puis SOUS L'EAU (bourdonnement sourd étouffé, bulles, petits craquements électriques lointains)
   const sfE = dive + 0.35, uS = dive - 0.2, uE = aE + 0.25;
   if (sfE > aS - 0.15 + 0.3) {
-    layer(aS - 0.15, sfE, { name: 'water_dusk', rms: -37, fi: 0.5, fo: 0.35, send: 0.3 }, genStream({ seed: 241, bubbles: 14, drips: 0.15, fa: 1100, fb: 380, hiss: 0.05, bubF: 220, dripF: [700, 1500] }));
-    layer(aS - 0.15, sfE, { name: 'frogs_dusk', rms: -40, fi: 0.5, fo: 0.35, send: 0.3 }, genTreeFrogs({ n: 7, seed: 242, f: [1700, 2900], rate: [4, 7], series: [4, 12], gap: [0.8, 3], croakers: 5 }));
+    layer(aS - 0.15, sfE, { name: 'water_dusk', rms: -38, fi: 0.5, fo: 0.35, send: 0.3 }, genStream({ seed: 241, bubbles: 14, drips: 0.15, fa: 1100, fb: 380, hiss: 0.05, bubF: 220, dripF: [700, 1500] }));
+    layer(aS - 0.15, sfE, { name: 'frogs_dusk', rms: -41, fi: 0.5, fo: 0.35, send: 0.3 }, genTreeFrogs({ n: 7, seed: 242, f: [1700, 2900], rate: [4, 7], series: [4, 12], gap: [0.8, 3], croakers: 5 }));
     layer(aS - 0.15, sfE, { name: 'insects_dusk', rms: -43, fi: 0.5, fo: 0.35, send: 0.2 }, genCrickets({ n: 5, seed: 243, fc: [3300, 4200], rate: [1.3, 2.4], pulses: [4, 7], pr: [28, 40] }));
     layer(aS - 0.15, sfE, { name: 'birds_dusk', rms: -50, fi: 0.5, fo: 0.35, send: 0 }, genBirds({ seed: 244, rate: () => 0.5, species: [['oriole', 1], ['tinamou', 0.6], ['whistle', 1]], gain: 0.06, far: 0.8, scale: [0.85, 1.05], sendFar: 0.9, sendNear: 0.9 }));
     layer(aS - 0.15, sfE, { name: 'wind_dusk', rms: -43, fi: 0.5, fo: 0.35, send: 0.3 }, genWind({ f0: 700, q: 1, whistle: 0, rumble: 0.1, seed: 245, depth: 0.6, hiss: 0.3, wf: 2000, rate: 0.7 }));
   }
-  layer(uS, uE, { name: 'uw_hum', rms: -34.5, fi: 0.45, fo: 0.5, send: 0.4 }, genUWHum({ seed: 251 }));
-  layer(uS, uE, { name: 'uw_flow', rms: -41, fi: 0.45, fo: 0.5, send: 0.3 }, genWind({ f0: 170, q: 0.8, whistle: 0, rumble: 0.9, seed: 252, depth: 0.9, hiss: 0, rate: 0.6 }));
-  layer(uS, uE, { name: 'uw_bubbles', rms: -42, fi: 0.45, fo: 0.5, send: 0.6 }, genUWBubbles({ seed: 253, rate: 0.9 }));
-  layer(uS, uE, { name: 'uw_crackle', rms: -44, fi: 0.8, fo: 0.5, send: 0.7, mul: x => lerp(0.6, 1.3, sm((x - uS) / Math.max(1, aE - uS))) }, genFarCrackle({ seed: 254, rate: 0.5 }));
+  layer(uS, uE, { name: 'uw_hum', rms: -37.5, fi: 0.45, fo: 0.5, send: 0.4 }, genUWHum({ seed: 251 }));
+  layer(uS, uE, { name: 'uw_flow', rms: -42.5, fi: 0.45, fo: 0.5, send: 0.3 }, genWind({ f0: 170, q: 0.8, whistle: 0, rumble: 0.9, seed: 252, depth: 0.9, hiss: 0, rate: 0.6 }));
+  layer(uS, uE, { name: 'uw_bubbles', rms: -43.5, fi: 0.45, fo: 0.5, send: 0.6 }, genUWBubbles({ seed: 253, rate: 0.9 }));
+  layer(uS, uE, { name: 'uw_crackle', rms: -49, fi: 0.8, fo: 0.5, send: 0.7, mul: x => lerp(0.6, 1.3, sm((x - uS) / Math.max(1, aE - uS))) }, genFarCrackle({ seed: 254, rate: 0.5 }));
   // ─ question finale : une prairie légère (vent, oiseaux, quelques grillons) qui s'éteint dans la seconde qui suit la dernière parole : le plan de sortie est propre
   const qS = fS - 0.25, qE = fE - 0.8, fade = x => x < VOICE_END ? 1 : lerp(1, 0.55, sm((x - VOICE_END) / 0.6));
-  layer(qS, qE, { name: 'wind_fin', rms: -37.5, fi: 0.5, fo: 0.9, send: 0.3, mul: fade }, genWind({ f0: 480, q: 1.2, whistle: 0.04, rumble: 0.2, seed: 261, depth: 0.7, hiss: 0.12, wf: 1900, rate: 0.8 }));
-  layer(qS, qE, { name: 'birds_fin', rms: -44, fi: 0.5, fo: 0.9, send: 0, mul: fade }, genBirds({ seed: 262, rate: () => 0.55, species: [['whistle', 1], ['chick', 1], ['warble', 0.8], ['tsit', 1]], gain: 0.06, far: 0.5, scale: [0.9, 1.1] }));
-  layer(qS, qE, { name: 'crickets_fin', rms: -42, fi: 0.5, fo: 0.9, send: 0.2, mul: fade }, genCrickets({ n: 4, seed: 263, fc: [3700, 4400], rate: [1.4, 2.4], pulses: [3, 5], pr: [34, 48] }));
+  layer(qS, qE, { name: 'wind_fin', rms: -36.5, fi: 0.5, fo: 0.9, send: 0.3, mul: fade }, genWind({ f0: 480, q: 1.2, whistle: 0.04, rumble: 0.2, seed: 261, depth: 0.7, hiss: 0.12, wf: 1900, rate: 0.8 }));
+  layer(qS, qE, { name: 'birds_fin', rms: -42.5, fi: 0.5, fo: 0.9, send: 0, mul: fade }, genBirds({ seed: 262, rate: () => 0.55, species: [['whistle', 1], ['chick', 1], ['warble', 0.8], ['tsit', 1]], gain: 0.06, far: 0.5, scale: [0.9, 1.1] }));
+  layer(qS, qE, { name: 'crickets_fin', rms: -41, fi: 0.5, fo: 0.9, send: 0.2, mul: fade }, genCrickets({ n: 4, seed: 263, fc: [3700, 4400], rate: [1.4, 2.4], pulses: [3, 5], pr: [34, 48] }));
   layer(qS, qE, { name: 'hush_fin', rms: -48, fi: 0.5, fo: 0.9, send: 0.3, mul: fade }, genHush({ seed: 264, f: 3000 }));
 }
 
@@ -701,7 +701,7 @@ function ambiances() {
 const LV = {                                             // niveau de l'événement avant mastering, exprimé en « crête finale visée » (dBFS) corrigée de l'écart mesuré dû à la réverbération : la crête finale mesurée est dans son_notes.md
   ding: -11.8, no: -10, label: -10, blip: -12, counter: -10, pop: -10, scribble: -12.8, page: -10.1, scan: -11.9, zoom: -11.2, whoosh: -8.4, reveal: -7.5, suspense: -11.3, wind: -11, snowfall: -14, frost: -11.7, crack: -7, drip: -10, thaw: -12.9,
   heartbeat: -8, beep: -10.4, flatline: -11.8, glow: -11.3, sparkle: -11.3, ribbit: -7, hop: -10, step: -10, sniff: -10.1, squirt: -7, splat: -6, yelp: -7.1, shake: -9, sneeze: -6, yip: -8.1, run: -10, ruler: -10.2, bird: -12.3, vote: -8.1,
-  zap: -5.5, splash: -7.5, slap: -10, steam: -10.5, bang: -6.5, bubbles: -11.5, flop: -9, heat: -11.5, buzz: -12.5,       // épisode 2
+  zap: -5.5, splash: -7.5, slap: -10, steam: -10.5, bang: -6.5, bubbles: -13, flop: -9, heat: -11.5, buzz: -12.5,       // épisode 2
   endCard: -9.6, logo: -5.6, letters: -8.7, swoosh: -9, thud: -7, stamp: -8,
 };
 const surfaceAt = t => { const sg = segAt(t); return sg === 'bas' ? (t >= wt('c1', 'courir') - 0.2 ? 'water' : 'wet') : sg === 'ang' ? 'wet' : 'grass'; };       // herbe et litière (prairie, intro, fin), boue de berge, eau peu profonde (le basilic court), fond vaseux
@@ -768,12 +768,12 @@ const SFX = {
   vote(x) { nzb(x, 0.16, { f0: 2500, f1: 1200, q: 1, gain: 0.08, att: 0.01, rel: 0.08, pan: -0.2, panTo: 0.1 }); tone(x + 0.16, 0.12, { f0: 160, f1: 90, curve: 0.5, gain: 0.18, att: 0.002, rel: 0.03, dec: 0.05, harm: [1, 0.4], send: 0.2 }); nzb(x + 0.16, 0.05, { type: 'lp', f0: 500, gain: 0.1, att: 0.001, rel: 0.03 }); marimba(x + 0.28, 'G5', { gain: 0.08, tau: 0.4 }); marimba(x + 0.37, 'D6', { gain: 0.08, tau: 0.5 }); },
   // ─ épisode 2 : électricité, eau, vapeur, insecte
   zap(x, v) {                                            // décharge électrique : claquement large bande, arc (dent de scie nasale hachée par un papillotement irrégulier + bruit clair), zip descendant, étincelles ; grondement si forte ; v = intensité 0,5 à 2
-    const s = clamp(v, 0.4, 2.2), d = 0.16 + 0.13 * s;
-    nzb(x, 0.009, { type: 'hp', f0: 1800, gain: 0.5, att: 0.0002, rel: 0.006, send: 0.2 });
+    const s = clamp(v, 0.4, 2.2), d = 0.2 + 0.16 * s;
+    nzb(x, 0.009, { type: 'hp', f0: 1800, gain: 0.4, att: 0.0002, rel: 0.006, send: 0.2 });
     { const len = Math.floor(d * SR), buf = new Float32Array(len), A = new Filt().set(1700, 1.4), Bq = new Filt().set(3900, 1.2), C = new Filt().set(600, 2); let ph = 0, gl = 0, mx = 1e-9;
       for (let i = 0; i < len; i++) { const xs = i / SR, u = i / len, f = 125 * (1 - 0.3 * u) * (1 + 0.04 * Math.sin(TAU * 31 * xs)); ph += f / SR; if (ph >= 1) ph -= 1; gl += ((rnd() * 2 - 1) - gl) * 0.035; const gate = clamp(0.5 + 5 * gl, 0.08, 1), saw = ph * 2 - 1, nz = rnd() * 2 - 1;
         A.run(saw + nz * 0.5); Bq.run(nz); C.run(saw); buf[i] = (A.bp + 0.55 * Bq.bp + 0.5 * C.bp) * gate * Math.min(1, i / 24) * Math.pow(1 - u, 0.8); mx = Math.max(mx, Math.abs(buf[i])); }
-      emit(buf, x + 0.004, rr(-0.15, 0.15), 0.25, 0.16 / mx); }
+      emit(buf, x + 0.004, rr(-0.15, 0.15), 0.25, 0.3 / mx); }
     tone(x + 0.002, 0.07, { f0: 4200, f1: 700, curve: 0.5, gain: 0.07, att: 0.0005, rel: 0.02, dec: 0.03, harm: [1, 0.3], pan: 0.1, send: 0.3 });
     const n = Math.round(6 + 12 * s); for (let k = 0; k < n; k++) { const t = x + 0.01 + (d + 0.08) * Math.pow(rnd(), 1.3); tone(t, 0.01, { f0: 1500 + 5500 * rnd(), gain: 0.06 * (0.3 + 0.7 * rnd()), att: 0.0004, rel: 0.004, dec: 0.002, pan: rr(-0.8, 0.8), send: 0.3 }); nzb(t, 0.004, { type: 'hp', f0: 4000, gain: 0.05, att: 0.0003, rel: 0.003, pan: rr(-0.8, 0.8) }); }
     if (s > 1.05) tone(x, 0.3, { f0: 95, f1: 48, curve: 0.55, gain: 0.2 * (s - 0.9), att: 0.002, rel: 0.08, dec: 0.09, harm: [1, 0.4], send: 0.2 });
@@ -916,7 +916,7 @@ function verb(inp, spread) {
   return out;
 }
 // ───────── master : chaque bus a sa réverbération, un adoucisseur tanh, le même gain final pour toutes les pistes ─────────
-const TRIM = { music: 1, amb: 1, sfx: 1 };
+const TRIM = { music: 1.15, amb: 1, sfx: 1 };       // musique +1,2 dB : musique + ambiances ≈ −23 dBFS RMS avant le mixage de rendu.sh
 const mast = {};
 for (const k of ['music', 'amb', 'sfx']) {
   const b = BUS[k], WL = verb(b.SL, 0), WR = verb(b.SR, 23), ML = new Float32Array(N), MR = new Float32Array(N);

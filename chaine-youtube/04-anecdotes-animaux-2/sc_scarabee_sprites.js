@@ -194,7 +194,7 @@ const sb_TIPK = [
   [[-25, -22], [-33.5, -26], [-39, -33], [-38, -41.5], [-30, -46.5], [-19, -47.5]],
 ];
 const sb_TIPW = [8.2, 7.4, 6.2, 5.0, 4.0, 3.0];
-const sb_WALK = { T: 0.52, duty: 0.6, stride: 13, lift: 5.2 };
+const sb_WALK = { T: 0.52, duty: 0.6, stride: 13, lift: 3.8 };
 sb_WALK.speed = sb_WALK.stride / (sb_WALK.duty * sb_WALK.T);                    // unités/s : le corps avance de `stride` pendant l'appui d'un pied
 const sb_walkPh = d => d * sb_WALK.duty / sb_WALK.stride;                       // phase (en cycles) après avoir avancé de d unités
 
@@ -218,7 +218,9 @@ function sb_pose(o, t) {
     const c = Math.cos(4 * Math.PI * ph);
     P.bob = 0.6 * c; P.pitch = 0.018 * Math.sin(4 * Math.PI * ph + 1); P.headRot = 0.05 * Math.sin(2 * Math.PI * ph);
     P.antW = 1.0;
-    for (const side of ['n', 'f']) for (const id of ['F', 'M', 'H']) P.toes[side][id] = sb_gait(ph, id, side, sb_TOES);
+    const st = clamp(sb_fin(o.settle, 0));
+    for (const side of ['n', 'f']) for (const id of ['F', 'M', 'H']) { const w = sb_gait(ph, id, side, sb_TOES), b = sb_TOES[side][id]; P.toes[side][id] = [lerp(w[0], b[0], st), lerp(w[1], b[1], st)]; }
+    if (st > 0) { P.bob *= 1 - st; P.pitch *= 1 - st; }
   }
   // se redresse fièrement : le corps monte sur des pattes tendues, le nez se relève, les antennes s'écartent
   P.pitch += 0.17 * up; P.raise += 4.2 * up; P.headRot -= 0.1 * up; P.antA -= 0.4 * up; P.antW += 0.4 * up;
@@ -351,7 +353,7 @@ function sb_beetle(cx, cy, s, t, o = {}) {
     c.globalAlpha = 0.9; sb_cres(c, ely, ll, 2.0, C.w2, true); c.globalAlpha = 1;
     // reflet qui glisse (balayage lent) : bande oblique claire
     const sh = o.sheen ?? ((t * 0.45) % 3.2) / 1.0;
-    if (sh >= 0 && sh <= 1.2) { const xx = 12 - sh * 46, a = Tb(xx + 6, -40), b = Tb(xx - 2, -14); c.save(); c.globalAlpha = 0.9; sb_stroke(c, [a, b], 2.4, C.e6); sb_stroke(c, [[a[0] + 1, a[1]], [b[0] + 1, b[1]]], 1.0, C.e8); c.restore(); }
+    if (sh >= 0 && sh <= 1.15) { const xx = 14 - sh * 48, a = Tb(xx + 7, -41), b = Tb(xx - 3, -15); c.save(); c.globalAlpha = 0.5; sb_stroke(c, [a, b], 6.0, C.e5); c.globalAlpha = 0.8; sb_stroke(c, [[a[0] + 0.6, a[1]], [b[0] + 0.6, b[1]]], 2.4, C.e7); c.restore(); }
   }
   c.restore();
   c.strokeStyle = C.e0; c.lineWidth = cw * 0.9; c.lineJoin = 'round'; c.stroke(ely);
@@ -849,7 +851,7 @@ function sb_cutaway(t, p, o = {}) {
   }
   sb_snapPal(4);
   // jet à la buse
-  if (p.jet > 0) { const [nx, ny] = W(sb_CUT.nozzle[0], sb_CUT.nozzle[1] + 2); sb_jet(nx, ny, Math.PI / 2, t, t - ((t * 14) % 1) / 14 - Math.floor(1) * 0, { dur: 99, len: 70 * z, hz: 14, size: 0.9 * z, gravity: 20 }); }
+  if (p.jet > 0) { const [nx, ny] = W(sb_CUT.nozzle[0], sb_CUT.nozzle[1] + 2); sb_jet(nx, ny, Math.PI / 2, t, 0, { dur: 1e6, len: 70 * z, hz: 14, size: 0.9 * z, gravity: 20 }); }
   return { cham: W(chx, chy).concat([crx * z, cry * z]), pA: W(sb_CUT.pA[0], sb_CUT.pA[1]).concat([sb_CUT.pA[2] * z, sb_CUT.pA[3] * z]), pB: W(sb_CUT.pB[0], sb_CUT.pB[1]).concat([sb_CUT.pB[2] * z, sb_CUT.pB[3] * z]), nozzle: W(sb_CUT.nozzle[0], sb_CUT.nozzle[1]), z, W };
 }
 
