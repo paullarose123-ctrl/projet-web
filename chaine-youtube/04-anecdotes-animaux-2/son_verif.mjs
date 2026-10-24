@@ -5,8 +5,8 @@ import fs from 'fs'; import { readWav, analyse, BANDS } from './son_analyse.mjs'
 const T = JSON.parse(fs.readFileSync('build/timeline.json', 'utf8')), P = {}; T.phrases.forEach(p => P[p.id] = p);
 const W = { wind_prairie: [0.5, 5], crickets_prairie: [0.5, 5], hoppers_prairie: [0.5, 10], flies: [0.5, 20], birds_prairie: [0.5, 20], hush_prairie: [0.5, 5],
   river: [24, 36], cicadas_jungle: [24, 36], cicadas_hi_jungle: [24, 36], frogs_jungle: [24, 36], birds_jungle: [24, 36], drops_jungle: [24, 36], leaves_jungle: [24, 36],
-  water_dusk: [37.55, 38.3], frogs_dusk: [37.55, 38.3], insects_dusk: [37.55, 38.3], birds_dusk: [37.55, 38.3], wind_dusk: [37.55, 38.3],
-  uw_hum: [39, 50], uw_flow: [39, 50], uw_bubbles: [39, 50], uw_crackle: [39, 50], wind_fin: [51, 55], birds_fin: [51, 55], crickets_fin: [51, 55], hush_fin: [51, 55] };
+  water_dusk: [37.55, 38.8], frogs_dusk: [37.55, 38.8], insects_dusk: [37.55, 38.8], birds_dusk: [37.55, 38.8], wind_dusk: [37.55, 38.8],
+  uw_hum: [39.5, 50], uw_flow: [39.5, 50], uw_bubbles: [39.5, 50], uw_crackle: [39.5, 50], wind_fin: [51, 55], birds_fin: [51, 55], crickets_fin: [51, 55], hush_fin: [51, 55] };
 console.log('couche              fenêtre        RMS    crête   pic(Hz)  bandes(<100 100-300 300-1k 1-3k 3-6k 6k+)');
 for (const [l, [a, b]] of Object.entries(W)) { let w; try { w = readWav(`build/test/l_${l}_music.wav`); } catch { continue; } const r = analyse(w, a, b); console.log(l.padEnd(19), `${a}-${b}`.padEnd(12), r.rms.toFixed(1).padStart(7), r.peak.toFixed(1).padStart(7), String(r.pkf).padStart(7), '  ', r.bands.map(x => String(x).padStart(4)).join(' ')); }
 function fftm(x) { const n = x.length, re = Float64Array.from(x), im = new Float64Array(n); for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; } }

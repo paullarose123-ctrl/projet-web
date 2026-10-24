@@ -1,7 +1,23 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
-   sc_basilic_sprites.js — le BASILIC À PLUMET (Basiliscus plumifrons, mâle), l'eau qu'il frappe, ses prédateurs. Préfixe ba_.
-   (en cours d'écriture : l'en-tête d'API est complété à la fin)
+   sc_basilic_sprites.js — le BASILIC À PLUMET (Basiliscus plumifrons, mâle), l'eau qu'il frappe, ses prédateurs (segment Amérique centrale). Préfixe ba_.
+   Tout se dessine sur L (270 × 480) dans draw(u, t) (AVANT le tramage), sauf ICONES[1] (ui, pixels nets). Fonctions pures du temps : aucun Math.random ni Date (hasard = ba_h, graines).
+
+   ba_lizard(cx, cy, s, t, o)   le basilic de profil, tourné vers la DROITE (o.flip : vers la gauche). (cx, cy) = point d'appui (branche, surface de l'eau) sous la hanche ; o.hip = [x, y] : place la HANCHE à cet endroit de l'écran.
+                                s = 1 → tête 16 px, tronc 38 px, queue 118 px (≈ 180 px du museau à la pointe) ; s ≈ 1,3 en course (corps entier dans le cadre), 2,0 assis, 2,25 en gros plan.
+                                Vert vif (LM), ventre pâle, raie claire du flanc, mouchetures turquoise, VOILE dorsal et PLUMET de la tête (membranes menthe à nervures sombres, liseré de soleil), queue très fine à bandes et petite crête,
+                                longues pattes arrière dont les orteils sont bordés de FRANGES qui s'ouvrent (o.sp), bras repliés en arrière en course, œil DORÉ (clignement automatique).
+                                o.pose : 'sit' (assis, alerte) | 'look' (tête haute) | 'crouch' (ramassé avant le bond) | 'leap' (bond, étiré) | 'fall' (jambes en avant pour la réception) | 'swim' | 'run' (course debout) ; o.pose2 + o.mix 0..1 : fondu d'une pose à l'autre (ba_seq(t, [[t, pose], …]) enchaîne des poses) ;
+                                o.ph : phase du cycle de course en CYCLES (la patte proche frappe l'eau à ph = 0,05, l'autre à 0,55 ; ≈ 3,3 cycles/s) ; o.spd 0..1 (intensité : ondulation de la queue) ; o.rot (rad : tangage du corps autour de la hanche) ;
+                                o.over : champs de pose forcés (voir BA_POSES : ha, na, mouth, tongue, sail, crest…) ; o.light [x, y] (vers la source, écran), o.rim 0..1 (liseré de soleil), o.dim 0..1 (dans l'ombre) ; o.outline ;
+                                o.tint = [y, 'r,g,b', alpha] : teinte ce qui est SOUS y (le pied immergé, vu à travers l'eau) ; o.reflect = { y, a, depth } : reflet ondulé dans l'eau ; o.noEye.
+                                Renvoie { T(x, y) (repère du modèle → écran), eye, head, nose, feetN, feetF, tipN, tipF (cheville et bout des orteils des deux pattes), tailTip, … }.
+   ba_runPose(o, t) / ba_runLeg(ph)   cycle de course : claque (orteils ouverts) → poussée (le pied s'enfonce, la poche d'air se forme) → il sort → genou haut → il repart ; hanche qui monte et descend, tronc qui tangue, queue en balancier.
+   ba_slap(wx, wy, t0, t, o)    claquement d'un pied : anneaux, gerbe vers l'arrière, gouttes balistiques, trou d'air, bulles (o.layer 'under' avant le basilic | 'over' après ; o.size, o.dir, o.cam, o.sq : écrasement des anneaux).
+   ba_runFx(t, o)               la traînée de pas d'un basilic qui court à vitesse constante (un claquement par pas, aux endroits où le pied touche l'eau) ; ba_footTimes (sc_basilic.js) donne les mêmes instants pour les événements.
+   ba_pocket(X0, wy, sm, phi, t) gros plan EN COUPE : la poche d'air qui se forme autour du pied (phi = phase de la patte), se pince avant qu'il ne la referme, bulles, jet et rides ; ba_footWater(phi) = trajectoire du pied dans le repère de l'eau.
+   ba_birdShadow(x, y, t, o)    l'ombre d'un oiseau de proie vue du dessus, aplatie sur l'eau ; ba_caiman(x, wy, s, t, o) le caïman (rise 0 : seules les arcades des yeux dépassent ; 1 : jaillit ; open : gueule ; pitch : museau levé).
+   ICONES[1]                    icône 17 × 17 du carnet : tête de basilic de profil, plumet et œil doré.
    ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ───────────────────────── outils ─────────────────────────
@@ -99,9 +115,9 @@ function ba_pal(dim = 0, far = 0) {
 // L* : patte arrière proche (cheville x, y ; angle du pied ; ouverture des orteils 0..1) ; F* : patte arrière éloignée ; lk : échelle des os de la patte (raccourci du sprawl) ;
 // A*, B* : mains proche et éloignée (position) ; sail : hauteur du voile dorsal (1 = repos) ; crest : hauteur du plumet de la tête ; mouth : ouverture de la gueule ; sx : étalement latéral.
 const BA_POSES = {
-  sit: { hx: -17, hy: -8.5, ta: -0.16, tl: 36, arch: 1.4, na: -0.62, nl: 8, ha: -0.20, tailA: 3.06, tailC: 0.50, tw: 0.05, tph: 0, tlen: 118,
-    Lx: -12.5, Ly: -1.2, Lt: 0.0, Ls: 0.5, Kx: -7, Ky: -4.2, Fx: -6, Fy: -1.2, Ft: 0.0, Fs: 0.45, KFx: -1, KFy: -4.4, lk: 0.64, Ax: 6, Ay: 13, Bx: 0.5, By: 13, sail: 1, crest: 1, mouth: 0 },
-  look: { hx: -17, hy: -8.5, ta: -0.30, tl: 36, arch: 1.0, na: -0.85, nl: 8.5, ha: -0.42, tailA: 3.06, tailC: 0.55, tw: 0.05, tph: 0, tlen: 118,
+  sit: { hx: -17, hy: -8.5, ta: -0.27, tl: 36, arch: 1.2, na: -0.8, nl: 8.5, ha: -0.30, tailA: 3.06, tailC: 0.50, tw: 0.05, tph: 0, tlen: 118,
+    Lx: -12.5, Ly: -1.2, Lt: 0.0, Ls: 0.5, Kx: -7, Ky: -4.2, Fx: -6, Fy: -1.2, Ft: 0.0, Fs: 0.45, KFx: -1, KFy: -4.4, lk: 0.64, Ax: 5, Ay: 14, Bx: 0, By: 14, sail: 1, crest: 1, mouth: 0 },
+  look: { hx: -17, hy: -8.5, ta: -0.36, tl: 36, arch: 1.0, na: -0.95, nl: 8.8, ha: -0.48, tailA: 3.06, tailC: 0.55, tw: 0.05, tph: 0, tlen: 118,
     Lx: -12.5, Ly: -1.2, Lt: 0.0, Ls: 0.5, Kx: -7, Ky: -4.2, Fx: -6, Fy: -1.2, Ft: 0.0, Fs: 0.45, KFx: -1, KFy: -4.4, lk: 0.64, Ax: 5, Ay: 13.5, Bx: -0.5, By: 13.5, sail: 1.12, crest: 1.1, mouth: 0 },
   crouch: { hx: -15, hy: -9.5, ta: -0.08, tl: 34, arch: 3.0, na: -0.30, nl: 7.5, ha: 0.12, tailA: 3.04, tailC: 0.35, tw: 0.03, tph: 0, tlen: 118,
     Lx: -10, Ly: -1.2, Lt: 0.0, Ls: 0.8, Kx: -3, Ky: -6.2, Fx: -4, Fy: -1.2, Ft: 0.0, Fs: 0.7, KFx: 2, KFy: -6.4, lk: 0.78, Ax: 6, Ay: 12, Bx: 1, By: 12.5, sail: 0.85, crest: 0.9, mouth: 0 },
@@ -463,11 +479,11 @@ function ba_pocketGeom(sm, phi) {
 }
 function ba_pocket(X0, wy, sm, phi, t, o = {}) {
   if (phi < 0.045) return;
-  const open = sm01(prog(phi, 0.05, 0.3)), pinch = sm01(prog(phi, 0.5, 0.64)), vanish = sm01(prog(phi, 0.6, 0.72));
+  const open = ba_sm01(prog(phi, 0.05, 0.3)), pinch = ba_sm01(prog(phi, 0.5, 0.64)), vanish = ba_sm01(prog(phi, 0.6, 0.72));
   const D = ba_pocketGeom(sm, phi) * (0.4 + 0.6 * open) * (1 - 0.35 * vanish), Wm = 14 * sm * (0.5 + 0.5 * open) * (1 - 0.85 * vanish), pd = D * 0.92 * pinch, N = 30, cx0 = X0 + 3 - 0.0 * D;
   const L_ = [], R_ = [];
   for (let i = 0; i <= N; i++) {
-    const d = i / N * D, base = Math.sqrt(Math.max(0, 1 - Math.pow(d / D, 1.8))), top = d < pd ? 0 : sm01(clamp((d - pd) / (0.3 * D + 3))), w2 = Wm * base * (pinch > 0 ? top : 1), ctr = cx0 - 0.16 * d;
+    const d = i / N * D, base = Math.sqrt(Math.max(0, 1 - Math.pow(d / D, 1.8))), top = d < pd ? 0 : ba_sm01(clamp((d - pd) / (0.3 * D + 3))), w2 = Wm * base * (pinch > 0 ? top : 1), ctr = cx0 - 0.16 * d;
     if (pinch > 0 && d < pd) continue;
     L_.push([ctr - w2, wy + d]); R_.push([ctr + w2, wy + d]);
   }
@@ -496,7 +512,7 @@ function ba_pocket(X0, wy, sm, phi, t, o = {}) {
   }
   for (let k = 0; k < 3; k++) { const q = phi - 0.52 - k * 0.07; if (q <= 0) continue; const hw = 8 * sm / 2.7 + q * 190 * sm / 2.7, fade = clamp(1 - q * 2.6); for (let j = -1; j <= 1; j += 2) for (let n = 0; n < 6; n++) { const xx = cx0 + j * (hw - n * 3 * sm / 2.7); if (k_bay(Math.round(xx) + n, k) < fade) px(xx, wy + 1 + (k & 1), n === 0 ? WH[3] : CY[4]); } }
 }
-const sm01 = v => v * v * (3 - 2 * v);
+const ba_sm01 = v => v * v * (3 - 2 * v);
 
 // ───────────────────────── le prédateur du ciel : l'ombre d'un oiseau de proie sur l'eau ─────────────────────────
 // (x, y) = centre de l'ombre sur la surface (écran) ; s = envergure/80 ; dir ±1 (cap) ; squash : écrasement vertical (perspective) ; a : opacité ; rot : cap oblique ; flap : 0..1 (battement)
@@ -533,7 +549,8 @@ function ba_caiman(x, wy, s, t, o = {}) {
   // cou et dos : chaîne du crâne vers l'eau, bosses de la crête dorsale
   const neckPts = [[J[0] - 2 * s, J[1] + 2 * s], [J[0] - 22 * s * rise - 10 * s, J[1] + 12 * s], [J[0] - 40 * s * rise - 20 * s, J[1] + 26 * s + 6 * s * (1 - rise)], [-30 * s, 14 * s], [-48 * s, 24 * s]];
   const nk = ba_poly(ba_limbPts(neckPts, [26 * s, 27 * s, 30 * s, 32 * s, 34 * s], 4)); c.fillStyle = col.base; c.fill(nk);
-  ba_cres(c, nk, col.lit, -1.4, -2.2, 1); ba_cres(c, nk, col.dark, 1.5, 3.0, 1);
+  ba_cres(c, nk, col.lit, -1.4, -2.6, 1); ba_cres(c, nk, col.dark, 1.6, 4.2, 1); ba_cres(c, nk, col.deep, 1.0, 1.6, 0.8);
+  c.save(); c.clip(nk); c.fillStyle = col.band; for (let gy = -140; gy < 60; gy += 5) for (let gx = -150; gx < 140; gx += 6) { const ox = ((gy / 5) & 1) * 3; c.fillRect(gx + ox, gy, 2.2, 1.2); c.fillRect(gx + ox + 0.6, gy + 1.2, 1, 1); } c.restore();
   c.fillStyle = col.dark; const cr_ = ba_cr(neckPts, 4); for (let i = 0; i < 8; i++) { const q = cr_[i * 3 + 1]; if (!q) continue; c.beginPath(); c.moveTo(q[0] - 3 * s, q[1] - 11 * s); c.lineTo(q[0], q[1] - 17 * s); c.lineTo(q[0] + 3 * s, q[1] - 10 * s); c.closePath(); c.fill(); }
   // tête : mâchoire supérieure et inférieure (rotée autour de la charnière)
   c.save(); c.translate(J[0], J[1]); c.rotate(pitchE); c.scale(s, s);
@@ -554,6 +571,7 @@ function ba_caiman(x, wy, s, t, o = {}) {
   c.lineWidth = 0.9; c.strokeStyle = col.deep; c.lineJoin = 'round'; c.stroke(up);
   c.fillStyle = col.tooth;                                                                // dents supérieures (vers le bas), décalées
   for (let i = 0; i < 11; i++) { const f = i / 10, bx = 12 + f * 53, by = lerp(6.6, 3.4, f); c.beginPath(); c.moveTo(bx - 1.4, by - 0.4); c.lineTo(bx, by + 3.8 + ((i + 1) % 2) * 1.2); c.lineTo(bx + 1.4, by - 0.4); c.closePath(); c.fill(); }
+  c.save(); c.clip(up); c.fillStyle = col.band; for (let gy = -19; gy < 8; gy += 3.4) for (let gx = -10; gx < 72; gx += 4.2) { c.fillRect(gx + ((gy / 3.4) & 1) * 2.1, gy, 1.6, 0.9); } c.restore();
   c.fillStyle = col.band; for (const bx of [4, 20, 36, 52]) { c.beginPath(); c.moveTo(bx, -17 + (bx > 30 ? 6 : 0)); c.lineTo(bx + 6, -10); c.lineTo(bx + 2, -8.5); c.lineTo(bx - 4, -12); c.closePath(); c.fill(); }     // bandes sombres du museau
   c.fillStyle = col.lit; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(20 + i * 8, -10.5 + i * 0.7, 0.9, 0, TAU); c.fill(); }                                                   // écailles claires
   c.fillStyle = col.dark; c.beginPath(); c.ellipse(66.5, -5.2, 2.2, 1.8, 0, 0, TAU); c.fill();                                                                                   // narine

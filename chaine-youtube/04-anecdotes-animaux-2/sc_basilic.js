@@ -1,7 +1,16 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
-   sc_basilic.js — segment BASILIC (Amérique centrale), plans calés sur la voix (préfixe ba_)
-   (en-tête complété à la fin)
+   sc_basilic.js — segment BASILIC (Amérique centrale, « lézard Jésus-Christ »), 7 plans calés sur la voix (wt() / P.<id> : aucune seconde écrite en dur ; préfixe ba_)
+     c1_branche  assis sur une branche au-dessus de la rivière tropicale, la caméra descend de la canopée ; case 2/3 + « 2/3 AMERIQUE CENTRALE »      « En Amérique centrale, un lézard possède une capacité complètement folle : »
+     c1_saut     il se ramasse, bondit, claque l'eau (gerbe, anneaux) et file : travelling qui le suit                                               « il peut courir sur l'eau ! »
+     c2_course   le basilic en entier à pleine vitesse, queue en balancier, un claquement par pas ; étiquette « LE LÉZARD JÉSUS-CHRIST »              « Surnommé le lézard Jésus-Christ, le basilic »
+     c2_pattes   gros plan sur les longues pattes arrière aux orteils à franges ; étiquette « 20 PAS PAR SECONDE »                                  « utilise ses longues pattes arrière »
+     c2_pas      planche en coupe, ralenti : le pied claque l'eau, la poche d'air se forme, le pied sort avant qu'elle se referme ; « PAS D'AIR SOUS LE PIED » (sans cases du carnet)   « pour courir à la surface des rivières ! »
+     c3_ombre    l'ombre d'un oiseau de proie rattrape le basilic, un caïman le suit à ras de l'eau ; étiquette « ≈ 1,5 M/S »                      « Et tout ça pour »
+     c3_fuite    le caïman jaillit, le basilic bondit sur le tronc de l'autre rive et grimpe ; case 2/3 COCHÉE ; dernier plan jusqu'à S.t1           « échapper à ses prédateurs ! »
+   Décor : forêt tropicale au bord d'une rivière (bandes périodiques du lointain au premier plan, canopée, lianes, eau qui reflète la forêt et défile avec la caméra, feuilles du premier plan qui ploient) ; ba_world, ba_fgLeaves, ba_atmos.
+   K_WATER.ba est ajouté ici (préréglage d'eau de la rivière, lu par k_pond) : kit.js n'est pas modifié.
+   Sprites : sc_basilic_sprites.js (ba_lizard, ba_slap, ba_runFx, ba_pocket, ba_birdShadow, ba_caiman, ICONES[1]).
    ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ───────────────────────── décor : forêt tropicale au bord d'une rivière ─────────────────────────
@@ -251,7 +260,7 @@ function ba_atmos(t, cam, camY, o = {}) {                             // rayons 
 function ba_sitAct(u, t) {                                            // mouvements du basilic assis : respiration (dans le sprite), tête qui dodeline, langue, plumet qui se dresse
   const A = ba_A, tl = t - A.tongue, flick = tl > 0 && tl < 0.26 ? Math.sin(tl / 0.26 * Math.PI) : 0, fl2 = t - (A.tongue + 1.1), flick2 = fl2 > 0 && fl2 < 0.22 ? Math.sin(fl2 / 0.22 * Math.PI) : 0, f = Math.max(flick, flick2);
   const flare = bump(t, A.flare, A.flare + 0.25, A.flare + 0.75, A.flare + 1.3);
-  return { ha: -0.2 + 0.05 * Math.sin(u * 1.5) + 0.12 * bump(t, A.look, A.look + 0.4, A.look + 1.0, A.look + 1.5), na: -0.62 + 0.04 * Math.sin(u * 1.5 + 0.7), mouth: f * 0.4, tongue: f, sail: 1 + 0.25 * flare, crest: 1 + 0.3 * flare };
+  return { ha: -0.3 + 0.05 * Math.sin(u * 1.5) - 0.14 * bump(t, A.look, A.look + 0.4, A.look + 1.0, A.look + 1.5), na: -0.8 + 0.04 * Math.sin(u * 1.5 + 0.7), mouth: f * 0.4, tongue: f, sail: 1 + 0.25 * flare, crest: 1 + 0.3 * flare };
 }
 function ba_c1a(u, t, sh) {
   const dur = Math.max(1, sh.t1 - sh.t0), cam = k_pan(u, 0, 20, 'io', dur), cy = k_pan(u, -40, 0, 'o', Math.min(1.5, dur * 0.5)), yTop = 264;
@@ -335,7 +344,7 @@ function ba_runScene(t, C, hooks = {}) {
   ba_world(t, cam, { camY: 0, flow: 6 });
   ba_atmos(t, cam, 0, { dust: C.dust ?? 38, rays: C.rays ?? 0.3 });
   if (hooks.back) hooks.back(t, cam, st);
-  const fx = { t0: C.t0, ph0: C.ph0, f: C.f, x0: C.x0, v: C.v, dir: 1, s, wy: C.wy, cam, ahead: 22, size: s * 0.8 };
+  const fx = { t0: C.t0, ph0: C.ph0, f: C.f, x0: C.x0, v: C.v, dir: 1, s, wy: C.wy, cam, ahead: 22, size: s * 1.05 };
   ba_runFx(t, { ...fx, layer: 'under' });
   const K = ba_lizard(st.scr, C.wy, s, t, { pose: 'run', ph: st.ph, spd: 1, over: hooks.over && hooks.over(t, st), tint: [C.wy, '14,40,34', 0.6], reflect: { y: C.wy, a: 0.4, depth: 52 * s + 40 }, seed: 2 });
   ba_runFx(t, { ...fx, layer: 'over' });
@@ -453,7 +462,7 @@ function ba_c3Draw(u, t, sh, o = {}) {
   }
   if (shadowA > 0.02 && o.shadow !== false) ba_birdShadow(shx, wy + 8, t, { s: 1.5, dir: 1, a: shadowA, squash: 0.5 });
   // le basilic : sa course, son bond, sa grimpée
-  const fx = { t0: L3.tR0, ph0: 0.1, f: K.f, x0: L3.x0, v: K.v, dir: 1, s, wy, cam, ahead: 22, size: s * 0.8 };
+  const fx = { t0: L3.tR0, ph0: 0.1, f: K.f, x0: L3.x0, v: K.v, dir: 1, s, wy, cam, ahead: 22, size: s * 1.05 };
   if (t < L3.tJ + 0.05) ba_runFx(t, { ...fx, layer: 'under', tFrom: L3.tR0 - 2 });
   const lo = { pose: st.pose, pose2: st.pose2, mix: st.mix ?? 0, ph: st.ph, rot: st.rot, spd: 1, seed: 2, dim: dimK * 0.55 };
   if (st.onLog || st.air) ba_lizard(0, 0, s, t, { ...lo, hip: [st.hip[0] - cam, st.hip[1]], tint: st.air && st.hip[1] > wy - 10 ? [wy, '14,40,34', 0.6] : undefined });
@@ -482,7 +491,7 @@ function buildBasilic(S) {
   ba_jumpInit(); ba_c3Init(S);
   const K = ba_J, J = BA_J, evSlaps = [];
   for (let n = 0; ; n++) { const tn = K.tD + n * 0.5 / J.f; if (tn >= A.c2 - 0.1) break; evSlaps.push([tn, 'slap', 1]); }
-  shot('c1_branche', S.t0, { draw: ba_c1a, ui: ba_c1aUi, ev: [[A.tongue + 0.05, 'blip', 0.5]] });
+  shot('c1_branche', S.t0, { draw: ba_c1a, ui: ba_c1aUi, ev: [[S.t0 + 0.2, 'pop', 1], [S.t0 + 0.4, 'label', 1], [A.tongue, 'sniff', 0.6], ...(A.tongue + 1.1 < A.il - 0.15 ? [[A.tongue + 1.1, 'sniff', 0.5]] : []), [A.flare, 'whoosh', 0.4]] });
   shot('c1_saut', A.il - 0.1, { draw: ba_c1b, ui: ba_c1bUi, ev: [[K.tL + 0.02, 'hop', 1], [K.tL + 0.05, 'whoosh', 0.5], [K.tD, 'splash', 1.3], ...evSlaps] });
   const tA = A.c2 - 0.1, tB = A.utilise - 0.1, tC = A.pour - 0.1, tD = A.c3 - 0.1, tE = A.ech - 0.1;
   ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.55, wy: 320, f: 3.3, ph0: 0.2, scr0: 150, scr1: 128, tScr: 1.3, dust: 40 };
@@ -491,10 +500,12 @@ function buildBasilic(S) {
   const ev2b = ba_footTimes(ba_C2b, tB, tC).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.7]] : [])]);
   shot('c2_course', tA, { draw: ba_c2a, ui: ba_c2aUi, ev: [[tA + 0.02, 'whoosh', 1.2], [A.jc, 'label', 1], ...ev2] });
   shot('c2_pattes', tB, { draw: ba_c2b, ui: ba_c2bUi, ev: [[A.pattes, 'label', 1], ...ev2b] });
-  shot('c2_pas', tC, { draw: ba_c2c, ui: ba_c2cUi, ev: [[tC + 0.1, 'label', 1]] });
+  const durC = tD - tC, pOf = u => { const x = clamp(u / (durC * 0.86)); return eio(x) * 0.65 + x * 0.35; };
+  const uOf = phi => { let a = 0, b = durC; for (let i = 0; i < 30; i++) { const m = (a + b) / 2; (pOf(m) * 0.74 < phi ? a = m : b = m); } return tC + (a + b) / 2; };
+  shot('c2_pas', tC, { draw: ba_c2c, ui: ba_c2cUi, ev: [[tC + 0.1, 'label', 1], [tC + 0.45, 'label', 1], [uOf(0.05), 'slap', 1], [uOf(0.05) + 0.01, 'splash', 0.9], [uOf(0.5), 'bubbles', 0.9], [uOf(0.6), 'drip', 0.7], [uOf(0.55), 'slap', 1], [uOf(0.55) + 0.01, 'splash', 0.6]] });
   const L3 = ba_L3, evA = ba_footTimes({ t0: L3.tR0, ph0: 0.1, f: BA_L3.f }, tD, tE).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
   const evB = ba_footTimes({ t0: L3.tR0, ph0: 0.1, f: BA_L3.f }, tE, L3.tJ).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
   const tick = Math.max(wt1('c3', 'prédateurs'), L3.tLand + 0.7);
   shot('c3_ombre', tD, { draw: ba_c3a, ui: ba_c3aUi, ev: [[tD + 0.05, 'whoosh', 1], [tD + 0.1, 'label', 1], [tD + 0.35, 'bird', 2], ...evA] });
-  shot('c3_fuite', tE, { draw: ba_c3b, ui: ba_c3bUi, ev: [...evB, [L3.tJ, 'hop', 1], [L3.tJ + 0.02, 'splash', 1.2], [L3.tP - 0.05, 'splash', 1.6], [L3.tP + 0.38, 'bang', 1], [L3.tP + 0.4, 'splash', 1.4], [L3.tLand, 'hop', 1], [tick, 'ding', 1]] });
+  shot('c3_fuite', tE, { draw: ba_c3b, ui: ba_c3bUi, ev: [[tE + 0.05, 'suspense', 0.9], ...evB, [L3.tJ, 'hop', 1], [L3.tJ + 0.02, 'splash', 1.2], [L3.tP - 0.05, 'splash', 1.6], [L3.tP + 0.38, 'bang', 1], [L3.tP + 0.4, 'splash', 1.4], [L3.tLand, 'hop', 1], [tick, 'ding', 1]] });
 }

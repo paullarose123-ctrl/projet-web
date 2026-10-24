@@ -590,7 +590,7 @@ function musBas() {                                      // BASILIC : jungle ; t
   // c2 : la course, doubles croches calées sur les pas qui claquent (≈ 6,6 / s) ; « Jésus-Christ » : un instant de grâce (verre, la course se retient) ; elle s'arrête avant « rivières » ; petit roulement ensuite
   const tJes = w2('Jésus-Christ'), tRiv = L2.t0, limC = tRiv - 0.12, hold = t => t > tJes - 0.04 && t < tJes + 0.55;
   pad(c2.t0 - 0.05, tRiv - c2.t0 - 0.05, ['A2', 'E3', 'A3', 'B3', 'E4'], { gain: 0.034, att: 0.4, rel: 0.5, bright: 0.2 });
-  { const G = runGrid('slap', c2.t0 - 0.05, limC, 100); for (const { t, n } of G) { if (hold(t)) continue; const m = ((n % 8) + 8) % 8;
+  { const G = runGrid('slap', c2.t0 - 0.05, limC, 100); if (OPT.check) console.log(`--check : course du basilic (c2) ${G.src === 'pas' ? 'calée sur les pas qui claquent, une double croche = ' + (G.ds * 1000).toFixed(0) + ' ms' : 'au tempo par défaut (aucun événement slap)'}`); for (const { t, n } of G) { if (hold(t)) continue; const m = ((n % 8) + 8) % 8;
       if (m === 0) dLow(t, 0.6); else if (m === 4) dLow(t, 0.42); else if (m % 4 === 2) dMid(t, 0.3, { f: 215 + 18 * (m === 6) }); if (m % 4 === 2) shaker(t, { gain: 0.014, pan: -0.3 + 0.6 * (m === 2) });
       kal16(t, ((n % 16) + 16) % 16, 0.04); } }
   [['E6', 0], ['A6', 0.09], ['C#7', 0.18], ['E7', 0.27]].forEach(([n, d], k) => glass(tJes + d, n, { gain: 0.03, tau: 1.8, pan: -0.3 + 0.2 * k })); flute(tJes + 0.05, 0.5, 'A5', { gain: 0.036 });
@@ -599,7 +599,7 @@ function musBas() {                                      // BASILIC : jungle ; t
   const tEch = w3('échapper'), lim3 = L3.t0 - 0.1;
   pad(c3.t0 - 0.02, tEch - c3.t0 + 0.2, ['A2', 'E3', 'A3', 'C4'], { gain: 0.036, att: 0.15, rel: 0.3, bright: 0.1 });
   flute(w3('tout'), 0.45, 'C5', { gain: 0.032, vib: 0.012 });
-  { const G = runGrid('slap', c3.t0 - 0.05, lim3, 105); for (const { t, n } of G) { const m = ((n % 8) + 8) % 8, u = clamp((t - tEch) / (lim3 - tEch)), flee = t >= tEch - 0.04;
+  { const G = runGrid('slap', c3.t0 - 0.05, lim3, 105); if (OPT.check) console.log(`--check : fuite du basilic (c3) ${G.src === 'pas' ? 'calée sur les pas qui claquent, une double croche = ' + (G.ds * 1000).toFixed(0) + ' ms' : 'au tempo par défaut (aucun événement slap)'}`); for (const { t, n } of G) { const m = ((n % 8) + 8) % 8, u = clamp((t - tEch) / (lim3 - tEch)), flee = t >= tEch - 0.04;
       if (!flee) { if (m === 0) dLow(t, 0.5); if (m % 2 === 0) kal16(t, ((n % 16) + 16) % 16, 0.026); continue; }
       if (m % 2 === 0) dLow(t, 0.5 + 0.2 * u); else dMid(t, 0.34, { f: 230 }); if (m % 4 === 2) dHi(t, 0.3 + 0.3 * u);
       kal16(t, ((n % 16) + 16) % 16, 0.034 + 0.016 * u, 1); } }
@@ -617,7 +617,7 @@ function musAng() {                                      // ANGUILLE : mystérie
   hum(s0, e1.t1 - s0 - 0.2, 'G2', { gain: 0.03, att: 1.2, rel: 0.9 });
   glass(tAma, 'D6', { gain: 0.045, tau: 3.2, pan: -0.3 }); glass(w1('espèce'), 'G5', { gain: 0.035, tau: 3, pan: 0.3 }); glass(tAng, 'Bb5', { gain: 0.04, tau: 3, pan: 0 });
   pizz(tAng, 'G2', { gain: 0.11, t60: 1.0 }); pizz(tEle, 'D2', { gain: 0.1, t60: 1.0 });
-  { let t = tEle, k = 0; while (t < tTop - 0.1) { const u = clamp((t - tEle) / (tTop - tEle)); zing(t, Gp(15 + Math.min(7, Math.floor(u * 8))), { gain: 0.022 + 0.03 * u, pan: Math.sin(k * 2.3) * 0.7, sparks: 2 + Math.round(4 * u) }); t += lerp(0.5, 0.085, rise(u, 0.9)); k++; } }
+  { let t = tEle, k = 0; while (t < tTop - 0.1) { const u = clamp((t - tEle) / (tTop - tEle)); zing(t, Gp(15 + Math.min(7, Math.floor(u * 8))), { gain: 0.022 + 0.03 * u, pan: Math.sin(k * 2.3) * 0.7, sparks: 2 + Math.round(4 * u) }); t += lerp(0.5, 0.12, rise(u, 0.9)); k++; } }
   tone(tPeut, tTop - tPeut, { f0: 98, f1: 880, curve: 1.8, gain: 0.02, att: (tTop - tPeut) * 0.85, rel: 0.06, harm: [1, 0.4, 0.2], am: 0.45, arate: 9, send: 0.4 });
   nzb(tPeut, tTop - tPeut, { type: 'hp', f0: 2500, f1: 9000, gain: 0.012, att: (tTop - tPeut) * 0.85, rel: 0.05, am: 0.7, arate: 30, send: 0.4 });
   { let t = w1('produire'); while (t < tTop - 0.1) { const u = clamp((t - tPeut) / (tTop - tPeut)); dLow(t, 0.4 + 0.4 * u); t += lerp(0.6, 0.2, u); } }
@@ -626,7 +626,8 @@ function musAng() {                                      // ANGUILLE : mystérie
   // e2 : « presque quatre fois la tension d'une prise » : le ressort (la barre bondit), un second rebond sur « prise » ; mot final libre
   const tQua = w2('quatre'), tPri = w2('prise');
   { const g = grid(e2.t0, L2.t0 - 0.12, 0.5); for (let k = 0; k < g.n; k++) pizz(g.t(k), k % 2 ? 'D3' : 'G2', { gain: 0.085, t60: 0.5, pan: -0.15 }); }
-  boing(tQua, NOTE('G4'), { gain: 0.05, dur: 0.8 }); boing(tPri + 0.02, NOTE('D5'), { gain: 0.036, dur: 0.55, depth: 0.45 }); zing(tPri + 0.45, Gp(21), { gain: 0.03, pan: 0.3 });
+  const tBo = lastEv(['counter'], e2.t0, tPri - 0.1) ?? tQua;                                       // la pile de prises bondit sur le dernier cran du compteur (ou sur « quatre »)
+  boing(tBo, NOTE('G4'), { gain: 0.05, dur: 0.8 }); boing(tPri + 0.02, NOTE('D5'), { gain: 0.036, dur: 0.55, depth: 0.45 }); zing(tPri + 0.45, Gp(21), { gain: 0.03, pan: 0.3 });
   glass(w2('presque'), 'D6', { gain: 0.03, tau: 2.2, pan: -0.3 });
   zing(L2.t1 + 0.07, Gp(23), { gain: 0.03, pan: -0.4 });
   // e3 : « paralyser » : tout se fige (un seul fil de verre) ; « proies » : étincelles clairsemées ; « et se » : la menace monte ; silence sur « défendre » ; coup final sur la décharge
@@ -754,7 +755,7 @@ const SFX = {
   flatline(x, v) { const d = durOf(v, 2); tone(x, d, { f0: 1000, gain: 0.14, att: 0.006, rel: 0.04, send: 0.1 }); },
   glow(x, v) { const d = durOf(v, 2); ['A5', 'D6', 'E6', 'A6'].forEach((n, k) => tone(x + 0.05 * k, d, { f0: hz(n), gain: 0.03, att: d * 0.45, rel: d * 0.45, vib: 0.004, vrate: 4 + k, harm: [1, 0.15], pan: -0.4 + 0.27 * k, send: 0.6 })); tone(x, d, { f0: hz('A4'), gain: 0.03, att: d * 0.5, rel: d * 0.4, harm: [1, 0.4, 0.15], send: 0.5 }); nzb(x, d, { type: 'hp', f0: 6500, gain: 0.015, att: d * 0.5, rel: d * 0.4 }); for (let k = 0; k < 4 + Math.round(2 * d); k++) glass(x + d * 0.15 + (d * 0.7) * rnd(), ['A5', 'D6', 'E6', 'B5', 'A6', 'E7'][Math.floor(rnd() * 6)], { gain: 0.03, tau: 0.9, pan: rr(-0.6, 0.6) }); },
   sparkle(x) { const sc = ['B6', 'D7', 'E7', 'G7', 'A7', 'B7'], up = rnd() < 0.5; for (let k = 0; k < 4; k++) glass(x + k * 0.055, sc[up ? 1 + k : 4 - k], { gain: 0.05, tau: 0.45, pan: rr(-0.6, 0.6), send: 0.5 }); },
-  // grenouille, déplacements
+  // coassement, sauts, pas, reniflement (pas : herbe, boue, eau selon le monde)
   ribbit(x, v) { const s = clamp(v, 0.7, 1.4); croak(x, 0.1, 58 * s, 70 * s, 380 * s, 1300 * s, 0.9); croak(x + 0.16, 0.14, 66 * s, 92 * s, 470 * s, 1600 * s, 1); nzb(x + 0.1, 0.06, { type: 'lp', f0: 260, gain: 0.03, att: 0.01, rel: 0.03 }); },
   hop(x) { const sf = surfaceAt(x); tone(x, 0.12, { f0: 130, f1: 70, curve: 0.5, gain: 0.12, att: 0.002, rel: 0.03, dec: 0.04, send: 0.15 }); if (sf === 'water') { nzb(x, 0.12, { f0: 1300, f1: 500, q: 0.8, gain: 0.14, att: 0.002, rel: 0.07, send: 0.3 }); tone(x + 0.01, 0.12, { f0: 200, f1: 520, curve: 0.5, gain: 0.07, att: 0.002, rel: 0.03, dec: 0.04, send: 0.4 }); } else { nzb(x, 0.1, { f0: 2200, f1: 1500, q: 1, gain: 0.1, att: 0.003, rel: 0.07 }); for (let k = 0; k < 5; k++) nzb(x + 0.01 + 0.02 * k * (0.5 + rnd()), 0.012, { type: 'hp', f0: 3000 + 2000 * rnd(), gain: 0.04, att: 0.0005, rel: 0.007, pan: rr(-0.4, 0.4) }); } },
   step(x) {
@@ -764,13 +765,13 @@ const SFX = {
     else { nzb(x, 0.13, { f0: 2500 * s, f1: 1600, q: 0.6, gain: 0.07, att: 0.01, rel: 0.09, pan }); tone(x, 0.1, { f0: 120, f1: 70, gain: 0.08, att: 0.003, rel: 0.03, dec: 0.04, pan }); for (let k = 0; k < 3; k++) nzb(x + 0.02 * k, 0.01, { type: 'hp', f0: 4000, gain: 0.03, att: 0.0004, rel: 0.006, pan }); }
   },
   sniff(x) { for (let k = 0; k < 3; k++) { const t = x + k * 0.135, g = 1 - 0.22 * k; nzb(t, 0.09, { f0: 1700 + 150 * k, f1: 3200, q: 1.2, gain: 0.13 * g, att: 0.015, rel: 0.045, pan: 0.1 * k, send: 0.15 }); nzb(t, 0.08, { f0: 500, q: 2, gain: 0.04 * g, att: 0.012, rel: 0.04 }); } },
-  // lézard, coyote
+  // jet, impact mouillé, couinement, secousse
   squirt(x, v) { const d = durOf(v, 0.5); nzb(x, 0.045, { type: 'hp', f0: 2500, gain: 0.2, att: 0.002, rel: 0.03, pan: 0.1 }); nzb(x, d, { type: 'hp', f0: 4000, f1: 6500, gain: 0.1, att: 0.03, rel: 0.1, am: 0.3, arate: 50, pan: 0, panTo: 0.35, send: 0.3 }); nzb(x + 0.02, d, { f0: 3200, f1: 2700, q: 12, gain: 0.05, att: 0.04, rel: 0.12, pan: 0.1 }); tone(x + 0.02, d, { f0: 3300, f1: 2700, gain: 0.02, att: 0.04, rel: 0.1, vib: 0.01, vrate: 80, pan: 0.1 });
     for (let k = 0; k < 11; k++) { const t = x + d * 0.4 + rnd() * (d * 0.8 + 0.3), f = 1400 + 1300 * rnd(); tone(t, 0.04, { f0: f, f1: f * 0.6, gain: 0.04 * (0.5 + 0.5 * rnd()), att: 0.001, rel: 0.01, dec: 0.01, pan: rr(0, 0.8), send: 0.3 }); nzb(t, 0.006, { type: 'hp', f0: 3000, gain: 0.03, att: 0.0003, rel: 0.004, pan: rr(0, 0.8) }); } },
   splat(x) { nzb(x, 0.12, { type: 'lp', f0: 1400, f1: 220, gain: 0.3, att: 0.001, rel: 0.09, send: 0.25 }); tone(x, 0.12, { f0: 260, f1: 90, curve: 0.6, gain: 0.15, att: 0.002, rel: 0.03, dec: 0.05 }); nzb(x + 0.01, 0.1, { f0: 1000, f1: 420, q: 3, gain: 0.07, att: 0.002, rel: 0.06 }); for (let k = 0; k < 6; k++) tone(x + 0.06 + k * 0.045 * (0.6 + 0.8 * rnd()), 0.05, { f0: 500 + 700 * rnd(), f1: 1300 + 900 * rnd(), curve: 0.5, gain: 0.04, att: 0.002, rel: 0.01, dec: 0.015, pan: rr(-0.5, 0.5), send: 0.3 }); },
   yelp(x) { voc(x, 0.26, { f0pts: [[0, 600], [0.3, 1100], [0.65, 900], [1, 560]], forms: [[700, 6, 1], [1700, 8, 0.6], [3000, 10, 0.25]], gain: 0.2, breath: 0.03, vib: 0.03, vrate: 22, send: 0.35, pan: -0.1 }); voc(x + 0.33, 0.2, { f0pts: [[0, 700], [0.35, 1250], [1, 650]], forms: [[800, 6, 1], [1800, 8, 0.6], [3100, 10, 0.25]], gain: 0.15, breath: 0.03, vib: 0.03, vrate: 22, send: 0.35, pan: -0.1 }); },
   shake(x) { nzb(x, 0.4, { f0: 1000, f1: 1900, q: 1.2, gain: 0.12, att: 0.03, rel: 0.12, dec: 0.3, am: 0.8, arate: 16, pan: -0.3, panTo: 0.3 }); tone(x, 0.4, { f0: 90, gain: 0.03, att: 0.03, rel: 0.1, harm: [1, 0.6, 0.4], am: 0.8, arate: 16, dec: 0.3 }); for (let k = 0; k < 4; k++) tone(x + 0.04 + 0.08 * k, 0.04, { f0: 600 + 300 * rnd(), f1: 1100, curve: 0.5, gain: 0.04, att: 0.002, rel: 0.01, dec: 0.012, pan: rr(-0.5, 0.5) }); },
-  // lycaons
+  // éternuement, piaillements, course d'une troupe, règle, oiseaux, urne
   sneeze(x, v) { const s = clamp(v, 0.75, 1.35), pan = rr(-0.2, 0.2); nzb(x, 0.07, { f0: 2200 * Math.sqrt(s), f1: 3200, q: 1, gain: 0.11, att: 0.006, rel: 0.035, pan }); nzb(x, 0.05, { type: 'hp', f0: 5000, gain: 0.02, att: 0.004, rel: 0.03, pan });
     const bl = 0.15, F1 = new Filt().set(900 * s, 5), F2 = new Filt().set(2400 * s, 7), buf = new Float32Array(Math.floor(bl * SR)); for (let i = 0; i < buf.length; i++) { const e = Math.min(1, i / (0.012 * SR)) * Math.pow(Math.max(0, 1 - i / buf.length), 1.3), n = rnd() * 2 - 1; F1.run(n); F2.run(n); buf[i] = (F1.bp * 1.2 + F2.bp * 0.8) * e; } let mx = 1e-9; for (const b of buf) mx = Math.max(mx, Math.abs(b)); emit(buf, x + 0.05, pan, 0.2, 0.17 / mx);
     tone(x + 0.17, 0.11, { f0: 1500 * s, f1: 2300 * s, curve: 0.7, gain: 0.07, att: 0.006, rel: 0.03, dec: 0.06, harm: [1, 0.2], pan, send: 0.3 }); tone(x + 0.24, 0.07, { f0: 2300 * s, f1: 1700 * s, gain: 0.05, att: 0.004, rel: 0.02, dec: 0.04, pan }); },
@@ -801,7 +802,7 @@ const SFX = {
     nzb(x + 0.005, 0.12 + 0.18 * s, { type: 'lp', f0: 1400 * f, f1: 250, gain: 0.2, att: 0.004, rel: 0.09, dec: 0.07 + 0.05 * s, send: 0.3 });
     tone(x + 0.012, 0.18 + 0.12 * s, { f0: 140 * f, f1: 430 * f, curve: 0.5, gain: 0.1, att: 0.003, rel: 0.04, dec: 0.05 + 0.03 * s, harm: [1, 0.2], send: 0.4 });
     nzb(x, 0.1 + 0.22 * s, { type: 'hp', f0: 3500, gain: 0.05, att: 0.004, rel: 0.08, dec: 0.05 + 0.05 * s, send: 0.3 });
-    const n = Math.round(8 + 14 * s); for (let k = 0; k < n; k++) { const t = x + 0.04 + (0.15 + 0.45 * s) * Math.pow(rnd(), 1.2), fr = 1200 + 2300 * rnd(); tone(t, 0.05, { f0: fr, f1: fr * 0.6, gain: 0.04 * (0.4 + 0.6 * rnd()), att: 0.001, rel: 0.012, dec: 0.012, pan: rr(-0.7, 0.7), send: 0.35 }); 
+    const n = Math.round(8 + 14 * s); for (let k = 0; k < n; k++) { const t = x + 0.04 + (0.15 + 0.45 * s) * Math.pow(rnd(), 1.2), fr = 1200 + 2300 * rnd(); tone(t, 0.05, { f0: fr, f1: fr * 0.6, gain: 0.04 * (0.4 + 0.6 * rnd()), att: 0.001, rel: 0.012, dec: 0.012, pan: rr(-0.7, 0.7), send: 0.35 }); }
     return 0.55 + 0.45 * clamp((s - 0.4) / 1.8); },
   slap(x) {                                              // pied qui claque l'eau : « plac » bref (claquement 900-1500 Hz, petit « bloc » grave, quelques gouttes)
     nzb(x, 0.03, { f0: 1500, f1: 900, q: 1.1, gain: 0.25, att: 0.0008, rel: 0.02, dec: 0.01, pan: rr(-0.2, 0.2), send: 0.2 });
