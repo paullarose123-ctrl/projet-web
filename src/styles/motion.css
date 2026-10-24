@@ -121,45 +121,43 @@ h3 {
   box-shadow: 0 1px 0 #0f3d24, 0 4px 10px rgba(20, 45, 22, 0.45), inset 0 1px 0 rgba(255, 250, 220, 0.4);
 }
 
-/* boutons d'ouverture des boosters, aux couleurs de leur sachet en pastel, texte sombre comme sur les cartes :
-   aube menthe et pêche pour la Série 1, rose et fleur de cempasúchil pour le Mexique */
+/* boutons d'ouverture des boosters : un aplat pastel de la couleur de leur sachet, texte sombre comme sur les cartes,
+   sans dégradé ni reflet ; menthe pour la Série 1, rose mexicain pour le Mexique */
 .btn--primary.btn--booster,
 .btn--primary.btn--booster-mx {
+  background: var(--pastel);
   color: var(--ink);
-  border-color: rgba(255, 252, 240, 0.6);
-  text-shadow: 0 1px 0 rgba(255, 252, 240, 0.55);
-  box-shadow:
-    0 4px 0 var(--edge),
-    0 12px 24px rgba(4, 12, 10, 0.45),
-    inset 0 1px 0 rgba(255, 255, 250, 0.8),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+  border-color: transparent;
+  text-shadow: none;
+  box-shadow: 0 4px 0 var(--edge), 0 10px 20px rgba(4, 12, 10, 0.35);
 }
 
 .btn--primary.btn--booster {
-  --ink: #0e2c27;
-  --edge: #2f6a5c;
-  background: linear-gradient(100deg, #9fdcd2 0%, #cfe8c6 48%, #ffe2a8 100%);
+  --pastel: #b8e6d6;
+  --ink: #12372f;
+  --edge: #7fbfab;
 }
 
 .btn--primary.btn--booster-mx {
-  --ink: #3a1226;
-  --edge: #9a3f55;
-  background: linear-gradient(100deg, #f7a9bb 0%, #fbc4a4 48%, #ffd27a 100%);
+  --pastel: #f8c3cf;
+  --ink: #4a1630;
+  --edge: #d98da0;
 }
 
 .btn--primary.btn--booster:hover:not(:disabled),
 .btn--primary.btn--booster-mx:hover:not(:disabled) {
-  filter: brightness(1.05) saturate(1.05);
-  box-shadow:
-    0 6px 0 var(--edge),
-    0 16px 30px rgba(4, 12, 10, 0.5),
-    inset 0 1px 0 rgba(255, 255, 250, 0.85),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+  background: color-mix(in srgb, var(--pastel) 88%, #ffffff);
+  box-shadow: 0 6px 0 var(--edge), 0 14px 26px rgba(4, 12, 10, 0.4);
 }
 
 .btn--primary.btn--booster:active:not(:disabled),
 .btn--primary.btn--booster-mx:active:not(:disabled) {
-  box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.4), inset 0 1px 0 rgba(255, 255, 250, 0.7);
+  box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.3);
+}
+
+.btn--booster::after,
+.btn--booster-mx::after {
+  display: none;
 }
 
 .btn--gold {

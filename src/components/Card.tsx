@@ -136,15 +136,6 @@ function Frame({ mexique = false }: { mexique?: boolean }) {
   );
 }
 
-// Soleil de la Pierre du Soleil autour du médaillon des cartes du Mexique : huit grands rayons et huit petits.
-const SUN_RAYS = Array.from({ length: 16 }, (_, i) => {
-  const angle = (i * Math.PI) / 8;
-  const tip = i % 2 ? 41 : 48;
-  const half = i % 2 ? 0.1 : 0.13;
-  const at = (r: number, a: number) => pt(Math.cos(a) * r, Math.sin(a) * r);
-  return `M${at(33, angle - half)}L${at(tip, angle)}L${at(33, angle + half)}Z`;
-}).join('');
-
 // Frise aztèque des cartes de la Série 2 (Mexique) : la greca escalonada des palais de Mitla, un escalier qui monte
 // et finit en crochet, répétée tout autour de la carte dans la bordure, avec un losange à degrés dans chaque coin.
 // Le cadre de ces cartes est réduit à 95 % (voir card.css) : la bordure fait alors 6 unités sur 100.
@@ -262,7 +253,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     prime ? 'is-prime' : '',
     reverse ? 'is-reverse' : '',
     habitat ? 'is-habitat' : '',
-    // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, soleil aztèque, pyramide sur l'horizon
+    // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, nom en caractères de bois, pyramide
     mexique ? 'serie-2' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',
@@ -345,11 +336,6 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
           )}
 
           <div className="card__medal" title={sport.name}>
-            {mexique && (
-              <svg className="card__sun" viewBox="-50 -50 100 100" aria-hidden="true">
-                <path d={SUN_RAYS} />
-              </svg>
-            )}
             <span>
               <SportIcon sport={athlete.sport} />
             </span>
