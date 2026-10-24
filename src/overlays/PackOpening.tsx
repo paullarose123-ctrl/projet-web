@@ -690,7 +690,7 @@ export function PackOpening() {
             {isFree && freePacks > 0 && (
               <button
                 type="button"
-                className="btn btn--primary"
+                className={`btn btn--primary ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`}
                 onClick={() => {
                   sfx.whoosh();
                   openFreePack(serie);

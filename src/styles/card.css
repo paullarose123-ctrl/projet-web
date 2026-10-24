@@ -1225,6 +1225,43 @@
   fill: var(--greca);
 }
 
+/* la pastille devient une pyramide renversée à gradins, son étiquette a les bouts en escalier */
+.card.serie-2 .card__tier {
+  clip-path: polygon(0 28%, 5% 28%, 5% 0, 95% 0, 95% 28%, 100% 28%, 100% 72%, 95% 72%, 95% 100%, 5% 100%, 5% 72%, 0 72%);
+}
+
+.card.serie-2 .card__rating,
+.card.serie-2 .card__rating::before {
+  clip-path: polygon(0 0, 100% 0, 100% 44%, 86% 44%, 86% 60%, 72% 60%, 72% 76%, 58% 76%, 58% 94%, 42% 94%, 42% 76%, 28% 76%, 28% 60%, 14% 60%, 14% 44%, 0 44%);
+}
+
+.card.serie-2 .card__rating::before {
+  inset: 0.12em 0.14em 0.16em;
+}
+
+/* au lieu du losange : un petit carré de jade, sur la dernière marche */
+.card.serie-2 .card__rating::after {
+  bottom: 0.42em;
+  width: 0.28em;
+  height: 0.28em;
+  transform: translateX(-50%);
+}
+
+/* le soleil de la Pierre du Soleil rayonne autour du médaillon */
+.card__medal .card__sun {
+  position: absolute;
+  inset: -22%;
+  z-index: -1;
+  width: 144%;
+  height: 144%;
+  fill: var(--trim);
+  stroke: var(--panel);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  filter: drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.45));
+}
+
 /* les couleurs de chaque rareté, adoucies en pastel */
 .card.serie-2.r-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:

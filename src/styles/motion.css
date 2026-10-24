@@ -121,29 +121,45 @@ h3 {
   box-shadow: 0 1px 0 #0f3d24, 0 4px 10px rgba(20, 45, 22, 0.45), inset 0 1px 0 rgba(255, 250, 220, 0.4);
 }
 
-/* bouton du booster Mexique : le rouge de son sachet */
-.btn--primary.btn--mexique {
-  background: linear-gradient(180deg, #df5a6c 0%, #c4213a 55%, #9c1830 100%);
-  border-color: rgba(255, 200, 190, 0.4);
-  text-shadow: 0 1px 0 rgba(70, 10, 20, 0.55);
+/* boutons d'ouverture des boosters, aux couleurs de leur sachet en pastel, texte sombre comme sur les cartes :
+   aube menthe et pêche pour la Série 1, rose et fleur de cempasúchil pour le Mexique */
+.btn--primary.btn--booster,
+.btn--primary.btn--booster-mx {
+  color: var(--ink);
+  border-color: rgba(255, 252, 240, 0.6);
+  text-shadow: 0 1px 0 rgba(255, 252, 240, 0.55);
   box-shadow:
-    0 4px 0 #5e0f1d,
-    0 12px 24px rgba(70, 10, 20, 0.5),
-    inset 0 1px 0 rgba(255, 236, 220, 0.55),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+    0 4px 0 var(--edge),
+    0 12px 24px rgba(4, 12, 10, 0.45),
+    inset 0 1px 0 rgba(255, 255, 250, 0.8),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
 }
 
-.btn--primary.btn--mexique:hover:not(:disabled) {
-  background: linear-gradient(180deg, #e76a7b 0%, #cf2b44 55%, #a51c34 100%);
-  box-shadow:
-    0 6px 0 #5e0f1d,
-    0 16px 30px rgba(70, 10, 20, 0.55),
-    inset 0 1px 0 rgba(255, 236, 220, 0.6),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+.btn--primary.btn--booster {
+  --ink: #0e2c27;
+  --edge: #2f6a5c;
+  background: linear-gradient(100deg, #9fdcd2 0%, #cfe8c6 48%, #ffe2a8 100%);
 }
 
-.btn--primary.btn--mexique:active:not(:disabled) {
-  box-shadow: 0 1px 0 #5e0f1d, 0 4px 10px rgba(70, 10, 20, 0.45), inset 0 1px 0 rgba(255, 236, 220, 0.4);
+.btn--primary.btn--booster-mx {
+  --ink: #3a1226;
+  --edge: #9a3f55;
+  background: linear-gradient(100deg, #f7a9bb 0%, #fbc4a4 48%, #ffd27a 100%);
+}
+
+.btn--primary.btn--booster:hover:not(:disabled),
+.btn--primary.btn--booster-mx:hover:not(:disabled) {
+  filter: brightness(1.05) saturate(1.05);
+  box-shadow:
+    0 6px 0 var(--edge),
+    0 16px 30px rgba(4, 12, 10, 0.5),
+    inset 0 1px 0 rgba(255, 255, 250, 0.85),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+
+.btn--primary.btn--booster:active:not(:disabled),
+.btn--primary.btn--booster-mx:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.4), inset 0 1px 0 rgba(255, 255, 250, 0.7);
 }
 
 .btn--gold {

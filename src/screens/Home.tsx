@@ -123,7 +123,7 @@ function ExpansionBanner() {
             <div className="expansion__cta">
               <button
                 type="button"
-                className="btn btn--primary btn--mexique"
+                className="btn btn--primary btn--booster-mx"
                 disabled={freePacks <= 0}
                 onClick={() => {
                   sfx.whoosh();
@@ -286,7 +286,7 @@ function FreePackHero() {
               <button
                 key={pack.id}
                 type="button"
-                className={`btn btn--primary ${duo ? 'btn--lg' : 'btn--xl'}${pack.serie === 2 ? ' btn--mexique' : ''}`}
+                className={`btn btn--primary ${duo ? 'btn--lg' : 'btn--xl'} ${pack.serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`}
                 disabled={freePacks <= 0}
                 onClick={() => open(serie.number)}
               >

@@ -66,7 +66,60 @@ const WINDOW =
   'M9.4 14 Q9.4 11.2 12.2 11.2 H21.5 C25.8 11.2 26.4 4.6 31 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
 const PLATE = 'M20 128.2 H92.4 Q94.2 128.2 94.2 130 V133 Q94.2 134.8 92.4 134.8 H20 Z';
 
-function Frame() {
+// Cadre des cartes du Mexique : les mêmes pièces, taillées en gradins comme les pyramides (coins à degrés, onglet
+// en escalier) ; le rail de la famille devient une frise en créneaux et son losange un losange à degrés.
+const pt = (x: number, y: number) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+
+/** Rectangle aux coins taillés en deux degrés de côté s. */
+function steppedRect(x: number, y: number, w: number, h: number, s: number): string {
+  const r = x + w;
+  const b = y + h;
+  return (
+    `M${pt(x, y + 2 * s)}H${x + s}V${y + s}H${x + 2 * s}V${y}H${r - 2 * s}V${y + s}H${r - s}V${y + 2 * s}H${r}` +
+    `V${b - 2 * s}H${r - s}V${b - s}H${r - 2 * s}V${b}H${x + 2 * s}V${b - s}H${x + s}V${b - 2 * s}H${x}Z`
+  );
+}
+
+/** Losange à degrés centré en (x, y), de demi-largeur 2,5 s. */
+function steppedDiamond(x: number, y: number, s: number): string {
+  return `M${pt(x - s / 2, y - 3 * s)}h${s}v${s}h${s}v${s}h${s}v${s * 2}h${-s}v${s}h${-s}v${s}h${-s * 2}v${-s}h${-s}v${-s}h${-s}v${-s * 2}h${s}v${-s}h${s}v${-s}Z`;
+}
+
+/** Ligne en créneaux le long du rail, de y1 à y2. */
+function crenelLine(y1: number, y2: number): string {
+  let d = `M6.5 ${y1}`;
+  for (let y = y1, side = 1; y + 1.2 <= y2 + 0.01; y += 1.2, side = -side) d += `H${6.5 + 0.55 * side}V${(y + 1.2).toFixed(2)}`;
+  return `${d}H6.5`;
+}
+
+const MX = {
+  panel: steppedRect(3.6, 2.6, 92.8, 134.4, 1.6),
+  window:
+    'M9.4 13.8 H10.7 V12.5 H12 V11.2 H22.5 V9 H25.5 V6.8 H28.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
+  plate: 'M20 128.2 H92.6 V129.4 H94.2 V133.6 H92.6 V134.8 H20 Z',
+  thin: steppedRect(4.7, 3.7, 90.6, 132.2, 1.1),
+  banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
+  rail: `${crenelLine(24, 36)} ${crenelLine(70, 80.4)} ${crenelLine(91.6, 105)}`,
+  diamond: steppedDiamond(6.5, 86, 0.5),
+};
+
+function Frame({ mexique = false }: { mexique?: boolean }) {
+  if (mexique) {
+    return (
+      <svg className="card__frame" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
+        <path className="card__panel" d={`${MX.panel} ${MX.window} ${MX.plate}`} fillRule="evenodd" />
+        <path className="card__trim" d={MX.panel} />
+        <path className="card__trim card__trim--thin" d={MX.thin} />
+        <path className="card__trim card__trim--window" d={MX.window} />
+        <path className="card__trim card__trim--thin" d={MX.banner} />
+        <path className="card__trim" d={MX.plate} />
+        <g className="card__rail">
+          <path d={MX.rail} />
+          <path className="card__diamond" d={MX.diamond} />
+        </g>
+      </svg>
+    );
+  }
   return (
     <svg className="card__frame" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
       <path className="card__panel" d={`${PANEL} ${WINDOW} ${PLATE}`} fillRule="evenodd" />
@@ -82,6 +135,15 @@ function Frame() {
     </svg>
   );
 }
+
+// Soleil de la Pierre du Soleil autour du médaillon des cartes du Mexique : huit grands rayons et huit petits.
+const SUN_RAYS = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i * Math.PI) / 8;
+  const tip = i % 2 ? 41 : 48;
+  const half = i % 2 ? 0.1 : 0.13;
+  const at = (r: number, a: number) => pt(Math.cos(a) * r, Math.sin(a) * r);
+  return `M${at(33, angle - half)}L${at(tip, angle)}L${at(33, angle + half)}Z`;
+}).join('');
 
 // Frise aztèque des cartes de la Série 2 (Mexique) : la greca escalonada des palais de Mitla, un escalier qui monte
 // et finit en crochet, répétée tout autour de la carte dans la bordure, avec un losange à degrés dans chaque coin.
@@ -100,7 +162,6 @@ const GRECA = (() => {
     { from: [93.6, 140], along: [-1, 0], inward: [0, -1], length: 87.2, band: 6.35 },
     { from: [0, 133.6], along: [0, -1], inward: [1, 0], length: 127.2, band: 5.92 },
   ];
-  const pt = (x: number, y: number) => `${x.toFixed(2)} ${y.toFixed(2)}`;
   let d = '';
   for (const side of sides) {
     const count = Math.round(side.length / 6.7);
@@ -117,9 +178,8 @@ const GRECA = (() => {
   }
   // les coins : un losange à degrés, percé d'un carré
   for (const [x, y] of [[3.3, 3.3], [96.7, 3.3], [96.7, 136.6], [3.3, 136.6]]) {
-    const s = 0.5;
-    d += `M${pt(x - s / 2, y - 3 * s)}h${s}v${s}h${s}v${s}h${s}v${s * 2}h${-s}v${s}h${-s}v${s}h${-s * 2}v${-s}h${-s}v${-s}h${-s}v${-s * 2}h${s}v${-s}h${s}v${-s}Z`;
-    d += `M${pt(x - s / 2, y - s / 2)}v${s}h${s}v${-s}Z`;
+    d += steppedDiamond(x, y, 0.5);
+    d += `M${pt(x - 0.25, y - 0.25)}v0.5h0.5v-0.5Z`;
   }
   return d;
 })();
@@ -146,6 +206,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
   const width = WIDTHS[size];
   const tiny = size === 'xs';
   const compact = size === 'xs' || size === 'sm';
+  const mexique = serieOf(athlete) === 2;
   const photo = usePhoto(athlete);
   const showPhoto = !!photo.src && !photoFailed;
   const fullName = compact ? athlete.last : displayName(athlete);
@@ -201,8 +262,8 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     prime ? 'is-prime' : '',
     reverse ? 'is-reverse' : '',
     habitat ? 'is-habitat' : '',
-    // les cartes du Mexique : bordure pastel et frise aztèque, pyramide sur l'horizon
-    serieOf(athlete) === 2 ? 'serie-2' : '',
+    // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, soleil aztèque, pyramide sur l'horizon
+    mexique ? 'serie-2' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',
     locked ? 'is-locked' : '',
@@ -242,7 +303,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     >
       <div className="card__body">
         <div className="card__bg" />
-        {serieOf(athlete) === 2 && <Greca />}
+        {mexique && <Greca />}
 
         {/* le cadre et tout ce qu'il porte (réduit sur les cartes du Mexique, pour élargir la bordure) */}
         <div className="card__inner">
@@ -260,7 +321,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
             </div>
           </div>
 
-          <Frame />
+          <Frame mexique={mexique} />
           <div className="card__hills" aria-hidden="true" />
 
           <div className="card__code metal-text">{athleteCode(athlete)}</div>
@@ -284,6 +345,11 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
           )}
 
           <div className="card__medal" title={sport.name}>
+            {mexique && (
+              <svg className="card__sun" viewBox="-50 -50 100 100" aria-hidden="true">
+                <path d={SUN_RAYS} />
+              </svg>
+            )}
             <span>
               <SportIcon sport={athlete.sport} />
             </span>
