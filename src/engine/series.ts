@@ -4,7 +4,8 @@ import { ATHLETES } from '../data/athletes';
 // Les séries de cartes. La première rassemble les animaux du monde ; les suivantes partent chacune à la découverte
 // d'un pays, une par mois. Une série sort à minuit (heure du joueur) le jour de sa sortie : avant, ses cartes ne
 // sortent d'aucun booster, ne passent pas au marché, ne figurent ni dans l'album ni dans les duels.
-// En développement et dans la version de test, toutes les séries sont ouvertes, pour les essayer avant leur sortie.
+// En développement, dans la version de test et dans la page d'aperçu du site (/apercu/), toutes les séries sont
+// ouvertes, pour les essayer avant leur sortie.
 
 export interface SerieDef {
   number: number;
@@ -22,8 +23,8 @@ export const SERIES_LIST: SerieDef[] = [
   { number: 2, name: 'Mexique', country: 'MX', local: 'México', release: new Date(2026, 10, 1) },
 ];
 
-/** Version de développement ou de test : les séries à venir sont déjà ouvertes. */
-let EARLY = import.meta.env.DEV || import.meta.env.MODE === 'single';
+/** Version de développement, de test ou d'aperçu : les séries à venir sont déjà ouvertes. */
+let EARLY = import.meta.env.DEV || import.meta.env.MODE === 'single' || import.meta.env.MODE === 'apercu';
 
 /** Pour les tests : se placer comme sur le site public, où les séries sortent à leur date. */
 export function setEarlyAccessForTesting(on: boolean): void {

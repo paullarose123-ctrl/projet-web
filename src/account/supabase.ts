@@ -28,8 +28,9 @@ export interface PublicProfile {
 /** Erreur prête à afficher au joueur. */
 export class AccountError extends Error {}
 
+/** Comptes, marché et échanges en ligne ouverts ? Jamais dans la page d'aperçu, qui se joue hors ligne. */
 export function accountsEnabled(): boolean {
-  return !!SUPABASE_URL && !!SUPABASE_KEY;
+  return import.meta.env.MODE !== 'apercu' && !!SUPABASE_URL && !!SUPABASE_KEY;
 }
 
 const PSEUDO = /^[A-Za-z0-9_-]{3,20}$/;
