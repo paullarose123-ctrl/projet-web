@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   DOLPHIN,
   EAGLE,
@@ -1053,20 +1053,8 @@ export function PackScene({ scene, seed, className = 'pack-art__scene', shade = 
  * Panorama : la même scène peinte à la largeur de son conteneur (fond de page, bannières, ouverture de booster).
  * La largeur du dessin suit les proportions de la boîte, par paliers de 20 pour ne pas repeindre à chaque pixel.
  */
-export function Landscape({
-  scene,
-  seed,
-  className = '',
-  shade = false,
-  maxWidth = 900,
-}: {
-  scene: SceneDef;
-  seed: string;
-  className?: string;
-  shade?: boolean;
-  maxWidth?: number;
-}) {
-  const ref = useRef<SVGSVGElement>(null);
+/** Largeur du repère (hauteur 172) qui remplit l'élément sans déformer le dessin : au pas de 20, entre SPAN et `maxWidth`. */
+export function useSceneWidth(ref: RefObject<SVGSVGElement | null>, maxWidth = 900): number {
   const [width, setWidth] = useState(240);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -1081,7 +1069,25 @@ export function Landscape({
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [maxWidth]);
+  }, [ref, maxWidth]);
+  return width;
+}
+
+export function Landscape({
+  scene,
+  seed,
+  className = '',
+  shade = false,
+  maxWidth = 900,
+}: {
+  scene: SceneDef;
+  seed: string;
+  className?: string;
+  shade?: boolean;
+  maxWidth?: number;
+}) {
+  const ref = useRef<SVGSVGElement>(null);
+  const width = useSceneWidth(ref, maxWidth);
   const id = useSceneId();
   const art = useMemo(() => paint(scene, seed, id, width, shade), [scene, seed, id, width, shade]);
   return (

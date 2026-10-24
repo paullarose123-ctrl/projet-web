@@ -11,6 +11,7 @@ import { CardBack } from '../components/CardBack';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { serieDef, serieOf } from '../engine/series';
 import { Landscape, type SceneDef } from '../components/PackScene';
+import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
 import { HERO_SCENE, SCREEN_SCENES } from '../art/scenes';
 import { Logo } from '../components/Logo';
 import { Flag, countryName } from '../components/Flag';
@@ -28,13 +29,29 @@ type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
 /** Paysages possibles derrière une ouverture : tous ceux des boosters, des familles et des écrans. */
 const BACKDROPS: SceneDef[] = [...ALL_PACK_SCENES, HERO_SCENE, ...Object.values(SCREEN_SCENES)];
 let lastBackdrop = -1;
+let lastMexico = -1;
 
-/** Un paysage au hasard (jamais deux fois de suite le même), redessiné avec une graine neuve. */
-function pickBackdrop(): { scene: SceneDef; seed: string } {
-  let i = Math.floor(Math.random() * BACKDROPS.length);
-  if (i === lastBackdrop) i = (i + 1 + Math.floor(Math.random() * (BACKDROPS.length - 1))) % BACKDROPS.length;
-  lastBackdrop = i;
-  return { scene: BACKDROPS[i], seed: `ouverture ${Math.random().toString(36).slice(2)}` };
+type Backdrop = { scene: SceneDef; seed: string; mexique?: undefined } | { mexique: MexicoScene; seed: string };
+
+/** Un index au hasard dans [0, n), jamais deux fois de suite le même. */
+function pickOther(n: number, last: number): number {
+  let i = Math.floor(Math.random() * n);
+  if (i === last) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+  return i;
+}
+
+/**
+ * Un décor au hasard (jamais deux fois de suite le même), redessiné avec une graine neuve : un paysage du jeu, ou
+ * pour le booster du Mexique, un de ses décors de la fête des morts.
+ */
+function pickBackdrop(serie: number): Backdrop {
+  const seed = `ouverture ${Math.random().toString(36).slice(2)}`;
+  if (serie === 2) {
+    lastMexico = pickOther(MEXICO_SCENES.length, lastMexico);
+    return { mexique: MEXICO_SCENES[lastMexico], seed };
+  }
+  lastBackdrop = pickOther(BACKDROPS.length, lastBackdrop);
+  return { scene: BACKDROPS[lastBackdrop], seed };
 }
 
 // Éclats projetés par la déchirure : papier crème, feuilles aux couleurs du paysage, étincelles de lumière (la même pour tous les boosters).
@@ -172,7 +189,7 @@ function BackOf({ serie }: { serie: number }) {
   return serie === 2 ? <CardBackMexique /> : <CardBack />;
 }
 
-function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
+function Walkout({ card, serie, onDone }: { card: CardFace; serie: number; onDone: () => void }) {
   const athlete = ATHLETES_BY_ID[card.athleteId];
   const rarity = rarityOf(athlete);
   const [step, setStep] = useState(0);
@@ -298,7 +315,7 @@ function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
             )}
           </div>
           <div className="walkout__actions">
-            <button type="button" className="btn btn--primary" onClick={onDone}>
+            <button type="button" className={`btn btn--primary ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`} onClick={onDone}>
               Continuer
             </button>
             {phone && !showStats && (
@@ -370,7 +387,7 @@ export function PackOpening() {
   // intensité de la déchirure : 0 commune → 4 légendaire, 5 Icône ou Prime (sans couleur : rien ne dévoile la carte)
   const intensity = useMemo(() => Math.max(0, ...cards.map((c) => (c.variant === 'prime' ? 5 : tierOf(c)))), [cards]);
   // un fond différent à chaque ouverture
-  const backdrop = useMemo(() => (opening ? pickBackdrop() : null), [opening]);
+  const backdrop = useMemo(() => (opening ? pickBackdrop(opening.serie ?? 1) : null), [opening]);
 
   const revealNext = useCallback(() => {
     if (!opening || revealed >= cards.length) return;
@@ -480,9 +497,10 @@ export function PackOpening() {
   return (
     // le sachet s'ouvre toujours dans la même lumière dorée ; seule la force de la déchirure suit la meilleure carte
     <div className={`opening opening--${stage} opening--t${intensity}`} style={{ ['--teaser' as string]: MYSTERY_LIGHT }}>
-      {/* un paysage tiré au hasard, en grand, derrière toute l'ouverture */}
+      {/* un décor tiré au hasard, en grand, derrière toute l'ouverture */}
       <div className="opening__backdrop" aria-hidden="true">
-        {backdrop && <Landscape className="opening__scene" scene={backdrop.scene} seed={backdrop.seed} />}
+        {backdrop?.mexique && <MexicoBackdrop className="opening__scene" scene={backdrop.mexique} seed={backdrop.seed} />}
+        {backdrop && !backdrop.mexique && <Landscape className="opening__scene" scene={backdrop.scene} seed={backdrop.seed} />}
       </div>
       <div className="opening__rays" aria-hidden="true" />
       <div className="opening__dust" aria-hidden="true">
@@ -611,7 +629,7 @@ export function PackOpening() {
           </div>
 
           <div className="opening__actions">
-            <button type="button" className="btn btn--primary btn--lg" onClick={advance} disabled={leaving}>
+            <button type="button" className={`btn btn--primary btn--lg ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`} onClick={advance} disabled={leaving}>
               {revealed <= current ? 'Retourner' : current < cards.length - 1 ? 'Suivante' : 'Récapitulatif'}
             </button>
             <button type="button" className="btn btn--ghost" onClick={revealAll} disabled={revealed >= cards.length}>
@@ -641,6 +659,7 @@ export function PackOpening() {
       {stage === 'walkout' && walkoutIndex !== null && (
         <Walkout
           card={cards[walkoutIndex]}
+          serie={serie}
           onDone={() => {
             setRevealed(walkoutIndex + 1);
             setCurrent(walkoutIndex);

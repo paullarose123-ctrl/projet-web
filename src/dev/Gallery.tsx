@@ -7,6 +7,7 @@ import { RARITIES, collectionNumber, isIcon, rarityOf, rarityScore } from '../en
 import { FREE_PACK, SHOP_PACKS, sportPack } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
+import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
 
 // Page de contrôle visuel (#galerie) : un échantillon de cartes, les emblèmes des familles et tous les drapeaux.
 const SAMPLE = ['lion', 'tigre', 'elephant', 'loup', 'orque', 'requin-blanc', 'panda', 'gorille', 'aigle-royal', 'crocodile-du-nil', 'berger-allemand', 'chat', 'axolotl', 'pieuvre', 'kangourou', 'fourmi'];
@@ -146,6 +147,16 @@ export function Gallery() {
           </figure>
         ))}
       </section>
+    </div>
+  );
+}
+
+/** Aperçu plein écran d'un décor d'ouverture du Mexique (#fonds-mexique=panteon, monarcas ou xochimilco). */
+export function MexicoBackdropPreview({ scene }: { scene: string }) {
+  const name = (MEXICO_SCENES as string[]).includes(scene) ? (scene as MexicoScene) : MEXICO_SCENES[0];
+  return (
+    <div className="opening__backdrop">
+      <MexicoBackdrop className="opening__scene" scene={name} seed="aperçu" />
     </div>
   );
 }
