@@ -151,7 +151,7 @@ export function Gallery() {
   );
 }
 
-/** Aperçu plein écran d'un décor d'ouverture du Mexique (#fonds-mexique=panteon, monarcas ou xochimilco). */
+/** Aperçu plein écran d'un décor d'ouverture du Mexique (#fonds-mexique=panteon, selva…). */
 export function MexicoBackdropPreview({ scene }: { scene: string }) {
   const name = (MEXICO_SCENES as string[]).includes(scene) ? (scene as MexicoScene) : MEXICO_SCENES[0];
   return (

@@ -2296,6 +2296,48 @@ h3 {
   }
 }
 
+/* rayons de soleil dans la brume de la jungle */
+.mx-scene .mx-rays {
+  opacity: 0.08;
+  animation: mx-rays 6s ease-in-out infinite alternate;
+}
+
+@keyframes mx-rays {
+  from {
+    opacity: 0.04;
+  }
+  to {
+    opacity: 0.11;
+  }
+}
+
+/* fumée du volcan et bancs de brume qui dérivent lentement */
+.mx-scene .mx-smoke {
+  animation: mx-smoke 9s ease-in-out infinite alternate;
+}
+
+@keyframes mx-smoke {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(4px, -2px);
+  }
+}
+
+.mx-scene .mx-mist {
+  animation: mx-mist 14s ease-in-out infinite alternate;
+}
+
+@keyframes mx-mist {
+  from {
+    transform: translateX(-6px);
+  }
+  to {
+    transform: translateX(6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mx-scene * {
     animation: none !important;

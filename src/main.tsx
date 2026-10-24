@@ -16,7 +16,7 @@ if (import.meta.env.DEV) (window as unknown as { __game: typeof useGame }).__gam
 
 // #galerie affiche la planche de contrôle visuel (matières de cartes et drapeaux) ;
 // #toutes-les-cartes affiche toutes les cartes, pour la planche de revue ; #serie-2 celles du Mexique ;
-// #fonds-mexique=panteon (monarcas, xochimilco) un décor d'ouverture des boosters du Mexique.
+// #fonds-mexique=panteon (monarcas, xochimilco, volcanes, barrancas, desierto, selva) un décor d'ouverture du Mexique.
 const hash = typeof window !== 'undefined' ? window.location.hash : '';
 
 // la partie d'un joueur connecté part toute seule dans son compte

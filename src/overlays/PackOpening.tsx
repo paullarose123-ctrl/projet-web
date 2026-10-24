@@ -42,7 +42,7 @@ function pickOther(n: number, last: number): number {
 
 /**
  * Un décor au hasard (jamais deux fois de suite le même), redessiné avec une graine neuve : un paysage du jeu, ou
- * pour le booster du Mexique, un de ses décors de la fête des morts.
+ * pour le booster du Mexique, un de ses décors (fête des morts ou nature du pays).
  */
 function pickBackdrop(serie: number): Backdrop {
   const seed = `ouverture ${Math.random().toString(36).slice(2)}`;
