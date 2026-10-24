@@ -3,6 +3,7 @@ import { hashString, mulberry32 } from '../art/kit';
 import type { PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { Logo } from './Logo';
+import { PackArtMexique } from './PackArtMexique';
 import { PackScene, isLight, type SceneDef } from './PackScene';
 
 // Booster en affiche illustrée, imprimée sur un sachet plastique : un paysage peint propre à chaque pack
@@ -30,6 +31,8 @@ const PACK_SCENES: Record<Exclude<Tone, 'sport'>, SceneDef> = {
   prime: { kind: 'ocean', creature: 'dauphins', palette: { sky: ['#f2a7cf', '#ffe4c2'], sun: '#fff9ee', far: '#b0b9f0', near: '#2b2c72', accent: '#ffffff' } },
   // légende : nuit d'or et constellations
   black: { kind: 'nuit', palette: { sky: ['#05060b', '#2b2214'], sun: '#ffd46e', far: '#3b301d', near: '#050404', accent: '#ffd46e' } },
+  // Série 2 · Mexique : désert sous un ciel rouge, terres vertes (son sachet est dessiné par PackArtMexique)
+  mexique: { kind: 'desert', palette: { sky: ['#c4213a', '#ffe0b5'], sun: '#fff8ea', far: '#5ba878', near: '#05261a', accent: '#fff8ea' } },
 };
 
 const FAMILY_SCENES: Record<SportId, SceneDef> = {
@@ -159,6 +162,10 @@ export function PackArt({ tone, name, title: customTitle, sport, size = 5, guara
   const kicker = name.startsWith('Booster') ? 'Booster' : 'Pack';
   const short = name.replace(/^Pack /, '').replace(/^Booster /, '');
   const title = customTitle ?? short.charAt(0).toUpperCase() + short.slice(1);
+  // la Série 2 a son propre sachet : la pyramide de Teotihuacan au soleil couchant
+  if (tone === 'mexique') {
+    return <PackArtMexique className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Mexique' : title)} line={guarantee ?? `${size} cartes`} />;
+  }
   const style = {
     '--near': scene.palette.near,
     '--ink': isLight(scene.palette.sky[0]) ? scene.palette.near : '#fff8ec',

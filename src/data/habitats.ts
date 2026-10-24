@@ -247,3 +247,59 @@ const DEFS: Def[] = [
 ];
 
 export const HABITATS: Athlete[] = DEFS.map(H);
+
+// ───── Série 2 · Mexique (sortie le 1er novembre 2026) ─────
+// Six grands lieux du Mexique, tous inscrits au patrimoine mondial de l'UNESCO, avec les animaux de la série qui y vivent.
+const DEFS_MEXIQUE: Def[] = [
+  {
+    id: 'mer-de-cortes', name: 'Mer de Cortés', sport: 'marins', country: 'MX', fame: 92,
+    lieu: 'Entre la Basse-Californie et le Mexique continental', superficie: '160 000 km²',
+    especes: ['vaquita', 'baleine-grise', 'totoaba', 'calmar-de-humboldt', 'fou-a-pattes-bleues', 'mx-requin-baleine'],
+    fact: 'Jacques-Yves Cousteau l’avait surnommée « l’aquarium du monde » : on y croise près d’un tiers des espèces de baleines et de dauphins de la planète.',
+    protection: 'Îles et aires protégées du golfe de Californie, patrimoine mondial de l’UNESCO depuis 2005.',
+    scene: { kind: 'ocean', creature: 'baleine', palette: { sky: ['#f08a5d', '#ffe2b8'], sun: '#fff6e4', far: '#c97a6a', near: '#0a3550', accent: '#ffffff' } },
+  },
+  {
+    id: 'sonora', name: 'Désert de Sonora', sport: 'reptiles', country: 'MX', fame: 80,
+    lieu: 'Nord-ouest du Mexique et sud-ouest des États-Unis', superficie: '260 000 km²',
+    especes: ['mx-coyote', 'mouflon-du-desert', 'geocoucou', 'crapaud-du-sonora', 'chauve-souris-des-agaves', 'pecari-a-collier', 'caracara-du-nord', 'bassaris'],
+    fact: 'Le désert le plus chaud d’Amérique du Nord, et pourtant l’un des plus riches en vie : il y pousse le cardón, le plus grand cactus du monde.',
+    protection: 'Réserve de biosphère El Pinacate et Gran Desierto de Altar, patrimoine mondial de l’UNESCO depuis 2013.',
+    scene: { kind: 'desert', palette: { sky: ['#e8603c', '#ffd89a'], sun: '#fff4dc', far: '#c9774a', near: '#2a120a', accent: '#ffffff' } },
+  },
+  {
+    id: 'monarques', name: 'Sanctuaires des monarques', sport: 'insectes', country: 'MX', fame: 80,
+    lieu: 'Michoacán et État de Mexico', superficie: '563 km² de réserve',
+    especes: ['mx-monarque', 'mx-coyote', 'coati'],
+    fact: 'Chaque hiver, des centaines de millions de monarques venus du Canada et des États-Unis s’y posent sur les sapins, qui en deviennent orange.',
+    protection: 'Réserve de biosphère du papillon monarque, patrimoine mondial de l’UNESCO depuis 2008.',
+    scene: { kind: 'foret', creature: 'papillons', palette: { sky: ['#f59a3c', '#ffe6b0'], sun: '#fff5dc', far: '#5e8a6a', near: '#0c2418', accent: '#ff8a1e' } },
+  },
+  {
+    id: 'revillagigedo', name: 'Îles Revillagigedo', sport: 'requins', country: 'MX', fame: 66,
+    lieu: 'Océan Pacifique, à 400 km de la Basse-Californie', superficie: '148 000 km² de parc marin',
+    especes: ['mx-raie-manta', 'mx-requin-baleine', 'colombe-de-socorro'],
+    fact: 'Surnommées les « Galápagos du Mexique » ; leur parc marin, le plus grand d’Amérique du Nord, y interdit toute pêche depuis 2017.',
+    protection: 'Patrimoine mondial de l’UNESCO depuis 2016.',
+    scene: { kind: 'recif', creature: 'manta', palette: { sky: ['#3fc6c9', '#0a3360'], sun: '#e8fffb', far: '#228a9a', near: '#041a2c', accent: '#c8fff4' } },
+  },
+  {
+    id: 'sian-kaan', name: 'Sian Ka’an', sport: 'oiseaux', country: 'MX', fame: 66,
+    lieu: 'Quintana Roo, dans la péninsule du Yucatán', superficie: '5 280 km²',
+    especes: ['mx-jaguar', 'tapir-de-baird', 'crocodile-de-morelet', 'singe-hurleur-noir', 'dindon-ocelle', 'motmot', 'toucan-a-carene', 'mx-margay'],
+    fact: 'Son nom maya veut dire « là où naît le ciel » : forêts, marais, mangroves et barrière de corail s’y succèdent jusqu’à la mer des Caraïbes.',
+    protection: 'Patrimoine mondial de l’UNESCO depuis 1987.',
+    scene: { kind: 'marais', creature: 'flamants', palette: { sky: ['#4fb6c8', '#fff0c8'], sun: '#fffbe8', far: '#5aa384', near: '#0a2a22', accent: '#ffffff' } },
+  },
+  {
+    id: 'xochimilco', name: 'Canaux de Xochimilco', sport: 'amphibiens', country: 'MX', fame: 50,
+    lieu: 'Sud de la ville de Mexico', superficie: '170 km de canaux',
+    especes: ['mx-axolotl'],
+    fact: 'Les derniers restes des lacs où les Aztèques avaient bâti Tenochtitlan ; on y cultive encore des chinampas, des jardins posés sur l’eau.',
+    protection: 'Centre historique de Mexico et Xochimilco, patrimoine mondial de l’UNESCO depuis 1987.',
+    scene: { kind: 'marais', creature: 'lucioles', palette: { sky: ['#e86a8c', '#ffd9b0'], sun: '#fff3e2', far: '#4a8a6a', near: '#0a221a', accent: '#ffe27a' } },
+  },
+];
+
+/** Habitats de la Série 2 (Mexique). */
+export const HABITATS_MEXIQUE: Athlete[] = DEFS_MEXIQUE.map((d) => ({ ...H(d), id: `habitat-mx-${d.id}`, serie: 2 }));

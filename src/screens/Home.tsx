@@ -3,16 +3,15 @@ import type { CardFace } from '../engine/types';
 import { useGame, OBJECTIVES, MAX_FREE_PACKS, FREE_PACK_INTERVAL } from '../store/game';
 import { useUi } from '../store/ui';
 import { useNow, formatDuration, timeAgo } from '../hooks/useNow';
-import { ATHLETES } from '../data/athletes';
 import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
-import { FREE_PACK } from '../engine/packs';
+import { freePack } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
 import { HERO_SCENE } from '../art/scenes';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
-import { NEXT_SERIES, SERIES } from '../engine/packs';
+import { cardsOfSerie, currentSerie, nextSerie, releasedAthletes, releasedSeries, type SerieDef } from '../engine/series';
 import { Balles } from '../components/Balles';
 import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
@@ -82,47 +81,53 @@ function untiltHero(event: PointerEvent<HTMLElement>) {
 
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
-/** Extensions : la série en cours, la prochaine (consacrée à un pays) et son compte à rebours. */
+/** Ce que contient une série : « 425 espèces, 30 Habitats et 20 Icônes ». */
+function serieContents(serie: SerieDef): string {
+  const cards = cardsOfSerie(serie.number);
+  const species = cards.filter((a) => !a.habitat).length;
+  const habitats = cards.filter((a) => a.habitat).length;
+  const icons = cards.filter((a) => a.retired && !a.habitat).length;
+  return `${species} espèces, ${habitats} Habitats et ${icons} Icônes`;
+}
+
+/**
+ * Extensions : avant la sortie d'une série, son compte à rebours ; une fois sortie, son annonce (ses boosters et une
+ * de ses cartes). Puis la frise des séries : celles qui sont sorties, la prochaine, la suivante.
+ */
 function ExpansionBanner() {
   const now = useNow(1000);
-  const release = NEXT_SERIES.release;
-  const left = Math.max(0, release.getTime() - now);
-  const days = Math.floor(left / 86_400_000);
-  const hours = Math.floor((left % 86_400_000) / 3_600_000);
-  const minutes = Math.floor((left % 3_600_000) / 60_000);
-  const seconds = Math.floor((left % 60_000) / 1000);
+  const setTab = useUi((s) => s.setTab);
+  const current = currentSerie(now);
+  const next = nextSerie(now);
+  const released = releasedSeries(now);
   const timeline = [
-    { serie: SERIES.number, label: 'disponible', state: 'live' },
-    { serie: NEXT_SERIES.number, label: MONTHS[release.getMonth()], state: 'next' },
-    { serie: NEXT_SERIES.number + 1, label: 'bientôt', state: 'later' },
+    ...released.map((serie) => ({ serie: serie.number, label: 'disponible', state: 'live' })),
+    ...(next ? [{ serie: next.number, label: MONTHS[next.release.getMonth()], state: 'next' }] : []),
+    { serie: (next ?? current).number + 1, label: 'bientôt', state: 'later' },
   ];
-  const species = ATHLETES.filter((a) => !a.habitat).length;
   return (
     <section className="expansion" aria-labelledby="expansion-title">
       <div className="expansion__text">
         <p className="eyebrow">Extensions</p>
-        <h2 id="expansion-title">La Série {NEXT_SERIES.number} arrive en {MONTHS[release.getMonth()]}</h2>
-        <p className="expansion__sub">
-          La <b>Série {SERIES.number} · {SERIES.name}</b> est disponible : {species} espèces des quatre coins de la planète, {ATHLETES.filter((a) => a.habitat).length} Habitats et{' '}
-          {ATHLETES.filter((a) => a.retired).length} Icônes. Les prochaines séries partiront chacune à la découverte d’un pays : ses espèces, ses habitats et
-          son booster.
-        </p>
-        <div className="expansion__countdown" aria-label={`Série ${NEXT_SERIES.number} dans ${days} jours et ${hours} heures`}>
-          <span className="expansion__next">Série {NEXT_SERIES.number} · le 1er {MONTHS[release.getMonth()]}</span>
-          <div className="countdown">
-            {[
-              [days, 'jours'],
-              [hours, 'h'],
-              [minutes, 'min'],
-              [seconds, 's'],
-            ].map(([value, unit]) => (
-              <span key={unit} className="countdown__cell">
-                <b>{String(value).padStart(2, '0')}</b>
-                <small>{unit}</small>
-              </span>
-            ))}
-          </div>
-        </div>
+        {next ? <Countdown current={current} next={next} now={now} /> : (
+          <>
+            <h2 id="expansion-title">
+              La Série {current.number} · {current.name} est arrivée
+            </h2>
+            <p className="expansion__sub">
+              {serieContents(current)} à collectionner, avec leur booster gratuit et leurs packs en boutique. La{' '}
+              <b>Série 1 · Animaux du monde</b> reste disponible en boutique, et chaque série a son album.
+            </p>
+            <div className="expansion__cta">
+              <button type="button" className="btn btn--primary" onClick={() => setTab('boutique')}>
+                Voir les packs {current.name}
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={() => setTab('collection')}>
+                Album de la Série {current.number}
+              </button>
+            </div>
+          </>
+        )}
         <ol className="expansion__timeline">
           {timeline.map((step) => (
             <li key={step.serie} className={`is-${step.state}`}>
@@ -133,7 +138,8 @@ function ExpansionBanner() {
           ))}
         </ol>
       </div>
-      {/* la prochaine série (le Mexique) : deux de ses boosters, et devant eux un dos de carte qui garde son mystère */}
+      {/* la série du Mexique : deux de ses boosters, et devant eux un dos de carte qui garde son mystère (avant sa sortie)
+          ou l'axolotl de la série (après) */}
       <div className="expansion__teaser" aria-hidden="true">
         <div className="expansion__pack expansion__pack--left">
           <PackArtMexique />
@@ -142,11 +148,52 @@ function ExpansionBanner() {
           <PackArtMexique />
         </div>
         <div className="expansion__card">
-          <CardBackMexique />
-          <span className="expansion__mystery">?</span>
+          {next ? (
+            <>
+              <CardBackMexique />
+              <span className="expansion__mystery">?</span>
+            </>
+          ) : (
+            <Card card={{ athleteId: 'mx-axolotl', variant: 'base' }} size="sm" />
+          )}
         </div>
       </div>
     </section>
+  );
+}
+
+/** Compte à rebours de la prochaine série. */
+function Countdown({ current, next, now }: { current: SerieDef; next: SerieDef; now: number }) {
+  const release = next.release;
+  const left = Math.max(0, release.getTime() - now);
+  const days = Math.floor(left / 86_400_000);
+  const hours = Math.floor((left % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((left % 3_600_000) / 60_000);
+  const seconds = Math.floor((left % 60_000) / 1000);
+  return (
+    <>
+      <h2 id="expansion-title">La Série {next.number} arrive en {MONTHS[release.getMonth()]}</h2>
+      <p className="expansion__sub">
+        La <b>Série {current.number} · {current.name}</b> est disponible : {serieContents(current)}. Les prochaines séries partiront chacune à la découverte
+        d’un pays : ses espèces, ses habitats et son booster.
+      </p>
+      <div className="expansion__countdown" aria-label={`Série ${next.number} dans ${days} jours et ${hours} heures`}>
+        <span className="expansion__next">Série {next.number} · le 1er {MONTHS[release.getMonth()]}</span>
+        <div className="countdown">
+          {[
+            [days, 'jours'],
+            [hours, 'h'],
+            [minutes, 'min'],
+            [seconds, 's'],
+          ].map(([value, unit]) => (
+            <span key={unit} className="countdown__cell">
+              <b>{String(value).padStart(2, '0')}</b>
+              <small>{unit}</small>
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -157,13 +204,16 @@ function FreePackHero() {
   const now = useNow(1000);
   const full = freePacks >= MAX_FREE_PACKS;
   const progress = full ? 1 : 1 - Math.max(0, nextFreePackAt - now) / FREE_PACK_INTERVAL;
+  // le booster gratuit de la série la plus récente
+  const pack = freePack(now);
+  const serie = currentSerie(now);
 
   return (
     <section className="hero" aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
       <Landscape className="hero__art" scene={HERO_SCENE} seed="accueil" />
       <div className="hero__pack">
         <div className="hero__tilt">
-          <PackArt tone="bronze" name={FREE_PACK.name} title={SERIES.name} size={FREE_PACK.size} className={freePacks > 0 ? 'is-ready' : ''} />
+          <PackArt tone={pack.tone} name={pack.name} title={serie.name} size={pack.size} className={freePacks > 0 ? 'is-ready' : ''} />
         </div>
         {/* les boosters en réserve : des sachets empilés derrière, et une pastille par booster dessous */}
         {freePacks > 1 && <span className="hero__ghost hero__ghost--1" aria-hidden="true" />}
@@ -179,7 +229,9 @@ function FreePackHero() {
         </div>
       </div>
       <div className="hero__text">
-        <p className="eyebrow">Série {SERIES.number} · {SERIES.name} · booster gratuit</p>
+        <p className="eyebrow">
+          Série {serie.number} · {serie.name} · booster gratuit
+        </p>
         <h1 id="hero-title">
           {freePacks > 0 ? (
             <>
@@ -224,7 +276,7 @@ function CollectionSummary() {
 
   const perRarity = useMemo(() => {
     const totals = Object.fromEntries(RARITY_TIERS.map((id) => [id, { owned: 0, total: 0 }])) as Record<string, { owned: number; total: number }>;
-    for (const athlete of ATHLETES) {
+    for (const athlete of releasedAthletes()) {
       const entry = totals[rarityOf(athlete).id];
       entry.total += 1;
       if (discovered[athlete.id]) entry.owned += 1;
@@ -254,7 +306,7 @@ function CollectionSummary() {
           <div className="bigstat">
             <b>
               {owned}
-              <small> / {ATHLETES.length}</small>
+              <small> / {releasedAthletes().length}</small>
             </b>
             <span>espèces découvertes · {collection.length} cartes</span>
           </div>
@@ -380,8 +432,8 @@ export function HomeScreen() {
       <RecentPulls />
       <MarketNewsPanel />
       <p className="footnote">
-        Mesures, populations et anecdotes réelles (estimations arrondies). {ATHLETES.filter((a) => !a.habitat).length} espèces, dont {ATHLETES.filter((a) => a.retired).length} Icônes (espèces disparues),
-        et {ATHLETES.filter((a) => a.habitat).length} cartes Habitat. Photos libres de Wikimedia Commons, iNaturalist, Unsplash et Pixabay, auteurs crédités dans la fiche de chaque carte ; pour une Icône sans photo d’elle-même, un animal vivant de la même espèce.
+        Mesures, populations et anecdotes réelles (estimations arrondies). {releasedAthletes().filter((a) => !a.habitat).length} espèces, dont{' '}
+        {releasedAthletes().filter((a) => a.retired).length} Icônes (espèces disparues), et {releasedAthletes().filter((a) => a.habitat).length} cartes Habitat. Photos libres de Wikimedia Commons, iNaturalist, Unsplash et Pixabay, auteurs crédités dans la fiche de chaque carte ; pour une Icône sans photo d’elle-même, un animal vivant de la même espèce.
       </p>
       <p className="footnote">© 2026 AnimalCards · le jeu, ses dessins et ses textes : tous droits réservés. Mesure d’audience anonyme, sans cookie (GoatCounter).</p>
     </div>

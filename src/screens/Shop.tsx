@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../store/game';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { RARITIES, RARITY_ORDER } from '../engine/cards';
-import { SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, sportPack, type PackDef } from '../engine/packs';
+import { MEXIQUE_PACKS, SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, sportPack, type PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { PackArt } from '../components/PackArt';
 import { Balles } from '../components/Balles';
@@ -10,6 +10,8 @@ import { SportIcon } from '../components/SportIcon';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
+import { isReleased } from '../engine/series';
+import { useNow } from '../hooks/useNow';
 
 function percent(value: number): string {
   if (value > 0 && value < 0.0001) return '< 0,01 %';
@@ -112,6 +114,9 @@ function PackTile({ pack }: { pack: PackDef }) {
 export function ShopScreen() {
   const [sport, setSport] = useState<SportId>('felins');
   const balles = useGame((s) => s.balles);
+  // les packs de la Série 2 apparaissent le jour de sa sortie
+  const now = useNow(60_000);
+  const mexique = isReleased(2, now);
   return (
     <div className="screen">
       <header className="screen__head screen__head--art">
@@ -124,6 +129,20 @@ export function ShopScreen() {
           </p>
         </div>
       </header>
+      {mexique && (
+        <section className="shop-serie shop-serie--mexique" aria-labelledby="shop-mexique">
+          <h2 id="shop-mexique">
+            Série 2 · Mexique <small>nouvelle série</small>
+          </h2>
+          <p className="muted small">Les animaux, les Habitats et les Icônes du Mexique, avec leurs versions Prime : un album à part, à compléter.</p>
+          <div className="pack-grid">
+            {MEXIQUE_PACKS.map((pack) => (
+              <PackTile key={pack.id} pack={pack} />
+            ))}
+          </div>
+        </section>
+      )}
+      {mexique && <h2 className="shop-serie__title">Série 1 · Animaux du monde</h2>}
       <div className="pack-grid">
         {SHOP_PACKS.map((pack) => (
           <PackTile key={pack.id} pack={pack} />

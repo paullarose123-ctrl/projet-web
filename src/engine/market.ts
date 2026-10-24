@@ -1,5 +1,6 @@
-import type { CardFace, OwnedCard, SportId, Variant } from './types';
-import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
+import type { Athlete, CardFace, OwnedCard, SportId, Variant } from './types';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { releasedAthletes } from './series';
 import { SPORTS } from '../data/sports';
 import { REVERSE_CHANCE, baseValueOf, canBePrime, canBeReverse, displayName, dropWeight, isHabitat, rarityOf, roundPrice } from './cards';
 import { hashUnit, makeUid, pick, randInt, weightedPick, type Rng } from './random';
@@ -143,18 +144,20 @@ function listingWeight(athleteId: string): number {
   return tierWeight * (0.35 + dropWeight(athlete)) * (athlete.retired ? 0.05 : 1);
 }
 
-// Répartition cumulée des poids, calculée une fois : le tirage reste rapide même avec des milliers d'espèces.
-let listingCdf: { cdf: Float64Array; total: number } | null = null;
+// Répartition cumulée des poids, calculée une fois par jeu de cartes sorties : le tirage reste rapide même avec des
+// milliers d'espèces. Seules les cartes des séries déjà sorties passent au marché.
+let listingCdf: { athletes: Athlete[]; cdf: Float64Array; total: number } | null = null;
 
-function pickListingAthlete(rng: Rng) {
-  if (!listingCdf) {
-    const cdf = new Float64Array(ATHLETES.length);
+function pickListingAthlete(rng: Rng, t: number) {
+  const athletes = releasedAthletes(t);
+  if (listingCdf?.athletes !== athletes) {
+    const cdf = new Float64Array(athletes.length);
     let total = 0;
-    ATHLETES.forEach((athlete, i) => {
+    athletes.forEach((athlete, i) => {
       total += listingWeight(athlete.id);
       cdf[i] = total;
     });
-    listingCdf = { cdf, total };
+    listingCdf = { athletes, cdf, total };
   }
   const roll = rng() * listingCdf.total;
   let lo = 0;
@@ -164,11 +167,11 @@ function pickListingAthlete(rng: Rng) {
     if (listingCdf.cdf[mid] <= roll) lo = mid + 1;
     else hi = mid;
   }
-  return ATHLETES[lo];
+  return listingCdf.athletes[lo];
 }
 
 export function createAiListing(rng: Rng, t: number, news: MarketNews[], forceAthleteId?: string): Listing {
-  const athlete = forceAthleteId ? ATHLETES_BY_ID[forceAthleteId] : pickListingAthlete(rng);
+  const athlete = forceAthleteId ? ATHLETES_BY_ID[forceAthleteId] : pickListingAthlete(rng, t);
   // les espèces vedettes passent parfois en version Prime sur le marché, pour faire rêver
   // et les Rares et au-dessus peuvent y apparaître en finition Reverse
   const variant: Variant = isHabitat(athlete) ? 'base' : canBePrime(athlete) && rng() < 0.2 ? 'prime' : canBeReverse(athlete) && rng() < REVERSE_CHANCE ? 'reverse' : 'base';
@@ -196,7 +199,7 @@ export function createMarket(t: number, rng: Rng): MarketState {
   const listings: Listing[] = [];
   // quelques têtes d'affiche dès l'ouverture, pour faire rêver
   // (des Épiques et des Légendaires : les Icônes restent des trésors, rares sur le marché)
-  const headliners = ATHLETES.filter((a) => rarityOf(a).order >= 3 && !a.retired);
+  const headliners = releasedAthletes(t).filter((a) => rarityOf(a).order >= 3 && !a.retired);
   for (let i = 0; i < 6; i++) listings.push(createAiListing(rng, t, [], pick(rng, headliners).id));
   while (listings.length < TARGET_LISTINGS) listings.push(createAiListing(rng, t, []));
   return { listings, myListings: [], news: [], lastTick: t, nextNewsAt: t + 2 * MINUTE };
@@ -221,7 +224,7 @@ export function createNews(rng: Rng, t: number): MarketNews {
     const factor = 1.12 + rng() * 0.1;
     return { id: makeUid('n'), at: t, icons: true, factor, duration, text: `Les collectionneurs s’arrachent les espèces disparues : ${pct(factor)}` };
   }
-  const athlete = weightedPick(rng, ATHLETES, (a) => 0.2 + a.fame / 100);
+  const athlete = weightedPick(rng, releasedAthletes(t), (a) => 0.2 + a.fame / 100);
   const up = rng() < 0.62;
   const factor = up ? 1.15 + rng() * 0.25 : 0.75 + rng() * 0.15;
   const name = displayName(athlete);

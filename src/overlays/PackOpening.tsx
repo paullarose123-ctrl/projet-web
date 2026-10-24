@@ -8,7 +8,8 @@ import type { CardFace } from '../engine/types';
 import { Card } from '../components/Card';
 import { ALL_PACK_SCENES, PackArt, packScene } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
-import { SERIES } from '../engine/packs';
+import { CardBackMexique } from '../components/CardBackMexique';
+import { serieDef, serieOf } from '../engine/series';
 import { Landscape, type SceneDef } from '../components/PackScene';
 import { HERO_SCENE, SCREEN_SCENES } from '../art/scenes';
 import { Logo } from '../components/Logo';
@@ -164,6 +165,11 @@ function CardTag({ card }: { card: CardFace & { isNew?: boolean } }) {
   if (ATHLETES_BY_ID[card.athleteId].habitat && card.isNew) return <span className="tag tag--habitat">Nouvel habitat</span>;
   if (card.variant === 'reverse') return <span className="tag tag--reverse">Reverse</span>;
   return <span className={`tag ${card.isNew ? 'tag--new' : 'tag--dupe'}`}>{card.isNew ? 'Nouveau' : 'Doublon'}</span>;
+}
+
+/** Dos de la carte : celui de sa série (le Mexique pour la Série 2). */
+function BackOf({ serie }: { serie: number }) {
+  return serie === 2 ? <CardBackMexique /> : <CardBack />;
 }
 
 function Walkout({ card, onDone }: { card: CardFace; onDone: () => void }) {
@@ -463,6 +469,7 @@ export function PackOpening() {
   const ownedDupes = dupes.filter((c) => collection.some((o) => o.uid === c.uid && !o.locked));
   const dupesValue = ownedDupes.reduce((sum, c) => sum + quickSellValue(ATHLETES_BY_ID[c.athleteId], c.variant), 0);
   const isFree = opening.packName === 'Booster gratuit';
+  const serie = opening.serie ?? 1;
   // dos et tranches du sachet aux couleurs de son paysage
   const palette = packScene(opening.tone, opening.sport).palette;
   const focusIndex = focus ?? cards.length - 1;
@@ -499,23 +506,23 @@ export function PackOpening() {
             <span className="pack3d-float">
               <span className="pack3d tilt3d">
                 <span className="pack3d__cards" aria-hidden="true">
-                  <CardBack />
-                  <CardBack />
-                  <CardBack />
+                  <BackOf serie={serie} />
+                  <BackOf serie={serie} />
+                  <BackOf serie={serie} />
                 </span>
                 <span className="pack3d__face pack3d__front">
                   <span className="pack3d__body" style={{ clipPath: BODY_CLIP }}>
-                    <PackArt tone={opening.tone} name={opening.packName} title={isFree ? SERIES.name : undefined} sport={opening.sport} size={cards.length} />
+                    <PackArt tone={opening.tone} name={opening.packName} title={isFree ? serieDef(serie).name : undefined} sport={opening.sport} size={cards.length} />
                   </span>
                   <span className="pack3d__strip" aria-hidden="true" style={{ clipPath: STRIP_CLIP }}>
-                    <PackArt tone={opening.tone} name={opening.packName} title={isFree ? SERIES.name : undefined} sport={opening.sport} size={cards.length} />
+                    <PackArt tone={opening.tone} name={opening.packName} title={isFree ? serieDef(serie).name : undefined} sport={opening.sport} size={cards.length} />
                   </span>
                   {/* couture qui s'illumine pendant la charge */}
                   <span className="pack3d__seam" aria-hidden="true" />
                 </span>
                 <span className="pack3d__face pack3d__back" aria-hidden="true">
                   <Logo />
-                  <small>Série 1 · 2026</small>
+                  <small>Série {serie} · 2026</small>
                 </span>
                 <span className="pack3d__side pack3d__side--left" aria-hidden="true" />
                 <span className="pack3d__side pack3d__side--right" aria-hidden="true" />
@@ -571,7 +578,7 @@ export function PackOpening() {
                     <div className="stage-card__float">
                       <div className="flip__inner">
                         <div className="flip__back">
-                          <CardBack />
+                          <BackOf serie={serieOf(ATHLETES_BY_ID[card.athleteId])} />
                         </div>
                         <div className="flip__front">
                           <Card card={card} size="xl" />
@@ -598,7 +605,7 @@ export function PackOpening() {
           <div className="opening__tray" aria-hidden="true">
             {cards.map((card, i) => (
               <div key={card.uid} className={`tray-slot${i === current ? ' is-current' : ''}${i < revealed ? ' is-revealed' : ''}`}>
-                {i < revealed ? <Card card={card} size="xs" /> : <CardBack />}
+                {i < revealed ? <Card card={card} size="xs" /> : <BackOf serie={serieOf(ATHLETES_BY_ID[card.athleteId])} />}
               </div>
             ))}
           </div>

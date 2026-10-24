@@ -1,5 +1,5 @@
 import type { Athlete, ArchetypeId, SportId } from '../engine/types';
-import { HABITATS } from './habitats.ts';
+import { HABITATS, HABITATS_MEXIQUE } from './habitats.ts';
 import { CONTINENTS_MULTIPLES, MILIEU_CORRIGE, PAYS_PRINCIPAL } from './repartition.ts';
 
 // Base des espèces animales (le fichier garde son nom d'AthletiCards).
@@ -579,8 +579,91 @@ const RECENT_ICONS: Athlete[] = [
   x('emeu-de-king-island', 'Émeu de King Island', 'oiseaux', 'oiseau-coureur', 'King Island', 'AU', 40, 60, 'Un émeu nain de 87 cm, sombre, de l’île King au sud de l’Australie ; les deux derniers sont morts en captivité à Paris en 1822.', { ...L('Dromaius novaehollandiae minor'), ...D(1822) }),
 ];
 
+// ───────────────────────── SÉRIE 2 · MEXIQUE ─────────────────────────
+// Sortie le 1er novembre 2026. Les animaux du Mexique : des espèces nouvelles, et des « versions Mexique » d'espèces
+// déjà dans la Série 1 (axolotl, jaguar, monarque…), avec d'autres anecdotes. Identifiants préfixés « mx- » pour
+// les reprises. Le drapeau est celui du Mexique pour toute la série.
+
+/** Une carte de la Série 2. */
+const mx = (athlete: Athlete): Athlete => ({ ...athlete, serie: 2 });
+
+const MEXIQUE: Athlete[] = [
+  // félins
+  x('mx-jaguar', 'Jaguar', 'felins', 'felin-puissant', 'Jungle du Yucatán', 'MX', 86, 92, 'Le plus grand félin des Amériques. Pour les Mayas, il régnait sur la nuit et le monde souterrain, et leurs rois portaient sa peau.', { ...L('Panthera onca'), ...P('2011', 'El Jefe, photographié en 2011 dans les montagnes de l’Arizona, le seul jaguar sauvage connu alors aux États-Unis ; il a été revu en 2021 dans le Sonora, au Mexique.') }),
+  x('mx-margay', 'Margay', 'felins', 'felin-agile', 'Forêt tropicale', 'MX', 30, 68, 'Le plus acrobate des félins : il peut rester suspendu à une branche par une seule patte arrière.', L('Leopardus wiedii')),
+  // canidés
+  x('mx-coyote', 'Coyote', 'canides', 'canide-ruse', 'Déserts et plaines', 'MX', 66, 78, 'Son nom vient du nahuatl « coyotl », la langue des Aztèques ; leur dieu de la musique et de la fête s’appelait Huehuecóyotl, le « vieux coyote ».', L('Canis latrans')),
+  x('loup-du-mexique', 'Loup du Mexique', 'canides', 'canide-meute', 'Montagnes de la Sierra Madre', 'MX', 58, 76, 'Le plus petit loup d’Amérique. Tous ceux qui vivent aujourd’hui descendent de sept loups capturés pour un élevage, quand l’espèce avait disparu de la nature.', L('Canis lupus baileyi')),
+  // primates
+  x('singe-hurleur-noir', 'Singe hurleur noir', 'primates', 'primate-acrobate', 'Jungle du Yucatán', 'MX', 40, 62, 'À l’aube, les mâles hurlent pour annoncer leur territoire : on les entend à des kilomètres, jusque sur les ruines mayas de Palenque.', L('Alouatta pigra')),
+  // géants
+  x('tapir-de-baird', 'Tapir de Baird', 'geants', 'geant-colosse', 'Forêt tropicale', 'MX', 50, 70, 'Le plus grand mammifère sauvage d’Amérique centrale ; sa courte trompe attrape feuilles et fruits, et lui sert de tuba quand il nage.', L('Tapirus bairdii')),
+  // ongulés
+  x('pecari-a-collier', 'Pécari à collier', 'ongules', 'ongule-costaud', 'Déserts et forêts', 'MX', 38, 60, 'Il croque les raquettes de figuier de Barbarie, épines comprises ; la harde se reconnaît à l’odeur d’une glande sur son dos.', L('Dicotyles tajacu')),
+  x('mouflon-du-desert', 'Mouflon du désert', 'ongules', 'ongule-costaud', 'Montagnes du désert', 'MX', 44, 74, 'Les mâles se chargent tête baissée ; le choc de leurs cornes, qui pèsent plus que tout leur squelette, résonne dans les canyons.', L('Ovis canadensis')),
+  // petits mammifères
+  x('lapin-des-volcans', 'Lapin des volcans', 'petits', 'petit-placide', 'Montagnes autour de Mexico', 'MX', 46, 40, 'L’un des plus petits lapins du monde, aux oreilles rondes ; il ne vit que sur les pentes de quelques volcans autour de Mexico, dont le Popocatépetl.', { ...L('Romerolagus diazi'), nick: 'Zacatuche' }),
+  x('coati', 'Coati à nez blanc', 'petits', 'petit-agile', 'Forêts et canyons', 'MX', 44, 58, 'Il dresse sa longue queue rayée comme une antenne : la bande ne se perd pas de vue dans les hautes herbes.', L('Nasua narica')),
+  x('chauve-souris-des-agaves', 'Chauve-souris des agaves', 'petits', 'petit-nocturne', 'Déserts et grottes', 'MX', 36, 34, 'La nuit, elle pollinise les fleurs d’agave ; des producteurs de tequila laissent fleurir une partie de leurs plants pour elle.', L('Leptonycteris yerbabuenae')),
+  x('chien-de-prairie-du-mexique', 'Chien de prairie du Mexique', 'petits', 'petit-placide', 'Prairies du nord du Mexique', 'MX', 34, 40, 'Il ne vit plus que sur un petit territoire du nord-est du Mexique ; ses sentinelles sifflent dès qu’un aigle approche.', L('Cynomys mexicanus')),
+  x('bassaris', 'Bassaris rusé', 'petits', 'petit-nocturne', 'Canyons et falaises', 'MX', 30, 52, 'Les chercheurs d’or l’apprivoisaient pour chasser les souris de leurs cabanes : on l’appelait le « chat des mineurs ».', { ...L('Bassariscus astutus'), nick: 'Cacomixtle' }),
+  // mammifères marins
+  x('vaquita', 'Vaquita', 'marins', 'marin-chasseur', 'Mer de Cortés', 'MX', 70, 50, 'Le plus petit et le plus menacé des cétacés : en 2024, on n’en a compté que 6 à 8, tous dans le nord de la mer de Cortés.', { ...L('Phocoena sinus'), nick: 'Marsouin du Pacifique' }),
+  x('baleine-grise', 'Baleine grise', 'marins', 'marin-geant', 'Lagunes de Basse-Californie', 'MX', 66, 84, 'Chaque hiver, elle nage jusqu’à 10 000 km depuis l’Arctique pour mettre bas dans les lagunes chaudes de Basse-Californie.', L('Eschrichtius robustus')),
+  // requins et raies
+  x('mx-requin-baleine', 'Requin-baleine', 'requins', 'requin-curieux', 'Mer des Caraïbes', 'MX', 82, 80, 'Chaque été, des centaines se rassemblent au large de l’isla Mujeres et de Holbox pour avaler les œufs que les thonines pondent par millions.', L('Rhincodon typus')),
+  x('mx-raie-manta', 'Raie manta', 'requins', 'requin-curieux', 'Mer autour des îles Revillagigedo', 'MX', 74, 74, 'Aux îles Revillagigedo, les mantas géantes viennent tourner autour des plongeurs, comme si elles cherchaient le contact.', L('Mobula birostris')),
+  x('mx-requin-blanc', 'Grand requin blanc', 'requins', 'requin-predateur', 'Mer autour de l’île Guadalupe', 'MX', 95, 94, 'Chaque automne, l’île Guadalupe, au large de la Basse-Californie, attire l’un des plus grands rassemblements de requins blancs du monde.', L('Carcharodon carcharias')),
+  // poissons
+  x('tetra-aveugle', 'Tétra aveugle', 'poissons', 'poisson-etrange', 'Grottes de la Huasteca', 'MX', 40, 30, 'Dans les grottes du Mexique, il a perdu ses yeux et sa couleur ; il se repère aux vibrations de l’eau.', { ...L('Astyanax mexicanus'), wiki: 'Astyanax mexicanus' }),
+  x('totoaba', 'Totoaba', 'poissons', 'poisson-coriace', 'Mer de Cortés', 'MX', 34, 64, 'Sa vessie natatoire se vend des fortunes en Asie : les filets des braconniers qui la pêchent tuent aussi les derniers vaquitas.', L('Totoaba macdonaldi')),
+  x('porte-epee', 'Porte-épée', 'poissons', 'poisson-etrange', 'Rivières de l’est du Mexique', 'MX', 40, 26, 'Ce poisson d’aquarium vient des rivières de l’est du Mexique ; le mâle porte une longue « épée » au bas de la queue.', L('Xiphophorus hellerii')),
+  // rapaces
+  x('mx-aigle-royal', 'Aigle royal', 'rapaces', 'rapace-aigle', 'Montagnes et plateaux', 'MX', 91, 92, 'Au centre du drapeau mexicain : selon la légende, les Aztèques ont fondé Tenochtitlan là où un aigle dévorait un serpent, posé sur un cactus.', L('Aquila chrysaetos')),
+  x('caracara-du-nord', 'Caracara du Nord', 'rapaces', 'rapace-faucon', 'Plaines et déserts', 'MX', 36, 60, 'Un faucon qui marche plus qu’il ne vole ; certains historiens pensent que l’oiseau de la légende de Tenochtitlan était un caracara.', L('Caracara cheriway')),
+  x('condor-de-californie', 'Condor de Californie', 'rapaces', 'rapace-planeur', 'Montagnes de Basse-Californie', 'MX', 66, 80, 'Il n’en restait que 27 en 1987, tous capturés pour un élevage ; depuis 2002, il plane de nouveau au Mexique, dans la sierra de San Pedro Mártir.', L('Gymnogyps californianus')),
+  // oiseaux
+  x('mx-quetzal', 'Quetzal resplendissant', 'oiseaux', 'oiseau-paradeur', 'Forêts de nuages du Chiapas', 'MX', 44, 58, 'Il a donné son nom au dieu Quetzalcóatl, le « serpent à plumes » des Aztèques ; il vit encore dans les forêts de nuages du Chiapas, au sud du Mexique.', L('Pharomachrus mocinno')),
+  x('ara-militaire', 'Ara militaire', 'oiseaux', 'oiseau-malin', 'Canyons et forêts sèches', 'MX', 48, 56, 'Il niche dans les falaises, jusqu’au fond du Sótano del Barro, un gouffre de plus de 400 m de profondeur.', L('Ara militaris')),
+  x('dindon-ocelle', 'Dindon ocellé', 'oiseaux', 'oiseau-paradeur', 'Jungle du Yucatán', 'MX', 40, 52, 'Le cousin sauvage du Yucatán du dindon : sa queue porte des ocelles bleus et bronze, comme celle d’un paon.', L('Meleagris ocellata')),
+  x('geocoucou', 'Grand géocoucou', 'oiseaux', 'oiseau-coureur', 'Déserts', 'MX', 58, 54, 'Le vrai Bip Bip : il court à plus de 30 km/h et attrape lézards et serpents à sonnette.', { ...L('Geococcyx californianus'), nick: 'Bip Bip' }),
+  x('fou-a-pattes-bleues', 'Fou à pattes bleues', 'oiseaux', 'oiseau-paradeur', 'Îles du golfe de Californie', 'MX', 60, 50, 'Le mâle parade en levant ses pattes bleues l’une après l’autre : plus elles sont vives, plus il plaît.', L('Sula nebouxii')),
+  x('motmot', 'Motmot à sourcils bleus', 'oiseaux', 'oiseau-paradeur', 'Forêts sèches du Yucatán', 'MX', 30, 40, 'Quand il repère un prédateur, il balance sa queue en raquette comme un essuie-glace : une façon de dire « je t’ai vu ».', L('Eumomota superciliosa')),
+  x('toucan-a-carene', 'Toucan à carène', 'oiseaux', 'oiseau-malin', 'Forêt tropicale', 'MX', 54, 50, 'Pour dormir, il tourne la tête et pose son grand bec arc-en-ciel sur son dos, puis rabat sa queue par-dessus.', L('Ramphastos sulfuratus')),
+  // reptiles
+  x('heloderme-perle', 'Héloderme perlé', 'reptiles', 'reptile-venimeux', 'Forêts sèches du Pacifique', 'MX', 46, 64, 'L’un des rares lézards venimeux : son venin coule le long des sillons de ses dents pendant qu’il mâchonne sa proie.', L('Heloderma horridum')),
+  x('crocodile-de-morelet', 'Crocodile de Morelet', 'reptiles', 'reptile-mastodonte', 'Marais du golfe du Mexique', 'MX', 40, 80, 'Presque disparu dans les années 1970, chassé pour sa peau, il est revenu en nombre grâce à sa protection.', L('Crocodylus moreletii')),
+  x('tortue-de-kemp', 'Tortue de Kemp', 'reptiles', 'reptile-tortue', 'Plages du Tamaulipas', 'MX', 50, 50, 'La plus petite et la plus menacée des tortues marines ; presque toutes viennent pondre sur les plages du Tamaulipas, autour de Rancho Nuevo.', L('Lepidochelys kempii')),
+  x('tortue-olivatre', 'Tortue olivâtre', 'reptiles', 'reptile-tortue', 'Plages de l’Oaxaca', 'MX', 44, 48, 'À La Escobilla, dans l’Oaxaca, des centaines de milliers de femelles viennent pondre en quelques nuits : la plus grande « arribada » du monde.', L('Lepidochelys olivacea')),
+  x('iguane-noir', 'Iguane noir', 'reptiles', 'reptile-lezard', 'Côtes et ruines mayas', 'MX', 34, 50, 'Le lézard le plus rapide mesuré : près de 35 km/h. Au Yucatán, il se dore au soleil sur les pyramides mayas.', L('Ctenosaura similis')),
+  x('crotale-du-mexique', 'Crotale du Mexique', 'reptiles', 'reptile-venimeux', 'Forêts sèches du Pacifique', 'MX', 38, 70, 'Le Mexique compte plus d’espèces de serpents à sonnette que tout autre pays ; celui-ci, long de près de 2 m, est l’un des plus grands.', L('Crotalus basiliscus')),
+  // amphibiens
+  x('mx-axolotl', 'Axolotl', 'amphibiens', 'amphibien-etrange', 'Lacs et canaux de Xochimilco', 'MX', 82, 48, 'Il doit son nom à Xólotl, le dieu aztèque à tête de chien qui, selon la légende, s’est changé en axolotl pour échapper aux autres dieux.', L('Ambystoma mexicanum')),
+  x('achoque', 'Achoque', 'amphibiens', 'amphibien-etrange', 'Lac de Pátzcuaro', 'MX', 30, 44, 'Les religieuses d’un couvent de Pátzcuaro en tirent un sirop contre la toux depuis plus d’un siècle ; leur élevage aide aujourd’hui à sauver l’espèce.', { ...L('Ambystoma dumerilii'), wiki: 'Ambystoma dumerilii' }),
+  x('crapaud-du-sonora', 'Crapaud du Sonora', 'amphibiens', 'amphibien-toxique', 'Désert de Sonora', 'MX', 32, 46, 'L’un des plus gros crapauds d’Amérique du Nord ; il passe la saison sèche enterré et sort en masse avec les pluies d’été.', { ...L('Incilius alvarius'), wiki: 'Incilius alvarius' }),
+  // insectes et araignées
+  x('mx-monarque', 'Monarque', 'insectes', 'insecte-voltigeur', 'Forêts de sapins du Michoacán', 'MX', 74, 56, 'Des millions de monarques passent l’hiver serrés sur les sapins de quelques montagnes du Michoacán : les branches ploient sous leur poids.', L('Danaus plexippus')),
+  x('mx-mygale', 'Mygale à genoux rouges', 'insectes', 'arachnide', 'Forêts sèches du Pacifique', 'MX', 74, 62, 'Elle ne vit que sur la côte Pacifique du Mexique ; tant recherchée pour les terrariums, elle a été en 1985 l’une des premières mygales protégées dans le monde.', L('Brachypelma hamorii')),
+  x('cochenille', 'Cochenille du nopal', 'insectes', 'insecte-colonie', 'Champs de nopals', 'MX', 36, 20, 'Écrasée, elle donne le carmin, un rouge vif que les Aztèques recevaient en tribut ; il colore encore des bonbons et des rouges à lèvres.', L('Dactylopius coccus')),
+  x('fourmi-a-escamoles', 'Fourmi à escamoles', 'insectes', 'insecte-colonie', 'Plateaux du centre', 'MX', 30, 30, 'Ses larves, les escamoles, se mangent au Mexique depuis les Aztèques : on les surnomme le « caviar mexicain ».', { ...L('Liometopum apiculatum'), wiki: 'Liometopum apiculatum' }),
+  x('chapulin', 'Chapulín', 'insectes', 'insecte-voltigeur', 'Champs de l’Oaxaca', 'MX', 32, 28, 'Grillés avec du citron, de l’ail et du piment, les chapulines se vendent par paniers entiers sur les marchés de l’Oaxaca.', { ...L('Sphenarium purpurascens'), wiki: 'Sphenarium purpurascens' }),
+  x('melipone', 'Mélipone du Yucatán', 'insectes', 'insecte-colonie', 'Forêts du Yucatán', 'MX', 34, 22, 'Cette abeille sans dard était élevée par les Mayas dans des troncs creux ; son miel servait de remède et d’offrande.', { ...L('Melipona beecheii'), wiki: 'Melipona beecheii' }),
+  // invertébrés marins
+  x('calmar-de-humboldt', 'Calmar de Humboldt', 'invertebres', 'cephalopode', 'Mer de Cortés', 'MX', 48, 72, 'Les pêcheurs l’appellent « diablo rojo » : il chasse en bancs de centaines et vire au rouge quand il s’excite.', L('Dosidicus gigas')),
+  // chiens
+  x('mx-chihuahua', 'Chihuahua', 'ferme', 'ferme-compagnon', 'Maison', 'MX', 74, 52, 'Ses ancêtres seraient les techichis, de petits chiens que les Toltèques puis les Aztèques élevaient il y a plus de 1 000 ans.', { ...C, ...P('1997', 'Gidget, la chienne des publicités Taco Bell, devenue une vedette de la télévision américaine.') }),
+  x('xoloitzcuintle', 'Xoloitzcuintle', 'ferme', 'ferme-compagnon', 'Maison', 'MX', 50, 50, 'Un chien presque sans poils, sacré chez les Aztèques : on croyait qu’il guidait l’âme des morts jusqu’au Mictlán, le monde des défunts.', { ...C, nick: 'Chien nu du Mexique', ...P('1949', 'Señor Xólotl, le chien de la peintre Frida Kahlo, qu’elle a peint à ses pieds dans « L’Étreinte d’amour de l’univers » en 1949.') }),
+
+  // Icônes : espèces du Mexique disparues depuis 1800
+  x('grizzli-du-mexique', 'Grizzli du Mexique', 'ours', 'ours-colosse', 'Montagnes du Chihuahua', 'MX', 52, 88, 'Le plus méridional des grizzlis : il n’en restait qu’une trentaine en 1960 dans les montagnes du Chihuahua, et on l’a déclaré disparu en 1964.', { ...L('Ursus arctos nelsoni'), ...D(1964) }),
+  x('phoque-moine-des-caraibes', 'Phoque moine des Caraïbes', 'marins', 'marin-pinnipede', 'Récifs du Yucatán', 'MX', 50, 60, 'Le seul phoque des Caraïbes, qui se reposait sur les récifs du Yucatán ; chassé pour son huile, il a été vu pour la dernière fois en 1952.', { ...L('Neomonachus tropicalis'), ...D(1952) }),
+  x('caracara-de-guadalupe', 'Caracara de Guadalupe', 'rapaces', 'rapace-faucon', 'Île Guadalupe', 'MX', 40, 58, 'Accusé de tuer les chevreaux, il a été exterminé par les éleveurs de l’île Guadalupe ; les derniers ont été abattus en 1900 par un collectionneur.', { ...L('Caracara lutosa'), ...D(1900) }),
+  x('quiscale-a-bec-fin', 'Quiscale à bec fin', 'oiseaux', 'oiseau-malin', 'Marais du Lerma', 'MX', 30, 40, 'Il ne vivait que dans les marais aux sources du fleuve Lerma, près de Mexico ; asséchés, ils ont emporté l’oiseau, vu pour la dernière fois en 1910.', { ...L('Quiscalus palustris'), ...D(1910) }),
+  x('colombe-de-socorro', 'Tourterelle de Socorro', 'oiseaux', 'oiseau-voyageur', 'Île Socorro', 'MX', 34, 40, 'Disparue de son île, Socorro, en 1972, chassée par les chats et privée de ses sous-bois par les moutons ; elle survit dans quelques élevages, en attendant d’y revenir.', { ...L('Zenaida graysoni'), ...D(1972) }),
+].map(mx);
+
 // une espèce présente sur plusieurs continents porte le logo « Plusieurs continents » (XW) au lieu d'un drapeau
-export const ATHLETES: Athlete[] = [...CURATED, ...RECENT_ICONS, ...HABITATS].map((a) => ({
+export const ATHLETES: Athlete[] = [...CURATED, ...RECENT_ICONS, ...HABITATS, ...MEXIQUE, ...HABITATS_MEXIQUE].map((a) => ({
   ...a,
   // drapeau : un globe si l'espèce vit sur plusieurs continents, sinon le pays où elle est la plus présente
   country: CONTINENTS_MULTIPLES[a.id] ? 'XW' : (PAYS_PRINCIPAL[a.id] ?? a.country),

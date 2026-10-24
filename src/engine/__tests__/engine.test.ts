@@ -202,12 +202,13 @@ describe('boosters', () => {
 
 describe('badges de collection', () => {
   it('donne le badge d’une famille quand toutes ses espèces sont découvertes (sans ses Icônes), et une seule fois', () => {
-    const felins = ATHLETES.filter((a) => a.sport === 'felins' && !a.habitat && !a.retired);
+    // l'album des familles est celui de la Série 1
+    const felins = ATHLETES.filter((a) => a.sport === 'felins' && !a.habitat && !a.retired && !a.serie);
     expect(ATHLETES.some((a) => a.sport === 'felins' && a.retired)).toBe(true);
     const discovered: Record<string, number> = Object.fromEntries(felins.map((a) => [a.id, 1]));
     expect(familyProgress(discovered, 'felins')).toEqual([felins.length, felins.length]);
     expect(completedFamilies(discovered)).toEqual(['felins']);
-    expect(newBadges(discovered, {})).toEqual(['felins']);
+    expect(newBadges(discovered, {}).map((badge) => badge.id)).toEqual(['felins']);
     expect(newBadges(discovered, { felins: 1 })).toEqual([]);
     // une espèce manquante : pas de badge
     delete discovered[felins[0].id];
