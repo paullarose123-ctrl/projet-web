@@ -1,5 +1,5 @@
 # Met le jeu en ligne sur GitHub Pages (https://<compte>.github.io/<dépôt>/) à chaque envoi sur la branche
-# principale : construit le jeu avec Vite (dist) puis publie ce dossier.
+# principale : construit le jeu avec Vite (dist) et sa page d'aperçu (dist/apercu), puis publie ce dossier.
 # Réglage à faire une fois dans le dépôt : Settings → Pages → Source : « GitHub Actions ».
 name: Site du jeu
 
@@ -31,6 +31,10 @@ jobs:
           # les navigateurs de Playwright ne servent qu'aux captures en local
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - run: npm run build
+      # page d'aperçu (/apercu/) : les séries à venir déjà ouvertes, hors ligne, avec des graines pour tester les packs
+      - run: npm run build:apercu
+        env:
+          VITE_GRAINES: '100000000'
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist

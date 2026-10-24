@@ -25,8 +25,11 @@ import { newBadges } from '../engine/badges';
 export const FREE_PACK_INTERVAL = 15 * 60_000;
 /** nombre de cartes de la vitrine du profil */
 export const FAVORITES_SIZE = 5;
-/** nom de la sauvegarde dans le stockage du navigateur */
-const SAVE_NAME = 'animalcards-save';
+/**
+ * nom de la sauvegarde dans le stockage du navigateur ; la page d'aperçu (/apercu/, même domaine que le jeu) a la
+ * sienne, pour ne jamais toucher à la vraie partie
+ */
+const SAVE_NAME = import.meta.env.MODE === 'apercu' ? 'animalcards-apercu' : 'animalcards-save';
 export const MAX_FREE_PACKS = 5;
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
@@ -875,10 +878,11 @@ useGame.subscribe((state, previous) => {
 awardBadges(useGame.getState());
 
 /**
- * Commandes de triche (graines) : seulement en développement et dans la version de test (mode « single »).
- * Sur le site public, les joueurs échangent au marché en ligne : personne ne doit pouvoir se donner des graines.
+ * Commandes de triche (graines) : seulement en développement, dans la version de test (mode « single ») et dans la
+ * page d'aperçu (mode « apercu », coupée des comptes et du marché en ligne). Sur le site public, les joueurs
+ * échangent au marché en ligne : personne ne doit pouvoir se donner des graines.
  */
-const CHEATS = import.meta.env.DEV || import.meta.env.MODE === 'single';
+const CHEATS = import.meta.env.DEV || import.meta.env.MODE === 'single' || import.meta.env.MODE === 'apercu';
 
 // Graines illimitées : le solde est remis au plafond dès qu'une dépense le fait baisser.
 // Sur le site public, une partie restée en mode illimité (ancienne triche) repart au solde de départ.

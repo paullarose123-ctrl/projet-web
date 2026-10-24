@@ -9,8 +9,9 @@ import { useUi, type Tab } from './store/ui';
 /** Code du site GoatCounter (vide : aucune mesure). */
 const GOATCOUNTER_CODE = 'animalcards';
 
-/** Seulement sur le vrai site (ni en développement, ni dans la version de test). */
-const ENABLED = !!GOATCOUNTER_CODE && import.meta.env.PROD && import.meta.env.MODE !== 'single' && /animalcards\.fr$/.test(window.location.hostname);
+/** Seulement sur le vrai site (ni en développement, ni dans la version de test, ni dans la page d'aperçu). */
+const ENABLED =
+  !!GOATCOUNTER_CODE && import.meta.env.PROD && import.meta.env.MODE !== 'single' && import.meta.env.MODE !== 'apercu' && /animalcards\.fr$/.test(window.location.hostname);
 
 interface GoatCounter {
   no_onload?: boolean;
