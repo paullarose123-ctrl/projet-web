@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
-import { SCENE_H, area, circle, ellipse, f, hashString, hills, mulberry32, pine, poly, type Pt, type Rng } from '../art/kit';
+import { EAGLE, SCENE_H, WOLF, area, circle, ellipse, f, frond, hashString, hills, mulberry32, peaks, pine, poly, type Profile, type Pt, type Rng } from '../art/kit';
+import { agave, cardon, nopal, pyramid, ridgeSnow, volcano } from '../art/mexique';
 import { useSceneWidth } from './PackScene';
 
 // Décors des ouvertures des boosters du Mexique, autour du Jour des morts (Día de Muertos, les 1er et 2 novembre) :
@@ -8,13 +9,18 @@ import { useSceneWidth } from './PackScene';
 // - monarcas : la forêt de sapins oyamel du Michoacán au crépuscule, où les monarques arrivent pour la fête
 //   (on dit qu'ils portent les âmes des défunts) ;
 // - xochimilco : les canaux la nuit, des trajineras éclairées de lanternes, des bougies et des fleurs sur l'eau.
+// Et la nature du pays :
+// - volcanes : le Popocatépetl qui fume et l'Iztaccíhuatl enneigé à l'aube, au-dessus des champs d'agaves ;
+// - barrancas : les Barrancas del Cobre, canyons en gradins couleur de cuivre, et leur rivière ;
+// - desierto : le désert de Sonora au couchant, ses buttes, ses cardons et un coyote ;
+// - selva : la jungle du Yucatán dans la brume du matin, une pyramide maya au-dessus de la canopée.
 // Même manière que les paysages du jeu (aplats, astre, silhouettes), avec les couleurs de la fête : cempasúchil
 // orange, rose mexicain, violet, turquoise. Bougies, pétales, fanions et papillons bougent doucement (voir motion.css).
 // Repère : hauteur 172, largeur adaptée à l'écran (comme Landscape) ; la composition est centrée sur x = W / 2,
 // où se tient le booster.
 
-export type MexicoScene = 'panteon' | 'monarcas' | 'xochimilco';
-export const MEXICO_SCENES: MexicoScene[] = ['panteon', 'monarcas', 'xochimilco'];
+export type MexicoScene = 'panteon' | 'monarcas' | 'xochimilco' | 'volcanes' | 'barrancas' | 'desierto' | 'selva';
+export const MEXICO_SCENES: MexicoScene[] = ['panteon', 'monarcas', 'xochimilco', 'volcanes', 'barrancas', 'desierto', 'selva'];
 
 const H = SCENE_H;
 const MARIGOLD = ['#f7a21b', '#ffbf3f', '#f37b20', '#ffd166'];
@@ -542,7 +548,318 @@ const xochimilco: Paint = (r, w, id) => {
   );
 };
 
-const PAINTERS: Record<MexicoScene, Paint> = { panteon, monarcas, xochimilco };
+// ───────────── la nature du Mexique ─────────────
+
+/** Un oiseau qui plane (aigle, buse), en ombre chinoise, et flâne doucement. */
+function soarer(key: number, x: number, y: number, s: number, color: string, r: Rng): ReactNode {
+  return (
+    <g key={key} transform={`translate(${f(x)} ${f(y)}) rotate(${f((r() - 0.5) * 16)}) scale(${s.toFixed(2)})`}>
+      <path className="mx-fly" d={EAGLE} fill={color} style={timing(10 + r() * 8, r() * 10, { ['--drift' as string]: `${f(4 + r() * 6)}px` })} />
+    </g>
+  );
+}
+
+/** Ligne de crête d'un profil, pour le fil de lumière au bord d'un relief. */
+function ridgeLine(profile: Profile, w: number, step = 1): string {
+  let d = '';
+  for (let x = -2; x <= w + 2.01; x += step) d += `${x === -2 ? 'M' : 'L'}${f(x)} ${f(profile(x))}`;
+  return d;
+}
+
+/** Brume en bande horizontale (dégradé transparent → couleur → transparent). */
+function Mist({ id, name, color }: { id: string; name: string; color: string }) {
+  return (
+    <linearGradient id={`${id}-${name}`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stopColor={color} stopOpacity={0} />
+      <stop offset="0.55" stopColor={color} stopOpacity={0.7} />
+      <stop offset="1" stopColor={color} stopOpacity={0} />
+    </linearGradient>
+  );
+}
+
+const volcanes: Paint = (r, w, id) => {
+  const cx = w / 2;
+  const stars = starField(r, w, 34, Math.round(w * 0.1));
+  const popo = { x: cx - Math.min(w * 0.27, 64), y: 46 };
+  const cone = volcano(r, popo.x, popo.y, 108, 48, 44);
+  const iztaX = cx + Math.min(w * 0.24, 58);
+  const izta = peaks(r, 106, [[iztaX - 18, 38, 22], [iztaX, 46, 20], [iztaX + 16, 41, 18], [iztaX + 32, 32, 16]], 1.2);
+  let smoke = '';
+  for (let i = 0; i < 7; i++) smoke += circle(popo.x + 2 + i * 3.2, popo.y - 3 - i * 2.4 + Math.sin(i) * 0.8, 2.2 + i * 0.7);
+  const ridge1 = hills(r, 114, 4, 0.4);
+  const ridge2 = hills(r, 126, 3);
+  const field = hills(r, 140, 1.6);
+  const pines = (profile: Profile, min: number, max: number, gap: number) => {
+    let d = '';
+    for (let x = -3 + r() * gap; x < w + 3; x += gap * (0.5 + r() * 0.8)) d += pine(x, profile(x) + 1.2, min + r() * (max - min));
+    return d;
+  };
+  // rangées d'agaves bleus, de plus en plus grandes en approchant (les champs de Jalisco)
+  const rows = [
+    { y: 144, h: 5.5, gap: 6, color: '#86bab5' },
+    { y: 152, h: 8.5, gap: 9, color: '#6fa6a1' },
+    { y: 162, h: 13, gap: 13, color: '#558c87' },
+    { y: 176, h: 20, gap: 19, color: '#3d716c' },
+  ].map((row) => {
+    let d = '';
+    for (let x = -4 + r() * row.gap; x < w + 6; x += row.gap * (0.85 + r() * 0.3)) d += agave(x, row.y + (r() - 0.5), row.h);
+    return { d, color: row.color };
+  });
+  return (
+    <>
+      <defs>
+        <Glow id={id} name="sun" color="#ffe6b8" />
+        <Mist id={id} name="mist" color="#f4c3a6" />
+      </defs>
+      <Sky id={id} stops={[[0, '#1f2b5a'], [0.34, '#55578f'], [0.52, '#c48aa2'], [0.62, '#f6b48e'], [0.7, '#ffe1b2']]} />
+      <Stars paths={stars} />
+      <circle cx={cx + 6} cy={104} r={70} fill={`url(#${id}-sun)`} />
+      <circle cx={cx + 6} cy={104} r={14} fill="#fff4d6" />
+      <path className="mx-smoke" d={smoke} fill="#e9c9c4" opacity={0.6} />
+      <path d={area(izta, w)} fill="#7c7fb2" />
+      <path d={ridgeSnow(izta, iztaX - 44, iztaX + 52, 84)} fill="#fff4ee" opacity={0.92} />
+      <path d={cone.body} fill="#6f73aa" />
+      <path d={cone.snow} fill="#fff4ee" opacity={0.95} />
+      <path d={cone.shadow} fill="#1b2350" opacity={0.2} />
+      <rect className="mx-mist" x={-10} y={92} width={w + 20} height={30} fill={`url(#${id}-mist)`} opacity={0.55} />
+      {soarer(1, cx + Math.min(w * 0.12, 30), 66, 1.1, '#3a3560', r)}
+      {soarer(2, cx - Math.min(w * 0.06, 14), 78, 0.7, '#4a4572', r)}
+      <path d={area(ridge1, w)} fill="#4f6487" />
+      <path d={pines(ridge1, 4, 7, 3)} fill="#4f6487" />
+      <path d={area(ridge2, w)} fill="#344e66" />
+      <path d={pines(ridge2, 7, 11, 4)} fill="#344e66" />
+      <path d={area(field, w)} fill="#3a5e56" />
+      {rows.map((row, i) => (
+        <path key={i} d={row.d} fill={row.color} />
+      ))}
+    </>
+  );
+};
+
+/** Relief en gradins : le profil arrondi par marches de `q`, falaises verticales et replats (canyon, butte). */
+const terraces = (profile: Profile, q: number): Profile => (x) => Math.round(profile(x) / q) * q;
+
+const barrancas: Paint = (r, w, id) => {
+  const cx = w / 2;
+  const layers = [
+    { p: terraces(hills(r, 92, 14, 0.6), 3), color: '#e3ad8f', rim: '#ffe0c4' },
+    { p: terraces(hills(r, 104, 13, 0.6), 3.5), color: '#cf8463', rim: '#ffcfa8' },
+    { p: terraces(hills(r, 117, 12, 0.6), 4), color: '#ad5e45', rim: '#f7b184' },
+    { p: terraces(hills(r, 130, 10, 0.6), 4.5), color: '#83402f', rim: '#e8925f' },
+  ];
+  // les deux grandes parois du premier plan descendent en gradins jusqu'à la rivière, au milieu
+  const wall: Profile = (x) => {
+    const d = Math.max(0, Math.min(1, (Math.abs(x - cx) - 12) / 44));
+    return Math.round((H + 4 - (H + 4 - 112) * d ** 0.75) / 6) * 6 + (x < cx ? 0 : 1.5);
+  };
+  let pines = '';
+  for (let x = -3 + r() * 4; x < w + 3; x += 3 + r() * 4) {
+    if (Math.abs(x - cx) < 40) continue;
+    pines += pine(x, wall(x) + 1, 4 + r() * 4);
+  }
+  let river = `M${f(cx - 7)} ${H + 2}`;
+  for (let y = H; y >= 146; y -= 4) river += `L${f(cx - 5 + Math.sin(y * 0.22) * 3)} ${y}`;
+  for (let y = 146; y <= H; y += 4) river += `L${f(cx - 1 + Math.sin(y * 0.22) * 3 + (y - 146) * 0.18)} ${y}`;
+  river += `L${f(cx + 6)} ${H + 2}Z`;
+  return (
+    <>
+      <defs>
+        <Glow id={id} name="sun" color="#ffd9a0" />
+        <Mist id={id} name="mist" color="#f8c49a" />
+      </defs>
+      <Sky id={id} stops={[[0, '#3a2f6b'], [0.3, '#8d6699'], [0.48, '#ee9f7c'], [0.58, '#ffd8a0']]} />
+      <circle cx={cx - Math.min(w * 0.2, 48)} cy={84} r={64} fill={`url(#${id}-sun)`} />
+      <circle cx={cx - Math.min(w * 0.2, 48)} cy={84} r={11} fill="#fff1cf" />
+      {layers.map((layer, i) => (
+        <g key={i}>
+          <path d={area(layer.p, w, 0.5)} fill={layer.color} />
+          <path d={ridgeLine(layer.p, w, 0.5)} fill="none" stroke={layer.rim} strokeWidth={0.45} opacity={0.6} />
+          {i < 3 && <rect className="mx-mist" x={-10} y={98 + i * 13} width={w + 20} height={14} fill={`url(#${id}-mist)`} opacity={0.35} />}
+        </g>
+      ))}
+      {soarer(1, cx + Math.min(w * 0.16, 36), 62, 1, '#4a2a3a', r)}
+      {soarer(2, cx - Math.min(w * 0.04, 10), 50, 0.65, '#5a3446', r)}
+      <path d={area(wall, w, 0.5)} fill="#4a2428" />
+      <path d={ridgeLine(wall, w, 0.5)} fill="none" stroke="#d9875a" strokeWidth={0.5} opacity={0.55} />
+      <path d={pines} fill="#2e161b" />
+      <path className="mx-shimmer" d={river} fill="#6fc7c0" opacity={0.8} />
+    </>
+  );
+};
+
+/** Butte du désert : flancs en pente raide, sommet plat. */
+function butte(x: number, base: number, w: number, h: number): string {
+  const top = w * 0.32;
+  return poly([[x - w / 2, base], [x - top - w * 0.06, base - h * 0.55], [x - top, base - h], [x + top, base - h], [x + top + w * 0.08, base - h * 0.5], [x + w / 2, base]]);
+}
+
+/** Ocotillo : des tiges fines qui jaillissent d'un même pied, fleurs rouges au bout. */
+function ocotillo(r: Rng, x: number, y: number, h: number): { stems: string; tips: string } {
+  let stems = '';
+  let tips = '';
+  for (let i = 0; i < 7; i++) {
+    const a = (-90 + (i - 3) * 9 + (r() - 0.5) * 6) * (Math.PI / 180);
+    const len = h * (0.75 + r() * 0.25);
+    const tx = x + Math.cos(a) * len;
+    const ty = y + Math.sin(a) * len;
+    stems += `M${f(x)} ${f(y)}Q${f(x + Math.cos(a) * len * 0.5 + (i - 3) * 0.3)} ${f(y + Math.sin(a) * len * 0.5)} ${f(tx)} ${f(ty)}`;
+    tips += ellipse(tx, ty - 0.6, 0.45, 1);
+  }
+  return { stems, tips };
+}
+
+const desierto: Paint = (r, w, id) => {
+  const cx = w / 2;
+  const stars = starField(r, w, 46, Math.round(w * 0.22));
+  const sun = { x: cx + Math.min(w * 0.12, 26), y: 116 };
+  let buttes = '';
+  for (const [dx, bw, bh] of [[-0.36, 46, 22], [-0.12, 24, 12], [0.3, 38, 18], [0.48, 22, 10]]) buttes += butte(cx + dx * Math.min(w, 260), 120, bw, bh);
+  const dune1 = hills(r, 124, 3);
+  const dune2 = hills(r, 136, 2.6);
+  const ground = hills(r, 152, 1.4);
+  // cardons : les grands encadrent le booster, les petits au loin
+  let farCacti = '';
+  let midCacti = '';
+  for (let x = -4 + r() * 8; x < w + 4; x += 8 + r() * 12) {
+    if (Math.abs(x - cx) < 10) continue;
+    farCacti += cardon(x, dune1(x), 5 + r() * 5);
+  }
+  for (let x = -6 + r() * 10; x < w + 6; x += 14 + r() * 18) {
+    if (Math.abs(x - cx) < 16) continue;
+    midCacti += cardon(x, dune2(x), 10 + r() * 8);
+  }
+  const big = [cx - Math.min(w * 0.36, 72), cx + Math.min(w * 0.4, 80)];
+  const bigCacti = cardon(big[0], ground(big[0]) + 1, 52) + cardon(big[1], ground(big[1]) + 1, 40);
+  const oco = ocotillo(r, cx + Math.min(w * 0.22, 48), ground(cx + Math.min(w * 0.22, 48)) + 1, 22);
+  const front =
+    nopal(cx - Math.min(w * 0.2, 44), ground(cx - Math.min(w * 0.2, 44)) + 1.5, 16) +
+    agave(cx + Math.min(w * 0.3, 64), ground(cx + Math.min(w * 0.3, 64)) + 1, 11) +
+    agave(cx - Math.min(w * 0.46, 96), ground(cx - Math.min(w * 0.46, 96)) + 1, 9);
+  const rockX = cx - Math.min(w * 0.13, 30);
+  const rock = poly([[rockX - 9, ground(rockX) + 2], [rockX - 6, ground(rockX) - 5], [rockX + 1, ground(rockX) - 7], [rockX + 7, ground(rockX) - 4], [rockX + 10, ground(rockX) + 2]]);
+  return (
+    <>
+      <defs>
+        <Glow id={id} name="sun" color="#ffcf7a" />
+      </defs>
+      <Sky id={id} stops={[[0, '#2a2052'], [0.36, '#7b3f7a'], [0.56, '#e0685a'], [0.66, '#f6a04b'], [0.72, '#ffd27a']]} />
+      <Stars paths={stars} />
+      <circle cx={sun.x} cy={sun.y} r={80} fill={`url(#${id}-sun)`} />
+      <circle cx={sun.x} cy={sun.y} r={19} fill="#ffe7a8" />
+      {soarer(1, cx - Math.min(w * 0.1, 22), 70, 0.9, '#5a2346', r)}
+      <path d={buttes} fill="#8c4a6c" />
+      <path d={area(dune1, w)} fill="#b8584f" />
+      <path d={farCacti} fill="none" stroke="#b8584f" strokeWidth={0.9} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={area(dune2, w)} fill="#8a3c45" />
+      <path d={midCacti} fill="none" stroke="#8a3c45" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={area(ground, w)} fill="#3a1a34" />
+      <path d={rock} fill="#3a1a34" />
+      <path d={WOLF} fill="#3a1a34" transform={`translate(${f(rockX + 1)} ${f(ground(rockX) - 6.4)}) scale(0.36)`} />
+      <path d={bigCacti} fill="none" stroke="#2a1128" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={oco.stems} fill="none" stroke="#2a1128" strokeWidth={0.6} strokeLinecap="round" />
+      <path d={oco.tips} fill="#e8553f" />
+      <path d={front} fill="#2a1128" />
+    </>
+  );
+};
+
+/**
+ * Canopée : une rangée de houppiers ronds posés sur un profil, et tout ce qui est dessous. Deux chemins à remplir
+ * séparément : dans un seul, les ronds tracés dans l'autre sens que la surface y perceraient des trous.
+ */
+function canopy(r: Rng, profile: Profile, w: number, min: number, max: number, color: string): ReactNode {
+  let crowns = '';
+  for (let x = -6; x < w + 6; x += min * (0.9 + r() * 0.6)) crowns += circle(x, profile(x), min + r() * (max - min));
+  return (
+    <g>
+      <path d={area((x) => profile(x) + min * 0.4, w)} fill={color} />
+      <path d={crowns} fill={color} />
+    </g>
+  );
+}
+
+/** Grande feuille de bananier au premier plan, avec sa nervure. */
+function bigLeaf(x: number, y: number, len: number, angle: number): { blade: string; rib: string } {
+  const a = (angle * Math.PI) / 180;
+  const tx = x + Math.cos(a) * len;
+  const ty = y + Math.sin(a) * len;
+  const nx = -Math.sin(a) * len * 0.22;
+  const ny = Math.cos(a) * len * 0.22;
+  const mx = (x + tx) / 2;
+  const my = (y + ty) / 2;
+  return {
+    blade: `M${f(x)} ${f(y)}Q${f(mx + nx)} ${f(my + ny)} ${f(tx)} ${f(ty)}Q${f(mx - nx)} ${f(my - ny)} ${f(x)} ${f(y)}Z`,
+    rib: `M${f(x)} ${f(y)}L${f(tx)} ${f(ty)}`,
+  };
+}
+
+const selva: Paint = (r, w, id) => {
+  const cx = w / 2;
+  const templeX = cx + Math.min(w * 0.26, 62);
+  const far = hills(r, 104, 4);
+  const mid = hills(r, 120, 4);
+  const near = hills(r, 138, 4);
+  const temple = pyramid(templeX, far(templeX) + 4, 34, 34);
+  let palms = '';
+  let palmStems = '';
+  for (const px of [cx - Math.min(w * 0.3, 70), cx - Math.min(w * 0.18, 42), cx + Math.min(w * 0.4, 86)]) {
+    const base = mid(px) + 2;
+    const topY = base - 34 - r() * 10;
+    const topX = px + (r() - 0.5) * 6;
+    palmStems += `M${f(px)} ${f(base)}Q${f(px + 2)} ${f((base + topY) / 2)} ${f(topX)} ${f(topY)}`;
+    for (let k = 0; k < 7; k++) {
+      const fr = frond(r, topX, topY, -170 + k * 27 + (r() - 0.5) * 8, 11 + r() * 4, 3, 3.4);
+      palms += fr.leaves;
+      palmStems += fr.stem;
+    }
+  }
+  const leaves = [
+    bigLeaf(-2, H + 2, 46, -58),
+    bigLeaf(4, H + 4, 40, -36),
+    bigLeaf(-4, H - 8, 36, -16),
+    bigLeaf(w + 2, H + 2, 46, -122),
+    bigLeaf(w - 4, H + 4, 40, -144),
+    bigLeaf(w + 4, H - 10, 34, -166),
+  ];
+  let lianas = '';
+  for (const lx of [cx - Math.min(w * 0.42, 90), cx + Math.min(w * 0.36, 78)]) {
+    lianas += `M${f(lx)} -2Q${f(lx + 4)} 30 ${f(lx - 2)} ${f(52 + r() * 18)}`;
+    lianas += `M${f(lx + 6)} -2Q${f(lx + 10)} 22 ${f(lx + 5)} ${f(38 + r() * 12)}`;
+  }
+  const flyers = Array.from({ length: 4 }, (_, i) => ({ x: cx + (r() - 0.5) * Math.min(w * 0.7, 160), y: 30 + r() * 30, s: 0.4 + r() * 0.2, color: i % 2 ? '#d8432f' : '#2f8f5b' }));
+  return (
+    <>
+      <defs>
+        <Glow id={id} name="sun" color="#fff6d0" />
+        <Mist id={id} name="mist" color="#e8f2dc" />
+      </defs>
+      <Sky id={id} stops={[[0, '#1c4848'], [0.3, '#4f8a7a'], [0.52, '#b9dcb4'], [0.64, '#f2efc8']]} />
+      <circle cx={cx - Math.min(w * 0.1, 24)} cy={70} r={74} fill={`url(#${id}-sun)`} />
+      <path className="mx-rays" d={`M${f(cx - 30)} -2L${f(cx - 4)} -2L${f(cx + 40)} ${H}L${f(cx + 4)} ${H}Z M${f(cx + 6)} -2L${f(cx + 18)} -2L${f(cx + 70)} ${H}L${f(cx + 50)} ${H}Z`} fill="#fffbe0" style={timing(6, 2)} />
+      {canopy(r, far, w, 3, 5, '#7aa892')}
+      <path d={temple.body} fill="#8fb3a2" />
+      <path d={temple.shade} fill="#3f6b5c" opacity={0.25} />
+      <path d={temple.stairs} fill="#3f6b5c" opacity={0.18} />
+      <path d={temple.rims} fill="none" stroke="#f6f2d0" strokeOpacity={0.4} strokeWidth={0.4} />
+      <rect className="mx-mist" x={-10} y={92} width={w + 20} height={26} fill={`url(#${id}-mist)`} opacity={0.75} />
+      {flyers.map((b, i) => soarer(i, b.x, b.y, b.s, b.color, r))}
+      {canopy(r, mid, w, 4, 7, '#3f7a63')}
+      <path d={palmStems} fill="none" stroke="#2a5e4a" strokeWidth={0.9} strokeLinecap="round" />
+      <path d={palms} fill="#2a5e4a" />
+      <rect className="mx-mist" x={-10} y={116} width={w + 20} height={22} fill={`url(#${id}-mist)`} opacity={0.45} style={timing(18, 4)} />
+      {canopy(r, near, w, 5, 9, '#1f5641')}
+      <path d={lianas} fill="none" stroke="#173f31" strokeWidth={0.7} strokeLinecap="round" />
+      {leaves.map((leaf, i) => (
+        <g key={i}>
+          <path d={leaf.blade} fill={i % 3 === 1 ? '#164a37' : '#113a2c'} />
+          <path d={leaf.rib} stroke="#2f6e52" strokeWidth={0.5} opacity={0.7} />
+        </g>
+      ))}
+    </>
+  );
+};
+
+const PAINTERS: Record<MexicoScene, Paint> = { panteon, monarcas, xochimilco, volcanes, barrancas, desierto, selva };
 
 export function MexicoBackdrop({ scene, seed, className = '' }: { scene: MexicoScene; seed: string; className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
