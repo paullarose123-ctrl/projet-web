@@ -195,6 +195,7 @@ function reed(t0, f0, f1, dur, o = {}) {                 // basson comique : sci
 }
 function pad(t0, dur, notes, o = {}) {                   // nappe douce (sinusoïdes désaccordées, trémolo lent) : celle de la marque, inchangée
   const { gain = 0.06, att = 1.2, rel = 1.5, det = 7, bright = 0.2, send = 0.5, trem = 0.18 } = o;
+  if (att < 0.3) logOn(t0, 'pad', gain);                  // une nappe à attaque courte compte comme une note (--check)
   const s0 = Math.floor(t0 * SR), len = Math.floor((dur + rel) * SR);
   notes.forEach((n, k) => {
     const f = hz(n), vs = [-det, 0, det].map(c => f * Math.pow(2, c / 1200)), ph = vs.map(() => rnd() * TAU), pans = [-0.55, 0, 0.55];
@@ -575,7 +576,7 @@ function musBas() {                                      // BASILIC : jungle ; t
   beatsOf(s0 + 0.1, tPeut - 0.1, 94).forEach((t, k) => { if (k % 2 === 0) dLow(t, k % 4 === 0 ? 0.55 : 0.4); else dMid(t, 0.28, { f: 210 }); shaker(t + 30 / 94, { gain: 0.012, pan: -0.3 + 0.6 * (k % 2) }); });
   flute(w1('Amérique'), 0.55, 'E5', { gain: 0.04 }); flute(w1('centrale'), 0.75, 'F#5', { gain: 0.04 });
   [['lézard', 5], ['possède', 7], ['capacité', 8], ['folle', 10]].forEach(([wd, i], k) => kalimba(w1(wd), Ap(i), { gain: 0.05, decay: 1.1, pan: -0.3 + 0.2 * k }));
-  { const a = tPeut - 0.05, b = L1.t0 - 0.12, bpm = t => lerp(100, 152, sm((t - a) / (b - a))); let k = 0; for (const t of beatsOf(a, b, bpm)) { const u = (t - a) / (b - a); dLow(t, 0.5 + 0.3 * u); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / bpm(t) / 4; if (tt > lim1 || (u < 0.5 && j % 2)) continue; kal16(tt, k * 4 + j, 0.036 + 0.02 * u); } if (u > 0.4) dHi(t + 30 / bpm(t), 0.35 + 0.3 * u); k++; } }
+  { const a = tPeut - 0.05, b = L1.t0 - 0.12, bpm = t => lerp(100, 152, sm((t - a) / (b - a))); let k = 0; for (const t of beatsOf(a, b, bpm)) { const u = (t - a) / (b - a); dLow(t, 0.5 + 0.3 * u); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / bpm(t) / 4; if (tt > lim1 || (u < 0.5 && j % 2)) continue; kal16(tt, k * 4 + j, 0.036 + 0.02 * u); } if (u > 0.4 && t + 30 / bpm(t) <= lim1) dHi(t + 30 / bpm(t), 0.35 + 0.3 * u); k++; } }
   // c2 : la course, 128 bpm ; « Jésus-Christ » : un instant de grâce (verre, la course se retient) ; elle s'arrête avant « rivières » ; petit roulement ensuite
   const tJes = w2('Jésus-Christ'), tRiv = L2.t0, limC = tRiv - 0.12, hold = t => t > tJes - 0.04 && t < tJes + 0.55;
   pad(c2.t0 - 0.05, tRiv - c2.t0 - 0.05, ['A2', 'E3', 'A3', 'B3', 'E4'], { gain: 0.034, att: 0.4, rel: 0.5, bright: 0.2 });
@@ -586,7 +587,7 @@ function musBas() {                                      // BASILIC : jungle ; t
   const tEch = w3('échapper'), lim3 = L3.t0 - 0.1;
   pad(c3.t0 - 0.02, tEch - c3.t0 + 0.2, ['A2', 'E3', 'A3', 'C4'], { gain: 0.036, att: 0.15, rel: 0.3, bright: 0.1 });
   dLow(c3.t0 + 0.02, 0.55); dLow(w3('ça'), 0.5); flute(w3('tout'), 0.45, 'C5', { gain: 0.032, vib: 0.012 });
-  { let k = 0; for (const t of beatsOf(tEch - 0.04, lim3, 150)) { const u = clamp((t - tEch) / (lim3 - tEch)); dLow(t, 0.6); dMid(t + 60 / 300, 0.36, { f: 230 }); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / 150 / 4; if (tt > lim3) continue; kal16(tt, k * 4 + j, 0.036 + 0.014 * u, 1); } k++; } }
+  { let k = 0; for (const t of beatsOf(tEch - 0.04, lim3, 150)) { const u = clamp((t - tEch) / (lim3 - tEch)); dLow(t, 0.6); if (t + 0.2 <= lim3) dMid(t + 60 / 300, 0.36, { f: 230 }); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / 150 / 4; if (tt > lim3) continue; kal16(tt, k * 4 + j, 0.036 + 0.014 * u, 1); } k++; } }
   { const t = L3.t1 + 0.07;                              // l'autre rive : ouf
     ['E6', 'C#6', 'A5', 'E5', 'C#5', 'A4'].forEach((n, k) => kalimba(t + 0.04 + 0.13 * k, n, { gain: 0.05 - 0.005 * k, decay: 1.2, pan: 0.25 - 0.08 * k })); glass(t, 'A5', { gain: 0.04, tau: 2.4 }); glass(t + 0.04, 'C#6', { gain: 0.03, tau: 2.4, pan: 0.2 }); glass(t + 0.08, 'E6', { gain: 0.03, tau: 2.4, pan: -0.2 });
     flute(t + 0.1, 0.5, 'A5', { gain: 0.036 }); dLow(t, 0.4); pad(t - 0.04, Math.max(0.2, s1 - t), ['A2', 'E3', 'A3', 'C#4'], { gain: 0.034, att: 0.2, rel: 0.5, bright: 0.2 }); }
@@ -601,7 +602,7 @@ function musAng() {                                      // ANGUILLE : mystérie
   hum(s0, e1.t1 - s0 - 0.2, 'G2', { gain: 0.03, att: 1.2, rel: 0.9 });
   glass(tAma, 'D6', { gain: 0.045, tau: 3.2, pan: -0.3 }); glass(w1('espèce'), 'G5', { gain: 0.035, tau: 3, pan: 0.3 }); glass(tAng, 'Bb5', { gain: 0.04, tau: 3, pan: 0 });
   pizz(tAng, 'G2', { gain: 0.11, t60: 1.0 }); pizz(tEle, 'D2', { gain: 0.1, t60: 1.0 });
-  { let t = tEle, k = 0; while (t < tTop) { const u = clamp((t - tEle) / (tTop - tEle)); zing(t, Gp(15 + Math.min(7, Math.floor(u * 8))), { gain: 0.022 + 0.03 * u, pan: Math.sin(k * 2.3) * 0.7, sparks: 2 + Math.round(4 * u) }); t += lerp(0.5, 0.085, rise(u, 0.9)); k++; } }
+  { let t = tEle, k = 0; while (t < tTop - 0.1) { const u = clamp((t - tEle) / (tTop - tEle)); zing(t, Gp(15 + Math.min(7, Math.floor(u * 8))), { gain: 0.022 + 0.03 * u, pan: Math.sin(k * 2.3) * 0.7, sparks: 2 + Math.round(4 * u) }); t += lerp(0.5, 0.085, rise(u, 0.9)); k++; } }
   tone(tPeut, tTop - tPeut, { f0: 98, f1: 880, curve: 1.8, gain: 0.02, att: (tTop - tPeut) * 0.85, rel: 0.06, harm: [1, 0.4, 0.2], am: 0.45, arate: 9, send: 0.4 });
   nzb(tPeut, tTop - tPeut, { type: 'hp', f0: 2500, f1: 9000, gain: 0.012, att: (tTop - tPeut) * 0.85, rel: 0.05, am: 0.7, arate: 30, send: 0.4 });
   { let t = w1('produire'); while (t < tTop - 0.1) { const u = clamp((t - tPeut) / (tTop - tPeut)); dLow(t, 0.4 + 0.4 * u); t += lerp(0.6, 0.2, u); } }

@@ -87,9 +87,9 @@ function an_zapLevel3(t) {
 function an_p3(u, t, sh) {
   const cam = u * 8, Z = an_zapLevel3(t), push = 1 + 0.06 * sm(prog(u, 0, 1.6));
   an_under(u, t, { cam, rays: 0.3 + 0.3 * Z, dark: 0.1 });
-  const e = an_eel(236, 236, 1.08 * push, t, { pose: 'zap', rot: 0.04, fog: 0, zap: Math.min(1, Z + 0.15), bend: 1.5, ph: 0.2 });
+  const e = an_eel(236, 236, 1.08 * push, t, { pose: 'zap', rot: 0.04, fog: 0, zap: Math.min(1, Z + 0.1), bend: 1.5, ph: 0.2 });
   an_flash(Z);
-  an_discharge(e, t, Math.min(1, Z + 0.1), { reach: 105, seed: 7, n: Math.round(3 + 6 * Z), from: 0.08, to: 0.92 });
+  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 105, seed: 7, n: Math.round(3 + 6 * Z), from: 0.08, to: 0.92 });
   an_counterGlow(135, 70, clamp(0.3 + Z), t);
   an_overlay(u, t, { cam, vig: 0.55, dust: 24 });
 }
@@ -115,7 +115,7 @@ function an_ghost(x, y, w, h, a) {
   for (let j = 0; j < h; j++) if ((j >> 1) % 2 === 0) { px(x, y + j, BL[4]); px(x + w - 1, y + j, BL[4]); }
 }
 function an_p4(u, t, sh) {
-  const T = an_A, rise = eob(prog(t, T.p0 + 0.02, T.p0 + 0.45));
+  const T = an_A, rise = 0.3 + 0.7 * eob(prog(t, T.p0 + 0.0, T.p0 + 0.42));
   an_plateBg();
   rgrad(AN_XE + AN_WE / 2, AN_YB - AN_HE / 2, 10, 150, [[0, 'rgba(70,190,230,0.22)'], [1, 'rgba(20,80,120,0)']], rise, 'lighter');
   R(20, AN_YB, LW - 40, 1, ST[4]); R(20, AN_YB + 1, LW - 40, 3, NI[0]);
@@ -168,8 +168,8 @@ function an_p6(u, t, sh) {
   an_under(u, t, { cam, rays: 0.32 + 0.3 * Z, shoal: false });
   // l'ombre du caïman glisse au fond, à droite (elle annonce le plan suivant)
   const sh7 = prog(t, hit + 0.45, an_A.tDef);
-  if (sh7 > 0) an_caiman(330 - 78 * eo(sh7), 318, 0.8, t, { flip: true, pose: 'stalk', fog: 0.72, open: 0 });
-  const e = an_eel(150, 262, 1.0, t, { pose: 'zap', rot: -0.4, zap: Math.min(1, Z + 0.1), bend: 0.8, ph: 0.4, amp: 0.1 });
+  if (sh7 > 0) an_caiman(336 - 96 * eo(sh7), 306, 0.9, t, { flip: true, pose: 'stalk', fog: 0.5, open: 0 });
+  const e = an_eel(150, 262, 1.0, t, { pose: 'zap', rot: -0.4, zap: Z, bend: 0.8, ph: 0.4, amp: 0.1 });
   an_flash(Z * 0.8);
   // les tétras visés : plus grands qu'au plan précédent (gros plan) ; tournés comme le banc (vers la droite) ; ils se raidissent, se retournent et montent en flottant
   const fish = [[214, 190, 2.3, 0.0, 0.15], [242, 256, 1.8, 0.7, -0.45], [196, 138, 1.4, 1.4, 0.55]], tg = [];
@@ -178,7 +178,7 @@ function an_p6(u, t, sh) {
     const o = an_tetra(x + 3 * Math.sin(t * 0.9 + ph) * (1 - st) + 6 * fl, y - drift + 2 * Math.sin(t * 0.7 + ph) * (1 - st), s, t, { ph, stun: st, rot: r0 * st, fog: 0.05, tremble: st > 0 && st < 1 ? 0.8 : 0.12 * st });
     tg.push(o.body);
   });
-  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 120, seed: 9, targets: Z > 0.05 ? tg.map(p => [p[0], p[1]]) : [], n: Math.round(1 + 2 * Z), crackle: 3, sparks: 8, from: 0.04, to: 0.5 });
+  an_discharge(e, t, Z, { reach: 120, seed: 9, targets: Z > 0.05 ? tg.map(p => [p[0], p[1]]) : [], n: Math.round(1 + 2 * Z), crackle: 3, sparks: 8, from: 0.04, to: 0.5 });
   an_overlay(u, t, { cam, vig: 0.55 });
 }
 
@@ -194,10 +194,10 @@ function an_p7(u, t, sh) {
   const cx0 = 306 - 150 * go + 135 * back, cy0 = 208 + 4 * Math.sin(u * 3) - 10 * back;
   const trem = clamp(d / 0.08) * (1 - 0.6 * prog(t, hit + 0.6, hit + 1.3)), open = 0.25 + 0.6 * sm(prog(t, hit - 0.3, hit)) * (1 - 0.35 * prog(t, hit + 0.5, hit + 1.1));
   const calm = prog(t, hit + 1.0, hit + 1.4);
-  const e = an_eel(128, 268, 0.88, t, { pose: Z > 0.1 ? 'zap' : 'tense', mix: calm, pose2: 'swim', rot: -0.3, zap: Math.min(1, Z + 0.05), bend: Z > 0.1 ? 0.9 : 0.4, fog: 0, ph: 0.8, amp: 0.1 + 0.2 * calm });
+  const e = an_eel(128, 268, 0.88, t, { pose: Z > 0.1 ? 'zap' : 'tense', mix: calm, pose2: 'swim', rot: -0.3, zap: Z, bend: Z > 0.1 ? 0.9 : 0.4, fog: 0, ph: 0.8, amp: 0.1 + 0.2 * calm });
   an_flash(Z * 0.9);
   const c = an_caiman(cx0, cy0, 1.3, t, { flip: true, pose: d > 0 ? 'recoil' : 'swim', open, tremble: trem, fog: 0.2 - 0.12 * Z, ph: 0.3 });
-  an_discharge(e, t, Math.min(1, Z + 0.05), { reach: 125, seed: 5, targets: Z > 0.05 && c.head[0] < 300 ? [c.E(0.2, -0.2), c.E(0.36, 0.5), c.E(0.5, -0.3)] : [], n: Math.round(1 + 3 * Z), crackle: 3, sparks: 8, from: 0.06, to: 0.5 });
+  an_discharge(e, t, Z, { reach: 125, seed: 5, targets: Z > 0.05 && c.head[0] < 300 ? [c.E(0.2, -0.2), c.E(0.36, 0.5), c.E(0.5, -0.3)] : [], n: Math.round(1 + 3 * Z), crackle: 3, sparks: 8, from: 0.06, to: 0.5 });
   an_overlay(u, t, { cam, vig: 0.55 });
 }
 function an_p7Ui(u, t, sh) {
@@ -228,11 +228,11 @@ function buildAnguille(S) {
   const ev3 = A.zs.map((tt, k) => [tt, 'zap', k === A.zs.length - 1 ? 2 : 0.7 + 0.1 * k]);
   for (let k = 0; k < 9; k++) ev3.push([+(A.c0 + (A.c1 - A.c0) * (k + 1) / 9).toFixed(3), 'counter', k + 1]);
   ev3.push([A.c1, 'ding', 1], [A.c1 + 0.04, 'reveal', 1], [A.c1 + 0.2, 'sparkle', 1], [A.tVolts, 'suspense', 1.2]);
-  const ev4 = [[A.p0 + 0.05, 'whoosh', 0.5], [A.p0 + 0.1, 'pop', 1], [A.p0 + 0.2, 'label', 1], [A.q0, 'pop', 1], [A.q0, 'counter', 1], [A.q2, 'pop', 1], [A.q2, 'counter', 2], [A.q3, 'pop', 1], [A.q3, 'counter', 3], [A.q4, 'pop', 1], [A.q4, 'counter', 4], [A.fois, 'label', 1],
-    [A.tension, 'blip', 1], [A.prise, 'pop', 1], [A.prise + 0.12, 'label', 1], [A.elec, 'zap', 0.7], [A.elec + 0.22, 'zap', 0.5], [A.fr, 'pop', 1], [A.fr + 0.3, 'blip', 1]];
+  const ev4 = [[A.p0 + 0.02, 'whoosh', 0.5], [A.p0 + 0.05, 'pop', 1], [A.p0 + 0.1, 'label', 1], [A.q0, 'pop', 1], [A.q0, 'counter', 1], [A.q2, 'pop', 1], [A.q2, 'counter', 2], [A.q3, 'pop', 1], [A.q3, 'counter', 3], [A.q4, 'pop', 1], [A.q4, 'counter', 4], [A.fois, 'label', 1],
+    [A.tension, 'blip', 1], [A.prise, 'pop', 1], [A.prise + 0.02, 'label', 1], [A.elec, 'zap', 0.7], [A.elec + 0.22, 'zap', 0.5], [A.fr, 'pop', 1], [A.fr + 0.3, 'blip', 1]];
   const ev5 = [[A.tChasse, 'whoosh', 0.6], [A.tChasse + 0.05, 'bubbles', 1.0], [A.tProie - 0.5, 'suspense', 0.5]];
-  const ev6 = [[A.hit, 'zap', 1.6], [A.hit + 0.02, 'whoosh', 0.5], [A.hit + 0.15, 'flop', 0.6], [A.hit + 0.28, 'flop', 0.4], [A.hit + 0.55, 'zap', 0.7], [A.hit + 0.7, 'flop', 0.3]];
-  const ev7 = [[A.tDef, 'whoosh', 1.0], [A.tDef + 0.05, 'bubbles', 1.0], [A.def, 'zap', 2], [A.def + 0.03, 'shake', 1], [A.def + 0.15, 'zap', 1.2], [A.def + 0.2, 'splash', 0.8], [A.def + 0.45, 'zap', 0.8], [A.tick, 'ding', 1], [A.tick, 'pop', 1], [A.tick + 0.05, 'reveal', 1], [A.tick + 0.1, 'bubbles', 0.6]];
+  const ev6 = [[A.hit, 'zap', 1.6], [A.hit + 0.15, 'flop', 0.6], [A.hit + 0.28, 'flop', 0.4], [A.hit + 0.55, 'zap', 0.7], [A.hit + 0.7, 'flop', 0.3]];
+  const ev7 = [[A.tDef, 'whoosh', 1.0], [A.tDef + 0.05, 'bubbles', 1.0], [A.def, 'zap', 2], [A.def + 0.03, 'shake', 1], [A.def + 0.15, 'zap', 1.2], [A.def + 0.1, 'whoosh', 0.7], [A.def + 0.45, 'zap', 0.8], [A.tick, 'ding', 1], [A.tick, 'pop', 1], [A.tick + 0.05, 'reveal', 1], [A.tick + 0.1, 'bubbles', 0.6]];
   shot('e1_surface', S.t0, { draw: an_p1, ui: an_p1Ui, ev: ev1 });
   shot('e1_anguille', A.tEel, { draw: an_p2, ui: an_hud, ev: ev2 });
   shot('e1_volts', A.tVolts, { draw: an_p3, ui: an_p3Ui, ev: ev3 });

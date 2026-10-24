@@ -492,22 +492,19 @@ function ba_pocket(X0, wy, sm, p, t, o = {}) {
 // ───────────────────────── le prédateur du ciel : l'ombre d'un oiseau de proie sur l'eau ─────────────────────────
 // (x, y) = centre de l'ombre sur la surface (écran) ; s = envergure/76 ; dir ±1 (cap) ; squash : écrasement vertical (perspective) ; a : opacité ; flap : 0..1 position des ailes (0 : planer)
 function ba_birdShadowPts(flap, t) {
-  const fl = Math.sin(t * 2.2) * 0.12 + flap * 0.4, wing = [], tips = [[-3, 39], [-8, 38], [-12, 35], [-15, 31], [-17, 26]];
-  wing.push([4, 3.4], [2.6, 14], [0, 26], [-1, 33 + fl * 4]);
-  tips.forEach((q, i) => wing.push([q[0] + 3 * (i % 2), q[1] + fl * 5 - (i % 2) * 1.8]));
-  wing.push([-18, 20], [-17, 12], [-15, 5], [-12, 3.2]);
-  return wing;
+  const fl = Math.sin(t * 2.2) * 0.12 + flap * 0.4, k = fl * 4;
+  return [[9, 3], [7, 10], [3, 19], [-2, 28], [-8, 36 + k * 0.5], [-13, 42 + k], [-16, 44.5 + k], [-17, 39 + k], [-21, 43 + k], [-21.5, 37 + k], [-25, 40 + k], [-24.5, 34 + k * 0.5], [-22, 28], [-19, 18], [-15, 9], [-12, 3.5]];
 }
 function ba_birdShadow(x, y, t, o = {}) {
-  const s = o.s ?? 1.6, dir = o.dir ?? 1, sq = o.squash ?? 0.5, a = o.a ?? 0.46, ph = o.flap ?? 0.0, W = ba_birdShadowPts(ph, t);
+  const s = o.s ?? 1.6, dir = o.dir ?? 1, sq = o.squash ?? 0.5, a = o.a ?? 0.46, ph = o.flap ?? 0.0, rot = o.rot ?? 0.3, W = ba_birdShadowPts(ph, t);
   const draw = (k, al) => {
-    L.save(); L.setTransform(dir * s * k, 0, 0, s * sq * k, x, y); L.fillStyle = `rgba(5,4,15,${al})`;
-    L.beginPath();
-    for (const m of [1, -1]) { L.moveTo(5, 0); for (const q of m > 0 ? W : W.slice().reverse()) L.lineTo(q[0], q[1] * m); L.lineTo(-12, 0); }
-    L.fill();
-    L.beginPath(); L.ellipse(0, 0, 11, 3.6, 0, 0, TAU); L.fill();                                     // corps
-    L.beginPath(); L.moveTo(-10, -3); L.lineTo(-27, -7.5); L.lineTo(-29, 0); L.lineTo(-27, 7.5); L.lineTo(-10, 3); L.fill();     // queue en éventail
-    L.beginPath(); L.arc(13.5, 0, 2.7, 0, TAU); L.fill(); L.beginPath(); L.moveTo(15.5, -1.6); L.lineTo(20.5, 0.6); L.lineTo(15.5, 2); L.fill();   // tête et bec
+    L.save(); L.translate(x, y); L.scale(1, sq); L.rotate(rot * dir); L.scale(dir * s * k, s * k); L.fillStyle = `rgba(5,4,15,${al})`;
+    for (const m of [1, -1]) {
+      L.beginPath(); L.moveTo(10, 0); for (const q of m > 0 ? W : W.slice().reverse()) L.lineTo(q[0], q[1] * m); L.lineTo(-12, 0); L.closePath(); L.fill();
+    }
+    L.beginPath(); L.ellipse(0, 0, 12, 3.8, 0, 0, TAU); L.fill();                                     // corps
+    L.beginPath(); L.moveTo(-10, -3.6); L.lineTo(-26, -8); L.quadraticCurveTo(-33, 0, -26, 8); L.lineTo(-10, 3.6); L.fill();     // queue en éventail
+    L.beginPath(); L.arc(13.5, 0, 2.8, 0, TAU); L.fill(); L.beginPath(); L.moveTo(15.5, -1.7); L.lineTo(21, 0.6); L.lineTo(15.5, 2.2); L.fill();   // tête et bec
     L.restore();
   };
   draw(1.07, a * 0.45); draw(1, a);
@@ -563,3 +560,27 @@ function ba_caiman(x, wy, s, t, o = {}) {
   const ab = q => [x + fl * q[0], wy + q[1]];
   return { J: ab(H(0, 0)), head: ab(H(40, -4)), mouth: ab(H(66, 3)), eye: [ex, ey] };
 }
+
+// ───────────────────────── icône du carnet : ICONES[1], 17 × 17 px ─────────────────────────
+// tête de basilic de profil (museau à droite) : plumet maille menthe à nervures et mouchetures turquoise, œil doré, bande claire de la lèvre ; contour sombre d'un pixel calculé
+const BA_ICOL = { c: GR[4], r: GR[2], t: CY[3], g: LM[4], G: LM[3], h: LM[5], w: LM[6], d: GR[3], D: GR[2], y: AM[8], o: AM[5], k: '#05040f', e: WH[3] };
+const BA_ICON = (function () {
+  const N = 17, g = Array.from({ length: N }, () => Array(N).fill('.'));
+  const inside = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const a = pts[i], b = pts[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+  const fill = (pts, f) => { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (inside(pts, x + 0.5, y + 0.5)) g[y][x] = f(x, y); };
+  fill([[1.5, 17], [2.5, 11], [6, 8.5], [10, 10.5], [9.5, 17]], (x, y) => y < 12 ? 'G' : x > 6 ? 'd' : 'G');               // cou
+  fill([[3, 7.2], [4, 5.6], [8, 5], [11.5, 6], [14, 7.6], [16.4, 9], [16.6, 10.6], [15, 11.2], [11, 12.4], [6.5, 13.4], [3.5, 12.6]], (x, y) => y <= 6 ? 'h' : y === 7 ? 'g' : y >= 12 ? 'w' : y >= 11 ? 'g' : 'G');   // tête
+  fill([[3.5, 6.6], [2.6, 3.8], [4.6, 1.2], [8, 0.6], [10.8, 2.4], [11.8, 5.8], [9.5, 6.6], [6, 6.2]], (x, y) => 'c');                                         // plumet
+  for (const [x, y] of [[5, 5], [5, 3], [7, 4], [8, 2], [9, 5], [7, 6]]) if (g[y][x] === 'c') g[y][x] = 'r';                                                    // nervures
+  for (const [x, y] of [[6, 3], [9, 3], [4, 5], [8, 5]]) if (g[y][x] === 'c') g[y][x] = 't';                                                                       // mouchetures
+  g[8][10] = 'y'; g[8][11] = 'y'; g[9][10] = 'y'; g[9][11] = 'o'; g[8][11] = 'k'; g[7][10] = 'k';                                                                  // œil doré, pupille, arcade
+  for (let x = 12; x <= 16; x++) if (g[10][x] !== '.') g[10][x] = 'e';                                                                                            // bande claire de la lèvre
+  for (let x = 7; x <= 11; x++) if (g[11][x] !== '.') g[11][x] = 'w';
+  g[9][16] = 'k';                                                                                                                                                   // narine
+  return g;
+})();
+ICONES[1] = function (cx, cy) {
+  const N = 17, g = BA_ICON, x0 = Math.round(cx) - 8, y0 = Math.round(cy) - 8, fillp = (x, y) => x >= 0 && y >= 0 && x < N && y < N && g[y][x] !== '.';
+  for (let y = -1; y <= N; y++) for (let x = -1; x <= N; x++) if (!fillp(x, y) && (fillp(x - 1, y) || fillp(x + 1, y) || fillp(x, y - 1) || fillp(x, y + 1))) R(x0 + x, y0 + y, 1, 1, '#05040f');
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const ch = g[y][x]; if (ch !== '.') R(x0 + x, y0 + y, 1, 1, BA_ICOL[ch]); }
+};

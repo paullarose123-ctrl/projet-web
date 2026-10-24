@@ -839,7 +839,7 @@ function sb_cutaway(t, p, o = {}) {
   }
   const boom = clamp(sb_fin(p.boom, 0)), bf = clamp(sb_fin(p.boomFade, 0));
   if (boom > 0.01 && bf < 0.99) {
-    const grow = eob(clamp(boom * 1.4)), R0 = (30 + 62 * grow), fr = Math.round(t * 30), nsp = 14;
+    const grow = eob(clamp(boom * 1.4)), R0 = (24 + 48 * grow), fr = Math.round(t * 30), nsp = 14;
     const star = (R, k2, rot) => { const pts = []; for (let k = 0; k < nsp * 2; k++) { const a = rot + k * Math.PI / nsp, rr = (k % 2 ? R * k2 * (0.85 + 0.3 * sb_h(k + fr, 2)) : R * (0.8 + 0.4 * sb_h(k * 3 + 1, 7))); pts.push([chx + Math.cos(a) * rr, chy + Math.sin(a) * rr]); } return polyPath(pts); };
     c.globalAlpha = 1 - bf;
     for (const [rf, k2, col] of [[1.0, 0.5, RD[2]], [0.88, 0.5, RD[4]], [0.7, 0.52, AM[7]], [0.5, 0.55, YE[2]], [0.3, 0.6, WH[3]]]) { c.fillStyle = col; c.fill(star(R0 * rf, k2, 0.12 + t * 0.4 * (rf < 0.5 ? -1 : 1) * 0)); }

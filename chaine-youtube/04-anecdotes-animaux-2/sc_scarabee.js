@@ -40,10 +40,23 @@ function sb_scene(u, t, cam, o = {}) {
   for (const [x0, y0, w, k] of [[30, 12, 46, 0], [250, 26, 60, 1], [330, 8, 38, 0]]) { const x = sb_wrap(x0, cam); if (k) fl_rock(x, gy + y0, w, w * 0.5, 'round', 4, { env: E, mat: 'warm', moss: 0.6, depth: 0.1 }); else fl_moss(x, gy + y0, w, { env: E, seed: 3, depth: 0.1 }); }
   for (const [x0, y0, h, sd] of [[110, 40, 26, 2], [380, 52, 30, 5]]) fl_ferns(t, { x: sb_wrap(x0, cam), y: gy + y0, h, n: 6, seed: sd, env: E, depth: 0.1, unfurl: 0.3 });
 }
+// grandes lames d'herbe floues au premier plan (silhouettes à contre-jour, liseré doré du côté du soleil) qui encadrent la scène
+function sb_blades(t) {
+  const defs = [[8, 52, 150, 13, -22, 1], [-6, 24, 262, 10, -10, 2], [262, 238, 168, 13, 16, 3], [280, 264, 96, 12, 10, 4], [246, 208, 296, 9, 12, 5]];
+  for (const [x0, x1, y1, w0, bend, sd] of defs) {
+    const y0 = 490, sway = k_wind(t, x0, sd) * 5 * (1 - (y1 - 90) / 400), pts = [];
+    for (let k = 0; k <= 16; k++) { const f = k / 16, c = [x0 + (x1 - x0) * 0.25 + bend, lerp(y0, y1, 0.55)], p = bez([x0, y0], c, [x1 + sway, y1], f), w = w0 * Math.pow(1 - f, 0.85) + 0.4; pts.push([p, w]); }
+    const left = [], right = [];
+    for (let k = 0; k < pts.length; k++) { const a = pts[Math.max(0, k - 1)][0], b = pts[Math.min(pts.length - 1, k + 1)][0], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l, w = pts[k][1]; left.push([pts[k][0][0] - nx * w / 2, pts[k][0][1] - ny * w / 2]); right.push([pts[k][0][0] + nx * w / 2, pts[k][0][1] + ny * w / 2]); }
+    L.fillStyle = LM[0]; L.beginPath(); left.forEach((q, i) => i ? L.lineTo(q[0], q[1]) : L.moveTo(q[0], q[1])); right.reverse().forEach(q => L.lineTo(q[0], q[1])); L.closePath(); L.fill();
+    L.strokeStyle = AM[8]; L.globalAlpha = 0.8; L.lineWidth = 1; L.beginPath(); right.forEach((q, i) => i ? L.lineTo(q[0] + 0.5, q[1]) : L.moveTo(q[0] + 0.5, q[1])); L.stroke(); L.globalAlpha = 1;
+    L.strokeStyle = LM[2]; L.globalAlpha = 0.7; L.beginPath(); left.slice(0, 11).forEach((q, i) => i ? L.lineTo(q[0] + 2, q[1]) : L.moveTo(q[0] + 2, q[1])); L.stroke(); L.globalAlpha = 1;
+  }
+}
 // avant-plan fixe (collé au cadre) : herbes en bordure, pollen, poussière dorée, vignette chaude
 function sb_fg(u, t, cam, o = {}) {
+  sb_blades(t);
   fl_grassFg(t, { env: 'savannaDawn', kind: 'gold', side: 'bottom', h: 62, n: 24, seed: 8, cam: 0 });
-  fl_grassFg(t, { env: 'savannaDawn', kind: 'green', side: 'left', h: 56, n: 8, seed: 3, cam: 0, y: 470 });
   k_pollen(t, { n: 46, y0: 40, y1: 330, cam, par: 0.8 });
   k_dust(t, { n: 14, y0: 60, y1: 300, cam, seed: 9, par: 0.6 });
   k_vignetteWarm(0.38);
@@ -139,9 +152,9 @@ function buildScarabee(S) {
     const ev = [[A.mel, 'blip', 1], [A.mel + 0.05, 'drip', 0.8], [A.mel + 0.4, 'drip', 0.5], [A.mel + 0.8, 'drip', 0.6], [A.deux, 'label', 1], [A.subs, 'label', 1], [A.chim + 0.1, 'whoosh', 0.4], [A.abd, 'pop', 1]];
     shot('b3_coupe', T.b3b, {
       draw(u, t, sh) {
-        const zoom = 1 + 0.16 * eio(prog(t, T.b3b, T.b3c)), flow = eio(prog(t, A.mel, A.mel + 1.0)) * 1.15, mix = sm(prog(t, A.mel + 0.9, A.mel + 2.2)) * 0.6, fill = 0.92 - 0.3 * prog(t, A.mel, A.mel + 1.8);
+        const zoom = 1.08 + 0.14 * eio(prog(t, T.b3b, T.b3c)), flow = eio(prog(t, A.mel, A.mel + 1.0)) * 1.15, mix = sm(prog(t, A.mel + 0.9, A.mel + 2.2)) * 0.6, fill = 0.92 - 0.3 * prog(t, A.mel, A.mel + 1.8);
         const hl = t >= A.chim ? 'both' : t >= A.subs ? 'B' : t >= A.deux ? 'A' : null;
-        sh.cut = sb_cutaway(t, { fill, flow, mix, enz: 0.25 + 0.2 * Math.sin(t * 4), heat: 0.06 + 0.1 * mix, hl }, { zoom, fx: 135, fy: 190, cx: 135, cy: 196 });
+        sh.cut = sb_cutaway(t, { fill, flow, mix, enz: 0.25 + 0.2 * Math.sin(t * 4), heat: 0.06 + 0.1 * mix, hl }, { zoom, fx: 135, fy: 190, cx: 135, cy: 208 });
       },
       ui(u, t, sh) {
         const c = sh.cut; if (!c) return;
@@ -183,16 +196,16 @@ function buildScarabee(S) {
     const ev = [[A.proj, 'suspense', 0.3], [tFire, 'steam', 1.6], [tFire, 'bang', 0.7], [tFire + 0.12, 'whoosh', 0.5], [tHit, 'splat', 1], [tHit + 0.05, 'steam', 1.0], [tHit + 0.18, 'ribbit', 1.3], [tHit + 0.5, 'shake', 1], [tHit + 0.75, 'shake', 1], [tHit + 1.0, 'shake', 1]];
     shot('b4_jet', T.b4a, {
       draw(u, t, sh) {
-        const sc = 1.45, bx = 62, by = sb_GY + 8, camS = 3 * bump(t, tHit, tHit + 0.05, tHit + 0.2, tHit + 0.5) * Math.sin(t * 70);
+        const sc = 1.45, bx = 66, by = sb_GY + 8, camS = 3 * bump(t, tHit, tHit + 0.05, tHit + 0.2, tHit + 0.5) * Math.sin(t * 70);
         sb_scene(u, t, 0);
         const rec = eob(prog(t, tHit, tHit + 0.34)), unl = 1 - sm(prog(t, tHit, tHit + 0.18)), sk = prog(t, tHit + 0.28, tHit + 1.5), shake = Math.sin((t - tHit) * 40) * (1 - sk) * (t > tHit + 0.28 ? 1 : 0);
-        const tg = 0.34 * (1 - sm(prog(t, T.b4a, T.b4a + 0.25))) * unl, cxT = 312 + 18 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
+        const tg = 0.34 * (1 - sm(prog(t, T.b4a, T.b4a + 0.25))) * unl, cxT = 276 + 16 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
         const toad = sb_toad(cxT, 350, 1.9, t, { flip: true, lunge: 1 * unl, tongue: tg, recoil: rec * 0.95, shake, seed: 5, mouth: 0.9 * unl });
         const fire = prog(t, tFire, tFire + 0.05) * (1 - prog(t, tFire + 1.5, tFire + 1.65));
         const tipK = 0.72 + 0.28 * sm(prog(t, A.il4, A.proj + 0.12));
         const m = sb_beetle(bx + camS * 0.5, by, sc, t, { pose: 'aim', aimK: 1, tip: tipK, aim: -0.3, hot: sm(prog(t, T.b4a, A.proj + 0.2)) * (1 - 0.5 * prog(t, tFire + 1.5, tFire + 1.8)), fire });
         const tgt = [toad.nose[0] - 6, toad.nose[1] + 4], ang = Math.atan2(tgt[1] - m.tip[1], tgt[0] - m.tip[0]);
-        sb_jet(m.tip[0], m.tip[1], ang, t, tFire, { dur: 1.5, len: Math.hypot(tgt[0] - m.tip[0], tgt[1] - m.tip[1]) * 1.15, hz: 14, size: 1.15, gravity: 40, seed: 3 });
+        sb_jet(m.tip[0], m.tip[1], ang, t, tFire, { dur: 1.5, len: Math.hypot(tgt[0] - m.tip[0], tgt[1] - m.tip[1]) * 1.15, hz: 14, size: 1.7, gravity: 40, seed: 3 });
         sb_splashHit(tgt[0], tgt[1], t, tHit, { dir: -Math.PI * 0.55, size: 1.5, n: 16 });
         if (t > tHit + 0.1 && t < tHit + 1.7) sb_steam(toad.nose[0] + 4, toad.nose[1] - 4, t, { n: 6, w: 8, h: 50, a: 0.9 * (1 - prog(t, tHit + 1.2, tHit + 1.7)), size: 1.2, seed: 6 });
         sb_fg(u, t, 0);
