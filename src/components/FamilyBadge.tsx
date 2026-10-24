@@ -1,3 +1,4 @@
+import { EAGLE } from '../art/kit';
 import type { CSSProperties } from 'react';
 import type { SportId } from '../engine/types';
 import { SPORTS } from '../data/sports';
@@ -25,6 +26,29 @@ export function FamilyBadge({ sport, earned, size = 104 }: { sport: SportId; ear
         </span>
       </div>
       <span className="fbadge__ribbon">{SPORTS[sport].short}</span>
+    </div>
+  );
+}
+
+/** Badge d'une série de pays complète (Série 2 : le Mexique) : son paysage et l'aigle du drapeau. */
+export function SerieBadge({ name, earned, size = 104 }: { name: string; earned: boolean; size?: number }) {
+  const scene = packScene('mexique');
+  const style = {
+    '--badge-size': `${size}px`,
+    '--badge-near': scene.palette.near,
+    '--sport': '#2fa36b',
+  } as CSSProperties;
+  return (
+    <div className={`fbadge fbadge--serie${earned ? ' is-earned' : ' is-locked'}`} style={style}>
+      <div className="fbadge__medal">
+        <PackScene scene={scene} seed={`badge ${name}`} className="fbadge__scene" shade={false} />
+        <span className="fbadge__emblem">
+          <svg className="sport-icon" viewBox="-11 -5 22 10" aria-hidden="true">
+            <path d={EAGLE} fill="currentColor" />
+          </svg>
+        </span>
+      </div>
+      <span className="fbadge__ribbon">{name}</span>
     </div>
   );
 }

@@ -24,5 +24,5 @@ startAutoSave();
 startAnalytics();
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : <App />}</StrictMode>,
+  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : hash === '#serie-2' ? <AllCards serie={2} /> : <App />}</StrictMode>,
 );

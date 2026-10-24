@@ -6145,3 +6145,89 @@
     animation: none;
   }
 }
+/* ───── Séries : choix de l'album, boutique et annonce de l'accueil ───── */
+.serie-switch {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.serie-switch__tab {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.serie-switch__tab b {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.serie-switch__tab span {
+  font-weight: 600;
+}
+
+.serie-switch__tab small {
+  color: var(--text-dim);
+}
+
+.serie-switch__tab.is-active {
+  border-color: #e9c77b;
+  box-shadow: 0 0 0 1px #e9c77b inset;
+  background: color-mix(in srgb, #e9c77b 12%, var(--bg-3));
+}
+
+/* la Série 2 aux couleurs du Mexique : vert, blanc, rouge */
+.serie-switch__tab--2.is-active {
+  border-color: #2fa36b;
+  box-shadow: 0 0 0 1px #2fa36b inset;
+  background: linear-gradient(100deg, color-mix(in srgb, #2fa36b 20%, var(--bg-3)), var(--bg-3) 55%, color-mix(in srgb, #c4213a 18%, var(--bg-3)));
+}
+
+.serie-goal {
+  margin: -4px 0 10px;
+}
+
+.shop-serie {
+  margin-bottom: 18px;
+}
+
+.shop-serie h2,
+.shop-serie__title {
+  margin: 6px 0 4px;
+}
+
+.shop-serie h2 small {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2fa36b;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.shop-serie__title {
+  font-size: 1.15rem;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.expansion__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 6px;
+}

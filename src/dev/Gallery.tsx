@@ -3,7 +3,7 @@ import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { Card } from '../components/Card';
 import { Flag, FLAG_CODES } from '../components/Flag';
 import { SportIcon } from '../components/SportIcon';
-import { RARITIES, isIcon, rarityOf, rarityScore } from '../engine/cards';
+import { RARITIES, collectionNumber, isIcon, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, SHOP_PACKS, sportPack } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
@@ -26,11 +26,17 @@ export function reviewOrder() {
   ];
 }
 
-/** Toutes les cartes du jeu, dans l'ordre de revue (#toutes-les-cartes), pour les captures de la planche. */
-export function AllCards() {
+/**
+ * Toutes les cartes du jeu, dans l'ordre de revue (#toutes-les-cartes), pour les captures de la planche ;
+ * #serie-2 : seulement celles de la Série 2 (Mexique), dans l'ordre de leur numéro.
+ */
+export function AllCards({ serie }: { serie?: number }) {
+  const cards = serie
+    ? ATHLETES.filter((a) => (a.serie ?? 1) === serie).sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b)))
+    : reviewOrder();
   return (
     <div id="toutes" style={{ padding: 16, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-      {reviewOrder().map((a) => (
+      {cards.map((a) => (
         <Card key={a.id} card={{ athleteId: a.id, variant: 'base' }} size="md" />
       ))}
     </div>

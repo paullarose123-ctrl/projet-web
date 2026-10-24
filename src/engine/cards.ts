@@ -221,21 +221,29 @@ export function athletesByRarity(): Record<RarityId, Athlete[]> {
 }
 
 // ───────────── Numéros de collection ─────────────
-// Chaque espèce a son numéro dans l'album, famille par famille (dans l'ordre du jeu), sans trou : N° 001 à N° 4xx.
-// Dans chaque famille, ses Icônes (espèces disparues) viennent en dernier. Les Habitats ont leur propre série : H01, H02…
+// Chaque espèce a son numéro dans l'album de sa série, famille par famille (dans l'ordre du jeu), sans trou :
+// N° 001 à N° 4xx pour la Série 1, M01 à M54 pour la Série 2 (Mexique). Dans chaque famille, ses Icônes (espèces
+// disparues) viennent en dernier. Les Habitats ont leur propre suite : H01, H02… (MH1, MH2… pour le Mexique).
 let numbers: Map<string, string> | null = null;
 
 export function collectionNumber(athlete: Athlete): string {
   if (!numbers) {
     numbers = new Map();
-    let n = 0;
-    for (const sport of SPORT_ORDER) {
-      for (const extinct of [false, true]) {
-        for (const a of ATHLETES) if (a.sport === sport && !a.habitat && !!a.retired === extinct) numbers.set(a.id, String(++n).padStart(3, '0'));
+    const series: Array<{ number: number; species: (n: number) => string; habitat: (n: number) => string }> = [
+      { number: 1, species: (n) => String(n).padStart(3, '0'), habitat: (n) => `H${String(n).padStart(2, '0')}` },
+      { number: 2, species: (n) => `M${String(n).padStart(2, '0')}`, habitat: (n) => `MH${n}` },
+    ];
+    for (const serie of series) {
+      const cards = ATHLETES.filter((a) => (a.serie ?? 1) === serie.number);
+      let n = 0;
+      for (const sport of SPORT_ORDER) {
+        for (const extinct of [false, true]) {
+          for (const a of cards) if (a.sport === sport && !a.habitat && !!a.retired === extinct) numbers.set(a.id, serie.species(++n));
+        }
       }
+      let h = 0;
+      for (const a of cards) if (a.habitat) numbers.set(a.id, serie.habitat(++h));
     }
-    let h = 0;
-    for (const a of ATHLETES) if (a.habitat) numbers.set(a.id, `H${String(++h).padStart(2, '0')}`);
   }
   return numbers.get(athlete.id) ?? '';
 }

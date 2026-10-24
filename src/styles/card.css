@@ -1195,3 +1195,30 @@
 .has-landscape .card__player {
   inset: 0;
 }
+
+/* ─── Série 2 · Mexique : papel picado en haut de la photo, pyramide et cactus sur l'horizon ─── */
+.card__papel {
+  position: absolute;
+  left: 27%;
+  width: 53%;
+  top: 3.1%;
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.45));
+}
+
+.card__papel-string {
+  fill: none;
+  stroke: rgba(255, 248, 236, 0.75);
+  stroke-width: 0.5;
+}
+
+.card.serie-2 .card__hills::before {
+  --hill-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 30V20C8 18 14 19 21 20H56V17.5H58.5V15H61V12.5H63.5V10H66.5V8H71.5V10H74.5V12.5H77V15H79.5V17.5H82V20H100V30Z M15.6 20V8.6Q16.6 7 17.6 8.6V20Z M15.6 15.5H13.2V11.2Q12.5 10.2 11.8 11.2V16.8H15.6Z M17.6 13.6H19.6V10Q20.3 9 21 10V14.9H17.6Z M90 20V12Q90.8 10.8 91.6 12V20Z M91.6 16.4H93.2V13.4Q93.8 12.6 94.4 13.4V17.6H91.6Z'/%3E%3C/svg%3E");
+}
+
+.card.serie-2 .card__hills::after {
+  --hill-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 30V23C12 21 22 24 34 22C46 20 56 24 68 22C80 20 90 23 100 21V30Z M40 22L37 15L40.6 20.5L41.2 13.5L42.4 20.4L45.6 15.2L43.6 22Z M28 23L26.4 18.6L28.6 21.6L29.2 17.4L30 21.6L32 18.8L31 23Z'/%3E%3C/svg%3E");
+}

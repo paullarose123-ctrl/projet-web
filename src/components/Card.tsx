@@ -10,6 +10,7 @@ import { Flag } from './Flag';
 import { Bust } from './Bust';
 import { SportIcon } from './SportIcon';
 import { PackScene } from './PackScene';
+import { serieOf } from '../engine/series';
 
 // Carte au style « cadre de naturaliste » : palette de booster selon le palier (forêt, cimes, savane…),
 // cadre sombre avec code de l'espèce en onglet, losange avec le numéro de collection, famille écrite à la verticale,
@@ -78,6 +79,38 @@ function Frame() {
         <path d="M6.5 24 V36 M6.5 70 V81 M6.5 91 V105" />
         <path className="card__diamond" d="M6.5 83.2 L7.7 86 L6.5 88.8 L5.3 86 Z" />
       </g>
+    </svg>
+  );
+}
+
+// Guirlande de papel picado des cartes de la Série 2 (Mexique), accrochée en haut de la fenêtre de la photo.
+const PAPEL_COLORS = ['#e2457a', '#f4b13d', '#2fa36b', '#fff4e0', '#e8532f', '#7b4fd6', '#3ab0d9'];
+const PAPEL_FLAGS = PAPEL_COLORS.map((color, i) => {
+  const x = 3 + i * 14.5;
+  // la ficelle pend un peu au milieu
+  const y = 1.6 + 4.2 * Math.sin(((x + 5.5) / 106) * Math.PI);
+  let d = `M${x} ${y}H${x + 11}V${y + 8.5}`;
+  for (let k = 7; k >= 0; k--) d += `L${x + (k * 11) / 8} ${y + (k % 2 ? 10.4 : 8.5)}`;
+  return { color, d: `${d}Z`, x, y, tilt: [-4, 3, -2, 4, -3, 2, -4][i] };
+});
+
+function Papel() {
+  return (
+    <svg className="card__papel" viewBox="0 0 106 17" aria-hidden="true">
+      <path className="card__papel-string" d="M0 1.6 Q53 10 106 1.6" />
+      {PAPEL_FLAGS.map((flag) => (
+        <g key={flag.color} transform={`rotate(${flag.tilt} ${flag.x + 5.5} ${flag.y})`}>
+          <path d={flag.d} fill={flag.color} />
+          {/* motif découpé : une rosace et quatre petits trous */}
+          <g fill="rgba(20, 10, 10, 0.32)">
+            <circle cx={flag.x + 5.5} cy={flag.y + 4.3} r={1.7} />
+            <circle cx={flag.x + 2.3} cy={flag.y + 2.2} r={0.6} />
+            <circle cx={flag.x + 8.7} cy={flag.y + 2.2} r={0.6} />
+            <circle cx={flag.x + 2.3} cy={flag.y + 6.6} r={0.6} />
+            <circle cx={flag.x + 8.7} cy={flag.y + 6.6} r={0.6} />
+          </g>
+        </g>
+      ))}
     </svg>
   );
 }
@@ -151,6 +184,8 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     prime ? 'is-prime' : '',
     reverse ? 'is-reverse' : '',
     habitat ? 'is-habitat' : '',
+    // les cartes du Mexique : papel picado et pyramide sur l'horizon
+    serieOf(athlete) === 2 ? 'serie-2' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',
     locked ? 'is-locked' : '',
@@ -206,6 +241,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
         </div>
 
         <Frame />
+        {serieOf(athlete) === 2 && !tiny && <Papel />}
         <div className="card__hills" aria-hidden="true" />
 
         <div className="card__code metal-text">{athleteCode(athlete)}</div>
@@ -319,10 +355,10 @@ function Facts({ mesures, population, compact }: { mesures: MesuresAffichees | n
 /** Bandeau d'une carte Habitat : le nombre d'espèces du jeu qui y vivent (la superficie est dans la fiche). */
 function HabitatFacts({ especes }: { especes: number }) {
   return (
-    <div className="card__facts" aria-label={`${especes} espèces du jeu y vivent`}>
+    <div className="card__facts" aria-label={especes > 1 ? `${especes} espèces du jeu y vivent` : `${especes} espèce du jeu y vit`}>
       <span className="card__fact" title="Espèces du jeu qui y vivent">
         <FactIcon d={FACT_ICONS.especes} />
-        {especes} espèces
+        {especes} espèce{especes > 1 ? 's' : ''}
       </span>
     </div>
   );
