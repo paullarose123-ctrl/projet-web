@@ -3,7 +3,8 @@ import { useGame } from '../store/game';
 import { useAccount } from '../store/account';
 import { useUi } from '../store/ui';
 import { copyToGive, sameRarity, useTrades } from '../store/trades';
-import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { releasedAthletes } from '../engine/series';
 import { displayName, rarityOf } from '../engine/cards';
 import type { CardFace, OwnedCard } from '../engine/types';
 import type { PublicProfile } from '../account/supabase';
@@ -49,7 +50,7 @@ export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose
     if (!offer) return [];
     const showcase = new Set(friend.favorites.map((f) => f?.athleteId));
     const q = normalize(query.trim());
-    return ATHLETES.filter((a) => a.id !== offer.athleteId && sameRarity(a.id, offer.athleteId) && (!q || normalize(displayName(a)).includes(q))).sort(
+    return releasedAthletes().filter((a) => a.id !== offer.athleteId && sameRarity(a.id, offer.athleteId) && (!q || normalize(displayName(a)).includes(q))).sort(
       (a, b) => Number(showcase.has(b.id)) - Number(showcase.has(a.id)) || Number(!!discovered[a.id]) - Number(!!discovered[b.id]) || a.last.localeCompare(b.last, 'fr'),
     );
   }, [offer, friend.favorites, discovered, query]);

@@ -5,7 +5,8 @@ import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
 import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
-import { FREE_PACK, NO_DUPE_WINDOW, SHOP_PACKS, openPack, sportPack, type PackDef } from '../engine/packs';
+import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
+import { serieOf } from '../engine/series';
 import {
   MAX_MY_LISTINGS,
   advanceMarket,
@@ -126,6 +127,8 @@ export interface Opening {
   tone: PackDef['tone'];
   /** famille du pack, pour son paysage */
   sport?: PackDef['sport'];
+  /** série du booster (dos des cartes, dos du sachet) */
+  serie?: number;
   cards: Array<CardFace & { uid: string; isNew: boolean }>;
 }
 
@@ -172,7 +175,8 @@ export interface GameState {
   toasts: Toast[];
 
   tick: (now?: number) => void;
-  openFreePack: () => boolean;
+  /** ouvre un booster gratuit de la série choisie (la Série 1 par défaut) */
+  openFreePack: (serie?: number) => boolean;
   buyPack: (packId: string) => boolean;
   closeOpening: () => void;
   quickSell: (uids: string[]) => number;
@@ -299,7 +303,8 @@ function hasRarity(state: Pick<GameState, 'discovered'>, order: number): boolean
 function bestSportCompletion(state: Pick<GameState, 'discovered'>): [number, number] {
   let best: [number, number] = [0, 1];
   for (const sport of SPORT_ORDER) {
-    const all = ATHLETES.filter((a) => a.sport === sport && !a.habitat);
+    // les familles de l'album de la Série 1 (la Série 2 a son propre album)
+    const all = ATHLETES.filter((a) => a.sport === sport && !a.habitat && serieOf(a) === 1);
     const owned = all.filter((a) => state.discovered[a.id]).length;
     if (owned / all.length > best[0] / best[1]) best = [owned, all.length];
   }
@@ -322,6 +327,7 @@ export const OBJECTIVES: Objective[] = [
 
 export function packById(id: string): PackDef | undefined {
   if (id === FREE_PACK.id) return FREE_PACK;
+  if (id === FREE_PACK_MEXIQUE.id) return FREE_PACK_MEXIQUE;
   if (id.startsWith('sport-')) {
     const sport = SPORTS[id.slice(6) as keyof typeof SPORTS];
     return sport ? sportPack(sport.id, sport.name) : undefined;
@@ -369,7 +375,7 @@ export const useGame = create<GameState>()(
         return cards;
       };
 
-      const addCards = (faces: CardFace[], packName: string, tone: PackDef['tone'], sport?: PackDef['sport']) => {
+      const addCards = (faces: CardFace[], pack: PackDef) => {
         const now = Date.now();
         const state = get();
         const discovered = { ...state.discovered };
@@ -391,7 +397,7 @@ export const useGame = create<GameState>()(
           collection: [...s.collection, ...newCards],
           discovered,
           primesFound,
-          opening: { packName, tone, sport, cards: owned },
+          opening: { packName: pack.name, tone: pack.tone, sport: pack.sport, serie: pack.serie ?? 1, cards: owned },
           stats: { ...s.stats, packsOpened: s.stats.packsOpened + 1, bestPull: best },
         }));
       };
@@ -465,12 +471,14 @@ export const useGame = create<GameState>()(
           applyMarketEvents(events);
         },
 
-        openFreePack: () => {
+        openFreePack: (serie = 1) => {
           const state = get();
           if (state.freePacks <= 0) return false;
-          const cards = drawPack(FREE_PACK);
+          // une seule réserve de boosters gratuits, à ouvrir dans la série de son choix
+          const pack = freePackOf(serie);
+          const cards = drawPack(pack);
           set({ freePacks: state.freePacks - 1, nextFreePackAt: state.freePacks >= MAX_FREE_PACKS ? Date.now() + FREE_PACK_INTERVAL : state.nextFreePackAt });
-          addCards(cards, FREE_PACK.name, FREE_PACK.tone);
+          addCards(cards, pack);
           return true;
         },
 
@@ -483,7 +491,7 @@ export const useGame = create<GameState>()(
             return false;
           }
           set({ balles: state.balles - pack.price });
-          addCards(drawPack(pack), pack.name, pack.tone, pack.sport);
+          addCards(drawPack(pack), pack);
           return true;
         },
 
@@ -853,8 +861,8 @@ function awardBadges(state: GameState) {
   const earned = newBadges(state.discovered, state.badges ?? {});
   if (!earned.length) return;
   const now = Date.now();
-  useGame.setState({ badges: { ...state.badges, ...Object.fromEntries(earned.map((sport) => [sport, now])) } });
-  for (const sport of earned) useGame.getState().toast('gold', `Badge ${SPORTS[sport].name} : tu as complété la collection ${SPORTS[sport].of} !`);
+  useGame.setState({ badges: { ...state.badges, ...Object.fromEntries(earned.map((badge) => [badge.id, now])) } });
+  for (const badge of earned) useGame.getState().toast('gold', badge.text);
 }
 
 // Pendant l'ouverture d'un booster, le badge attend que le booster soit refermé : sa notification dévoilerait

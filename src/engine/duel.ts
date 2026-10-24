@@ -1,5 +1,6 @@
 import type { Athlete, CardFace } from './types';
-import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { releasedAthletes } from './series';
 import { MESURES, formatLongevite, formatPoids, formatTaille } from '../data/mesures';
 import { CHIENS_DANS_LE_MONDE, POPULATIONS, formatPopulation } from '../data/populations';
 import { canBePrime, isHabitat } from './cards';
@@ -266,7 +267,8 @@ export function createDuel(
   // contre un ami : les animaux de sa vitrine, complétés au hasard s'il en a moins de 5
   const given = (friend?.cards ?? []).filter((c) => ATHLETES_BY_ID[c.athleteId] && canDuel(ATHLETES_BY_ID[c.athleteId])).slice(0, TEAM_SIZE);
   const taken = new Set(given.map((c) => c.athleteId));
-  const pool = ATHLETES.filter((a) => canDuel(a) && !taken.has(a.id));
+  // adversaires tirés parmi les cartes déjà sorties (aucune carte d'une série à venir)
+  const pool = releasedAthletes().filter((a) => canDuel(a) && !taken.has(a.id));
   const chosen = shuffle(rng, pool).slice(0, TEAM_SIZE - given.length);
   const oppCards = given.map((c) => ({ uid: makeUid('o'), athleteId: c.athleteId, variant: c.variant })).concat(chosen.map((athlete) => ({
     uid: makeUid('o'),

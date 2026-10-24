@@ -4,7 +4,7 @@ import { feature } from 'topojson-client';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import world from 'world-atlas/countries-110m.json';
-import { ATHLETES } from '../data/athletes';
+import { releasedAthletes } from '../engine/series';
 import { REGIONS, REGION_BY_ISO, type Region } from '../data/geo';
 import { rarityOf, rarityScore } from '../engine/cards';
 import type { Athlete } from '../engine/types';
@@ -38,7 +38,7 @@ const SHAPES = COUNTRIES.map((f, i) => ({ key: `${f.id ?? 'x'}-${i}`, id: f.id =
 const SPECIES_BY_REGION: Record<string, Athlete[]> = Object.fromEntries(
   REGIONS.map((region) => [
     region.key,
-    ATHLETES.filter((a) => !a.habitat && region.codes.includes(a.country)).sort(
+    releasedAthletes().filter((a) => !a.habitat && region.codes.includes(a.country)).sort(
       (a, b) => rarityOf(b).order - rarityOf(a).order || rarityScore(b) - rarityScore(a) || a.last.localeCompare(b.last, 'fr'),
     ),
   ]),

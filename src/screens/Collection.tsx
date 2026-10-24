@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useGame, formatBalles } from '../store/game';
 import { useUi } from '../store/ui';
-import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { cardsOfSerie, currentSerie, releasedAthletes, releasedSeries, serieDef, serieOf } from '../engine/series';
+import { serieProgress } from '../engine/badges';
+import { useNow } from '../hooks/useNow';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { RARITIES, RARITY_TIERS, collectionNumber, displayName, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import type { OwnedCard, RarityId, SportId } from '../engine/types';
@@ -44,12 +47,15 @@ function Club() {
   const [query, setQuery] = useState('');
   const [sport, setSport] = useState<SportId | ''>('');
   const [rarity, setRarity] = useState<RarityId | ''>('');
+  // 0 : toutes les séries
+  const [serie, setSerie] = useState(0);
   const [sort, setSort] = useState<Sort>('number');
   const [dupesOnly, setDupesOnly] = useState(false);
   const [confirmDupes, setConfirmDupes] = useState(false);
   const [limit, setLimit] = useState(PAGE);
+  const released = releasedSeries();
 
-  useEffect(() => setLimit(PAGE), [query, sport, rarity, sort, dupesOnly]);
+  useEffect(() => setLimit(PAGE), [query, sport, rarity, serie, sort, dupesOnly]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Group>();
@@ -63,6 +69,7 @@ function Club() {
     let list = [...map.values()].filter((group) => {
       const athlete = ATHLETES_BY_ID[group.cards[0].athleteId];
       if (sport && athlete.sport !== sport) return false;
+      if (serie && serieOf(athlete) !== serie) return false;
       if (rarity && rarityOf(athlete).id !== rarity) return false;
       if (dupesOnly && group.cards.length < 2) return false;
       if (q && !normalize(`${displayName(athlete)} ${athlete.nick ?? ''} ${athlete.latin ?? ''}`).includes(q)) return false;
@@ -76,7 +83,7 @@ function Club() {
       return ATHLETES_BY_ID[a.cards[0].athleteId].last.localeCompare(ATHLETES_BY_ID[b.cards[0].athleteId].last, 'fr');
     });
     return list;
-  }, [collection, query, sport, rarity, sort, dupesOnly]);
+  }, [collection, query, sport, rarity, serie, sort, dupesOnly]);
 
   // doublons vendables : on garde toujours l'exemplaire le plus ancien, les cartes verrouillées et celles de l'équipe
   const extraCopies = useMemo(() => {
@@ -121,6 +128,19 @@ function Club() {
             ))}
           </select>
         </label>
+        {released.length > 1 && (
+          <label className="field">
+            <span className="visually-hidden">Série</span>
+            <select id="club-serie" value={serie} onChange={(e) => setSerie(Number(e.target.value))}>
+              <option value={0}>Toutes les séries</option>
+              {released.map((def) => (
+                <option key={def.number} value={def.number}>
+                  Série {def.number} · {def.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="field">
           <span className="visually-hidden">Rareté</span>
           <select id="club-rarity" value={rarity} onChange={(e) => setRarity(e.target.value as RarityId | '')}>
@@ -204,8 +224,7 @@ function Club() {
 }
 
 /** Onglet des cartes Habitat dans l'album, après les familles. */
-function HabitatTab({ active, done, onClick }: { active: boolean; done: number; onClick: () => void }) {
-  const total = ATHLETES.filter((a) => a.habitat).length;
+function HabitatTab({ active, done, total, onClick }: { active: boolean; done: number; total: number; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -226,31 +245,74 @@ function HabitatTab({ active, done, onClick }: { active: boolean; done: number; 
   );
 }
 
+/**
+ * L'album : un par série (Série 1 · Animaux du monde, Série 2 · Mexique…), chacun rangé par famille, puis ses
+ * Habitats. Le choix de la série n'apparaît qu'une fois la deuxième sortie.
+ */
 function Album() {
   const discovered = useGame((s) => s.discovered);
   const collection = useGame((s) => s.collection);
   const openDetail = useUi((s) => s.openDetail);
-  // une famille d'animaux, ou les cartes Habitat
-  const [sport, setSport] = useState<SportId | 'habitats'>('felins');
+  const now = useNow(60_000);
+  const released = releasedSeries(now);
+  // par défaut, l'album de la série la plus récente
+  const [serie, setSerie] = useState(() => currentSerie().number);
+  const cards = useMemo(() => cardsOfSerie(serie), [serie]);
+  // les familles présentes dans la série (toutes pour la Série 1)
+  const families = useMemo(() => SPORT_ORDER.filter((id) => cards.some((a) => a.sport === id && !a.habitat)), [cards]);
+  // une famille de la série, ou ses cartes Habitat
+  const [sport, setSport] = useState<SportId | 'habitats'>(() => families[0] ?? 'felins');
   const [limit, setLimit] = useState(PAGE);
 
-  useEffect(() => setLimit(PAGE), [sport]);
+  useEffect(() => setLimit(PAGE), [sport, serie]);
+  // en changeant de série, on revient à sa première famille
+  useEffect(() => setSport((s) => (s === 'habitats' || families.includes(s) ? s : (families[0] ?? 'felins'))), [families]);
 
   const athletes = useMemo(
     () =>
       // dans l'ordre des numéros de collection
-      ATHLETES.filter((a) => (sport === 'habitats' ? !!a.habitat : a.sport === sport && !a.habitat)).sort((a, b) =>
-        collectionNumber(a).localeCompare(collectionNumber(b)),
-      ),
-    [sport],
+      cards
+        .filter((a) => (sport === 'habitats' ? !!a.habitat : a.sport === sport && !a.habitat))
+        .sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b))),
+    [sport, cards],
   );
   const owned = athletes.filter((a) => discovered[a.id]).length;
+  const habitats = cards.filter((a) => a.habitat);
+  const [serieOwned, serieTotal] = serieProgress(discovered, serie);
 
   return (
     <>
+      {released.length > 1 && (
+        <div className="serie-switch" role="tablist" aria-label="Séries de l’album">
+          {released.map((def) => {
+            const [done, total] = serieProgress(discovered, def.number);
+            return (
+              <button
+                key={def.number}
+                type="button"
+                role="tab"
+                aria-selected={serie === def.number}
+                className={`serie-switch__tab serie-switch__tab--${def.number}${serie === def.number ? ' is-active' : ''}`}
+                onClick={() => setSerie(def.number)}
+              >
+                <b>Série {def.number}</b>
+                <span>{def.name}</span>
+                <small>
+                  {done}/{total} espèces
+                </small>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {serie > 1 && (
+        <p className="serie-goal muted small">
+          Toutes les espèces de la Série {serie} ({serieOwned}/{serieTotal}, sans ses Icônes ni ses Habitats) donnent le badge {serieDef(serie).name}.
+        </p>
+      )}
       <div className="sport-tabs" role="tablist" aria-label="Familles de l’album">
-        {SPORT_ORDER.map((id) => {
-          const all = ATHLETES.filter((a) => a.sport === id && !a.habitat);
+        {families.map((id) => {
+          const all = cards.filter((a) => a.sport === id && !a.habitat);
           const done = all.filter((a) => discovered[a.id]).length;
           return (
             <button
@@ -270,14 +332,19 @@ function Album() {
             </button>
           );
         })}
-        <HabitatTab active={sport === 'habitats'} done={ATHLETES.filter((a) => a.habitat && discovered[a.id]).length} onClick={() => setSport('habitats')} />
+        <HabitatTab
+          active={sport === 'habitats'}
+          done={habitats.filter((a) => discovered[a.id]).length}
+          total={habitats.length}
+          onClick={() => setSport('habitats')}
+        />
       </div>
       <div className="album-head">
         <h2>
           {sport === 'habitats' ? 'Habitats' : SPORTS[sport].name} <small>{owned}/{athletes.length}</small>
         </h2>
         <span className="meter">
-          <span className="meter__fill" style={{ width: `${(owned / athletes.length) * 100}%` }} />
+          <span className="meter__fill" style={{ width: `${(owned / Math.max(1, athletes.length)) * 100}%` }} />
         </span>
       </div>
       <div className="card-grid card-grid--album">
@@ -311,7 +378,7 @@ export function CollectionScreen() {
           <p className="eyebrow">Collection</p>
           <h1>{view === 'club' ? 'Ma réserve' : view === 'album' ? 'Album' : 'Carte du monde'}</h1>
           <p className="muted">
-            {collection.length} carte{collection.length > 1 ? 's' : ''} · {Object.keys(discovered).length} découvertes sur {ATHLETES.length}
+            {collection.length} carte{collection.length > 1 ? 's' : ''} · {Object.keys(discovered).length} découvertes sur {releasedAthletes().length}
           </p>
         </div>
         <div className="segmented" role="tablist" aria-label="Vue de la collection">

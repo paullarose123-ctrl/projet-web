@@ -13,8 +13,9 @@ import { photoCredit } from '../photos';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { TradeModal, TradesPanel } from './Trades';
-import { FamilyBadge } from '../components/FamilyBadge';
-import { familyProgress } from '../engine/badges';
+import { FamilyBadge, SerieBadge } from '../components/FamilyBadge';
+import { familyProgress, serieBadge, serieProgress } from '../engine/badges';
+import { releasedSeries } from '../engine/series';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 
 // Écran Profil : le compte du joueur (création, connexion, sauvegarde), sa vitrine de cartes préférées,
@@ -278,14 +279,29 @@ function Showcase() {
 function Badges() {
   const discovered = useGame((s) => s.discovered);
   const badges = useGame((s) => s.badges);
-  const earned = SPORT_ORDER.filter((sport) => badges[sport]).length;
+  // séries de pays déjà sorties : un badge chacune
+  const countries = releasedSeries().filter((def) => def.number > 1);
+  const earned = SPORT_ORDER.filter((sport) => badges[sport]).length + countries.filter((def) => badges[serieBadge(def.number)]).length;
   return (
     <section className="panel">
       <h2>
-        Mes badges <small>· {earned}/{SPORT_ORDER.length}</small>
+        Mes badges <small>· {earned}/{SPORT_ORDER.length + countries.length}</small>
       </h2>
       <p className="muted small">Découvre toutes les espèces d’une famille (les Icônes ne sont pas obligatoires) pour gagner son badge. Il est à toi pour toujours.</p>
       <div className="badges">
+        {countries.map((def) => {
+          const earnedAt = badges[serieBadge(def.number)];
+          const [owned, total] = serieProgress(discovered, def.number);
+          return (
+            <div key={def.number} className={`badges__item${earnedAt ? ' is-earned' : ''}`}>
+              <SerieBadge name={def.local ?? def.name} earned={!!earnedAt} />
+              <span className="badges__name">Série {def.number}</span>
+              <span className="badges__state">
+                {earnedAt ? `Obtenu le ${new Date(earnedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : `${owned}/${total} espèces`}
+              </span>
+            </div>
+          );
+        })}
         {SPORT_ORDER.map((sport) => {
           const earnedAt = badges[sport];
           const [owned, total] = familyProgress(discovered, sport);

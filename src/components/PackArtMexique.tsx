@@ -17,7 +17,8 @@ const FAR = '#5ba878';
 const NEAR = '#05261a';
 const tone = (t: number) => mix(FAR, NEAR, t);
 
-const STYLE = { '--near': NEAR, '--ink': '#fff8ec', '--pk-title': '15cqw' } as CSSProperties;
+/** couleurs du sachet ; le nom rétrécit s'il est long (« Mexique Pro »), comme sur les boosters de la série 1 */
+const styleFor = (name: string) => ({ '--near': NEAR, '--ink': '#fff8ec', '--pk-title': `${Math.min(15, 128 / Math.max(name.length, 7))}cqw` }) as CSSProperties;
 
 interface Art {
   stars: string[];
@@ -83,13 +84,22 @@ function trace(): Art {
   };
 }
 
-export function PackArtMexique({ className = '' }: { className?: string }) {
+interface PackArtMexiqueProps {
+  className?: string;
+  /** « Booster » ou « Pack » (l'annonce de l'accueil : « Édition spéciale ») */
+  kicker?: string;
+  name?: string;
+  /** nombre de cartes ou garantie */
+  line?: string;
+}
+
+export function PackArtMexique({ className = '', kicker = 'Édition spéciale', name = 'Mexique', line = '5 cartes' }: PackArtMexiqueProps) {
   const id = `pam${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   art ??= trace();
   const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0} width={W + 4} height={y1 - y0} fill={`url(#${id}-mist)`} opacity={opacity} />;
   const { pyramid: pyr } = art;
   return (
-    <div className={`pack-art pack-art--mexique ${className}`} style={STYLE}>
+    <div className={`pack-art pack-art--mexique ${className}`} style={styleFor(name)}>
       <div className="pack-art__sachet">
         <svg className="pack-art__scene" viewBox="0 0 120 172" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <defs>
@@ -153,10 +163,10 @@ export function PackArtMexique({ className = '' }: { className?: string }) {
           <Logo />
         </div>
         <div className="pack-art__series">Série 2 · México</div>
-        <div className="pack-art__kicker">Édition spéciale</div>
-        <div className="pack-art__name">Mexique</div>
+        <div className="pack-art__kicker">{kicker}</div>
+        <div className="pack-art__name">{name}</div>
         <div className="pack-art__line">
-          <span>5 cartes</span>
+          <span>{line}</span>
         </div>
         <div className="pack-art__pillow" />
         <Plastic seed="Série 2 · Mexique" />

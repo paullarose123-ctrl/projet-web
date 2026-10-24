@@ -117,6 +117,8 @@ export interface Athlete {
   wiki?: string;
   /** carte « Habitat » : un grand lieu de la planète, et non une espèce */
   habitat?: HabitatInfo;
+  /** série de la carte : 1 (Animaux du monde, par défaut), 2 (Mexique)… */
+  serie?: number;
 }
 
 export interface HabitatInfo {

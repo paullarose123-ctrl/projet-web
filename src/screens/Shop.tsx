@@ -10,6 +10,8 @@ import { SportIcon } from '../components/SportIcon';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
+import { isReleased } from '../engine/series';
+import { useNow } from '../hooks/useNow';
 
 function percent(value: number): string {
   if (value > 0 && value < 0.0001) return '< 0,01 %';
@@ -112,6 +114,9 @@ function PackTile({ pack }: { pack: PackDef }) {
 export function ShopScreen() {
   const [sport, setSport] = useState<SportId>('felins');
   const balles = useGame((s) => s.balles);
+  // dès sa sortie, les cartes de la Série 2 se mêlent à celles de la Série 1 dans tous les packs
+  const now = useNow(60_000);
+  const mexique = isReleased(2, now);
   return (
     <div className="screen">
       <header className="screen__head screen__head--art">
@@ -121,6 +126,7 @@ export function ShopScreen() {
           <h1>Packs</h1>
           <p className="muted">
             Tu as <Balles value={balles} />. Gagne des crédits en vendant sur le marché, en jouant des duels de records et en remplissant les objectifs.
+            {mexique && ' Les packs mêlent les cartes de la Série 1 et de la Série 2 · Mexique.'}
           </p>
         </div>
       </header>

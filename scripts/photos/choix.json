@@ -211,6 +211,7 @@
     "page": "https://pixabay.com/photos/caracal-animal-nature-cat-wildcat-10225436/",
     "auteur": "Ray_Shrewsberry"
   },
+  "caracara-de-guadalupe": "Caracara cheriway by Audubon.jpg",
   "caribou-de-dawson": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/663428202/original.jpg",
     "page": "https://www.inaturalist.org/photos/663428202",
@@ -231,6 +232,7 @@
   "chacal-a-chabraque": "136 Black-backed jackal hunting for food at Cape cross Photo by Giles Laurent.jpg",
   "chacal-dore": "Canis aureus - golden jackal.jpg",
   "chamois": "Gämse (Rupicapra rupicapra) auf dem Ornach 07.jpg",
+  "chapulin": "Sphenarium purpurascens (Pyrgomorphidae).jpg",
   "chat": {
     "url": "https://cdn.pixabay.com/photo/2012/10/12/17/12/cat-61079_1280.jpg",
     "page": "https://pixabay.com/photos/cat-pet-animal-mackerel-cat-61079/",
@@ -246,6 +248,7 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "chat-viverrin": "Close-up of fishing cat.jpg",
+  "chauve-souris-des-agaves": "Leptonycteris curasoae.jpg",
   "cheval": "White horse in field.jpg",
   "cheval-de-przewalski": {
     "url": "https://cdn.pixabay.com/photo/2022/05/16/19/18/horse-7201032_1280.jpg",
@@ -289,6 +292,7 @@
     "auteur": "flutie8211"
   },
   "coccinelle": "Coccinella d'autunno.jpg",
+  "cochenille": "Dactylopius coccus 05.JPG",
   "cochon": {
     "url": "https://images.unsplash.com/photo-1670974545850-7619a012dea5?ixid=M3wxMjA3fDB8MXxzZWFyY2h8OHx8cGlnfGZyfDB8fHx8MTc5MTA3ODc2Mnww&ixlib=rb-4.1.0&w=2400&q=90&fm=jpg",
     "page": "https://unsplash.com/photos/un-petit-cochon-debout-au-sommet-dun-champ-verdoyant-nG_Y_TG3O-w",
@@ -605,6 +609,9 @@
   },
   "habitat-everglades": "Fiery Reflection I 2023 Photo Contest (53382845920).jpg",
   "habitat-mariannes": "Jellyfish - Flickr - NOAA Ocean Exploration ^ Research.jpg",
+  "habitat-mx-mer-de-cortes": "Islands and Protected Areas of the Gulf of California-113594.jpg",
+  "habitat-mx-monarques": "ButterfliesChincua03.JPG",
+  "habitat-mx-revillagigedo": "Declaratoria Oficial de Patrimonio Mundial del Archipiélago de Revillagigedo.jpg",
   "habitat-sargasses": "Underwater Sargassum (oceanos2024loiacono-2059).jpg",
   "hamster": "Juvenile Female Mesocricetus auratus in Pet Store enclosure, Illinois, USA.jpg",
   "harpie": "Gavião-real - FLONA de Carajás - Luiz Fernando Matos(001).jpg",
@@ -694,6 +701,7 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "lapin": "Oryctolagus cuniculus Rcdo.jpg",
+  "lapin-des-volcans": "Romerolagus diazi .jpg",
   "lemming": "Tunturisopuli Lemmus Lemmus.jpg",
   "lemur-catta": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/302094730/original.jpeg",
@@ -864,6 +872,13 @@
     "page": "https://pixabay.com/photos/sheep-lamb-texel-sheep-texel-dike-966749/",
     "auteur": "Pixabay"
   },
+  "mx-aigle-royal": "Vic Schendel- Golden eagle (48804576076).jpg",
+  "mx-axolotl": "Axolotl Ambystoma mexicanum Aquarium Liège 30012016 3.jpg",
+  "mx-jaguar": "Jaguar (Panthera onca palustris) female Piquiri River 2.JPG",
+  "mx-monarque": "Piedra Herrada - Monarch Butterfly Sanctuary - Near Valle de Bravo - Mexico - 07 (15875612243).jpg",
+  "mx-mygale": "Brachypelma edit.jpg",
+  "mx-quetzal": "060 Male Resplendent quetzal with a long tail in Los Quetzales National Park Photo by Giles Laurent.jpg",
+  "mx-requin-baleine": "Whale Shark (Rhincodon typus) with open mouth in La Paz, Mexico.jpg",
   "mythe-behemoth": {
     "url": "https://cdn.pixabay.com/photo/2025/04/28/02/41/ai-generated-9564084_1280.png",
     "page": "https://pixabay.com/illustrations/ai-generated-monster-bible-trials-9564084/",
@@ -1162,6 +1177,7 @@
   "paruline-de-bachman": "Vermivora bachmanii.jpg",
   "pastenague": "Raya pelágica (Pteroplatytrygon violacea), Cabo de Palos, España, 2022-07-16, DD 69.jpg",
   "peau-bleue": "Tiburón azul (Prionace glauca), canal Fayal-Pico, islas Azores, Portugal, 2020-07-27, DD 21.jpg",
+  "pecari-a-collier": "Collared Peccary (Pecari tajacu) (31600908085).jpg",
   "pelican": "Great white pelican (Pelecanus onocrotalus).jpg",
   "perruche": {
     "url": "https://cdn.pixabay.com/photo/2026/08/01/11/40/11-40-56-159_1280.jpg",
@@ -1450,6 +1466,7 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "singe-hurleur": "Mantled howler monkey and baby (81337)2.jpg",
+  "singe-hurleur-noir": "Alouatta pigra 256798434.jpg",
   "souris": "Maus außer Haus.JPG",
   "springbok": "Antidorcas marsupialis, female (Etosha, 2012).jpg",
   "sterne-arctique": {
@@ -1471,6 +1488,7 @@
     "licence": "Licence Unsplash",
     "licenceUrl": "https://unsplash.com/license"
   },
+  "tapir-de-baird": "Baird's tapir (92141).jpg",
   "tardigrade": {
     "url": "https://cdn.pixabay.com/photo/2026/03/23/03/11/gabrupawpixels-tardigrade-10187598_1280.jpg",
     "page": "https://pixabay.com/photos/tardigrade-waterbear-microscopic-10187598/",
@@ -1484,6 +1502,7 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
+  "tetra-aveugle": "Bosco delle fate - Astyanax mexicanus 01.jpg",
   "tetras-des-bruyeres": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/362740742/original.jpg",
     "page": "https://www.inaturalist.org/photos/362740742",
@@ -1551,6 +1570,7 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "wombat": "Common wombat (Vombatus ursinus tasmaniensis) juvenile Maria Island.jpg",
+  "xoloitzcuintle": "Xoloitzcuintli - GCH Bayshore Georgio Armani 09 (16397731930).jpg",
   "yak": "Bos grunniens at Letdar on Annapurna Circuit.jpg",
   "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg"
 }
