@@ -121,29 +121,45 @@ h3 {
   box-shadow: 0 1px 0 #0f3d24, 0 4px 10px rgba(20, 45, 22, 0.45), inset 0 1px 0 rgba(255, 250, 220, 0.4);
 }
 
-/* bouton du booster Mexique : le rouge de son sachet */
-.btn--primary.btn--mexique {
-  background: linear-gradient(180deg, #df5a6c 0%, #c4213a 55%, #9c1830 100%);
-  border-color: rgba(255, 200, 190, 0.4);
-  text-shadow: 0 1px 0 rgba(70, 10, 20, 0.55);
+/* boutons d'ouverture des boosters, aux couleurs de leur sachet en pastel, texte sombre comme sur les cartes :
+   aube menthe et pêche pour la Série 1, rose et fleur de cempasúchil pour le Mexique */
+.btn--primary.btn--booster,
+.btn--primary.btn--booster-mx {
+  color: var(--ink);
+  border-color: rgba(255, 252, 240, 0.6);
+  text-shadow: 0 1px 0 rgba(255, 252, 240, 0.55);
   box-shadow:
-    0 4px 0 #5e0f1d,
-    0 12px 24px rgba(70, 10, 20, 0.5),
-    inset 0 1px 0 rgba(255, 236, 220, 0.55),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+    0 4px 0 var(--edge),
+    0 12px 24px rgba(4, 12, 10, 0.45),
+    inset 0 1px 0 rgba(255, 255, 250, 0.8),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
 }
 
-.btn--primary.btn--mexique:hover:not(:disabled) {
-  background: linear-gradient(180deg, #e76a7b 0%, #cf2b44 55%, #a51c34 100%);
-  box-shadow:
-    0 6px 0 #5e0f1d,
-    0 16px 30px rgba(70, 10, 20, 0.55),
-    inset 0 1px 0 rgba(255, 236, 220, 0.6),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+.btn--primary.btn--booster {
+  --ink: #0e2c27;
+  --edge: #2f6a5c;
+  background: linear-gradient(100deg, #9fdcd2 0%, #cfe8c6 48%, #ffe2a8 100%);
 }
 
-.btn--primary.btn--mexique:active:not(:disabled) {
-  box-shadow: 0 1px 0 #5e0f1d, 0 4px 10px rgba(70, 10, 20, 0.45), inset 0 1px 0 rgba(255, 236, 220, 0.4);
+.btn--primary.btn--booster-mx {
+  --ink: #3a1226;
+  --edge: #9a3f55;
+  background: linear-gradient(100deg, #f7a9bb 0%, #fbc4a4 48%, #ffd27a 100%);
+}
+
+.btn--primary.btn--booster:hover:not(:disabled),
+.btn--primary.btn--booster-mx:hover:not(:disabled) {
+  filter: brightness(1.05) saturate(1.05);
+  box-shadow:
+    0 6px 0 var(--edge),
+    0 16px 30px rgba(4, 12, 10, 0.5),
+    inset 0 1px 0 rgba(255, 255, 250, 0.85),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+
+.btn--primary.btn--booster:active:not(:disabled),
+.btn--primary.btn--booster-mx:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.4), inset 0 1px 0 rgba(255, 255, 250, 0.7);
 }
 
 .btn--gold {
@@ -2163,5 +2179,125 @@ h3 {
   .now-playing,
   .now-playing__eq i {
     animation: none;
+  }
+}
+
+/* ───────────── Décors du Mexique, derrière l'ouverture des boosters de la Série 2 ───────────── */
+.mx-scene .mx-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mx-flicker 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes mx-flicker {
+  0% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  45% {
+    transform: scale(0.88, 1.1) skewX(-5deg);
+  }
+  100% {
+    transform: scale(1.06, 0.9) skewX(4deg);
+    opacity: 0.85;
+  }
+}
+
+.mx-scene .mx-glow,
+.mx-scene .mx-twinkle {
+  animation: mx-glow 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes mx-glow {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mx-scene .mx-shimmer {
+  animation: mx-shimmer 3s ease-in-out infinite alternate;
+}
+
+@keyframes mx-shimmer {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+/* pétales de cempasúchil qui tombent en tournoyant */
+.mx-scene .mx-petal {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: mx-fall 12s linear infinite;
+}
+
+@keyframes mx-fall {
+  from {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(var(--drift, 10px), 95px) rotate(220deg);
+  }
+  to {
+    transform: translate(0, 190px) rotate(440deg);
+  }
+}
+
+/* fanions de papel picado qui se balancent au bout de leur ficelle */
+.mx-scene .mx-flag {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: mx-sway 3.6s ease-in-out infinite alternate;
+}
+
+@keyframes mx-sway {
+  from {
+    transform: rotate(-5deg);
+  }
+  to {
+    transform: rotate(5deg);
+  }
+}
+
+/* monarques : ailes qui battent, vol qui flâne */
+.mx-scene .mx-flap {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: mx-flap 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes mx-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.18);
+  }
+}
+
+.mx-scene .mx-fly {
+  animation: mx-fly 9s ease-in-out infinite alternate;
+}
+
+@keyframes mx-fly {
+  from {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(var(--drift, 10px), -4px);
+  }
+  to {
+    transform: translate(calc(var(--drift, 10px) * -0.4), 3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-scene * {
+    animation: none !important;
   }
 }

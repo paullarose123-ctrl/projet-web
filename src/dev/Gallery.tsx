@@ -7,6 +7,7 @@ import { RARITIES, collectionNumber, isIcon, rarityOf, rarityScore } from '../en
 import { FREE_PACK, SHOP_PACKS, sportPack } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
+import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
 
 // Page de contrôle visuel (#galerie) : un échantillon de cartes, les emblèmes des familles et tous les drapeaux.
 const SAMPLE = ['lion', 'tigre', 'elephant', 'loup', 'orque', 'requin-blanc', 'panda', 'gorille', 'aigle-royal', 'crocodile-du-nil', 'berger-allemand', 'chat', 'axolotl', 'pieuvre', 'kangourou', 'fourmi'];
@@ -34,10 +35,23 @@ export function AllCards({ serie }: { serie?: number }) {
   const cards = serie
     ? ATHLETES.filter((a) => (a.serie ?? 1) === serie).sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b)))
     : reviewOrder();
+  // après les cartes d'une série : ses versions Prime, et une Reverse par rareté qui en a
+  const variants = serie
+    ? [
+        ...cards.filter((a) => a.prime).map((a) => ({ athleteId: a.id, variant: 'prime' as const })),
+        ...(['rare', 'epique', 'legendaire'] as const).flatMap((id) => {
+          const a = cards.find((c) => !c.habitat && !isIcon(c) && rarityOf(c).id === id);
+          return a ? [{ athleteId: a.id, variant: 'reverse' as const }] : [];
+        }),
+      ]
+    : [];
   return (
     <div id="toutes" style={{ padding: 16, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
       {cards.map((a) => (
         <Card key={a.id} card={{ athleteId: a.id, variant: 'base' }} size="md" />
+      ))}
+      {variants.map((card) => (
+        <Card key={`${card.athleteId}-${card.variant}`} card={card} size="md" className="is-variant" />
       ))}
     </div>
   );
@@ -133,6 +147,16 @@ export function Gallery() {
           </figure>
         ))}
       </section>
+    </div>
+  );
+}
+
+/** Aperçu plein écran d'un décor d'ouverture du Mexique (#fonds-mexique=panteon, monarcas ou xochimilco). */
+export function MexicoBackdropPreview({ scene }: { scene: string }) {
+  const name = (MEXICO_SCENES as string[]).includes(scene) ? (scene as MexicoScene) : MEXICO_SCENES[0];
+  return (
+    <div className="opening__backdrop">
+      <MexicoBackdrop className="opening__scene" scene={name} seed="aperçu" />
     </div>
   );
 }
