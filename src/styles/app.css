@@ -755,6 +755,65 @@
   }
 }
 
+/* deux séries sorties : leurs deux boosters gratuits côte à côte, la réserve est la même */
+.hero__boosters {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.hero__booster {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 8px;
+  justify-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hero__booster:disabled {
+  cursor: default;
+}
+
+.hero__booster:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+.hero__booster .hero__tilt {
+  display: block;
+  width: 100%;
+}
+
+.hero--duo .hero__pack {
+  width: min(300px, 78vw);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero--duo .hero__actions .btn {
+  padding: 0 20px;
+}
+
+@media (min-width: 760px) {
+  .hero--duo {
+    grid-template-columns: 320px 1fr;
+  }
+  .hero--duo .hero__pack {
+    width: 320px;
+  }
+}
+
 /* vitrine : trois cartes rares en éventail, à droite du booster (grands écrans) */
 .showcase {
   display: none;
@@ -763,6 +822,12 @@
 @media (min-width: 1100px) {
   .hero {
     grid-template-columns: 220px 1fr auto;
+  }
+  .hero--duo {
+    grid-template-columns: 300px 1fr auto;
+  }
+  .hero--duo .hero__pack {
+    width: 300px;
   }
   .showcase {
     position: relative;
@@ -6194,35 +6259,6 @@
 
 .serie-goal {
   margin: -4px 0 10px;
-}
-
-.shop-serie {
-  margin-bottom: 18px;
-}
-
-.shop-serie h2,
-.shop-serie__title {
-  margin: 6px 0 4px;
-}
-
-.shop-serie h2 small {
-  margin-left: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #2fa36b;
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  vertical-align: middle;
-}
-
-.shop-serie__title {
-  font-size: 1.15rem;
-  margin-top: 4px;
-  margin-bottom: 10px;
 }
 
 .expansion__cta {

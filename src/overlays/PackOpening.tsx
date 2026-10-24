@@ -693,7 +693,7 @@ export function PackOpening() {
                 className="btn btn--primary"
                 onClick={() => {
                   sfx.whoosh();
-                  openFreePack();
+                  openFreePack(serie);
                 }}
               >
                 Ouvrir le suivant ({freePacks})

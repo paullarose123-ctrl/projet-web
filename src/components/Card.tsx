@@ -83,34 +83,51 @@ function Frame() {
   );
 }
 
-// Guirlande de papel picado des cartes de la Série 2 (Mexique), accrochée en haut de la fenêtre de la photo.
-const PAPEL_COLORS = ['#e2457a', '#f4b13d', '#2fa36b', '#fff4e0', '#e8532f', '#7b4fd6', '#3ab0d9'];
-const PAPEL_FLAGS = PAPEL_COLORS.map((color, i) => {
-  const x = 3 + i * 14.5;
-  // la ficelle pend un peu au milieu
-  const y = 1.6 + 4.2 * Math.sin(((x + 5.5) / 106) * Math.PI);
-  let d = `M${x} ${y}H${x + 11}V${y + 8.5}`;
-  for (let k = 7; k >= 0; k--) d += `L${x + (k * 11) / 8} ${y + (k % 2 ? 10.4 : 8.5)}`;
-  return { color, d: `${d}Z`, x, y, tilt: [-4, 3, -2, 4, -3, 2, -4][i] };
-});
+// Frise aztèque des cartes de la Série 2 (Mexique) : la greca escalonada des palais de Mitla, un escalier qui monte
+// et finit en crochet, répétée tout autour de la carte dans la bordure, avec un losange à degrés dans chaque coin.
+// Le cadre de ces cartes est réduit à 95 % (voir card.css) : la bordure fait alors 6 unités sur 100.
+const GRECA = (() => {
+  // un motif en 8 × 4 cases : de 0 (bord de la carte) à 4 (côté du cadre)
+  const STEP = [
+    [0, 4], [0, 3.3], [1, 3.3], [1, 2.3], [2, 2.3], [2, 1.3], [3, 1.3], [3, 0.3], [7.4, 0.3], [7.4, 3], [4.6, 3], [4.6, 1.6],
+    [5.9, 1.6], [5.9, 2.3], [6.6, 2.3], [6.6, 1], [3.9, 1], [3.9, 2], [2.9, 2], [2.9, 3], [1.9, 3], [1.9, 4],
+  ];
+  const HEIGHT = 3.6;
+  // chaque côté, dans le sens des aiguilles d'une montre : départ, direction, vers l'intérieur, épaisseur de la bordure
+  const sides = [
+    { from: [6.4, 0], along: [1, 0], inward: [0, 1], length: 87.2, band: 5.97 },
+    { from: [100, 6.4], along: [0, 1], inward: [-1, 0], length: 127.2, band: 5.92 },
+    { from: [93.6, 140], along: [-1, 0], inward: [0, -1], length: 87.2, band: 6.35 },
+    { from: [0, 133.6], along: [0, -1], inward: [1, 0], length: 127.2, band: 5.92 },
+  ];
+  const pt = (x: number, y: number) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+  let d = '';
+  for (const side of sides) {
+    const count = Math.round(side.length / 6.7);
+    const cell = side.length / count / 8;
+    const outer = (side.band - HEIGHT) / 2;
+    for (let i = 0; i < count; i++) {
+      d += STEP.map(([a, b], k) => {
+        const u = i * 8 * cell + a * cell;
+        const v = outer + (b * HEIGHT) / 4;
+        return `${k ? 'L' : 'M'}${pt(side.from[0] + u * side.along[0] + v * side.inward[0], side.from[1] + u * side.along[1] + v * side.inward[1])}`;
+      }).join('');
+      d += 'Z';
+    }
+  }
+  // les coins : un losange à degrés, percé d'un carré
+  for (const [x, y] of [[3.3, 3.3], [96.7, 3.3], [96.7, 136.6], [3.3, 136.6]]) {
+    const s = 0.5;
+    d += `M${pt(x - s / 2, y - 3 * s)}h${s}v${s}h${s}v${s}h${s}v${s * 2}h${-s}v${s}h${-s}v${s}h${-s * 2}v${-s}h${-s}v${-s}h${-s}v${-s * 2}h${s}v${-s}h${s}v${-s}Z`;
+    d += `M${pt(x - s / 2, y - s / 2)}v${s}h${s}v${-s}Z`;
+  }
+  return d;
+})();
 
-function Papel() {
+function Greca() {
   return (
-    <svg className="card__papel" viewBox="0 0 106 17" aria-hidden="true">
-      <path className="card__papel-string" d="M0 1.6 Q53 10 106 1.6" />
-      {PAPEL_FLAGS.map((flag) => (
-        <g key={flag.color} transform={`rotate(${flag.tilt} ${flag.x + 5.5} ${flag.y})`}>
-          <path d={flag.d} fill={flag.color} />
-          {/* motif découpé : une rosace et quatre petits trous */}
-          <g fill="rgba(20, 10, 10, 0.32)">
-            <circle cx={flag.x + 5.5} cy={flag.y + 4.3} r={1.7} />
-            <circle cx={flag.x + 2.3} cy={flag.y + 2.2} r={0.6} />
-            <circle cx={flag.x + 8.7} cy={flag.y + 2.2} r={0.6} />
-            <circle cx={flag.x + 2.3} cy={flag.y + 6.6} r={0.6} />
-            <circle cx={flag.x + 8.7} cy={flag.y + 6.6} r={0.6} />
-          </g>
-        </g>
-      ))}
+    <svg className="card__greca" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
+      <path d={GRECA} fillRule="evenodd" />
     </svg>
   );
 }
@@ -184,7 +201,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     prime ? 'is-prime' : '',
     reverse ? 'is-reverse' : '',
     habitat ? 'is-habitat' : '',
-    // les cartes du Mexique : papel picado et pyramide sur l'horizon
+    // les cartes du Mexique : bordure pastel et frise aztèque, pyramide sur l'horizon
     serieOf(athlete) === 2 ? 'serie-2' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',
@@ -225,67 +242,70 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     >
       <div className="card__body">
         <div className="card__bg" />
+        {serieOf(athlete) === 2 && <Greca />}
 
-        <div className="card__window">
-          <div className="card__scene" />
-          <div className="card__player">
-            {habitat && !showPhoto ? (
-              // en attendant sa photo, un Habitat montre son paysage peint
-              <PackScene scene={habitat.scene} seed={athlete.id} className="card__landscape" shade={false} />
-            ) : showPhoto ? (
-              <img className="card__photo" src={photo.src} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setPhotoFailed(true)} />
-            ) : (
-              <Bust color={sport.color} sport={athlete.sport} className="card__bust" />
-            )}
+        {/* le cadre et tout ce qu'il porte (réduit sur les cartes du Mexique, pour élargir la bordure) */}
+        <div className="card__inner">
+          <div className="card__window">
+            <div className="card__scene" />
+            <div className="card__player">
+              {habitat && !showPhoto ? (
+                // en attendant sa photo, un Habitat montre son paysage peint
+                <PackScene scene={habitat.scene} seed={athlete.id} className="card__landscape" shade={false} />
+              ) : showPhoto ? (
+                <img className="card__photo" src={photo.src} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setPhotoFailed(true)} />
+              ) : (
+                <Bust color={sport.color} sport={athlete.sport} className="card__bust" />
+              )}
+            </div>
           </div>
-        </div>
 
-        <Frame />
-        {serieOf(athlete) === 2 && !tiny && <Papel />}
-        <div className="card__hills" aria-hidden="true" />
+          <Frame />
+          <div className="card__hills" aria-hidden="true" />
 
-        <div className="card__code metal-text">{athleteCode(athlete)}</div>
+          <div className="card__code metal-text">{athleteCode(athlete)}</div>
 
-        <div className="card__badge">
-          <span className="card__tier" style={tier.length > 7 ? { fontSize: `${(0.86 * 6.6) / tier.length}em` } : undefined}>
-            <i>{tier}</i>
-          </span>
-          <span className="card__rating" title={`Carte n° ${number}`}>
-            <b className="metal-text">{number}</b>
-          </span>
-        </div>
-
-        {/* en duel, le drapeau donnerait la réponse aux questions de continent */}
-        {!tiny && !hideFacts && <Flag code={athlete.country} className="card__flag" />}
-
-        {!tiny && (
-          <div className="card__sport" aria-hidden="true" style={{ fontSize: `${sport.name.length > 12 ? 0.62 : 0.8}em` }}>
-            {sport.name}
+          <div className="card__badge">
+            <span className="card__tier" style={tier.length > 7 ? { fontSize: `${(0.86 * 6.6) / tier.length}em` } : undefined}>
+              <i>{tier}</i>
+            </span>
+            <span className="card__rating" title={`Carte n° ${number}`}>
+              <b className="metal-text">{number}</b>
+            </span>
           </div>
-        )}
 
-        <div className="card__medal" title={sport.name}>
-          <span>
-            <SportIcon sport={athlete.sport} />
-          </span>
-        </div>
+          {/* en duel, le drapeau donnerait la réponse aux questions de continent */}
+          {!tiny && !hideFacts && <Flag code={athlete.country} className="card__flag" />}
 
-        {!tiny && !hideFacts && habitat && <HabitatFacts especes={habitat.especes.length} />}
-        {!tiny && !hideFacts && !habitat && (mesures || population) && <Facts mesures={mesures} population={population} compact={compact} />}
+          {!tiny && (
+            <div className="card__sport" aria-hidden="true" style={{ fontSize: `${sport.name.length > 12 ? 0.62 : 0.8}em` }}>
+              {sport.name}
+            </div>
+          )}
 
-        <div className="card__banner">
-          <span className="card__name metal-text" style={{ fontSize: `${nameSize(fullName) * (compact ? 1.08 : 1)}em` }}>
-            {fullName}
-          </span>
-        </div>
-
-        {!tiny && (
-          <div className="card__subtitle">
-            <span>{subtitle}</span>
+          <div className="card__medal" title={sport.name}>
+            <span>
+              <SportIcon sport={athlete.sport} />
+            </span>
           </div>
-        )}
 
-        {!compact && athlete.latin && <div className="card__latin">{athlete.latin}</div>}
+          {!tiny && !hideFacts && habitat && <HabitatFacts especes={habitat.especes.length} />}
+          {!tiny && !hideFacts && !habitat && (mesures || population) && <Facts mesures={mesures} population={population} compact={compact} />}
+
+          <div className="card__banner">
+            <span className="card__name metal-text" style={{ fontSize: `${nameSize(fullName) * (compact ? 1.08 : 1)}em` }}>
+              {fullName}
+            </span>
+          </div>
+
+          {!tiny && (
+            <div className="card__subtitle">
+              <span>{subtitle}</span>
+            </div>
+          )}
+
+          {!compact && athlete.latin && <div className="card__latin">{athlete.latin}</div>}
+        </div>
 
         <div className="card__holo" aria-hidden="true" />
         <div className="card__shine" aria-hidden="true" />

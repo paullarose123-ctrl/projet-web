@@ -121,6 +121,31 @@ h3 {
   box-shadow: 0 1px 0 #0f3d24, 0 4px 10px rgba(20, 45, 22, 0.45), inset 0 1px 0 rgba(255, 250, 220, 0.4);
 }
 
+/* bouton du booster Mexique : le rouge de son sachet */
+.btn--primary.btn--mexique {
+  background: linear-gradient(180deg, #df5a6c 0%, #c4213a 55%, #9c1830 100%);
+  border-color: rgba(255, 200, 190, 0.4);
+  text-shadow: 0 1px 0 rgba(70, 10, 20, 0.55);
+  box-shadow:
+    0 4px 0 #5e0f1d,
+    0 12px 24px rgba(70, 10, 20, 0.5),
+    inset 0 1px 0 rgba(255, 236, 220, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.btn--primary.btn--mexique:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e76a7b 0%, #cf2b44 55%, #a51c34 100%);
+  box-shadow:
+    0 6px 0 #5e0f1d,
+    0 16px 30px rgba(70, 10, 20, 0.55),
+    inset 0 1px 0 rgba(255, 236, 220, 0.6),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.btn--primary.btn--mexique:active:not(:disabled) {
+  box-shadow: 0 1px 0 #5e0f1d, 0 4px 10px rgba(70, 10, 20, 0.45), inset 0 1px 0 rgba(255, 236, 220, 0.4);
+}
+
 .btn--gold {
   border-color: rgba(255, 240, 200, 0.6);
   text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);

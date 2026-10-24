@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
-import { FREE_PACK, FREE_PACK_MEXIQUE, MEXIQUE_PACKS, SHOP_PACKS, freePack, openPack, sportPack } from '../packs';
+import { FREE_PACK, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, sportPack, type PackDef } from '../packs';
 import { cardsOfSerie, releasedAthletes, serieOf, setEarlyAccessForTesting } from '../series';
 import { createMarket } from '../market';
 import { rarityOf } from '../cards';
@@ -14,6 +14,15 @@ describe('Série 2 · Mexique', () => {
   // comme sur le site public : la série sort à sa date
   beforeAll(() => setEarlyAccessForTesting(false));
   afterAll(() => setEarlyAccessForTesting(true));
+  afterEach(() => vi.useRealTimers());
+
+  /** les séries des cartes tirées de ce booster */
+  const seriesFrom = (pack: PackDef, rng: () => number, times = 400) => {
+    const out = new Set<number>();
+    for (let i = 0; i < times; i++) for (const card of openPack(pack, rng)) out.add(serieOf(ATHLETES_BY_ID[card.athleteId]));
+    return [...out].sort();
+  };
+  const PAID = [...SHOP_PACKS, sportPack('felins', SPORTS.felins.name)];
 
   it('compte une soixantaine de cartes : espèces, Icônes et Habitats', () => {
     const cards = cardsOfSerie(2);
@@ -37,19 +46,27 @@ describe('Série 2 · Mexique', () => {
     }
   });
 
-  it('ses cartes ne sortent que de ses boosters, et les boosters de la Série 1 n’en donnent jamais', () => {
+  it('avant sa sortie, aucun booster ne donne ses cartes', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(OCT_31);
     const rng = mulberry32(7);
-    for (let i = 0; i < 300; i++) {
-      for (const pack of MEXIQUE_PACKS) for (const card of openPack(pack, rng)) expect(serieOf(ATHLETES_BY_ID[card.athleteId])).toBe(2);
-      for (const pack of [FREE_PACK, ...SHOP_PACKS, sportPack('felins', SPORTS.felins.name)]) {
-        for (const card of openPack(pack, rng)) expect(serieOf(ATHLETES_BY_ID[card.athleteId])).toBe(1);
-      }
-    }
+    for (const pack of [FREE_PACK, ...PAID]) expect(seriesFrom(pack, rng), pack.id).toEqual([1]);
   });
 
-  it('sort le 1er novembre : booster gratuit, marché et cartes disponibles changent à minuit', () => {
-    expect(freePack(OCT_31)).toBe(FREE_PACK);
-    expect(freePack(NOV_1)).toBe(FREE_PACK_MEXIQUE);
+  it('ensuite, chaque booster gratuit garde sa série et les packs payants mêlent les deux', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOV_1);
+    const rng = mulberry32(11);
+    expect(seriesFrom(FREE_PACK, rng)).toEqual([1]);
+    expect(seriesFrom(FREE_PACK_MEXIQUE, rng)).toEqual([2]);
+    for (const pack of PAID) expect(seriesFrom(pack, rng), pack.id).toEqual([1, 2]);
+  });
+
+  it('sort le 1er novembre : boosters gratuits, marché et cartes disponibles changent à minuit', () => {
+    expect(freePackChoices(OCT_31)).toEqual([FREE_PACK]);
+    expect(freePackChoices(NOV_1)).toEqual([FREE_PACK, FREE_PACK_MEXIQUE]);
+    expect(freePackOf(2, OCT_31)).toBe(FREE_PACK);
+    expect(freePackOf(2, NOV_1)).toBe(FREE_PACK_MEXIQUE);
     expect(releasedAthletes(OCT_31).some((a) => serieOf(a) === 2)).toBe(false);
     expect(releasedAthletes(NOV_1).filter((a) => serieOf(a) === 2).length).toBe(60);
     const before = createMarket(OCT_31, mulberry32(3));

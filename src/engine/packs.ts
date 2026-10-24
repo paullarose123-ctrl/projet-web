@@ -18,7 +18,7 @@ import {
   rarityScore,
 } from './cards';
 import { weightedPick, weightedPickCached, type Rng } from './random';
-import { currentSerie, serieOf } from './series';
+import { isCardReleased, isReleased, releasedSeries, serieOf } from './series';
 
 /** Chances des cinq paliers d'espèces vivantes (les Icônes ont leur propre tirage). */
 export type Odds = Record<BaseRarityId, number>;
@@ -34,17 +34,24 @@ export interface PackDef {
   /** dernière carte : rareté minimale garantie, ou version Prime garantie (un individu célèbre) */
   guaranteed?: { min: BaseRarityId; odds?: Partial<Odds>; prime?: boolean };
   filter?: (athlete: Athlete) => boolean;
-  /** série dont les cartes sortent de ce booster (1 par défaut : les Animaux du monde) */
+  /**
+   * série du booster gratuit (1 : Animaux du monde, 2 : Mexique) ; sans série, le pack mélange les cartes de toutes
+   * les séries déjà sorties (les packs payants de la boutique)
+   */
   serie?: number;
   /** couleur dominante de l'emballage (mexique : le sachet de la Série 2) */
   tone: 'bronze' | 'silver' | 'gold' | 'violet' | 'black' | 'icon' | 'prime' | 'sport' | 'mexique';
   sport?: SportId;
 }
 
-/** La carte peut-elle sortir de ce booster ? (sa série, puis le filtre du pack) */
+/** La carte peut-elle sortir de ce booster ? (sa série, ou toutes les séries sorties, puis le filtre du pack) */
 export function inPack(pack: PackDef, athlete: Athlete): boolean {
-  return serieOf(athlete) === (pack.serie ?? 1) && (!pack.filter || pack.filter(athlete));
+  const serieOk = pack.serie ? serieOf(athlete) === pack.serie : isCardReleased(athlete);
+  return serieOk && (!pack.filter || pack.filter(athlete));
 }
+
+/** Clé des caches de tirage : le contenu d'un pack mélangé change le jour où une série sort. */
+const cacheKey = (pack: PackDef) => `${pack.id}:${pack.serie ?? releasedSeries().length}`;
 
 export const FREE_ODDS: Odds = { commune: 60, 'peu-commune': 26, rare: 10, epique: 3.2, legendaire: 0.8 };
 
@@ -56,6 +63,7 @@ export const FREE_PACK: PackDef = {
   size: 5,
   odds: FREE_ODDS,
   primeChance: PRIME_CHANCE,
+  serie: 1,
   tone: 'bronze',
 };
 
@@ -139,36 +147,14 @@ export const FREE_PACK_MEXIQUE: PackDef = {
   tone: 'mexique',
 };
 
-/** Les packs de la Série 2 en boutique. */
-export const MEXIQUE_PACKS: PackDef[] = [
-  {
-    id: 'mexique',
-    name: 'Booster Mexique',
-    tagline: '5 cartes de la Série 2, mêmes chances que le booster gratuit',
-    price: 600,
-    size: 5,
-    odds: FREE_ODDS,
-    primeChance: PRIME_CHANCE,
-    serie: 2,
-    tone: 'mexique',
-  },
-  {
-    id: 'mexique-pro',
-    name: 'Pack Mexique Pro',
-    tagline: '5 cartes de la Série 2 dont 1 Rare ou mieux garantie',
-    price: 2_500,
-    size: 5,
-    odds: { commune: 40, 'peu-commune': 32, rare: 19, epique: 7, legendaire: 2 },
-    primeChance: PRIME_CHANCE,
-    guaranteed: { min: 'rare', odds: { rare: 80, epique: 16, legendaire: 4 } },
-    serie: 2,
-    tone: 'mexique',
-  },
-];
+/** Les boosters gratuits proposés sur l'accueil : celui de chaque série déjà sortie (une seule réserve pour les deux). */
+export function freePackChoices(now: number = Date.now()): PackDef[] {
+  return isReleased(2, now) ? [FREE_PACK, FREE_PACK_MEXIQUE] : [FREE_PACK];
+}
 
-/** Le booster gratuit du moment : celui de la série la plus récente. */
-export function freePack(now: number = Date.now()): PackDef {
-  return currentSerie(now).number === 2 ? FREE_PACK_MEXIQUE : FREE_PACK;
+/** Le booster gratuit d'une série (celui de la Série 1 si elle n'est pas encore sortie). */
+export function freePackOf(serie: number, now: number = Date.now()): PackDef {
+  return serie === 2 && isReleased(2, now) ? FREE_PACK_MEXIQUE : FREE_PACK;
 }
 
 /** Pack d'une seule famille : 3 cartes, jamais deux fois la même espèce (certaines familles sont petites). */
@@ -197,7 +183,7 @@ export function isIconPack(pack: PackDef): boolean {
 }
 
 function poolFor(pack: PackDef): Pool {
-  const cached = poolCache.get(pack.id);
+  const cached = poolCache.get(cacheKey(pack));
   if (cached) return cached;
   const pool: Pool = { commune: [], 'peu-commune': [], rare: [], epique: [], legendaire: [] };
   for (const athlete of ATHLETES) {
@@ -205,7 +191,7 @@ function poolFor(pack: PackDef): Pool {
     if (isHabitat(athlete) || isIcon(athlete)) continue;
     if (inPack(pack, athlete)) pool[rarityOf(athlete).id as BaseRarityId].push(athlete);
   }
-  poolCache.set(pack.id, pool);
+  poolCache.set(cacheKey(pack), pool);
   return pool;
 }
 
@@ -316,10 +302,10 @@ const primePools = new Map<string, Athlete[]>();
 
 /** Espèces vedettes qui peuvent sortir en Prime dans ce booster. */
 export function primePool(pack: PackDef): Athlete[] {
-  let pool = primePools.get(pack.id);
+  let pool = primePools.get(cacheKey(pack));
   if (!pool) {
     pool = ATHLETES.filter((athlete) => canBePrime(athlete) && inPack(pack, athlete));
-    primePools.set(pack.id, pool);
+    primePools.set(cacheKey(pack), pool);
   }
   return pool;
 }
@@ -385,5 +371,5 @@ export function sortByRarity(cards: CardFace[]): CardFace[] {
 }
 
 export function allPacks(): PackDef[] {
-  return [FREE_PACK, ...SHOP_PACKS, FREE_PACK_MEXIQUE, ...MEXIQUE_PACKS];
+  return [FREE_PACK, FREE_PACK_MEXIQUE, ...SHOP_PACKS];
 }

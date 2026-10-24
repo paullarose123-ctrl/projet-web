@@ -154,7 +154,7 @@
 
 /* veines du marbre et voile nacré, sur le cadre seulement : la fenêtre de la photo est découpée du masque
    (même rectangle que .card__window : 9,4 % / 3,3 % / 5,8 % / 17,1 %) */
-.card.is-icon:not(.is-prime, .is-reverse, .is-habitat) .card__body::after {
+.card.is-icon:not(.is-prime, .is-reverse, .is-habitat) .card__inner::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -202,7 +202,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card.is-icon .card__body::after,
+  .card.is-icon .card__inner::after,
   .card.is-icon .card__holo {
     animation: none;
   }
@@ -346,6 +346,7 @@
 }
 
 .card__bg,
+.card__inner,
 .card__frame,
 .card__holo,
 .card__shine {
@@ -1196,23 +1197,66 @@
   inset: 0;
 }
 
-/* ─── Série 2 · Mexique : papel picado en haut de la photo, pyramide et cactus sur l'horizon ─── */
-.card__papel {
-  position: absolute;
-  left: 27%;
-  width: 53%;
-  top: 3.1%;
-  height: auto;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 2;
-  filter: drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.45));
+/* ─── Série 2 · Mexique : bordure pastel ornée d'une frise aztèque, pyramide et cactus sur l'horizon ─── */
+.card.serie-2 {
+  /* la frise est imprimée de la couleur du cadre ; plus claire sur les cadres clairs */
+  --greca: color-mix(in srgb, var(--panel) 72%, transparent);
 }
 
-.card__papel-string {
-  fill: none;
-  stroke: rgba(255, 248, 236, 0.75);
-  stroke-width: 0.5;
+.card.serie-2:is(.is-reverse, .is-habitat) {
+  --greca: color-mix(in srgb, var(--trim) 85%, transparent);
+}
+
+.card.serie-2.is-icon:not(.is-prime, .is-reverse) {
+  --greca: rgba(122, 86, 34, 0.7);
+}
+
+/* le cadre est un peu réduit : la bordure s'élargit pour porter la frise */
+.card.serie-2 .card__inner {
+  transform: scale(0.95);
+}
+
+.card__greca {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: var(--greca);
+}
+
+/* les couleurs de chaque rareté, adoucies en pastel */
+.card.serie-2.r-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(55% 22% at 82% 6%, rgba(255, 251, 236, 0.9), transparent 70%),
+    linear-gradient(172deg, #a6dcd6 0%, #d3eccf 35%, #ffeac4 70%, #dce8c4 100%);
+}
+
+.card.serie-2.r-peu-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(50% 20% at 20% 6%, rgba(255, 255, 255, 0.9), transparent 70%),
+    linear-gradient(172deg, #9ec8ee 0%, #bfdcf6 35%, #e7f3ff 72%, #d2e0f3 100%);
+}
+
+.card.serie-2.r-rare:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(48% 24% at 50% 100%, rgba(255, 246, 214, 0.9), transparent 70%),
+    linear-gradient(172deg, #f3a1a0 0%, #f8b99a 35%, #ffd5a3 68%, #ffe3a8 100%);
+}
+
+.card.serie-2.r-epique:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    linear-gradient(160deg, transparent 20%, rgba(160, 242, 208, 0.65) 38%, transparent 55%),
+    linear-gradient(200deg, transparent 40%, rgba(232, 190, 255, 0.65) 60%, transparent 80%),
+    linear-gradient(172deg, #a497d6 0%, #b6a7e4 45%, #c9b9ee 80%, #d9cbf5 100%);
+  --plate-ink: #241a52;
+}
+
+.card.serie-2.r-legendaire:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 242, 196, 0.95), transparent 70%),
+    conic-gradient(from 210deg at 35% 30%, rgba(255, 120, 190, 0.14), rgba(255, 230, 120, 0.12), rgba(120, 255, 200, 0.1), rgba(120, 180, 255, 0.14), rgba(210, 120, 255, 0.12), rgba(255, 120, 190, 0.14)),
+    linear-gradient(172deg, #b7a0dc 0%, #e0a3c6 32%, #f8b3a4 62%, #ffd09e 85%, #ffe3a6 100%);
 }
 
 .card.serie-2 .card__hills::before {

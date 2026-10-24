@@ -4,14 +4,14 @@ import { useGame, OBJECTIVES, MAX_FREE_PACKS, FREE_PACK_INTERVAL } from '../stor
 import { useUi } from '../store/ui';
 import { useNow, formatDuration, timeAgo } from '../hooks/useNow';
 import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
-import { freePack } from '../engine/packs';
+import { freePackChoices } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
 import { HERO_SCENE } from '../art/scenes';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
-import { cardsOfSerie, currentSerie, nextSerie, releasedAthletes, releasedSeries, type SerieDef } from '../engine/series';
+import { cardsOfSerie, currentSerie, nextSerie, releasedAthletes, releasedSeries, serieDef, type SerieDef } from '../engine/series';
 import { Balles } from '../components/Balles';
 import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
@@ -97,6 +97,8 @@ function serieContents(serie: SerieDef): string {
 function ExpansionBanner() {
   const now = useNow(1000);
   const setTab = useUi((s) => s.setTab);
+  const freePacks = useGame((s) => s.freePacks);
+  const openFreePack = useGame((s) => s.openFreePack);
   const current = currentSerie(now);
   const next = nextSerie(now);
   const released = releasedSeries(now);
@@ -115,12 +117,20 @@ function ExpansionBanner() {
               La Série {current.number} · {current.name} est arrivée
             </h2>
             <p className="expansion__sub">
-              {serieContents(current)} à collectionner, avec leur booster gratuit et leurs packs en boutique. La{' '}
-              <b>Série 1 · Animaux du monde</b> reste disponible en boutique, et chaque série a son album.
+              {serieContents(current)} à collectionner : leur booster gratuit attend à côté de celui de la{' '}
+              <b>Série 1 · Animaux du monde</b>, et leurs cartes sortent aussi de tous les packs de la boutique. Chaque série a son album.
             </p>
             <div className="expansion__cta">
-              <button type="button" className="btn btn--primary" onClick={() => setTab('boutique')}>
-                Voir les packs {current.name}
+              <button
+                type="button"
+                className="btn btn--primary btn--mexique"
+                disabled={freePacks <= 0}
+                onClick={() => {
+                  sfx.whoosh();
+                  openFreePack(current.number);
+                }}
+              >
+                Ouvrir un booster {current.name}
               </button>
               <button type="button" className="btn btn--ghost" onClick={() => setTab('collection')}>
                 Album de la Série {current.number}
@@ -204,20 +214,40 @@ function FreePackHero() {
   const now = useNow(1000);
   const full = freePacks >= MAX_FREE_PACKS;
   const progress = full ? 1 : 1 - Math.max(0, nextFreePackAt - now) / FREE_PACK_INTERVAL;
-  // le booster gratuit de la série la plus récente
-  const pack = freePack(now);
-  const serie = currentSerie(now);
+  // un booster par série sortie, côte à côte ; la réserve est la même pour les deux
+  const choices = freePackChoices(now);
+  const duo = choices.length > 1;
+  const open = (serie: number) => {
+    sfx.whoosh();
+    openFreePack(serie);
+  };
 
   return (
-    <section className="hero" aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
+    <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
       <Landscape className="hero__art" scene={HERO_SCENE} seed="accueil" />
       <div className="hero__pack">
-        <div className="hero__tilt">
-          <PackArt tone={pack.tone} name={pack.name} title={serie.name} size={pack.size} className={freePacks > 0 ? 'is-ready' : ''} />
+        <div className="hero__boosters">
+          {choices.map((pack) => {
+            const serie = serieDef(pack.serie ?? 1);
+            return (
+              <button
+                key={pack.id}
+                type="button"
+                className="hero__booster"
+                disabled={freePacks <= 0}
+                aria-label={`Ouvrir un booster Série ${serie.number} · ${serie.name}`}
+                onClick={() => open(serie.number)}
+              >
+                <span className="hero__tilt">
+                  <PackArt tone={pack.tone} name={pack.name} title={serie.name} size={pack.size} className={freePacks > 0 ? 'is-ready' : ''} />
+                </span>
+              </button>
+            );
+          })}
         </div>
         {/* les boosters en réserve : des sachets empilés derrière, et une pastille par booster dessous */}
-        {freePacks > 1 && <span className="hero__ghost hero__ghost--1" aria-hidden="true" />}
-        {freePacks > 2 && <span className="hero__ghost hero__ghost--2" aria-hidden="true" />}
+        {!duo && freePacks > 1 && <span className="hero__ghost hero__ghost--1" aria-hidden="true" />}
+        {!duo && freePacks > 2 && <span className="hero__ghost hero__ghost--2" aria-hidden="true" />}
         <div className="hero__pips" role="img" aria-label={`${freePacks} booster${freePacks > 1 ? 's' : ''} sur ${MAX_FREE_PACKS}`}>
           {Array.from({ length: MAX_FREE_PACKS }, (_, i) => (
             <i
@@ -229,9 +259,7 @@ function FreePackHero() {
         </div>
       </div>
       <div className="hero__text">
-        <p className="eyebrow">
-          Série {serie.number} · {serie.name} · booster gratuit
-        </p>
+        <p className="eyebrow">{duo ? 'Boosters gratuits · deux séries' : `Série 1 · ${serieDef(1).name} · booster gratuit`}</p>
         <h1 id="hero-title">
           {freePacks > 0 ? (
             <>
@@ -242,7 +270,8 @@ function FreePackHero() {
           )}
         </h1>
         <p className="hero__sub">
-          Un nouveau booster toutes les {FREE_PACK_INTERVAL / 60_000} minutes, jusqu’à {MAX_FREE_PACKS} en réserve. Plus une espèce est célèbre, plus sa carte est rare.
+          Un nouveau booster toutes les {FREE_PACK_INTERVAL / 60_000} minutes, jusqu’à {MAX_FREE_PACKS} en réserve
+          {duo ? ', à ouvrir dans la série de ton choix' : ''}. Plus une espèce est célèbre, plus sa carte est rare.
         </p>
         <div className="hero__timer" aria-label={full ? 'Réserve pleine' : `Prochain booster dans ${formatDuration(nextFreePackAt - now)}`}>
           <div className="meter">
@@ -250,17 +279,22 @@ function FreePackHero() {
           </div>
           <span>{full ? 'Réserve pleine : ouvre un booster pour relancer le compteur' : `+1 dans ${formatDuration(nextFreePackAt - now)}`}</span>
         </div>
-        <button
-          type="button"
-          className="btn btn--primary btn--xl"
-          disabled={freePacks <= 0}
-          onClick={() => {
-            sfx.whoosh();
-            openFreePack();
-          }}
-        >
-          Ouvrir un booster
-        </button>
+        <div className="hero__actions">
+          {choices.map((pack) => {
+            const serie = serieDef(pack.serie ?? 1);
+            return (
+              <button
+                key={pack.id}
+                type="button"
+                className={`btn btn--primary ${duo ? 'btn--lg' : 'btn--xl'}${pack.serie === 2 ? ' btn--mexique' : ''}`}
+                disabled={freePacks <= 0}
+                onClick={() => open(serie.number)}
+              >
+                {duo ? `Ouvrir · ${serie.number === 1 ? 'Série 1' : serie.name}` : 'Ouvrir un booster'}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <Showcase />
     </section>

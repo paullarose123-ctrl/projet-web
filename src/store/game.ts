@@ -5,7 +5,7 @@ import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
 import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
-import { FREE_PACK, FREE_PACK_MEXIQUE, MEXIQUE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, freePack, openPack, sportPack, type PackDef } from '../engine/packs';
+import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
 import { serieOf } from '../engine/series';
 import {
   MAX_MY_LISTINGS,
@@ -175,7 +175,8 @@ export interface GameState {
   toasts: Toast[];
 
   tick: (now?: number) => void;
-  openFreePack: () => boolean;
+  /** ouvre un booster gratuit de la série choisie (la Série 1 par défaut) */
+  openFreePack: (serie?: number) => boolean;
   buyPack: (packId: string) => boolean;
   closeOpening: () => void;
   quickSell: (uids: string[]) => number;
@@ -327,8 +328,6 @@ export const OBJECTIVES: Objective[] = [
 export function packById(id: string): PackDef | undefined {
   if (id === FREE_PACK.id) return FREE_PACK;
   if (id === FREE_PACK_MEXIQUE.id) return FREE_PACK_MEXIQUE;
-  const mexique = MEXIQUE_PACKS.find((pack) => pack.id === id);
-  if (mexique) return mexique;
   if (id.startsWith('sport-')) {
     const sport = SPORTS[id.slice(6) as keyof typeof SPORTS];
     return sport ? sportPack(sport.id, sport.name) : undefined;
@@ -472,11 +471,11 @@ export const useGame = create<GameState>()(
           applyMarketEvents(events);
         },
 
-        openFreePack: () => {
+        openFreePack: (serie = 1) => {
           const state = get();
           if (state.freePacks <= 0) return false;
-          // le booster gratuit est toujours celui de la série la plus récente
-          const pack = freePack();
+          // une seule réserve de boosters gratuits, à ouvrir dans la série de son choix
+          const pack = freePackOf(serie);
           const cards = drawPack(pack);
           set({ freePacks: state.freePacks - 1, nextFreePackAt: state.freePacks >= MAX_FREE_PACKS ? Date.now() + FREE_PACK_INTERVAL : state.nextFreePackAt });
           addCards(cards, pack);

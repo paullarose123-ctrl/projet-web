@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../store/game';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { RARITIES, RARITY_ORDER } from '../engine/cards';
-import { MEXIQUE_PACKS, SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, sportPack, type PackDef } from '../engine/packs';
+import { SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, sportPack, type PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { PackArt } from '../components/PackArt';
 import { Balles } from '../components/Balles';
@@ -114,7 +114,7 @@ function PackTile({ pack }: { pack: PackDef }) {
 export function ShopScreen() {
   const [sport, setSport] = useState<SportId>('felins');
   const balles = useGame((s) => s.balles);
-  // les packs de la Série 2 apparaissent le jour de sa sortie
+  // dès sa sortie, les cartes de la Série 2 se mêlent à celles de la Série 1 dans tous les packs
   const now = useNow(60_000);
   const mexique = isReleased(2, now);
   return (
@@ -126,23 +126,10 @@ export function ShopScreen() {
           <h1>Packs</h1>
           <p className="muted">
             Tu as <Balles value={balles} />. Gagne des crédits en vendant sur le marché, en jouant des duels de records et en remplissant les objectifs.
+            {mexique && ' Les packs mêlent les cartes de la Série 1 et de la Série 2 · Mexique.'}
           </p>
         </div>
       </header>
-      {mexique && (
-        <section className="shop-serie shop-serie--mexique" aria-labelledby="shop-mexique">
-          <h2 id="shop-mexique">
-            Série 2 · Mexique <small>nouvelle série</small>
-          </h2>
-          <p className="muted small">Les animaux, les Habitats et les Icônes du Mexique, avec leurs versions Prime : un album à part, à compléter.</p>
-          <div className="pack-grid">
-            {MEXIQUE_PACKS.map((pack) => (
-              <PackTile key={pack.id} pack={pack} />
-            ))}
-          </div>
-        </section>
-      )}
-      {mexique && <h2 className="shop-serie__title">Série 1 · Animaux du monde</h2>}
       <div className="pack-grid">
         {SHOP_PACKS.map((pack) => (
           <PackTile key={pack.id} pack={pack} />
