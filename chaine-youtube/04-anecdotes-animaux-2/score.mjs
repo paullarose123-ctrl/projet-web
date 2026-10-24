@@ -513,16 +513,16 @@ const T_LOGO = at('logo');                               // seul événement obl
 const rise = (u, k = 1.6) => Math.pow(clamp(u), k);
 
 function musIntro() {                                    // INTRO : curieuse, cinématographique (« comme dans un film ») : cordes pincées et verre, une petite montée ; ré dorien
-  rnd = mkRnd(101); B = BUS.music; const [, s1] = SEG.intro, F = lastW('i1'), w = (x, k) => wt('i1', x, k), tTell = w('tellement'), tRise = F.t0 - 0.2;
+  rnd = mkRnd(101); B = BUS.music; const [, s1] = SEG.intro, F = lastW('i1'), w = (x, k) => wt('i1', x, k), tTell = w('tellement'), tRise = F.t0 - 0.3;
   pad(0, s1 + 0.2, ['D2', 'A2', 'C3', 'F3', 'A3'], { gain: 0.04, att: 1.6, rel: 1.3, bright: 0.12, trem: 0.1 });
   glass(0.12, 'A5', { gain: 0.05, pan: -0.3 }); glass(w('trois'), 'D6', { gain: 0.045, pan: 0.3 }); glass(w('animaux'), 'F6', { gain: 0.04, pan: -0.15 });
   pizz(0.3, 'D3', { gain: 0.1, t60: 0.8 }); pizz(w('possèdent'), 'A2', { gain: 0.1, t60: 0.8 });
   { const fig = ['D4', null, 'F4', 'A4', null, 'G4', 'E4', null, 'F4', 'A4', 'C5', null], g = grid(w('Voici') + 0.3, tTell - 0.05, 0.36);        // figure curieuse, avec des silences
     for (let k = 0; k < g.n; k++) if (fig[k % fig.length]) pizz(g.t(k), fig[k % fig.length], { gain: 0.05 + 0.012 * k / g.n, pan: 0.45 * Math.sin(k * 1.9), t60: 0.35 }); }
   { const up = ['D5', 'F5', 'A5', 'C6', 'D6', 'F6', 'A6', 'C7'];                                        // la petite montée, de « tellement » à « d'un » : harpe puis verre
-    up.forEach((n, k) => { const t = tTell + (tRise - tTell) * k / (up.length - 1), g = 0.032 + 0.028 * k / (up.length - 1); if (k < 4) harp(t, n, { gain: g * 1.1, pan: -0.4 + 0.2 * k, t60: 1.6 }); else glass(t, n, { gain: g, pan: -0.5 + 0.15 * k, tau: 2.2 }); });
-    tone(tTell, tRise - tTell + 0.1, { f0: 220, f1: 1760, curve: 1.8, gain: 0.014, att: (tRise - tTell) * 0.6, rel: 0.12, harm: [1, 0.2, 0.05], am: 0.4, arate: 5, send: 0.5 });
-    nzb(tTell, tRise - tTell + 0.05, { type: 'hp', f0: 3000, f1: 8000, gain: 0.008, att: (tRise - tTell) * 0.7, rel: 0.1, send: 0.5 }); }
+    up.forEach((n, k) => { const t = tTell + (tRise - tTell) * k / (up.length - 1), g = 0.03 + 0.02 * k / (up.length - 1); if (k < 4) harp(t, n, { gain: g * 1.1, pan: -0.4 + 0.2 * k, t60: 1.6 }); else glass(t, n, { gain: g, pan: -0.5 + 0.15 * k, tau: 2.2 }); });
+    tone(tTell, tRise - tTell, { f0: 220, f1: 1760, curve: 1.8, gain: 0.014, att: (tRise - tTell) * 0.6, rel: 0.12, harm: [1, 0.2, 0.05], am: 0.4, arate: 5, send: 0.5 });
+    nzb(tTell, tRise - tTell, { type: 'hp', f0: 3000, f1: 8000, gain: 0.008, att: (tRise - tTell) * 0.7, rel: 0.1, send: 0.5 }); }
   const t = F.t1 + 0.07;                                 // après « film ! » : le titre
   glass(t, 'D6', { gain: 0.06, tau: 3 }); glass(t + 0.03, 'A5', { gain: 0.045, tau: 3, pan: -0.2 }); harp(t + 0.05, 'D4', { gain: 0.05 });
 }
@@ -561,7 +561,7 @@ function musSca() {                                      // SCARABÉE : sous-boi
   dLow(tJet, 0.75); dMid(tBr, 0.5);
   { const down = ['B3', 'A3', 'G3', 'F#3', 'E3', 'D3'], lim = L4.t0 - 0.1; let t = tPour + 0.03; down.forEach((n, k) => { if (t < lim) pizz(t, n, { gain: 0.085, t60: 0.4, pan: 0.2 - 0.07 * k }); t += 0.09 + 0.02 * k * k * 0.5; }); if (tFuir + 0.12 < lim) wood(tFuir + 0.12, 0.4, 700, -0.2); }
   { const t = L4.t1 + 0.07;                              // l'ennemi est parti : sol majeur, le scarabée repart tranquillement
-    pad(t - 0.04, Math.max(0.3, s1 - t + 0.5), ['G2', 'D3', 'G3', 'B3', 'D4'], { gain: 0.04, att: 0.15, rel: 0.8, bright: 0.25 });
+    pad(t - 0.01, Math.max(0.3, s1 - t + 0.5), ['G2', 'D3', 'G3', 'B3', 'D4'], { gain: 0.04, att: 0.15, rel: 0.8, bright: 0.25 });
     [['G4', 0], ['D5', 0.1], ['G5', 0.2], ['B5', 0.3]].forEach(([n, d], k) => marimba(t + d, n, { gain: 0.045, tau: 0.5, pan: -0.2 + 0.15 * k })); pizz(t, 'G2', { gain: 0.1, t60: 0.9 }); glass(t + 0.05, 'D6', { gain: 0.035, tau: 2 }); }
 }
 
@@ -590,7 +590,7 @@ function musBas() {                                      // BASILIC : jungle ; t
   { let k = 0; for (const t of beatsOf(tEch - 0.04, lim3, 150)) { const u = clamp((t - tEch) / (lim3 - tEch)); dLow(t, 0.6); if (t + 0.2 <= lim3) dMid(t + 60 / 300, 0.36, { f: 230 }); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / 150 / 4; if (tt > lim3) continue; kal16(tt, k * 4 + j, 0.036 + 0.014 * u, 1); } k++; } }
   { const t = L3.t1 + 0.07;                              // l'autre rive : ouf
     ['E6', 'C#6', 'A5', 'E5', 'C#5', 'A4'].forEach((n, k) => kalimba(t + 0.04 + 0.13 * k, n, { gain: 0.05 - 0.005 * k, decay: 1.2, pan: 0.25 - 0.08 * k })); glass(t, 'A5', { gain: 0.04, tau: 2.4 }); glass(t + 0.04, 'C#6', { gain: 0.03, tau: 2.4, pan: 0.2 }); glass(t + 0.08, 'E6', { gain: 0.03, tau: 2.4, pan: -0.2 });
-    flute(t + 0.1, 0.5, 'A5', { gain: 0.036 }); dLow(t, 0.4); pad(t - 0.04, Math.max(0.2, s1 - t), ['A2', 'E3', 'A3', 'C#4'], { gain: 0.034, att: 0.2, rel: 0.5, bright: 0.2 }); }
+    flute(t + 0.1, 0.5, 'A5', { gain: 0.036 }); dLow(t, 0.4); pad(t - 0.01, Math.max(0.2, s1 - t), ['A2', 'E3', 'A3', 'C#4'], { gain: 0.034, att: 0.2, rel: 0.5, bright: 0.2 }); }
 }
 
 function musAng() {                                      // ANGUILLE : mystérieuse, grave et électrique ; nappe grave, ronflement, verre, petites notes aiguës qui crépitent ; montée avec les volts, ressort sur la prise, coup final sur la décharge (sol mineur)
@@ -627,7 +627,7 @@ function musAng() {                                      // ANGUILLE : mystérie
   { const tz = lastEv(['zap'], e3.t0, SEG.ang[1]), t = Math.max(clearT(tz ?? tDef, 0.8), tTop3 + 0.1);      // le coup final (reporté juste après « défendre » s'il tombe sur le mot)
     thud(t, 0.5); dLow(t, 1); tone(t, 0.5, { f0: 98, f1: 49, curve: 0.5, gain: 0.12, att: 0.003, rel: 0.1, dec: 0.18, harm: [1, 0.5, 0.25], send: 0.25 });
     [['G6', 0, -0.3], ['Bb6', 0.03, 0.3], ['D7', 0.06, 0]].forEach(([n, d, p]) => glass(t + d, n, { gain: 0.045, tau: 1.3, pan: p })); [24, 23, 22, 20, 18, 16, 15].forEach((i, k) => zing(t + 0.05 * k, Gp(i), { gain: 0.045 - 0.004 * k, pan: -0.6 + 0.2 * k, sparks: 4 }));
-    pad(t - 0.02, Math.max(0.2, s1 - t), ['G2', 'D3', 'G3', 'Bb3'], { gain: 0.04, att: 0.05, rel: 0.7, bright: 0.2 }); }
+    pad(t, Math.max(0.2, s1 - t), ['G2', 'D3', 'G3', 'Bb3'], { gain: 0.04, att: 0.05, rel: 0.7, bright: 0.2 }); }
 }
 
 function musFin() {                                      // QUESTION FINALE : légère, curieuse, suspendue (sur la dominante de ré) ; la marque résout en ré majeur
@@ -650,12 +650,13 @@ function cicadaBursts(a, b, seed, g0 = 1) {              // vagues de cigales qu
   while (t < b) { const d = 3 + 3 * rg(); out.push([t, d, g0 * (0.6 + 0.4 * rg()), rg() * 1.2 - 0.6]); t += d * (0.35 + 0.3 * rg()); }
   return out;
 }
-function diveTime() {                                    // instant où l'on passe sous l'eau dans le segment de l'anguille (plan « sous l'eau » de la liste des plans, sinon premier splash / bulles / décharge, sinon « une espèce »)
-  const [aS, aE] = SEG.ang, e1 = ph('e1'), limit = wt('e1', "d'anguille") + 0.2;
-  const shot = (EV.shots || []).find(s => s && Number.isFinite(s.t0) && s.t0 > aS + 0.3 && s.t0 < aE - 1 && /sous|under|dive|plong|subm|immerg|fond|subaqu|water|eau/i.test(String(s.id)) && !/^e1_(surf|ciel|crep)/i.test(String(s.id)));
-  if (shot) return shot.t0;
-  const sp = evIn('splash', aS, e1.t1), bu = evIn('bubbles', aS, e1.t1), zp = evIn('zap', aS, e1.t1), c = [sp && sp.t, bu && bu.t - 0.1, zp && zp.t - 0.25].filter(x => Number.isFinite(x) && x > aS + 0.4);
-  return c.length ? Math.min(limit, ...c) : wt('e1', 'une') - 0.1;
+function diveTime() {                                    // instant où l'on passe sous l'eau dans le segment de l'anguille : le plan qui suit le plan « surface » de la liste des plans ; sinon le plan dont l'identifiant dit « sous l'eau » ; sinon la première décharge / éclaboussure ; sinon « d'anguille »
+  const [aS, aE] = SEG.ang, e1 = ph('e1'), limit = wt('e1', "d'anguille") + 0.2, dflt = wt('e1', "d'anguille") - 0.1;
+  const sh = (EV.shots || []).filter(s => s && Number.isFinite(s.t0) && s.t0 > aS - 0.05 && s.t0 < aE - 0.05).sort((x, y) => x.t0 - y.t0), id = s => String(s.id);
+  const k = sh.findIndex(s => /surf|ciel|crep|rive/i.test(id(s))); if (k >= 0 && sh[k + 1] && sh[k + 1].t0 < e1.t1) return sh[k + 1].t0;
+  const named = sh.find(s => s.t0 > aS + 0.3 && /sous|under|dive|plong|subm|immerg|subaqu/i.test(id(s))); if (named) return named.t0;
+  const sp = evIn('splash', aS, e1.t1), zp = evIn('zap', aS, e1.t1), c = [sp && sp.t, zp && zp.t - 0.25].filter(x => Number.isFinite(x) && x > aS + 0.4);
+  return c.length ? Math.min(limit, ...c) : dflt;
 }
 function ambiances() {
   B = BUS.amb; const [, iE] = SEG.intro, [sS, sE] = SEG.sca, [bS, bE] = SEG.bas, [aS, aE] = SEG.ang, [fS, fE] = SEG.fin;
@@ -839,17 +840,22 @@ function croak(t0, dur, r0, r1, f1, f2, g) {             // coassement : impulsi
 const finalToPre = d => Math.atanh(clamp(dbv(d), 0, 0.98)) / 1.4;     // crête finale visée (après tanh(1,4 x)) → crête avant mastering
 const CAP = mkBus(Math.floor(16 * SR), 0);
 // Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : épisode 1, mesuré, le jet de sang
-// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »), et −5 dB de plus sur le DERNIER mot d'une phrase
-// (« degrés », « explosion », « volts »…). Les sons de réussite et de marque restent entiers.
+// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »), −5 dB de plus sur le DERNIER mot d'une phrase
+// (« degrés », « explosion », « volts »…) et jusqu'à −8 dB de plus quand plusieurs bruitages s'empilent sur ce mot (la puissance totale reste bornée : mesuré sur « volts » avec les
+// plans réels, zap + compteur + ding + reveal + sparkle couvraient la voix, écart 1,8 dB). Les sons de réussite (ding, no) ne sont pas baissés par les mots mais le sont de −9 dB sur un mot final ; la marque reste entière.
 const DUCK_EXEMPT = new Set(['ding', 'no', 'endCard', 'logo', 'letters']);
 const WORDS_ALL = TLJ.phrases.flatMap(p => p.words);
 const FINALS = TLJ.phrases.map(p => p.words[p.words.length - 1]);
+const BRAND = new Set(['endCard', 'logo', 'letters']);
+const crowdDb = t => { const w = FINALS.find(w => t > w.t0 - 0.05 && t < w.t1 + 0.06); if (!w) return 0; const n = EVENTS.filter(e => !BRAND.has(e.type) && e.t > w.t0 - 0.05 && e.t < w.t1 + 0.06).length; return n > 1 ? -Math.min(8, 10 * Math.log10(n)) : 0; };
 function duckDb(t, type) {
-  if (DUCK_EXEMPT.has(type)) return 0;
+  if (BRAND.has(type)) return 0;
   let ov = 0, ovF = 0; const a = t, b = t + 0.9;
   for (const w of WORDS_ALL) { const x0 = w.t0 - 0.04, x1 = w.t1 + 0.10; ov += Math.max(0, Math.min(b, x1) - Math.max(a, x0)); }
   for (const w of FINALS) ovF += Math.max(0, Math.min(t + 0.5, w.t1 + 0.05) - Math.max(t, w.t0 - 0.04));
-  return -11 * Math.min(1, ov / 0.9) - 5 * Math.min(1, ovF / 0.3);
+  const fin = Math.min(1, ovF / 0.3);
+  if (DUCK_EXEMPT.has(type)) return -9 * fin + (fin > 0 ? crowdDb(t) : 0);
+  return -11 * Math.min(1, ov / 0.9) - 5 * fin + (fin > 0 ? crowdDb(t) : 0);
 }
 const duckFactor = (t, type) => Math.pow(10, duckDb(t, type) / 20);
 const SLOG = [];                                         // --check : bruitages dont le début tombe sur un mot final
@@ -891,11 +897,11 @@ if (ONLY !== 'demo' && want('music')) { musIntro(); musSca(); musBas(); musAng()
 if (ONLY !== 'demo' && want('amb')) ambiances();
 if (ONLY !== 'demo' && want('sfx')) runSfx();
 
-// ───────── mots de fin de phrase : musique et ambiances baissées autour du dernier mot (−7 dB musique, −4 dB ambiances, rampes de 70 ms) ─────────
+// ───────── mots de fin de phrase : musique et ambiances baissées autour du dernier mot (−8 dB musique, −5 dB ambiances, rampes de 70 ms) ─────────
 // (épisode 1, mesuré : musique et ambiances ensemble faisaient lire « nom » pour « nez » alors que chacune seule laissait lire « nez » ; ici c'est systématique, sur tous les mots finaux)
 {
   const ramp = 0.07;
-  for (const [k, dB] of [['music', -7], ['amb', -4]]) {
+  for (const [k, dB] of [['music', -8], ['amb', -5]]) {
     const b = BUS[k], lo = dbv(dB);
     for (const w of FINALS) {
       const a0 = w.t0 - 0.06, a1 = w.t1 + 0.10;

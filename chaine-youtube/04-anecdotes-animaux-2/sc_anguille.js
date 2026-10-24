@@ -131,7 +131,7 @@ function an_p4(u, t, sh) {
   const sk = prog(t, T.prise, T.prise + 0.35);
   if (sk > 0) an_socket(AN_XP + AN_WP / 2 - 2, AN_YB - hP / 2 + 3, 1.1 * eob(sk), t, { spark: prog(t, T.elec, T.elec + 0.1) * (1 - prog(t, T.fr + 0.4, T.fr + 0.8)) * 0.8 });
   // étincelles au sommet de la barre de l'anguille
-  const fr = Math.floor(t * 30); for (let k = 0; k < 3; k++) if (an_h(fr + k, 8) < 0.55 * rise) an_bolt(AN_XE + AN_WE / 2 - 2, ay - 5, AN_XE + AN_WE / 2 - 2 + (an_h(fr, 10 + k) - 0.5) * 50, ay - 10 - an_h(fr, 12 + k) * 18, fr * 3 + k, { w: 0.6, branch: 0.3, jag: 0.3, step: 5, glow: 0.4 });
+  const fr = Math.floor(t * 30), by = Math.round(AN_YB - AN_HE * rise); for (let k = 0; k < 3; k++) if (an_h(fr + k, 8) < 0.55 * clamp(rise)) an_bolt(AN_XE + AN_WE / 2 - 2, by - 5, AN_XE + AN_WE / 2 - 2 + (an_h(fr, 10 + k) - 0.5) * 50, by - 10 - an_h(fr, 12 + k) * 18, fr * 3 + k, { w: 0.6, branch: 0.3, jag: 0.3, step: 5, glow: 0.4 });
   // petit drapeau tricolore sur sa hampe, posé sur la ligne de base à côté de la prise (« française »)
   const fa = eob(prog(t, T.fr, T.fr + 0.3)); if (fa > 0) { const fx = AN_XP + AN_WP + 8, fh = Math.round(34 * fa), fy = AN_YB - fh; R(fx - 1, fy - 1, 3, fh + 1, '#05040f'); R(fx, fy, 1, fh, ST[6]); R(fx - 1, fy - 3, 3, 2, YE[2]); if (fa > 0.5) { R(fx + 1, fy - 1, 22, 15, '#05040f'); for (let i = 0; i < 20; i++) { const w = Math.round(Math.sin(t * 8 + i * 0.45) * 1.0 * (i / 20)); R(fx + 2 + i, fy + w, 1, 13, i < 7 ? BL[3] : i < 14 ? WH[3] : RD[3]); } } }
   k_glints(t, { n: 10, y0: 60, y1: 330, rate: 1.5, col: WH[3], col2: CY[3] });
@@ -139,7 +139,7 @@ function an_p4(u, t, sh) {
 function an_p4Ui(u, t, sh) {
   an_hud(u, t, sh);
   const T = an_A, ea = prog(t, T.p0 + 0.1, T.p0 + 0.35);
-  if (ea > 0) { ptextC('ANGUILLE : 860 V', AN_XE + AN_WE / 2, AN_YB + 12, YE[3], 1, '#05040f', Math.ceil(ea * 30)); ptextC('860 V', AN_XE + AN_WE / 2 - 2, AN_YB - AN_HE - 27, CY[4], 2, '#05040f'); }
+  if (ea > 0) { ptextC('ANGUILLE : 860 V', AN_XE + AN_WE / 2, AN_YB + 12, YE[3], 1, '#05040f', Math.ceil(ea * 30)); ptextC('860 V', AN_XE + AN_WE / 2 - 2, AN_YB - AN_HE * (0.3 + 0.7 * eob(prog(t, T.p0, T.p0 + 0.42))) - 27, CY[4], 2, '#05040f'); }
   const pa = prog(t, T.prise, T.prise + 0.3); if (pa > 0) ptextC('PRISE : 230 V', AN_XP + AN_WP / 2, AN_YB + 12, BL[4], 1, '#05040f', Math.ceil(pa * 30));
   const labs = ['×1', '×2', '×3', '≈ ×4'], ts = [T.q0, T.q2, T.q3, T.q4];
   for (let k = 0; k < 4; k++) { if (k === 0 && t >= T.prise) continue; if (t < ts[k] + 0.1) continue; const hh = k < 3 ? AN_U : AN_U * (860 / 230 - 3), y = AN_YB - AN_U * k - hh / 2 - 3; ptextC(labs[k], AN_XP + AN_WP / 2, y, k === 3 ? YE[3] : BL[5 - 1], 1, '#05040f'); }

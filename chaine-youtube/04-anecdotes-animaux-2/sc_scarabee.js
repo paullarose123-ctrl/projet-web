@@ -42,7 +42,7 @@ function sb_scene(u, t, cam, o = {}) {
 }
 // grandes lames d'herbe floues au premier plan (silhouettes à contre-jour, liseré doré du côté du soleil) qui encadrent la scène
 function sb_blades(t) {
-  const defs = [[8, 52, 150, 13, -22, 1], [-6, 24, 262, 10, -10, 2], [262, 238, 168, 13, 16, 3], [280, 264, 96, 12, 10, 4], [246, 208, 296, 9, 12, 5]];
+  const defs = [[8, 52, 150, 13, -22, 1], [-6, 24, 262, 10, -10, 2], [262, 238, 168, 13, 16, 3], [280, 264, 96, 12, 10, 4]];
   for (const [x0, x1, y1, w0, bend, sd] of defs) {
     const y0 = 490, sway = k_wind(t, x0, sd) * 5 * (1 - (y1 - 90) / 400), pts = [];
     for (let k = 0; k <= 16; k++) { const f = k / 16, c = [x0 + (x1 - x0) * 0.25 + bend, lerp(y0, y1, 0.55)], p = bez([x0, y0], c, [x1 + sway, y1], f), w = w0 * Math.pow(1 - f, 0.85) + 0.4; pts.push([p, w]); }
@@ -96,7 +96,7 @@ function buildScarabee(S) {
         sb_hud(u, t, sh, { first: true });
         const slide = 1 - eo(prog(t, A.liquide - 0.05, A.liquide + 0.3)), v = eio(prog(t, tRise, tTop)), temp = Math.round(20 + 80 * v), x0 = 214 + slide * 70;
         if (slide < 1) {
-          const q = sb_thermo(x0, 98, 188, v, t, { flask: true, bubbles: 2 + 8 * v });
+          const q = sb_thermo(x0, 98, 188, v, t, { flask: true, bubbles: 2 + 8 * v, nums: slide <= 0.001 });
           if (t >= A.a - 0.15) counter(x0 - 36 + 4, 62 + 0, temp + '°C', 2, v >= 1 ? '#fff09a' : '#ff5a48');
         }
         if (t >= A.cent) sb_ptag(8, 40, "JUSQU'À ≈ 100 °C", 'red', Math.ceil((t - A.cent) * 60));
@@ -199,13 +199,13 @@ function buildScarabee(S) {
         const sc = 1.45, bx = 66, by = sb_GY + 8, camS = 3 * bump(t, tHit, tHit + 0.05, tHit + 0.2, tHit + 0.5) * Math.sin(t * 70);
         sb_scene(u, t, 0);
         const rec = eob(prog(t, tHit, tHit + 0.34)), unl = 1 - sm(prog(t, tHit, tHit + 0.18)), sk = prog(t, tHit + 0.28, tHit + 1.5), shake = Math.sin((t - tHit) * 40) * (1 - sk) * (t > tHit + 0.28 ? 1 : 0);
-        const tg = 0.34 * (1 - sm(prog(t, T.b4a, T.b4a + 0.25))) * unl, cxT = 276 + 16 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
-        const toad = sb_toad(cxT, 350, 1.9, t, { flip: true, lunge: 1 * unl, tongue: tg, recoil: rec * 0.95, shake, seed: 5, mouth: 0.9 * unl });
+        const tg = 0, cxT = 270 + 10 * sm(prog(t, tHit + 0.1, tHit + 0.7)) + camS;
+        const toad = sb_toad(cxT, 350, 1.9, t, { flip: true, lunge: 0.55 * unl, tongue: tg, recoil: rec * 0.95, shake, seed: 5, mouth: 0.8 * unl });
         const fire = prog(t, tFire, tFire + 0.05) * (1 - prog(t, tFire + 1.5, tFire + 1.65));
         const tipK = 0.72 + 0.28 * sm(prog(t, A.il4, A.proj + 0.12));
         const m = sb_beetle(bx + camS * 0.5, by, sc, t, { pose: 'aim', aimK: 1, tip: tipK, aim: -0.3, hot: sm(prog(t, T.b4a, A.proj + 0.2)) * (1 - 0.5 * prog(t, tFire + 1.5, tFire + 1.8)), fire });
         const tgt = [toad.nose[0] - 6, toad.nose[1] + 4], ang = Math.atan2(tgt[1] - m.tip[1], tgt[0] - m.tip[0]);
-        sb_jet(m.tip[0], m.tip[1], ang, t, tFire, { dur: 1.5, len: Math.hypot(tgt[0] - m.tip[0], tgt[1] - m.tip[1]) * 1.15, hz: 14, size: 1.7, gravity: 40, seed: 3 });
+        sb_jet(m.tip[0], m.tip[1], ang, t, tFire, { dur: 1.5, len: Math.hypot(tgt[0] - m.tip[0], tgt[1] - m.tip[1]) * 1.55, hz: 14, size: 1.9, steam: 1.35, gravity: 40, seed: 3 });
         sb_splashHit(tgt[0], tgt[1], t, tHit, { dir: -Math.PI * 0.55, size: 1.5, n: 16 });
         if (t > tHit + 0.1 && t < tHit + 1.7) sb_steam(toad.nose[0] + 4, toad.nose[1] - 4, t, { n: 6, w: 8, h: 50, a: 0.9 * (1 - prog(t, tHit + 1.2, tHit + 1.7)), size: 1.2, seed: 6 });
         sb_fg(u, t, 0);
@@ -223,15 +223,15 @@ function buildScarabee(S) {
       draw(u, t, sh) {
         sb_scene(u, t, 0);
         // crapaud (de dos, il file vers la droite) : deux sauts, la tête qui se secoue, de plus en plus loin (petit et haut sur l'écran)
-        const h1 = clamp((t - tH1) / hopDur), h2 = clamp((t - tH2) / hopDur), dist = 92;
-        const cx = 214 + sb_toadHopX(h1, dist) + sb_toadHopX(h2, dist) + (t < tH1 ? 0 : 0), hp = t < tH1 ? undefined : (h1 < 1 ? h1 : (t >= tH2 ? h2 : undefined));
+        const h1 = clamp((t - tH1) / hopDur), h2 = clamp((t - tH2) / hopDur), dist = 70;
+        const cx = 236 + sb_toadHopX(h1, dist) + sb_toadHopX(h2, dist) + (t < tH1 ? 0 : 0), hp = t < tH1 ? undefined : (h1 < 1 ? h1 : (t >= tH2 ? h2 : undefined));
         const shk = Math.sin(t * 38) * 0.9 * (1 - prog(t, T.b4b, T.b4b + 1.0)), sq = 0.8 * (1 - prog(t, T.b4b + 0.4, T.b4b + 1.2));
-        if (cx < 420) sb_toad(cx, 340, 1.7, t, { flip: false, hop: hp, shake: shk, squint: sq, mouth: 0.3 * (1 - prog(t, T.b4b, T.b4b + 0.7)), recoil: 0.35 * (1 - prog(t, T.b4b, T.b4b + 0.6)), seed: 5 });
+        if (cx < 420) sb_toad(cx, 326, 1.4, t, { flip: false, hop: hp, shake: shk, squint: sq, mouth: 0.3 * (1 - prog(t, T.b4b, T.b4b + 0.7)), recoil: 0.35 * (1 - prog(t, T.b4b, T.b4b + 0.6)), seed: 5 });
         // vapeur qui s'attarde là où le crapaud a reçu le jet
-        if (t < T.b4b + 1.1) sb_steam(206, 290, t, { n: 5, w: 6, h: 46, a: 0.8 * (1 - prog(t, T.b4b, T.b4b + 1.1)), seed: 8 });
+        if (t < T.b4b + 1.1) sb_steam(236, 270, t, { n: 5, w: 6, h: 46, a: 0.8 * (1 - prog(t, T.b4b, T.b4b + 1.1)), seed: 8 });
         // le scarabée relâche sa pointe et repart tranquillement vers la gauche
-        const dist2 = sb_WALK.speed * 0.5 * Math.max(0, u - 0.25), bx = 128 - dist2 * 1.9, relax = sm(prog(t, T.b4b, T.b4b + 0.55));
-        sb_beetle(bx, sb_GY + 12, 1.9, t, { pose: 'walk', ph: sb_walkPh(dist2 * 0.0 + dist2), settle: 1 - sm(prog(u, 0.25, 0.55)), flip: true, aimK: 1 - relax, tip: 1 - relax, hot: 0.8 * (1 - sm(prog(t, T.b4b, T.b4b + 0.5))) });
+        const dist2 = sb_WALK.speed * 0.4 * Math.max(0, u - 0.25), bx = 132 - dist2 * 1.55, relax = sm(prog(t, T.b4b, T.b4b + 0.55));
+        sb_beetle(bx, sb_GY + 12, 1.55, t, { pose: 'walk', ph: sb_walkPh(dist2), settle: 1 - sm(prog(u, 0.25, 0.55)), flip: true, aimK: 1 - relax, tip: 1 - relax, hot: 0.8 * (1 - sm(prog(t, T.b4b, T.b4b + 0.5))) });
         sb_fg(u, t, 0);
       },
       ui(u, t, sh) {

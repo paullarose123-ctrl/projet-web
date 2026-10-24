@@ -434,9 +434,9 @@ function sb_toad(cx, cy, s, t, o = {}) {
   if (hop >= 0) { crouch = bump(hop, 0, 0.14, 0.22, 0.3); const q = clamp((hop - 0.28) / 0.52); land = bump(hop, 0.78, 0.84, 0.88, 1.0); hopPitch = hop < 0.28 ? -0.06 * crouch : 0.2 - 0.46 * q; }
   const ext = hop >= 0 ? clamp(sm(prog(hop, 0.14, 0.3)) * (1 - sm(prog(hop, 0.76, 0.88)))) : 0;       // pattes arrière tendues
   const reach = hop >= 0 ? clamp(sm(prog(hop, 0.2, 0.34)) * (1 - sm(prog(hop, 0.74, 0.84)))) : 0;     // bras tendus vers l'avant
-  const pitch = hopPitch - 0.07 * lunge + 0.2 * recoil + 0.05 * land;
-  const dxBody = 9 * lunge - 7 * recoil, dyBody = 3.2 * crouch + 3.4 * land + 2.4 * lunge - 1.2 * recoil + 0.45 * br * (hop >= 0 ? 0 : 1);
-  const headRot = -0.28 * recoil + 0.2 * shake + 0.05 * Math.sin(t * 2.2) * (1 - recoil) - 0.12 * ext;
+  const pitch = hopPitch - 0.07 * lunge + 0.12 * recoil + 0.05 * land;
+  const dxBody = 9 * lunge - 4 * recoil, dyBody = 3.2 * crouch + 3.4 * land + 2.4 * lunge - 1.2 * recoil + 0.45 * br * (hop >= 0 ? 0 : 1);
+  const headRot = -0.2 * recoil + 0.2 * shake + 0.05 * Math.sin(t * 2.2) * (1 - recoil) - 0.12 * ext;
   const headDx = 12 * lunge - 5 * recoil + 3.4 * shake, headDy = 2.2 * lunge - 3 * recoil;
   const lsx = side * 0.62, lsy = -0.78, ln = Math.hypot(lsx, lsy), Ls = [lsx / ln, lsy / ln], ll = [Ls[0] * flip, Ls[1]];
   const Tb = (x, y) => { const q = sb_rotAbout(x, y, sb_TPIV[0], sb_TPIV[1], pitch); return [q[0] + dxBody, q[1] + dyBody]; };
@@ -452,7 +452,7 @@ function sb_toad(cx, cy, s, t, o = {}) {
   // ── patte arrière : cuisse repliée le long du flanc, jambe en arrière, pied à plat ; dans le saut tout se tend vers l'arrière
   const hind = (hipB, far) => {
     const hip = Tb(hipB[0], hipB[1]);
-    const foldA = [-44 + (far ? 3 : 0), -3.6], extA = [-84 + (far ? 3 : 0), -12 + (far ? 2 : 0)];
+    const foldA = [-44 + (far ? 3 : 0), -3.6], extA = [-72 + (far ? 3 : 0), -12 + (far ? 2 : 0)];
     const ank = [lerp(foldA[0], extA[0], ext), lerp(foldA[1], extA[1], ext)];
     const ik = sb_ikSide(hip[0], hip[1], ank[0], ank[1], 29, 30, 1), kf = ik.k1[0] > ik.k2[0] ? ik.k1 : ik.k2, ku = ik.k1[1] < ik.k2[1] ? ik.k1 : ik.k2;
     const kn = [lerp(kf[0], ku[0], ext), lerp(kf[1], ku[1], ext)], an = ik.a;
@@ -556,7 +556,8 @@ function sb_toad(cx, cy, s, t, o = {}) {
     } else { sb_fill(c, globe, C.p3); sb_cres(c, globe, ll, 1.4, C.p4); sb_cres(c, globe, ll, 1.5, C.p2, true); }
     c.strokeStyle = C.p0; c.lineWidth = Math.max(0.9, minW * 0.9); c.lineCap = 'round';
     if (lidQ > 0.55) { c.beginPath(); c.moveTo(E0[0] - er + 0.5, gy + 0.9); c.quadraticCurveTo(E0[0], gy + 3.0 - 0.4 * (1 - lidQ) * 3 - 0.3, E0[0] + er - 0.5, gy + 0.2); c.stroke();
-      for (let k = 0; k < 3; k++) { c.lineWidth = Math.max(0.7, minW * 0.7); c.beginPath(); c.moveTo(E0[0] - er + 0.6 + k * 0.4, gy - 1.6 - k * 1.5); c.lineTo(E0[0] + er - 1.0 - k * 0.5, gy - 2.8 - k * 1.5 + 1.0); c.stroke(); } }
+      c.lineWidth = Math.max(0.7, minW * 0.7); c.beginPath(); c.moveTo(E0[0] - er + 1.2, gy - 3.4); c.quadraticCurveTo(E0[0] + 0.5, gy - 5.6, E0[0] + er - 1.0, gy - 3.0); c.stroke();
+      c.beginPath(); c.moveTo(E0[0] + er - 0.5, gy + 0.6); c.lineTo(E0[0] + er + 1.8, gy - 0.6); c.stroke(); }
   }
   hind(sb_TDEF.hipN, false);
   arm(sb_TDEF.shoN, false, wipe);
@@ -707,7 +708,7 @@ function sb_thermo(x, y, h, v, t, o = {}) {
     const yy = Math.round(yBot - (yBot - yTop) * (T - 20) / 80); if (fl && yy > by0 - 3) continue;
     const major = T % 20 === 0, lit = level <= yy + 1, col = lit ? (T === 100 && hot > 0.8 ? YE[3] : WH[2]) : ST[5];
     R(cx + 6, yy, major ? 6 : 3, 1, col);
-    if (major && T !== 20) ptext(String(T), cx + 14, yy - 3, T === 100 ? (hot > 0.5 ? YE[3] : AM[8]) : ST[7], 1, K);
+    if (major && T !== 20 && o.nums !== false) ptext(String(T), cx + 14, yy - 3, T === 100 ? (hot > 0.5 ? YE[3] : AM[8]) : ST[7], 1, K);
   }
   if (o.label != null) ptextC(String(o.label), cx + 6, y - 9, hot > 0.8 ? YE[3] : WH[3], 1, K);
   // vapeur au-dessus du bécher / du tube quand ça bout

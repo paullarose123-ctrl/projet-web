@@ -262,7 +262,8 @@ function ba_c1a(u, t, sh) {
   k_butterfly(60 - cam * 1.1, 330 - cy + 10 * Math.sin(u * 0.7 + 2), t, { col: YE[2], col2: AM[6], s: 1.0, phase: 3.2, rate: 6.4, flutter: 4 });
   ba_drawBranch(cam, cy, yTop);
   const act = ba_sitAct(u, t);
-  ba_lizard(150 - cam, yTop - cy + 0.6, 1.6, t, { pose: 'sit', over: act, tongue: act.tongue, seed: 1 });
+  k_glow(BA_J.x0 + 40 - cam, yTop - cy - 36, 80, '255,224,138', 0.32);
+  ba_lizard(BA_J.x0 + 17 * 2.0 - cam, yTop - cy + 0.6, 2.0, t, { pose: 'sit', over: act, tongue: act.tongue, seed: 1 });
   ba_fgLeaves(t, cam, { camY: cy, par: 1.25 });
   k_leaves(t, { n: 5, cam, wind: 5, y0: 0, y1: 400, cols: [GR[4], LM[4], AM[6]], seed: 3 });
   vignette(0.5, 120, 330, LW / 2, LH / 2 - 20, '5,20,16');
@@ -280,11 +281,11 @@ function ba_seq(t, keys) {
 }
 
 // ───────────────────────── plan 2 : c1_saut (« il peut courir sur l'eau ! » : il se ramasse, bondit, claque l'eau et file) ─────────────────────────
-const BA_J = { s: 1.6, wy: 322, x0: 110, yTop: 264, v: 246, cam0: 20, f: 3.3 };
+const BA_J = { s: 2.0, wy: 322, x0: 100, yTop: 264, v: 250, cam0: 20, f: 3.3 };
 let ba_J = null;                                                        // trajectoire du plan (calculée par buildBasilic)
 function ba_jumpInit() {
   const A = ba_A, J = BA_J, tD = A.eau, T = Math.max(0.46, Math.min(0.66, tD - (A.courir - 0.05))), tL = tD - T;
-  const hipL = [J.x0, J.yTop - 6.2 * J.s], vx = 252, hipD = [J.x0 + vx * T, J.wy - 28 * J.s];
+  const hipL = [J.x0, J.yTop - 6.2 * J.s], vx = 262, hipD = [J.x0 + vx * T, J.wy - 28 * J.s];
   ba_J = { tL, tD, T, hipL, hipD, vx, arc: 40 };
 }
 function ba_jumpAt(t) {                                                  // hanche (monde, y écran), pose, phase de course, caméra
@@ -295,7 +296,7 @@ function ba_jumpAt(t) {                                                  // hanc
   const keys = [[A.il - 0.1, 'sit'], [A.il + 0.12, 'crouch', eo], [K.tL - 0.02, 'crouch'], [K.tL + 0.1, 'leap', eo], [K.tD - 0.22, 'leap'], [K.tD - 0.04, 'fall', eio], [K.tD + 0.0, 'run']];
   const ps = ba_seq(t, keys), ph = 0.05 + f * (t - K.tD);
   // caméra : fixe tant que le basilic est ramassé, puis elle le suit (le basilic passe de 90 à 118 px de l'écran)
-  const scr = lerp(J.x0 - J.cam0, 118, sm(prog(t, K.tL - 0.05, K.tD + 0.5)));
+  const scr = lerp(J.x0 - J.cam0, 128, sm(prog(t, K.tL - 0.05, K.tD + 0.5)));
   const camX = t < K.tL - 0.05 ? J.cam0 : hip[0] - scr;
   return { hip, rot, air, ph, cam: Math.max(J.cam0, camX), ...ps };
 }
@@ -305,12 +306,13 @@ function ba_c1b(u, t, sh) {
   ba_atmos(t, cam, 0, { dust: 40 });
   k_butterfly(190 - cam, 200 + 10 * Math.sin(u * 3), t, { col: CY[4], col2: BL[3], s: 1.2, phase: 1, rate: 5.2, flutter: 5 });
   ba_drawBranch(cam, 0, J.yTop);
+  if (t < ba_J.tD) k_glow(BA_J.x0 + 40 - cam, J.yTop - 36, 80, '255,224,138', 0.3 * (1 - prog(t, ba_J.tL, ba_J.tD)));
   const act = ba_sitAct(u + (sh.t0 - ba_A.t0), t);
   const o = { pose: st.pose, pose2: st.pose2, mix: st.mix ?? 0, ph: st.ph, rot: st.rot, spd: 1, over: st.pose === 'sit' && !st.pose2 ? act : (st.pose === 'sit' ? { sail: lerp(act.sail, 0.9, st.mix) } : undefined), seed: 1 };
   // claquements de l'eau (anneaux avant le basilic, gerbes après)
   const fx = { t0: K.tD, ph0: 0.05, f: J.f, x0: K.hipD[0], v: J.v, dir: 1, s, wy: J.wy, cam, tFrom: K.tD - 0.01, ahead: 22 };
   if (t >= K.tD) ba_runFx(t, { ...fx, layer: 'under' });
-  const lz = st.air || t < K.tD ? ba_lizard(0, 0, s, t, { ...o, hip: [st.hip[0] - cam, st.hip[1]] }) : ba_lizard(st.hip[0] - cam, J.wy, s, t, { ...o, tint: [J.wy, '14,40,34', 0.5], reflect: { y: J.wy, a: 0.28, depth: 70 } });
+  const lz = st.air || t < K.tD ? ba_lizard(0, 0, s, t, { ...o, hip: [st.hip[0] - cam, st.hip[1]] }) : ba_lizard(st.hip[0] - cam, J.wy, s, t, { ...o, tint: [J.wy, '14,40,34', 0.5], reflect: { y: J.wy, a: 0.4, depth: 120 } });
   if (t >= K.tD) ba_runFx(t, { ...fx, layer: 'over' });
   if (t >= K.tD - 0.02) ba_slap(K.hipD[0] + s * 22, J.wy + 3, K.tD, t, { size: 1.5, dir: 1, cam, seed: 99, layer: 'both' });
   ba_fgLeaves(t, cam, { camY: 0, par: 1.25 });
@@ -335,7 +337,7 @@ function ba_runScene(t, C, hooks = {}) {
   if (hooks.back) hooks.back(t, cam, st);
   const fx = { t0: C.t0, ph0: C.ph0, f: C.f, x0: C.x0, v: C.v, dir: 1, s, wy: C.wy, cam, ahead: 22, size: s * 0.8 };
   ba_runFx(t, { ...fx, layer: 'under' });
-  const K = ba_lizard(st.scr, C.wy, s, t, { pose: 'run', ph: st.ph, spd: 1, over: hooks.over && hooks.over(t, st), tint: [C.wy, '14,40,34', 0.6], reflect: { y: C.wy, a: 0.42, depth: 40 * s + 60 }, seed: 2 });
+  const K = ba_lizard(st.scr, C.wy, s, t, { pose: 'run', ph: st.ph, spd: 1, over: hooks.over && hooks.over(t, st), tint: [C.wy, '14,40,34', 0.6], reflect: { y: C.wy, a: 0.4, depth: 52 * s + 40 }, seed: 2 });
   ba_runFx(t, { ...fx, layer: 'over' });
   if (hooks.front) hooks.front(t, cam, st, K);
   ba_fgLeaves(t, cam, { camY: 0, par: 1.3 });
@@ -455,7 +457,7 @@ function ba_c3Draw(u, t, sh, o = {}) {
   if (t < L3.tJ + 0.05) ba_runFx(t, { ...fx, layer: 'under', tFrom: L3.tR0 - 2 });
   const lo = { pose: st.pose, pose2: st.pose2, mix: st.mix ?? 0, ph: st.ph, rot: st.rot, spd: 1, seed: 2, dim: dimK * 0.55 };
   if (st.onLog || st.air) ba_lizard(0, 0, s, t, { ...lo, hip: [st.hip[0] - cam, st.hip[1]], tint: st.air && st.hip[1] > wy - 10 ? [wy, '14,40,34', 0.6] : undefined });
-  else ba_lizard(st.hip[0] - cam, wy, s, t, { ...lo, over: { }, tint: [wy, '14,40,34', 0.6], reflect: { y: wy, a: 0.42, depth: 40 * s + 60 } });
+  else ba_lizard(st.hip[0] - cam, wy, s, t, { ...lo, over: { }, tint: [wy, '14,40,34', 0.6], reflect: { y: wy, a: 0.4, depth: 52 * s + 40 } });
   if (t < L3.tJ + 0.05) ba_runFx(t, { ...fx, layer: 'over', tFrom: L3.tR0 - 2 });
   if (t > L3.tJ - 0.02 && t < L3.tJ + 0.8) ba_slap(L3.hipJ + 20, wy + 2, L3.tJ, t, { size: 1.7, dir: 1, cam, seed: 31, layer: 'both' });      // la dernière poussée sur l'eau
   ba_fgLeaves(t, cam, { camY: 0, par: 1.3 });
@@ -483,7 +485,7 @@ function buildBasilic(S) {
   shot('c1_branche', S.t0, { draw: ba_c1a, ui: ba_c1aUi, ev: [[A.tongue + 0.05, 'blip', 0.5]] });
   shot('c1_saut', A.il - 0.1, { draw: ba_c1b, ui: ba_c1bUi, ev: [[K.tL + 0.02, 'hop', 1], [K.tL + 0.05, 'whoosh', 0.5], [K.tD, 'splash', 1.3], ...evSlaps] });
   const tA = A.c2 - 0.1, tB = A.utilise - 0.1, tC = A.pour - 0.1, tD = A.c3 - 0.1, tE = A.ech - 0.1;
-  ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.3, wy: 318, f: 3.3, ph0: 0.2, scr0: 170, scr1: 132, tScr: 1.3, dust: 40 };
+  ba_C2 = { t0: tA, x0: 0, v: 250, s: 1.55, wy: 320, f: 3.3, ph0: 0.2, scr0: 150, scr1: 128, tScr: 1.3, dust: 40 };
   ba_C2b = { t0: tB, x0: ba_C2.x0 + 250 * (tB - tA), v: 250, s: 2.25, wy: 338, f: 3.3, ph0: ba_C2.ph0 + 3.3 * (tB - tA), scr0: 100, scr1: 92, tScr: 1.6, dust: 30 };
   const ev2 = ba_footTimes(ba_C2, tA, tB).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.6]] : [])]);
   const ev2b = ba_footTimes(ba_C2b, tB, tC).flatMap(([tn, n]) => [[tn, 'slap', 1], ...(n % 2 === 0 ? [[tn + 0.01, 'splash', 0.7]] : [])]);
