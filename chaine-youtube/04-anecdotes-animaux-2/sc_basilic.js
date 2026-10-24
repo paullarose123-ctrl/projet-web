@@ -363,7 +363,7 @@ function ba_c2bUi(u, t, sh) {
 // plan 5 : c2_pas — la poche d'air, en coupe et au ralenti
 function ba_c2cState(u, sh) { const dur = sh.t1 - sh.t0, p = clamp(u / (dur * 0.86)); return { p: eio(p) * 0.65 + p * 0.35 }; }
 function ba_c2c(u, t, sh) {
-  const { p } = ba_c2cState(u, sh), wy = 282, sm = 2.7, phi = lerp(0.0, 0.64, p), X0 = 104, f05 = ba_footWater(0.05), xOrig = X0 - f05.ax * sm, pan = 0.5 * BA_HIPV * phi * sm;
+  const { p } = ba_c2cState(u, sh), wy = 282, sm = 2.7, phi = lerp(0.0, 0.74, p), X0 = 104, f05 = ba_footWater(0.05), xOrig = X0 - f05.ax * sm, pan = 0.5 * BA_HIPV * phi * sm;
   // fond : forêt floue, lumière
   vgrad(0, 0, LW, LH, [[0, '#c4ecb8'], [0.5, '#62ae72'], [1, '#2a6648']]);
   ba_putBand(ba_band('far', BA_PW, 190, ba_buildFar), 30, 0.1, pan * 0.3);
@@ -374,14 +374,15 @@ function ba_c2c(u, t, sh) {
   vgrad(0, wy, LW, LH - wy, [[0, '#2a6648'], [0.12, '#1f7a96'], [0.45, '#124a66'], [1, '#10102e']]);
   for (let i = 0; i < 14; i++) { const x = ((ba_h(i, 4) * 340 - pan * 0.7 + t * 4 * (0.3 + ba_h(i, 5))) % 340 + 340) % 340 - 35, y = wy + 14 + ba_h(i, 6) * 150; px(x, y, i % 3 ? CY[2] : CY[3]); }
   for (let i = 0; i < 6; i++) { const x = ((ba_h(i, 14) * 300 - pan * 0.5) % 300 + 300) % 300 - 20, w = 2 + ba_h(i, 15) * 6; R(x, wy + 6 + i * 3 + ba_h(i, 16) * 5, w, 1, CY[3]); }
-  ba_pocket(xOrig + f05.ax * sm - pan, wy, sm, p, t);
+  ba_pocket(xOrig + f05.ax * sm - pan, wy, sm, phi, t);
+  const dx2 = 0.5 * BA_HIPV * sm; if (phi > 0.5) ba_pocket(xOrig + f05.ax * sm + dx2 - pan, wy, sm, phi - 0.5, t);
   L.save(); L.translate(0, 0);
   ba_lizard(xOrig + BA_HIPV * phi * sm - pan, wy, sm, t, { pose: 'run', ph: phi, spd: 0.3, seed: 2, rim: 1, noEye: false });
   L.restore();
   // surface : liseré clair, rides vues par la tranche, gerbe, jet de l'effondrement
   const sx = xOrig + f05.ax * sm - pan;
   R(0, wy - 1, LW, 1, CY[4]); R(0, wy, LW, 1, WH[3]); for (let x = 0; x < LW; x += 3) if (ba_h(x, 9) < 0.5) px(x + ((t * 20) | 0) % 3, wy + 1, CY[3]);
-  ba_slap(sx + pan, wy, 0.0 + sh.t0 + (sh.t1 - sh.t0) * 0.86 * 0.075 / 0.65 * 0.5, t, { size: 2.2, dir: 1, cam: pan, seed: 5, sq: 0.07, layer: 'over' });
+  if (phi > 0.05) ba_slap(sx + pan, wy, 0, (phi - 0.05) * 1.5, { size: 2.2, dir: 1, cam: pan, seed: 5, sq: 0.07, layer: 'over' });
   vignette(0.45, 120, 330, LW / 2, LH / 2 - 20, '5,10,24');
 }
 let ba_tmpCv = null;
@@ -416,8 +417,7 @@ function ba_c3At(t) {
     const cyc = 0.5 - 0.5 * Math.cos(climbT * TAU * 2.1), settle = sm(prog(climbT, L3.tClimb * 0.82, L3.tClimb * 1.1));
     if (climbT < L3.tClimb * 0.9) { pose = 'crouch'; pose2 = 'leap'; mix = cyc * (1 - e * 0.6); } else { pose = 'crouch'; pose2 = 'look'; mix = settle; }
   }
-  const scr = lerp(150, 100, sm(prog(t, L3.tJ - 0.05, L3.tEnd)));
-  const cam = hip[0] - scr + (t >= L3.tJ ? 0 : 0);
+  const camJ = L3.hipJ - 150, camA = t < L3.tJ ? hip[0] - 150 : camJ + K.v * 0.15 * (1 - Math.exp(-(t - L3.tJ) / 0.15)), cam = t < L3.tJ ? camA : Math.max(camA, hip[0] - 190), scr = hip[0] - cam;
   return { hip, pose, pose2, mix, rot, ph, air, onLog, cam, scr, climbT };
 }
 function ba_c3Cam(t) { const L3 = ba_L3, K = BA_L3, st = ba_c3At(t); return st.cam; }
@@ -441,7 +441,7 @@ function ba_c3Draw(u, t, sh, o = {}) {
   // caïman : approche en rase-eau (yeux et narines), puis jaillit
   const tE = L3.tP - 0.1, rise = t < tE ? 0.04 + 0.04 * Math.sin(t * 4) : t < L3.tP + 0.2 ? lerp(0.08, 1, eob(prog(t, tE, L3.tP + 0.18))) : 1 - sm(prog(t, L3.tP + 0.62, L3.tP + 1.15));
   const lunge = eo(prog(t, tE, L3.tP + 0.32)), runLine = L3.x0 + K.v * (Math.min(t, tE) - L3.tR0);
-  const caiX = runLine - 130 + 14 * lunge - cam;
+  const caiX = runLine - 130 + (L3.xLb - 100 - (L3.x0 + K.v * (tE - L3.tR0) - 130)) * lunge - cam;
   const caiOpen = t < L3.tP ? 0 : t < L3.tP + 0.38 ? sm(prog(t, L3.tP, L3.tP + 0.22)) : 1 - eo(prog(t, L3.tP + 0.38, L3.tP + 0.5));
   if (t > L3.tR0 && caiX > -140) {
     if (t < L3.tP + 1.4) {

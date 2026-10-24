@@ -261,10 +261,11 @@ function ba_lizard(cx, cy, s, t, o = {}) {
   // 1. membres éloignés (plus sombres, derrière le corps)
   const drawLeg = (lg, CC, near) => {
     const kk = 0.6 + 0.4 * P.lk, mid1 = [lerp(lg.hip[0], lg.knee[0], 0.5), lerp(lg.hip[1], lg.knee[1], 0.5)], mid2 = [lerp(lg.knee[0], lg.ank[0], 0.5), lerp(lg.knee[1], lg.ank[1], 0.5)];
-    const lp = ba_poly(ba_limbPts([lg.hip, mid1, lg.knee, mid2, lg.ank], [10.8 * kk, 9.4 * kk, 6.4 * kk, 4.6, 3.2], 4));
-    c.fillStyle = CC.base; c.fill(lp);
-    if (near) { ink(lp, CC.line, 0.55); dk(lp, CC.shade, 1.6); dk(lp, CC.dark, 0.8); lt(lp, CC.lit, 1.4); rimL(lp, 0.9); } else { dk(lp, CC.shade, 1.4); }
-    const hb = ba_poly(ba_elp(lg.hip[0] + 0.5, lg.hip[1] + 0.4, 6.4 * kk, 5.8 * kk, P.ta, 16)); c.fillStyle = CC.base; c.fill(hb);
+    const lpts = ba_limbPts([lg.hip, mid1, lg.knee, mid2, lg.ank], [9.4 * kk, 8.2 * kk, 5.8 * kk, 4.3, 3.0], 4), kn = ba_elp(lg.knee[0], lg.knee[1], 2.9 * kk + 0.5, 2.9 * kk + 0.5, 0, 12), hp_ = ba_elp(lg.hip[0] + 0.5, lg.hip[1] + 0.4, 6.4 * kk, 5.8 * kk, P.ta, 16);
+    const parts = [ba_poly(lpts), ba_poly(kn), ba_poly(hp_)], all = ba_union(lpts, kn, hp_);
+    if (near) for (const pp of parts.slice(0, 2)) ink(pp, CC.line, 0.6);
+    c.fillStyle = CC.base; for (const pp of parts) c.fill(pp);
+    if (near) { dk(all, CC.shade, 1.6); dk(all, CC.dark, 0.8); lt(all, CC.lit, 1.4); rimL(all, 0.9); } else { dk(all, CC.shade, 1.4); }
     ba_foot(c, CC, lg.ank[0], lg.ank[1], lg.th, lg.sp, { fs: 1 });
   };
   const drawArm = (ar, CC, near) => {
@@ -455,28 +456,29 @@ function ba_footWater(phi) {
   const a = ba_runLeg(phi), px_ = a.x + BA_HIPV * phi, tipX = px_ + Math.cos(a.th) * 15, tipY = a.y + Math.sin(a.th) * 15 * 0.9;
   return { ax: px_, ay: a.y, th: a.th, sp: a.sp, tipX, tipY, phi };
 }
-// poche d'air et eau autour du pied ; X0 = abscisse du pied à φ = 0,05 (écran), wy = surface, sm = échelle, p 0..1 = progression du pas (0 : le pied arrive, 0,7 : il est sorti, 1 : le jet et les rides)
+// poche d'air et eau autour du pied ; X0 = abscisse du pied à φ = 0,05 (écran), wy = surface, sm = échelle, phi = phase de la patte (0,05 : claque ; 0,5 : le pied sort ; 0,6 à 0,74 : la poche se referme, jet et rides)
 function ba_pocketGeom(sm, phi) {
   let D = 0; for (let i = 0; i <= 24; i++) { const f = ba_footWater(Math.min(phi, 0.52) * i / 24); D = Math.max(D, f.tipY, f.ay + 4); }
   return Math.max(0, D) * sm + 12;
 }
-function ba_pocket(X0, wy, sm, p, t, o = {}) {
-  const phi = lerp(0.0, 0.74, p); if (phi < 0.045) return;
+function ba_pocket(X0, wy, sm, phi, t, o = {}) {
+  if (phi < 0.045) return;
   const open = sm01(prog(phi, 0.05, 0.3)), pinch = sm01(prog(phi, 0.5, 0.64)), vanish = sm01(prog(phi, 0.6, 0.72));
   const D = ba_pocketGeom(sm, phi) * (0.4 + 0.6 * open) * (1 - 0.35 * vanish), Wm = 14 * sm * (0.5 + 0.5 * open) * (1 - 0.85 * vanish), pd = D * 0.92 * pinch, N = 30, cx0 = X0 + 3 - 0.0 * D;
   const L_ = [], R_ = [];
   for (let i = 0; i <= N; i++) {
     const d = i / N * D, base = Math.sqrt(Math.max(0, 1 - Math.pow(d / D, 1.8))), top = d < pd ? 0 : sm01(clamp((d - pd) / (0.3 * D + 3))), w2 = Wm * base * (pinch > 0 ? top : 1), ctr = cx0 - 0.16 * d;
+    if (pinch > 0 && d < pd) continue;
     L_.push([ctr - w2, wy + d]); R_.push([ctr + w2, wy + d]);
   }
-  if (Wm > 1.5) {
+  if (Wm > 1.5 && L_.length > 3) {
     const path = new Path2D(); path.moveTo(L_[0][0], L_[0][1]); L_.forEach(q => path.lineTo(q[0], q[1])); R_.slice().reverse().forEach(q => path.lineTo(q[0], q[1])); path.closePath();
     L.save(); L.setTransform(1, 0, 0, 1, 0, 0);
     L.lineJoin = 'round'; L.lineWidth = 5; L.strokeStyle = CY[0]; L.stroke(path); L.lineWidth = 2.5; L.strokeStyle = CY[1]; L.stroke(path);
     const gr = L.createLinearGradient(0, wy, 0, wy + D); gr.addColorStop(0, '#e8f8fc'); gr.addColorStop(0.45, '#b0f0f8'); gr.addColorStop(1, '#70d0e4'); L.fillStyle = gr; L.fill(path);
     L.save(); L.clip(path); L.fillStyle = 'rgba(31,122,150,0.3)'; L.fillRect(X0 - 120, wy + D * 0.6, 240, D); L.restore();
-    L.lineWidth = 1.4; L.strokeStyle = WH[3]; L.beginPath(); let st = false; for (let i = 2; i < N - 2; i++) { const q = L_[i]; if (R_[i][0] - q[0] < 3) continue; st ? L.lineTo(q[0] + 2.5, q[1]) : L.moveTo(q[0] + 2.5, q[1]); st = true; } L.stroke();
-    L.lineWidth = 1; L.strokeStyle = CY[4]; L.beginPath(); st = false; for (let i = 2; i < N - 2; i++) { const q = R_[i]; if (q[0] - L_[i][0] < 3) continue; st ? L.lineTo(q[0] - 2.5, q[1]) : L.moveTo(q[0] - 2.5, q[1]); st = true; } L.stroke();
+    L.lineWidth = 1.4; L.strokeStyle = WH[3]; L.beginPath(); let st = false; for (let i = 2; i < L_.length - 2; i++) { const q = L_[i]; if (R_[i][0] - q[0] < 3) continue; st ? L.lineTo(q[0] + 2.5, q[1]) : L.moveTo(q[0] + 2.5, q[1]); st = true; } L.stroke();
+    L.lineWidth = 1; L.strokeStyle = CY[4]; L.beginPath(); st = false; for (let i = 2; i < L_.length - 2; i++) { const q = R_[i]; if (q[0] - L_[i][0] < 3) continue; st ? L.lineTo(q[0] - 2.5, q[1]) : L.moveTo(q[0] - 2.5, q[1]); st = true; } L.stroke();
     L.restore();
   }
   // bulles qui montent de la poche refermée
@@ -488,10 +490,107 @@ function ba_pocket(X0, wy, sm, p, t, o = {}) {
   // jet de l'effondrement et rides vues par la tranche
   const jet = prog(phi, 0.58, 0.74);
   if (jet > 0) {
-    const hh = Math.sin(Math.PI * Math.min(1, jet * 1.05)) * 17 * sm / 2.7, x = cx0 - 2, w = 4 * sm / 2.7;
+    const hh = Math.sin(Math.PI * Math.min(1, jet * 1.05)) * 24 * sm / 2.7, x = cx0 - 2, w = 6.5 * sm / 2.7;
     L.fillStyle = CY[3]; L.fillRect(Math.round(x - w / 2), Math.round(wy - hh), Math.round(w), Math.round(hh)); L.fillStyle = WH[3]; L.fillRect(Math.round(x - w / 2), Math.round(wy - hh), Math.max(1, Math.round(w * 0.45)), Math.round(hh));
     L.fillStyle = WH[3]; L.beginPath(); L.arc(x, wy - hh - 2, w * 0.7, 0, TAU); L.fill();
   }
   for (let k = 0; k < 3; k++) { const q = phi - 0.52 - k * 0.07; if (q <= 0) continue; const hw = 8 * sm / 2.7 + q * 190 * sm / 2.7, fade = clamp(1 - q * 2.6); for (let j = -1; j <= 1; j += 2) for (let n = 0; n < 6; n++) { const xx = cx0 + j * (hw - n * 3 * sm / 2.7); if (k_bay(Math.round(xx) + n, k) < fade) px(xx, wy + 1 + (k & 1), n === 0 ? WH[3] : CY[4]); } }
 }
 const sm01 = v => v * v * (3 - 2 * v);
+
+// ───────────────────────── le prédateur du ciel : l'ombre d'un oiseau de proie sur l'eau ─────────────────────────
+// (x, y) = centre de l'ombre sur la surface (écran) ; s = envergure/80 ; dir ±1 (cap) ; squash : écrasement vertical (perspective) ; a : opacité ; rot : cap oblique ; flap : 0..1 (battement)
+function ba_birdShadowPts(flap, t) {
+  const fl = Math.sin(t * 2.2) * 0.12 + flap * 0.4, k = fl * 4;
+  return [[9, 3], [7, 10], [3, 19], [-2, 28], [-8, 36 + k * 0.5], [-13, 42 + k], [-16, 44.5 + k], [-17, 39 + k], [-21, 43 + k], [-21.5, 37 + k], [-25, 40 + k], [-24.5, 34 + k * 0.5], [-22, 28], [-19, 18], [-15, 9], [-12, 3.5]];
+}
+function ba_birdShadow(x, y, t, o = {}) {
+  const s = o.s ?? 1.6, dir = o.dir ?? 1, sq = o.squash ?? 0.5, a = o.a ?? 0.46, ph = o.flap ?? 0.0, rot = o.rot ?? 0.3, W = ba_birdShadowPts(ph, t);
+  const draw = (k, al) => {
+    L.save(); L.translate(x, y); L.scale(1, sq); L.rotate(rot * dir); L.scale(dir * s * k, s * k); L.fillStyle = `rgba(5,4,15,${al})`;
+    for (const m of [1, -1]) {
+      L.beginPath(); L.moveTo(10, 0); for (const q of m > 0 ? W : W.slice().reverse()) L.lineTo(q[0], q[1] * m); L.lineTo(-12, 0); L.closePath(); L.fill();
+    }
+    L.beginPath(); L.ellipse(0, 0, 12, 3.8, 0, 0, TAU); L.fill();                                     // corps
+    L.beginPath(); L.moveTo(-10, -3.6); L.lineTo(-26, -8); L.quadraticCurveTo(-33, 0, -26, 8); L.lineTo(-10, 3.6); L.fill();     // queue en éventail
+    L.beginPath(); L.arc(13.5, 0, 2.8, 0, TAU); L.fill(); L.beginPath(); L.moveTo(15.5, -1.7); L.lineTo(21, 0.6); L.lineTo(15.5, 2.2); L.fill();   // tête et bec
+    L.restore();
+  };
+  draw(1.07, a * 0.45); draw(1, a);
+}
+
+// ───────────────────────── le caïman ─────────────────────────
+// (x, wy) = point où le cou entre dans l'eau (écran) ; s = échelle (1 → tête de 75 px) ; o : rise 0..1 (0 : seules les arcades des yeux dépassent), pitch (rad, négatif = museau levé), open 0..1 (gueule), flip, dim
+function ba_caiman(x, wy, s, t, o = {}) {
+  const fl = o.flip ? -1 : 1, rise = clamp(o.rise ?? 1), pitch = o.pitch ?? -0.42, op = clamp(o.open ?? 0);
+  const col = { top: LM[1], base: LM[2], lit: LM[3], dark: GR[0], deep: NI[0], band: GR[1], belly: SK[4], bellyS: SK[3], tooth: WH[3] };
+  const pitchE = lerp(-0.03, pitch, clamp(rise * 2)), J = [28 * s * rise + 4, lerp(15, -34, rise) * s];          // jonction crâne-cou (relative au point d'entrée du cou)
+  const cp = Math.cos(pitchE), sp = Math.sin(pitchE), H = (px_, py_) => [J[0] + (px_ * cp - py_ * sp) * s, J[1] + (px_ * sp + py_ * cp) * s];
+  ba_BB = [Math.max(0, Math.floor(x - 60 * s - 40)), Math.max(0, Math.floor(wy - 120 * s - 20)), Math.min(LW, Math.ceil(x + 110 * s + 20)), Math.min(LH, Math.ceil(wy + 40))];
+  if (fl < 0) { ba_BB[0] = Math.max(0, Math.floor(x - 110 * s - 20)); ba_BB[2] = Math.min(LW, Math.ceil(x + 60 * s + 40)); }
+  ba_layerBegin();
+  const c = Y; c.setTransform(fl, 0, 0, 1, x, wy);
+  // cou et dos : chaîne du crâne vers l'eau, bosses de la crête dorsale
+  const neckPts = [[J[0] - 2 * s, J[1] + 2 * s], [J[0] - 22 * s * rise - 10 * s, J[1] + 12 * s], [J[0] - 40 * s * rise - 20 * s, J[1] + 26 * s + 6 * s * (1 - rise)], [-30 * s, 14 * s], [-48 * s, 24 * s]];
+  const nk = ba_poly(ba_limbPts(neckPts, [26 * s, 27 * s, 30 * s, 32 * s, 34 * s], 4)); c.fillStyle = col.base; c.fill(nk);
+  ba_cres(c, nk, col.lit, -1.4, -2.2, 1); ba_cres(c, nk, col.dark, 1.5, 3.0, 1);
+  c.fillStyle = col.dark; const cr_ = ba_cr(neckPts, 4); for (let i = 0; i < 8; i++) { const q = cr_[i * 3 + 1]; if (!q) continue; c.beginPath(); c.moveTo(q[0] - 3 * s, q[1] - 11 * s); c.lineTo(q[0], q[1] - 17 * s); c.lineTo(q[0] + 3 * s, q[1] - 10 * s); c.closePath(); c.fill(); }
+  // tête : mâchoire supérieure et inférieure (rotée autour de la charnière)
+  c.save(); c.translate(J[0], J[1]); c.rotate(pitchE); c.scale(s, s);
+  const UP = [[-10, -10], [-3, -16], [8, -18], [16, -16], [24, -13], [34, -11], [46, -9.5], [56, -9], [64, -9], [68, -6.5], [71, -3.5], [70, 0.5], [66, 3], [50, 4.2], [30, 5], [10, 6.5], [-8, 8]];
+  const LOW = [[-6, 7], [10, 6.8], [30, 5.2], [50, 4.6], [65, 3.6], [68, 6], [66, 9.5], [50, 11.5], [30, 12.5], [8, 14], [-6, 13]];
+  const hinge = [0, 8], ca = Math.cos(op * 0.62), sa = Math.sin(op * 0.62);
+  const lowR = LOW.map(([px_, py_]) => { const dx = px_ - hinge[0], dy = py_ - hinge[1]; return [hinge[0] + dx * ca - dy * sa, hinge[1] + dx * sa + dy * ca]; });
+  if (op > 0.05) {                                                                      // intérieur de la gueule
+    const inner = ba_poly([[2, 6.5], [66, 3.2], lowR[4], lowR[3], lowR[2], lowR[1], [4, 8]]); c.fillStyle = RD[1]; c.fill(inner);
+    c.fillStyle = RD[3]; c.beginPath(); c.ellipse(34, 6.8 + op * 5, 22, 2 + op * 2.5, 0.08 * op, 0, TAU); c.fill();
+    c.fillStyle = RD[0]; c.beginPath(); c.ellipse(6, 8, 6, 3, 0, 0, TAU); c.fill();
+  }
+  const lp = ba_poly(ba_crClosed(lowR, 2)); c.fillStyle = col.belly; c.fill(lp); ba_cres(c, lp, col.bellyS, 0, -2.2, 1); c.lineWidth = 0.8; c.strokeStyle = col.deep; c.lineJoin = 'round'; c.stroke(lp);
+  c.fillStyle = col.tooth;                                                                // dents inférieures (vers le haut)
+  for (let i = 0; i < 10; i++) { const f = i / 9, px_ = 14 + f * 50, py_ = lerp(6.8, 3.6, f); const bx = hinge[0] + (px_ - hinge[0]) * ca - (py_ + 0.4 - hinge[1]) * sa, by = hinge[1] + (px_ - hinge[0]) * sa + (py_ + 0.4 - hinge[1]) * ca; c.beginPath(); c.moveTo(bx - 1.3, by); c.lineTo(bx, by - 3.6 - (i % 2) * 1.2); c.lineTo(bx + 1.3, by); c.closePath(); c.fill(); }
+  const up = ba_poly(ba_crClosed(UP, 2)); c.fillStyle = col.base; c.fill(up);
+  ba_cres(c, up, col.lit, -1.2, -2.4, 1); ba_cres(c, up, col.dark, 1.2, 2.2, 1);
+  c.lineWidth = 0.9; c.strokeStyle = col.deep; c.lineJoin = 'round'; c.stroke(up);
+  c.fillStyle = col.tooth;                                                                // dents supérieures (vers le bas), décalées
+  for (let i = 0; i < 11; i++) { const f = i / 10, bx = 12 + f * 53, by = lerp(6.6, 3.4, f); c.beginPath(); c.moveTo(bx - 1.4, by - 0.4); c.lineTo(bx, by + 3.8 + ((i + 1) % 2) * 1.2); c.lineTo(bx + 1.4, by - 0.4); c.closePath(); c.fill(); }
+  c.fillStyle = col.band; for (const bx of [4, 20, 36, 52]) { c.beginPath(); c.moveTo(bx, -17 + (bx > 30 ? 6 : 0)); c.lineTo(bx + 6, -10); c.lineTo(bx + 2, -8.5); c.lineTo(bx - 4, -12); c.closePath(); c.fill(); }     // bandes sombres du museau
+  c.fillStyle = col.lit; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(20 + i * 8, -10.5 + i * 0.7, 0.9, 0, TAU); c.fill(); }                                                   // écailles claires
+  c.fillStyle = col.dark; c.beginPath(); c.ellipse(66.5, -5.2, 2.2, 1.8, 0, 0, TAU); c.fill();                                                                                   // narine
+  c.restore();
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, Math.round(wy) + 1, LW, LH); c.restore();        // la partie sous l'eau disparaît
+  ba_layerEnd({ outline: '#05040f' });
+  // œil : or, pupille verticale, arcade
+  const e = H(18, -13.4), ex = Math.round(x + fl * e[0]), ey = Math.round(wy + e[1]), er = Math.max(2, Math.round(3 * s));
+  if (ey < wy) { disc(ex, ey, er + 1, '#05040f'); disc(ex, ey, er, YE[2]); R(ex - 1, ey - er + 1, 2, er * 2 - 1, '#05040f'); px(ex - 1 * fl, ey - er + 1, WH[3]); R(ex - er, ey - er - 1, er * 2 + 1, 1, LM[1]); }
+  const ab = q => [x + fl * q[0], wy + q[1]];
+  return { J: ab(H(0, 0)), head: ab(H(40, -4)), mouth: ab(H(66, 3)), eye: [ex, ey] };
+}
+
+// ───────────────────────── icône du carnet : ICONES[1], 17 × 17 px ─────────────────────────
+// tête de basilic de profil (museau à droite) : plumet maille menthe à nervures et mouchetures turquoise, œil doré, bande claire de la lèvre ; contour sombre d'un pixel calculé
+const BA_ICOL = { c: GR[4], r: GR[2], t: CY[3], g: LM[4], G: LM[3], h: LM[5], w: LM[6], d: GR[3], D: GR[2], y: AM[8], o: AM[5], k: '#05040f', e: WH[3] };
+const BA_ICON = [
+  '.................',
+  '....ccccc........',
+  '...ccrcrcc.......',
+  '..ccrtcrcrc......',
+  '..crcrcrcctc.....',
+  '..ccrcrcrccc.....',
+  '...cccrcrcchg....',
+  '...hhhhhhhhhggg..',
+  '..ggggggggyyGgggg',
+  '..GGGGGGGGkoGGGGD',
+  '..GGdGGGGGGGeeeee',
+  '...dddGwwwwwwggg.',
+  '....dddddwwwwg...',
+  '.....dddddddd....',
+  '.....ddddddd.....',
+  '......ddddd......',
+  '.................',
+];
+ICONES[1] = function (cx, cy) {
+  const N = 17, g = BA_ICON, x0 = Math.round(cx) - 8, y0 = Math.round(cy) - 8, fillp = (x, y) => x >= 0 && y >= 0 && x < N && y < N && g[y][x] !== '.';
+  for (let y = -1; y <= N; y++) for (let x = -1; x <= N; x++) if (!fillp(x, y) && (fillp(x - 1, y) || fillp(x + 1, y) || fillp(x, y - 1) || fillp(x, y + 1))) R(x0 + x, y0 + y, 1, 1, '#05040f');
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const ch = g[y][x]; if (ch !== '.') R(x0 + x, y0 + y, 1, 1, BA_ICOL[ch]); }
+};

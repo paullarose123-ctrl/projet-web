@@ -167,6 +167,11 @@ function sb_finish(box, st) {
   return { x0, y0, w, h, occ, bbox: [x0, y0, w, h], mask: (qx, qy) => { const i = Math.round(qx) - x0, j = Math.round(qy) - y0; return i >= 0 && j >= 0 && i < w && j < h && occ[j * w + i] > 0; } };
 }
 
+// calque de dessin remis à zéro (aucun réglage de trait ne survit d'une image à l'autre : render(f) reste une fonction pure du temps)
+function sb_layer() {
+  layerBegin(); const c = Y;
+  c.lineCap = 'butt'; c.lineJoin = 'miter'; c.miterLimit = 10; c.lineWidth = 1; c.setLineDash([]); c.lineDashOffset = 0; c.shadowBlur = 0; c.fillStyle = '#000000'; c.strokeStyle = '#000000'; c.textAlign = 'left';
+}
 // ombre au sol (ovale à bord doux)
 function sb_shadow(x, y, rx, ry, a = 0.36, col = '5,4,15') {
   if (a <= 0) return;
@@ -248,7 +253,7 @@ function sb_beetle(cx, cy, s, t, o = {}) {
   const sil = o.sil || null;
   // ombre au sol
   sb_shadow(cx - flip * s * 3, cy + 0.6 * s, 38 * s, 3.8 * s, (o.shadow ?? 0.36) * (sil ? 0 : 1));
-  layerBegin(); const c = Y; c.setTransform(flip * s, 0, 0, s, cx, cy);
+  sb_layer(); const c = Y; c.setTransform(flip * s, 0, 0, s, cx, cy);
   const cw = 1.6 / s;                                                              // contour interne d'un pixel
   // ── une partie lisse à trois tons clairs et deux sombres (croissants)
   const part = (path, tones, wl = [2.2, 1.0], ws = [2.6, 1.1]) => {
@@ -445,7 +450,7 @@ function sb_toad(cx, cy, s, t, o = {}) {
   const liftY = hop >= 0 ? sb_toadHopY(hop, o.hopH ?? 24) : 0, hk = clamp(-liftY / 60);
   const shA = (o.shadow ?? 0.34) * (sil ? 0 : 1);
   if (shA > 0) sb_shadow(cx - flip * s * 6, cy + 0.8 * s, (50 + 6 * lunge) * s * (1 - hk * 0.2), 4.6 * s * (1 - hk * 0.2), shA * (1 - hk * 0.5));
-  layerBegin(); const c = Y; c.setTransform(flip * s, 0, 0, s, cx, cy + liftY * s);
+  sb_layer(); const c = Y; c.setTransform(flip * s, 0, 0, s, cx, cy + liftY * s);
   const cw = 1.7 / s, minW = 1.5 / s;
   const part = (path, tones, wl = [3, 1.3], ws = [3.4, 1.4]) => { sb_fill(c, path, tones[0]); sb_cres(c, path, ll, wl[0], tones[1]); sb_cres(c, path, ll, wl[1], tones[2]); sb_cres(c, path, ll, ws[0], tones[3], true); sb_cres(c, path, ll, ws[1], tones[4], true); };
   const SKN = [C.p4, C.p5, C.c2, C.p3, C.p2], SKF = [C.p3, C.p4, C.p5, C.p2, C.p1];
@@ -752,7 +757,7 @@ function sb_cutaway(t, p, o = {}) {
   { const g = 12 * z, ox = ((scx - fx * z) % g + g) % g, oy = ((scy - fy * z) % g + g) % g; L.save(); L.fillStyle = 'rgba(88,120,204,0.16)';
     for (let x = ox; x < LW; x += g) L.fillRect(Math.round(x), 0, 1, LH); for (let y = oy; y < LH; y += g) L.fillRect(0, Math.round(y), LW, 1); L.restore(); }
   // ── PASSE 1 : corps, réservoirs, conduits, chambre
-  layerBegin(); const c = Y; c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
+  sb_layer(); const c = Y; c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
   const shell = sb_spline(sb_SHELL);
   c.fillStyle = DU[0]; c.fill(shell);
   { const r = rng(7); c.save(); c.clip(shell); for (let i = 0; i < 26; i++) { const x = 30 + r() * 210, y = 60 + r() * 230; c.globalAlpha = 0.55; sb_fill(c, sb_ell(x, y, 5 + r() * 9, 3 + r() * 6, r() * 3), DU[1]); } c.globalAlpha = 1;
@@ -830,7 +835,7 @@ function sb_cutaway(t, p, o = {}) {
   { const [gx, gy] = W(chx, chy), hh = clamp(heat), a = 0.55 * hh + 0.9 * flash;
     if (a > 0.02) { rgrad(gx, gy, 4, 120 * z * 0.8 + 30, [[0, flash > 0.3 ? 'rgba(255,255,230,1)' : 'rgba(255,214,120,1)'], [0.35, 'rgba(255,128,48,0.8)'], [1, 'rgba(255,60,40,0)']], Math.min(1, a), 'lighter'); } }
   // ── PASSE 2 : éclair, étoile de la réaction, étincelles
-  layerBegin(); c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
+  sb_layer(); c.setTransform(z, 0, 0, z, scx - fx * z, scy - fy * z);
   if (flash > 0.02) {
     const fr = Math.round(t * 30), bolt = []; const x0 = chx - 14 + sb_h(fr, 5) * 6, y0 = chy - cry + 6;
     for (let k = 0; k <= 8; k++) { const f = k / 8; bolt.push([lerp(x0, chx + 14, f) + (k % 2 ? 1 : -1) * (6 + 6 * sb_h(fr * 9 + k, 6)) * (k === 0 || k === 8 ? 0 : 1), lerp(y0, chy + cry - 6, f)]); }

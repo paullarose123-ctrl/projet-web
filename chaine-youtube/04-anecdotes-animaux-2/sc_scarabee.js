@@ -48,7 +48,7 @@ function sb_blades(t) {
     for (let k = 0; k <= 16; k++) { const f = k / 16, c = [x0 + (x1 - x0) * 0.25 + bend, lerp(y0, y1, 0.55)], p = bez([x0, y0], c, [x1 + sway, y1], f), w = w0 * Math.pow(1 - f, 0.85) + 0.4; pts.push([p, w]); }
     const left = [], right = [];
     for (let k = 0; k < pts.length; k++) { const a = pts[Math.max(0, k - 1)][0], b = pts[Math.min(pts.length - 1, k + 1)][0], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l, w = pts[k][1]; left.push([pts[k][0][0] - nx * w / 2, pts[k][0][1] - ny * w / 2]); right.push([pts[k][0][0] + nx * w / 2, pts[k][0][1] + ny * w / 2]); }
-    L.fillStyle = LM[0]; L.beginPath(); left.forEach((q, i) => i ? L.lineTo(q[0], q[1]) : L.moveTo(q[0], q[1])); right.reverse().forEach(q => L.lineTo(q[0], q[1])); L.closePath(); L.fill();
+    L.lineCap = 'butt'; L.lineJoin = 'round'; L.fillStyle = LM[0]; L.beginPath(); left.forEach((q, i) => i ? L.lineTo(q[0], q[1]) : L.moveTo(q[0], q[1])); right.reverse().forEach(q => L.lineTo(q[0], q[1])); L.closePath(); L.fill();
     L.strokeStyle = AM[8]; L.globalAlpha = 0.8; L.lineWidth = 1; L.beginPath(); right.forEach((q, i) => i ? L.lineTo(q[0] + 0.5, q[1]) : L.moveTo(q[0] + 0.5, q[1])); L.stroke(); L.globalAlpha = 1;
     L.strokeStyle = LM[2]; L.globalAlpha = 0.7; L.beginPath(); left.slice(0, 11).forEach((q, i) => i ? L.lineTo(q[0] + 2, q[1]) : L.moveTo(q[0] + 2, q[1])); L.stroke(); L.globalAlpha = 1;
   }

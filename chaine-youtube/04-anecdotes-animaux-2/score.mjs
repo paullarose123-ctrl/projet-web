@@ -511,6 +511,13 @@ const lastEv = (types, a, b) => { let r = null; for (const e of EVENTS) if (type
 const beatsOf = (a, b, bpm) => { const r = []; let t = a; while (t < b - 1e-6) { r.push(t); t += 60 / (typeof bpm === 'function' ? bpm(t) : bpm); } return r; };
 const T_LOGO = at('logo');                               // seul événement obligatoire : le son de marque
 const rise = (u, k = 1.6) => Math.pow(clamp(u), k);
+// grille de doubles croches d'une course : calée sur la cadence réelle des événements `type` (pas qui claquent) entre a et b si on en trouve au moins 6 (médiane des écarts de 0,08 à 0,25 s,
+// phase du premier pas régulier), sinon sur un tempo `bpm` (4 doubles croches par temps) ; renvoie les dates de a à b
+function runGrid(type, a, b, bpm) {
+  const ts = EVENTS.filter(e => e.type === type && e.t >= a - 0.3 && e.t < b).map(e => e.t), df = []; for (let i = 1; i < ts.length; i++) { const d = ts[i] - ts[i - 1]; if (d > 0.08 && d < 0.25) df.push(d); }
+  let ds = 60 / bpm / 4, anchor = a, src = 'tempo'; if (ts.length >= 6 && df.length >= 5) { df.sort((x, y) => x - y); ds = df[Math.floor(df.length / 2)]; const i0 = ts.findIndex((t, i) => i + 1 < ts.length && Math.abs(ts[i + 1] - t - ds) < 0.015); anchor = ts[Math.max(0, i0)]; src = 'pas'; }
+  const out = []; for (let k = Math.ceil((a - anchor) / ds - 1e-6); anchor + k * ds < b; k++) out.push({ t: anchor + k * ds, n: k }); out.ds = ds; out.src = src; return out;
+}
 
 function musIntro() {                                    // INTRO : curieuse, cinématographique (« comme dans un film ») : cordes pincées et verre, une petite montée ; ré dorien
   rnd = mkRnd(101); B = BUS.music; const [, s1] = SEG.intro, F = lastW('i1'), w = (x, k) => wt('i1', x, k), tTell = w('tellement'), tRise = F.t0 - 0.3;
@@ -533,7 +540,9 @@ function musSca() {                                      // SCARABÉE : sous-boi
   const tip = (t, g = 1, pan = 0) => [[0, 0], [0.15, 1], [0.30, 3], [0.52, 1], [0.67, 5]].forEach(([d, i]) => marimba(t + d, Ep(i), { gain: 0.046 * g, tau: 0.22, pan: pan + 0.1 * i }));      // le thème malicieux (sur la pointe des pieds)
   // b1 : « Tu savais qu'un petit scarabée pouvait projeter du liquide à 100 degrés ? » : sparse, puis le thermomètre monte
   pad(s0 - 0.1, L1.t0 - s0 - 0.15, ['E2', 'B2', 'D3', 'G3'], { gain: 0.036, att: 0.9, rel: 0.6, bright: 0.12 });
-  pizz(b1.t0 + 0.02, 'E2', { gain: 0.1, t60: 0.7 }); pizz(w1('pouvait'), 'B2', { gain: 0.09, t60: 0.6 }); pizz(w1('projeter'), 'E2', { gain: 0.08, t60: 0.6 });
+  { const stp = EVENTS.filter(e => e.type === 'step' && e.t >= b1.t0 - 0.2 && e.t < L1.t0 - 0.12 && !inZone(e.t)).map(e => e.t);      // le scarabée marche : une corde pincée grave à chaque pas visible (E, B, G, B…), sinon trois notes sur les mots
+    if (stp.length >= 3) stp.forEach((t, k) => pizz(t, ['E2', 'B2', 'G2', 'B2'][k % 4], { gain: 0.1, t60: 0.6 }));
+    else { pizz(b1.t0 + 0.02, 'E2', { gain: 0.1, t60: 0.7 }); pizz(w1('pouvait'), 'B2', { gain: 0.09, t60: 0.6 }); pizz(w1('projeter'), 'E2', { gain: 0.08, t60: 0.6 }); } }
   tip(w1('petit'), 1, -0.3);
   { const tLiq = w1('liquide'), t100 = w1(['100', 'cent']); for (let k = 0; k < 6; k++) marimba(tLiq + (t100 - 0.05 - tLiq) * k / 5, Ep(k), { gain: 0.036 + 0.008 * k, tau: 0.3, pan: -0.2 + 0.08 * k }); glass(t100 + 0.02, 'E6', { gain: 0.04, tau: 2.2, pan: 0.2 }); }
   marimba(L1.t1 + 0.08, 'B4', { gain: 0.04, tau: 0.3 }); marimba(L1.t1 + 0.2, 'E5', { gain: 0.045, tau: 0.5, pan: 0.2 });
@@ -544,7 +553,8 @@ function musSca() {                                      // SCARABÉE : sous-boi
   // b3 : le prédateur s'approche (pas lourds, demi-ton qui gronde), puis le mélange : deux lignes qui se rejoignent, roulement qui accélère, silence sur « explosion », claquement sec
   const tPred = w3('prédateur'), tMel = w3('mélange'), tAbd = w3('abdomen'), tExp = L3.t0, tEnd = tExp - 0.14;
   pad(b3.t0 - 0.05, tMel - b3.t0 + 0.1, ['E2', 'F2', 'B2', 'C#3'], { gain: 0.032, att: 0.5, rel: 0.4, bright: 0.05 });
-  { const g = grid(b3.t0 + 0.05, tMel - 0.1, 0.5); for (let k = 0; k < g.n; k++) { bassPluck(g.t(k), k % 2 ? 'F2' : 'E2', { gain: 0.11, t60: 0.7 }); if (k) wood(g.t(k) - g.d / 2, 0.22, 900, 0.3); } }
+  { const g = grid(b3.t0 + 0.05, tMel - 0.1, 0.5); for (let k = 0; k < g.n; k++) { bassPluck(g.t(k), k % 2 ? 'F2' : 'E2', { gain: 0.11, t60: 0.7 }); if (k) wood(g.t(k) - g.d / 2, 0.22, 900, 0.3); }
+    const tHop = firstEv(['hop'], b3.t0, tMel - 0.1); if (tHop !== null) { bassPluck(tHop, 'E2', { gain: 0.14, t60: 0.8 }); dLow(tHop, 0.6); } }       // le prédateur atterrit (événement hop) : coup lourd
   { const n = 6, dt = (tAbd - tMel) / (n - 1); for (let k = 0; k < n; k++) { marimba(tMel + k * dt, Ep(k), { gain: 0.04 + 0.005 * k, tau: 0.3, pan: -0.55 }); if (k < n - 1) marimba(tMel + (k + 0.5) * dt, Ep(10 - k), { gain: 0.04 + 0.005 * k, tau: 0.3, pan: 0.55 }); } }
   pad(tMel, tEnd - tMel + 0.05, ['E2', 'B2', 'F3', 'Bb3'], { gain: 0.034, att: (tEnd - tMel) * 0.85, rel: 0.12, bright: 0.1 });
   { const a = tAbd + 0.05; let t = a, k = 0; while (t < tEnd) { const u = (t - a) / (tEnd - a); marimba(t, Ep(5 + Math.min(5, Math.floor(u * 6))), { gain: 0.03 + 0.04 * u, tau: 0.16, pan: 0.3 * Math.sin(k * 2.1) }); t += 1 / lerp(6, 22, rise(u, 1.4)); k++; } }
@@ -577,17 +587,22 @@ function musBas() {                                      // BASILIC : jungle ; t
   flute(w1('Amérique'), 0.55, 'E5', { gain: 0.04 }); flute(w1('centrale'), 0.75, 'F#5', { gain: 0.04 });
   [['lézard', 5], ['possède', 7], ['capacité', 8], ['folle', 10]].forEach(([wd, i], k) => kalimba(w1(wd), Ap(i), { gain: 0.05, decay: 1.1, pan: -0.3 + 0.2 * k }));
   { const a = tPeut - 0.05, b = L1.t0 - 0.12, bpm = t => lerp(100, 152, sm((t - a) / (b - a))); let k = 0; for (const t of beatsOf(a, b, bpm)) { const u = (t - a) / (b - a); dLow(t, 0.5 + 0.3 * u); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / bpm(t) / 4; if (tt > lim1 || (u < 0.5 && j % 2)) continue; kal16(tt, k * 4 + j, 0.036 + 0.02 * u); } if (u > 0.4 && t + 30 / bpm(t) <= lim1) dHi(t + 30 / bpm(t), 0.35 + 0.3 * u); k++; } }
-  // c2 : la course, 128 bpm ; « Jésus-Christ » : un instant de grâce (verre, la course se retient) ; elle s'arrête avant « rivières » ; petit roulement ensuite
+  // c2 : la course, doubles croches calées sur les pas qui claquent (≈ 6,6 / s) ; « Jésus-Christ » : un instant de grâce (verre, la course se retient) ; elle s'arrête avant « rivières » ; petit roulement ensuite
   const tJes = w2('Jésus-Christ'), tRiv = L2.t0, limC = tRiv - 0.12, hold = t => t > tJes - 0.04 && t < tJes + 0.55;
   pad(c2.t0 - 0.05, tRiv - c2.t0 - 0.05, ['A2', 'E3', 'A3', 'B3', 'E4'], { gain: 0.034, att: 0.4, rel: 0.5, bright: 0.2 });
-  { let k = 0; for (const t of beatsOf(c2.t0 - 0.02, limC, 128)) { const bt = 60 / 128; if (!hold(t)) { if (k % 4 === 0 || k % 4 === 2) dLow(t, k % 4 === 0 ? 0.6 : 0.45); else dMid(t, 0.38, { f: 215 + 18 * (k % 8 === 1) }); if (t + bt / 2 <= limC) shaker(t + bt / 2, { gain: 0.016, pan: -0.3 + 0.6 * (k % 2) }); } for (let j = 0; j < 4; j++) { const tt = t + j * bt / 4; if (tt > limC || hold(tt)) continue; kal16(tt, k * 4 + j, 0.04, 0); } k++; } }
+  { const G = runGrid('slap', c2.t0 - 0.05, limC, 100); for (const { t, n } of G) { if (hold(t)) continue; const m = ((n % 8) + 8) % 8;
+      if (m === 0) dLow(t, 0.6); else if (m === 4) dLow(t, 0.42); else if (m % 4 === 2) dMid(t, 0.3, { f: 215 + 18 * (m === 6) }); if (m % 4 === 2) shaker(t, { gain: 0.014, pan: -0.3 + 0.6 * (m === 2) });
+      kal16(t, ((n % 16) + 16) % 16, 0.04); } }
   [['E6', 0], ['A6', 0.09], ['C#7', 0.18], ['E7', 0.27]].forEach(([n, d], k) => glass(tJes + d, n, { gain: 0.03, tau: 1.8, pan: -0.3 + 0.2 * k })); flute(tJes + 0.05, 0.5, 'A5', { gain: 0.036 });
   { const t = L2.t1 + 0.07; dMid(t, 0.5, { f: 230 }); dMid(t + 0.12, 0.5, { f: 260 }); dLow(t + 0.24, 0.7); }
-  // c3 : l'ombre du rapace (danger, la mineure), puis la fuite à 150 bpm vers l'autre rive ; le mot final reste libre, soulagement ensuite
+  // c3 : l'ombre du rapace (danger, la mineure : course en retrait), puis la fuite (doubles croches une octave plus haut, tambours en croches) vers l'autre rive ; le mot final reste libre, soulagement ensuite
   const tEch = w3('échapper'), lim3 = L3.t0 - 0.1;
   pad(c3.t0 - 0.02, tEch - c3.t0 + 0.2, ['A2', 'E3', 'A3', 'C4'], { gain: 0.036, att: 0.15, rel: 0.3, bright: 0.1 });
-  dLow(c3.t0 + 0.02, 0.55); dLow(w3('ça'), 0.5); flute(w3('tout'), 0.45, 'C5', { gain: 0.032, vib: 0.012 });
-  { let k = 0; for (const t of beatsOf(tEch - 0.04, lim3, 150)) { const u = clamp((t - tEch) / (lim3 - tEch)); dLow(t, 0.6); if (t + 0.2 <= lim3) dMid(t + 60 / 300, 0.36, { f: 230 }); for (let j = 0; j < 4; j++) { const tt = t + j * 60 / 150 / 4; if (tt > lim3) continue; kal16(tt, k * 4 + j, 0.036 + 0.014 * u, 1); } k++; } }
+  flute(w3('tout'), 0.45, 'C5', { gain: 0.032, vib: 0.012 });
+  { const G = runGrid('slap', c3.t0 - 0.05, lim3, 105); for (const { t, n } of G) { const m = ((n % 8) + 8) % 8, u = clamp((t - tEch) / (lim3 - tEch)), flee = t >= tEch - 0.04;
+      if (!flee) { if (m === 0) dLow(t, 0.5); if (m % 2 === 0) kal16(t, ((n % 16) + 16) % 16, 0.026); continue; }
+      if (m % 2 === 0) dLow(t, 0.5 + 0.2 * u); else dMid(t, 0.34, { f: 230 }); if (m % 4 === 2) dHi(t, 0.3 + 0.3 * u);
+      kal16(t, ((n % 16) + 16) % 16, 0.034 + 0.016 * u, 1); } }
   { const t = L3.t1 + 0.07;                              // l'autre rive : ouf
     ['E6', 'C#6', 'A5', 'E5', 'C#5', 'A4'].forEach((n, k) => kalimba(t + 0.04 + 0.13 * k, n, { gain: 0.05 - 0.005 * k, decay: 1.2, pan: 0.25 - 0.08 * k })); glass(t, 'A5', { gain: 0.04, tau: 2.4 }); glass(t + 0.04, 'C#6', { gain: 0.03, tau: 2.4, pan: 0.2 }); glass(t + 0.08, 'E6', { gain: 0.03, tau: 2.4, pan: -0.2 });
     flute(t + 0.1, 0.5, 'A5', { gain: 0.036 }); dLow(t, 0.4); pad(t - 0.01, Math.max(0.2, s1 - t), ['A2', 'E3', 'A3', 'C#4'], { gain: 0.034, att: 0.2, rel: 0.5, bright: 0.2 }); }
@@ -780,13 +795,14 @@ const SFX = {
     const n = Math.round(6 + 12 * s); for (let k = 0; k < n; k++) { const t = x + 0.01 + (d + 0.08) * Math.pow(rnd(), 1.3); tone(t, 0.01, { f0: 1500 + 5500 * rnd(), gain: 0.06 * (0.3 + 0.7 * rnd()), att: 0.0004, rel: 0.004, dec: 0.002, pan: rr(-0.8, 0.8), send: 0.3 }); nzb(t, 0.004, { type: 'hp', f0: 4000, gain: 0.05, att: 0.0003, rel: 0.003, pan: rr(-0.8, 0.8) }); }
     if (s > 1.05) tone(x, 0.3, { f0: 95, f1: 48, curve: 0.55, gain: 0.2 * (s - 0.9), att: 0.002, rel: 0.08, dec: 0.09, harm: [1, 0.4], send: 0.2 });
     return 0.5 + 0.5 * clamp((s - 0.5) / 1.5); },
-  splash(x, v) {                                         // éclaboussure d'eau : « plouf » (bruit 350-1800 Hz qui retombe), bulle grave qui monte, gerbe de gouttelettes qui retombent ; v = taille (grave et longue si grande)
+  splash(x, v) {                                         // éclaboussure d'eau : « plouf » (bruit 350-1800 Hz qui retombe), bulle grave qui monte, gerbe de gouttelettes qui retombent ; v = taille (grave, longue et plus forte si grande)
     const s = clamp(v, 0.4, 2.2), f = 1 / Math.pow(s, 0.35);
     nzb(x, 0.04 + 0.05 * s, { f0: 1800 * f, f1: 500 * f, q: 0.8, gain: 0.25, att: 0.002, rel: 0.03, dec: 0.02 + 0.015 * s, send: 0.3 });
     nzb(x + 0.005, 0.12 + 0.18 * s, { type: 'lp', f0: 1400 * f, f1: 250, gain: 0.2, att: 0.004, rel: 0.09, dec: 0.07 + 0.05 * s, send: 0.3 });
     tone(x + 0.012, 0.18 + 0.12 * s, { f0: 140 * f, f1: 430 * f, curve: 0.5, gain: 0.1, att: 0.003, rel: 0.04, dec: 0.05 + 0.03 * s, harm: [1, 0.2], send: 0.4 });
     nzb(x, 0.1 + 0.22 * s, { type: 'hp', f0: 3500, gain: 0.05, att: 0.004, rel: 0.08, dec: 0.05 + 0.05 * s, send: 0.3 });
-    const n = Math.round(8 + 14 * s); for (let k = 0; k < n; k++) { const t = x + 0.04 + (0.15 + 0.45 * s) * Math.pow(rnd(), 1.2), fr = 1200 + 2300 * rnd(); tone(t, 0.05, { f0: fr, f1: fr * 0.6, gain: 0.04 * (0.4 + 0.6 * rnd()), att: 0.001, rel: 0.012, dec: 0.012, pan: rr(-0.7, 0.7), send: 0.35 }); } },
+    const n = Math.round(8 + 14 * s); for (let k = 0; k < n; k++) { const t = x + 0.04 + (0.15 + 0.45 * s) * Math.pow(rnd(), 1.2), fr = 1200 + 2300 * rnd(); tone(t, 0.05, { f0: fr, f1: fr * 0.6, gain: 0.04 * (0.4 + 0.6 * rnd()), att: 0.001, rel: 0.012, dec: 0.012, pan: rr(-0.7, 0.7), send: 0.35 }); 
+    return 0.55 + 0.45 * clamp((s - 0.4) / 1.8); },
   slap(x) {                                              // pied qui claque l'eau : « plac » bref (claquement 900-1500 Hz, petit « bloc » grave, quelques gouttes)
     nzb(x, 0.03, { f0: 1500, f1: 900, q: 1.1, gain: 0.25, att: 0.0008, rel: 0.02, dec: 0.01, pan: rr(-0.2, 0.2), send: 0.2 });
     tone(x, 0.06, { f0: 520, f1: 240, curve: 0.5, gain: 0.1, att: 0.001, rel: 0.02, dec: 0.02, harm: [1, 0.25], send: 0.25 });
