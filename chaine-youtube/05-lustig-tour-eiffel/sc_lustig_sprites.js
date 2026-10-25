@@ -516,7 +516,6 @@ function lu_hull(pts) {                                            // enveloppe 
   for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
   lo.pop(); up.pop(); return lo.concat(up);
 }
-const lg_yaw = (D, sd) => (sd === 'L' ? D.P.legL : D.P.legR).yawF * 0;
 function lu_drawLeg(D, sd) {
   const { c, K, sp } = D, M = sp.mats, W = sp.leg;
   // chaussure
@@ -532,7 +531,7 @@ function lu_drawLeg(D, sd) {
   lu_part(D, leg, M.jacket, [2.0, 0.9], [2.6, 1.1]);
   lu_edge(D, leg, M.jacket[4], 1);
   // pli du pantalon : ligne claire sur l'avant de la jambe
-  { const sn = Math.sin(D.P.yaw + (lg_yaw(D, sd))), r1 = W.w[0] * 0.5, dx = sn * r1 * 0.55; if (Math.abs(sn) < 0.93) lu_stroke(c, [[A[0] + dx, A[1] + 6], [B[0] + dx * 0.8, B[1]], [C[0] + dx * 0.6, C[1] - 4]], D.cw * 0.9, M.jacket[2]); }
+  { const sn = Math.sin(D.P.yaw), r1 = W.w[0] * 0.5, dx = sn * r1 * 0.55; if (Math.abs(sn) < 0.93) lu_stroke(c, [[A[0] + dx, A[1] + 6], [B[0] + dx * 0.8, B[1]], [C[0] + dx * 0.6, C[1] - 4]], D.cw * 0.9, M.jacket[2]); }
   // revers : fine ligne sombre en bas du pantalon
   const dd = lu_dir2(B, C), nx = -dd[1], ny = dd[0], w2 = W.cuff / 2;
   lu_line(c, [[C[0] - nx * w2, C[1] - ny * w2], [C[0] + nx * w2, C[1] + ny * w2]], D.cw * 1.1, M.jacket[4]);
