@@ -19,14 +19,14 @@
         (cx, cy) = point au sol sous le bassin (entre les pieds) ; avec o.crop : point de la taille / de la poitrine (voir o.crop) ; s = échelle (1 : 176 px) ; t = temps en secondes.
    lu_marchand(cx, cy, s, t, o)   André Poisson : rond, cinquantaine, moustache en guidon, melon, costume brun un peu serré, gilet qui tire, cravate verte ; mêmes options et ancrages.
    lu_groupe(x, y, s, t, o)   les cinq autres marchands, en demi-corps derrière la table (rangée de fond : 3, rangée de devant : 2) : voir plus bas.
-   lu_hat(cx, cy, s, rot, o)   un chapeau seul (sur une table, par terre, en l'air) : voir plus bas.   lu_figure(cx, cy, s, t, o, fiche) : le moteur commun (fiches : lu_WHO).
+   lu_hat(cx, cy, s, rot, o)   un chapeau seul (sur une table, par terre, en l'air) : voir plus bas.   lu_figure(cx, cy, s, t, o, fiche) : le moteur commun ; fiches : lu_WHO.lustig, .marchand, .m1 … .m5 (les cinq marchands du groupe, utilisables seuls : lu_figure(cx, cy, s, t, o, lu_WHO.m3) avec les poses 'stand', 'walk', 'run', 'listen'… pour le marchand qui court au commissariat).
 
    POSES (o.pose ; défaut 'stand') — la plupart bouclent sur t ; les ACTIONS (marquées u) se jouent avec o.u = secondes depuis le début de l'action (sans o.u : action terminée) :
         Lustig :  'stand' (respire, déplace son poids, regard, clignements ; main gauche et droite ballantes)  · 'walk' (cycle de marche, o.ph, voir « marche »)
                   'read' (tient un journal devant lui avec la main droite, le regard court le long des colonnes ; o.both = les deux mains sur le journal ; le journal est dessiné par le plan)
                   'think' (main droite au menton, le bras gauche en travers du ventre)  · 'smile' (sourire plus net ; o.corner = sourire en coin, un sourcil plus haut ; main gauche au revers)
                   'dress' u (de face : ajuste la cravate, puis les deux mains au chapeau qu'il rajuste, puis sourire en coin ; ≈ 3,6 s ; mettre o.yaw = 0 pour le miroir)
-                  'whisper' u (se penche en avant, doigt sur les lèvres, regard en coin vers la droite)  · 'handshake' u (bras droit tendu vers l'avant, main ouverte pouce en haut ; o.pump 0..1 = secousses)
+                  'whisper' u (se penche en avant, doigt sur les lèvres, regard en coin vers la droite)  · 'handshake' u (bras droit tendu vers l'avant, main ouverte pouce en haut ; o.pump 0..1 = secousses ; o.reachY hauteur de la main au-dessus du sol à s = 1 (défaut 0,62 H) et o.reachZ portée : donner la MÊME reachY aux deux personnages pour que les mains se rejoignent, puis caler x sur handR)
                   'tipHat' u (salue du chapeau : la main prend le bord, le soulève, hochement de tête, sourire, repose ; ≈ 1,7 s)  · 'run' (il s'enfuit : cycle de course, o.ph ; o.hat = 0..1,4 emporte le chapeau ; o.lookBack 0..1 tourne la tête vers l'arrière)
         Poisson : 'stand' · 'walk' · 'handshake' u · 'eager' u (penché en avant, yeux brillants et écarquillés, se frotte les mains ; o.rub 0..1)
                   'handover' u (tend une mallette à deux mains : le plan la dessine dans o.hold, la main R tient la poignée)  · 'shock' u (stupeur : tête en arrière, yeux écarquillés, mâchoire qui tombe,
@@ -1471,7 +1471,8 @@ lu_POSES.handshake = (sp, u, o, B, t) => {
   const k = clamp(lu_pk([[0, 0], [0.1, -0.05], [0.4, 1.08], [0.6, 1], [9, 1]], o.u !== undefined ? o.u : 9), -0.1, 1.2), pump = (o.pump || 0) * Math.sin(TAU * 2.4 * t) * 3.2;
   B.yaw = 1.2; B.lean = 0.07 * k; B.head.yaw = 0.1; B.gaze = [0.7, 0.0]; B.head.pitch = 0.03;
   B.face.smile = 0.5; B.face.smileAsym = 0.2; B.face.lid = 0.75; B.face.brow = 0.12;
-  lu_arm(B, 'R', { o: lerp(0.8, -7, k), u: lerp(-54, -16, k) + pump, f: lerp(2, 42, k), el: [0.5, -1, -0.1], hand: { curl: lerp(0.4, 0.15, k), thumb: lerp(0.15, 0.9, k), roll: 0, spread: 0.2 * k } });
+  const hy = (o.reachY ?? sp.H * 0.62) - sp.hipY - sp.shY, hz = o.reachZ ?? sp.H * 0.235;
+  lu_arm(B, 'R', { o: lerp(sp.armO, -7, k), u: lerp(-54, hy, k) + pump, f: lerp(2, hz, k), el: [0.5, -1, -0.1], hand: { curl: lerp(0.4, 0.15, k), thumb: lerp(0.15, 0.9, k), roll: 0, spread: 0.2 * k } });
   B.R.zb = 40;
   return B;
 };
