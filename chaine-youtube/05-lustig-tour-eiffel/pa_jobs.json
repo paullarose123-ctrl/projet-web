@@ -1,4 +1,0 @@
-[
- {"name":"cafe","o":{"env":"crepuscule"},"t":3,"out":"build/pa/cafe_night.png","scale":4},
- {"name":"toits","o":{"env":"matin","cam":260,"tower":[100,346,1.0]},"t":3,"out":"build/pa/toits_cam.png","scale":2}
-]
