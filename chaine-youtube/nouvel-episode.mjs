@@ -47,7 +47,7 @@ if (!intro || !fin || items.length < 1) { console.error('le script doit contenir
 if (new Set(items.map(i => i.cle)).size !== items.length) { console.error('deux animaux ont la même clé'); process.exit(1); }
 if (!titre) titre = 'Épisode';
 
-const phrases = t => t.replace(/\s+([!?:;»])/g, '$1').replace(/«\s+/g, '«').split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(Boolean);
+const phrases = t => t.replace(/\s+([!?:;»])/g, '$1').replace(/«\s+/g, '«').split(/(?<=[.!?])\s+|(?<=…)\s+(?=[A-ZÀ-ÝÉ])/).map(s => s.trim()).filter(Boolean);
 const PREF = 'abcdefghjklmnop';                                         // préfixes des phrases d'un animal (i = accroche, fin = question)
 const SCRIPT = [], GROUPES = [], seg = [];
 const ajoute = (id, pause, txt) => SCRIPT.push({ id, pause, txt });
