@@ -28,10 +28,10 @@ function fn_fuiteDraw(u, t, sh) {
   const env = 'matin', F = 362, cam = 0;
   pa_ciel(t, { env, h: 200, clouds: 4 });
   pa_rue(t, { env, F, layer: 'back', people: 3, pigeons: 2 });
-  const sc = 0.86, v = lu_RUN.speed * sc, x = 12 + v * u, y = F + 40;
+  const sc = 0.86, v = lu_RUN.speed * sc, x = -40 + v * u, y = F + 40;
   const hat = clamp((u - 0.12) / 0.9) * 1.3;
   for (const [k, off, sp] of [[0, 78, 0.92], [1, 124, 0.9]]) pa_agent(x - off, y - 4 + k * 3, 1.45, t, { mode: 'run', dir: 1, speed: v * sp, env, light: 1 });
-  lu_lustig(x, y, sc, t, { pose: 'run', ph: u / lu_RUN.T, yaw: 1.5, light: 1, hat: hat > 0.01 ? hat : true, lookBack: prog(u, 0.2, 0.7) });
+  if (x < LW + 30) lu_lustig(x, y, sc, t, { pose: 'run', ph: u / lu_RUN.T, yaw: 1.5, light: 1, hat: hat > 0.01 ? hat : true, lookBack: prog(u, 0.2, 0.7) });
   pa_rue(t, { env, F, layer: 'front' });
 }
 function fn_fuiteUi(u, t) { const A = fn_anch(), n = Math.floor(prog(t, A.echoue, A.echoue + 0.25) * 5); if (n > 0) tagBox(135, 120, 'ECHEC', 'red', n, true); }
