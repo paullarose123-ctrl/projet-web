@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ════════════════════════════════════════════════════════════════════════════════════════
-// 0. OUTILS : couleurs, hachage, tampon de pixels (PaBuf), caches
+// 0. OUTILS : couleurs, hachage, tampon de pixels (pa_Buf), caches
 // ════════════════════════════════════════════════════════════════════════════════════════
 const pa_u32M = {};
 function pa_u32(c) {                                                  // '#rrggbb' | [r,g,b] | nombre ABGR → entier ABGR opaque
@@ -27,7 +27,7 @@ function pa_n1(x, s = 0) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 
 const pa_lerpC = (a, b, f) => pa_mix(a, b, clamp(f));
 
 // tampon de pixels : on dessine dans un Uint32Array puis on le convertit en canevas (caches de sprites ; couleurs exactes, aucun lissage)
-class PaBuf {
+class pa_Buf {
   constructor(w, h) { this.w = Math.max(1, w | 0); this.h = Math.max(1, h | 0); this.c = mkCanvas(this.w, this.h); this.x = this.c.getContext('2d', { willReadFrequently: true }); this.id = this.x.createImageData(this.w, this.h); this.d = new Uint32Array(this.id.data.buffer); }
   px(x, y, c) { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.d[y * this.w + x] = pa_u32(c); }
   get(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h ? this.d[y * this.w + x] : 0; }
@@ -137,8 +137,8 @@ function pa_ramp(st, f, x, y, k = 2.2) {
   const s = (f - st[i][0]) / (st[i + 1][0] - st[i][0]), s2 = clamp((s - 0.5) * k + 0.5);
   return pa_bay(x, y) < s2 ? st[i + 1][1] : st[i][1];
 }
-function pa_buildSky(E, h) {
-  const b = new PaBuf(LW, LH), st = E.stops.map(s => [s[0], pa_u32(s[1])]), g = E.glow, gx = g.gx * LW, gy = g.gy * h;
+function pa_buildSky(E, h, flip) {
+  const b = new pa_Buf(LW, LH), st = E.stops.map(s => [s[0], pa_u32(s[1])]), g = E.glow, gx = (flip ? 1 - g.gx : g.gx) * LW, gy = g.gy * h;
   for (let y = 0; y < LH; y++) for (let x = 0; x < LW; x++) {
     let l = y / h;
     l += 0.02 * Math.sin(x * 0.023 + y * 0.012) + 0.01 * Math.sin(x * 0.051 - y * 0.021);
@@ -158,8 +158,8 @@ function pa_stars(t, n, y1, cam, seed) {
 }
 // pa_ciel : voir l'en-tête
 function pa_ciel(t, o = {}) {
-  const env = o.env || 'matin', E = pa_env(o), h = o.h ?? E.h, cam = pa_fin(o.cam), camY = pa_fin(o.camY);
-  const cv = pa_cache(`ciel|${env}|${h}`, () => pa_buildSky(E, h));
+  const env = o.env || 'matin', E = pa_env(o), h = o.h ?? E.h, cam = pa_fin(o.cam), camY = pa_fin(o.camY), light_ = o.light ?? E.light;
+  const flip = (o.light ?? E.light) < 0, cv = pa_cache(`ciel|${env}|${h}|${flip}`, () => pa_buildSky(E, h, flip));
   L.setTransform(1, 0, 0, 1, 0, 0); L.globalAlpha = 1;
   const dy = Math.round(-camY * 0.05);
   L.drawImage(cv, 0, dy);
@@ -167,11 +167,12 @@ function pa_ciel(t, o = {}) {
   const ns = o.stars ?? E.stars; if (ns) pa_stars(t, ns, h * 0.7, cam, o.seed ?? 5);
   let sun = null;
   if (E.sun && o.sun !== false) {
-    const sx = (o.sunX ?? E.sun[0]), sy = h + E.sun[1] + (o.sunDy || 0);
+    const sx = (o.sunX ?? (flip ? LW - E.sun[0] : E.sun[0])), sy = h + E.sun[1] + (o.sunDy || 0);
     sun = [sx - cam * 0.04, sy - camY * 0.04, E.sun[2]];
     k_sun(sx, sy, E.sun[2], { t, rays: o.rays ?? 0.35, glow: 0.8, col: E.sunCol, cam, camY, par: 0.04 });
   }
   if (o.moon || (o.moon === undefined && env === 'crepuscule' && false)) k_moon(o.moon.x ?? 52, o.moon.y ?? 84, o.moon.r ?? 8, { phase: o.moon.phase ?? 0.1, glow: 0.6, cam, par: 0.04 });
+  if (o.birds) k_birds(t, { n: o.birds, y: o.birdsY ?? Math.max(30, h - 190), size: 1, speed: o.birdsSpeed ?? 12, col: env === 'crepuscule' ? NI[0] : ST[1], rim: AM[9], cam, par: 0.1, dir: light_ > 0 ? 1 : -1 });
   const nc = o.clouds ?? 6;
   if (nc > 0) k_clouds(t, { preset: 'pa_' + env, kind: o.cloudKind || 'mix', n: nc, y0: o.cloudY0 ?? 30, y1: o.cloudY1 ?? h - 60, speed: o.cloudSpeed ?? 3, scale: o.cloudScale ?? 1.5, seed: o.seed ?? 11, cam, camY });
   return { h, sun, mist: E.mist, mistFar: E.mistFar, light: o.light ?? E.light, env };
@@ -202,7 +203,7 @@ const PA_IRON = {
 function pa_buildTower(env, s, hazeQ) {
   const IR = PA_IRON[env] || PA_IRON.matin, light = 1;
   const w = Math.ceil(2 * 68 * s) + 4, h = Math.ceil(318 * s) + 3, cx = Math.floor(w / 2), y0 = h - 2;
-  const m = new PaBuf(w, h);
+  const m = new pa_Buf(w, h);
   const X = v => cx + v * s, Y = v => y0 - v * s;
   const P = (pts, c) => m.poly(pts.map(p => [X(p[0]), Y(p[1])]), c);
   const Ln = (x0, yy0, x1, yy1, c, th = 1) => m.line(X(x0), Y(yy0), X(x1), Y(yy1), c, th);
@@ -211,20 +212,20 @@ function pa_buildTower(env, s, hazeQ) {
 
   // ── une colonne treillissée entre deux courbes (xl(Y) < xr(Y)) : fond, membrures, croix, croisillons fins ──
   function column(xl, xr, Ya, Yb, o = {}) {
-    const fill = o.fill ?? 0.0, ratio = o.ratio ?? 1.2, minM = o.minM ?? Math.max(2.4, 3.4 / s), fine = o.fine ?? 0, q = o.q ?? Math.max(3, Math.min(6, Math.round(3.3 * Math.pow(s, 0.5)))), mesh = o.mesh ?? 1;
+    const big = s > 1.5, thk = big ? 2 : 1, fill = (o.fill ?? 0.0) * (big ? 0.45 : 1), ratio = o.ratio ?? 1.2, minM = o.minM ?? Math.max(2.4, 3.4 / s), fine = o.fine ?? 0, q = o.q ?? Math.max(3, Math.min(8, Math.round(3.3 * Math.pow(s, 0.5)))), mesh = (o.mesh ?? 1) || (big ? 1 : 0);
     for (let yy = Math.floor(Y(Yb)); yy <= Math.ceil(Y(Ya)); yy++) {
       const Ym = (y0 - yy) / s, a = xl(Ym), b = xr(Ym), pa = Math.round(X(a)), pb = Math.round(X(b));
       for (let xx = pa; xx <= pb; xx++) {
         if (fill && pa_bay(xx + 1, yy + 2) < fill) m.px(xx, yy, 1);
-        if (mesh && (((xx + yy) % q + q) % q === 0 || ((xx - yy) % q + q) % q === 0)) m.px(xx, yy, 2);
+        if (mesh && (((xx + yy) % q + q) % q === 0 || ((xx - yy) % q + q) % q === 0)) { m.px(xx, yy, 2); if (big) m.px(xx + 1, yy, 2); }
       }
     }
     const pn = pa_panels(Ya, Yb, Ym => (xr(Ym) - xl(Ym)), ratio, minM);
     for (let k = 0; k + 1 < pn.length; k++) {
       const ya = pn[k], yb = pn[k + 1], yc = (ya + yb) / 2;
       const la = xl(ya), ra = xr(ya), lb = xl(yb), rb = xr(yb);
-      Ln(la, ya, rb, yb, 3, 1); Ln(ra, ya, lb, yb, 4, 1);              // croix du panneau
-      Ln(la, yb, rb, yb, 3, 1);                                         // sommier
+      Ln(la, ya, rb, yb, 3, thk); Ln(ra, ya, lb, yb, 4, thk);              // croix du panneau
+      Ln(lb, yb, rb, yb, 3, thk);                                         // sommier
       if (fine) {                                                       // croisillons fins du deuxième treillis (face arrière), décalés d'un demi-panneau
         const lc = xl(yc), rc = xr(yc);
         Ln(la, yc, rc, yc, 2, 1); Ln(la, ya, lc, yc, 2, 1); Ln(ra, ya, rc, yc, 2, 1); Ln(lc, yc, lb, yb, 2, 1); Ln(rc, yc, rb, yb, 2, 1);
@@ -237,7 +238,7 @@ function pa_buildTower(env, s, hazeQ) {
   }
   // ── couche arrière : arc et pieds éloignés (plus petits, ombre) vus à travers l'arche ──
   {
-    const k = 0.8, mm = new PaBuf(w, h), saveM = m;
+    const k = 0.8, mm = new pa_Buf(w, h), saveM = m;
     const XR = v => cx + v * s * k, YR = v => y0 - v * s * k;
     // arche arrière
     const rim = [];
@@ -256,8 +257,11 @@ function pa_buildTower(env, s, hazeQ) {
   }
   // arche : deux membrures et zigzag
   {
-    const A = 37.5, B = 36, cy = 8, tk = 3.6, N = 30, outer = [], inner = [];
+    const A = 37.5, B = 36, cy = 8, tk = 5, N = 30, outer = [], inner = [];
     for (let i = 0; i <= N; i++) { const r = Math.PI * i / N; outer.push([-Math.cos(r) * A, cy + Math.sin(r) * B]); inner.push([-Math.cos(r) * (A - tk), cy + Math.sin(r) * (B - tk)]); }
+    for (let i = 0; i < N; i++) {                                         // âme pleine de l'arche (fond sombre)
+      for (let q = 0.15; q < 1; q += 0.2) Ln(lerp(outer[i][0], inner[i][0], q), lerp(outer[i][1], inner[i][1], q), lerp(outer[i + 1][0], inner[i + 1][0], q), lerp(outer[i + 1][1], inner[i + 1][1], q), 1, 1);
+    }
     for (let i = 0; i < N; i++) {
       Ln(outer[i][0], outer[i][1], outer[i + 1][0], outer[i + 1][1], i < N / 2 ? 3 : 4, 2);
       Ln(inner[i][0], inner[i][1], inner[i + 1][0], inner[i + 1][1], 3, 1);
@@ -310,7 +314,7 @@ function pa_buildTower(env, s, hazeQ) {
   {
     column(Ym => -pa_tOut(Ym), Ym => pa_tOut(Ym), 121, PA_T.H3 - 3, { ratio: 1.55, minM: Math.max(8, 5.5 / s), fill: 0.66, fine: 0, mesh: 0 });
     // anneaux horizontaux plus épais tous les ~40 m
-    for (const Ym of [152, 190, 228]) Ln(-pa_tOut(Ym), Ym, pa_tOut(Ym), Ym, 4, 2);
+    for (const Ym of [152, 190, 228]) Ln(-pa_tOut(Ym) + 0.8, Ym, pa_tOut(Ym) - 0.8, Ym, 4, 2);
   }
   // plateforme 3, lanterne, coupole, mât
   {
@@ -326,11 +330,11 @@ function pa_buildTower(env, s, hazeQ) {
     Rc(-0.9, 303, 0.9, 305, 8);                                             // feu
   }
   // ── passe d'éclairage ──
-  const out = new PaBuf(w, h), md = m.d, od = out.d, C = IR.c.map(pa_u32), stoneC = IR.stone.map(pa_u32), glassC = IR.glass.map(pa_u32), rimC = pa_u32(IR.rim), lampC = pa_u32(IR.lamp);
+  const out = new pa_Buf(w, h), md = m.d, od = out.d, C = IR.c.map(pa_u32), stoneC = IR.stone.map(pa_u32), glassC = IR.glass.map(pa_u32), rimC = pa_u32(IR.rim), lampC = pa_u32(IR.lamp);
   const emp = (x, y) => x < 0 || y < 0 || x >= w || y >= h || md[y * w + x] === 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x, c = md[i]; if (!c) continue;
-    const Ym = (y0 - y) / s, hw = Math.max(3, pa_tOut(Math.min(Ym, 300)) * s), dxn = (x - cx) / hw, litSide = dxn * light + (pa_bay(x, y) - 0.5) * 0.5 > -0.2;
+    const Ym = (y0 - y) / s, hw = Math.max(3, pa_tOut(Math.min(Ym, 300)) * s), dxn = (x - cx) / hw, litSide = dxn * light + (pa_bay(x, y) - 0.5) * 0.16 > -0.2;
     let col;
     const eR = emp(x + light, y), eU = emp(x, y - 1), eL = emp(x - light, y);
     if (c === 1) col = litSide ? C[1] : C[0];
@@ -372,9 +376,9 @@ function pa_tour(cx, baseY, s, t, o = {}) {
   L.setTransform(1, 0, 0, 1, 0, 0);
   const sh = o.shadow ?? 0.5;
   if (sh > 0) pa_drawShadow(env, sp, ox, oy, o.shDir || [-0.75 * light, 0.12], sh);
-  L.drawImage(sp.cv, x0, yy0);
+  if (light < 0) { L.setTransform(-1, 0, 0, 1, 2 * x0 + sp.w, 0); L.drawImage(sp.cv, x0, yy0); L.setTransform(1, 0, 0, 1, 0, 0); } else L.drawImage(sp.cv, x0, yy0);
   const mx = ox, my = oy - PA_T.MAST * sc;
-  if (o.flag !== false) pa_flag(mx + 1, my - 0, Math.max(5, Math.round(6.5 * sc)), Math.max(3, Math.round(3.4 * sc)), t, o.windDir ?? -1, 0);
+  if (o.flag !== false) pa_flag(mx + 1, my - 0, Math.max(5, Math.round(6.5 * sc)), Math.max(3, Math.round(3.4 * sc)), t, o.windDir ?? -light, 0);
   const lamp = [mx, oy - 304 * sc];
   if (o.lights ?? env === 'crepuscule') pa_towerLights(ox, oy, sc, t, o.lightsA ?? 1);
   if (o.lifts !== false) pa_towerLifts(ox, oy, sc, t, env);
@@ -421,7 +425,7 @@ function pa_beacon(x, y, t, len, a = 1) {
 }
 function pa_shadowCanvas(env, sp, sv) {                                                // silhouette cisaillée (union des lignes qui tombent sur la même ligne du sol), mise en cache
   return pa_cache(`tourSh|${sp.s}|${sp.w}|${sv[0].toFixed(2)}|${sv[1].toFixed(3)}`, () => {
-    const sw = Math.ceil(sp.w + Math.abs(sv[0]) * sp.h), shh = Math.ceil(sv[1] * sp.h) + 2, b = new PaBuf(sw, shh), md = sp.sil.d, col = pa_u32('#1c1034');
+    const sw = Math.ceil(sp.w + Math.abs(sv[0]) * sp.h), shh = Math.ceil(sv[1] * sp.h) + 2, b = new pa_Buf(sw, shh), md = sp.sil.d, col = pa_u32('#1c1034');
     const ofs = sv[0] < 0 ? Math.ceil(-sv[0] * sp.h) : 0;
     for (let y = 0; y < sp.h; y++) {
       const Y = sp.y0 - y, dx = Math.round(sv[0] * Y) + ofs, dy = Math.round(sv[1] * Y);
@@ -446,7 +450,7 @@ function pa_drawShadow(env, sp, ox, oy, sv, a) {
 // Matières par ambiance. Tons de pierre : [ombre, ombre claire, milieu, éclairé, éclat] ; zinc, ardoise, brique : sombre → clair ; vitre : [fond, reflet, reflet clair, lumière allumée]
 const PA_MAT = {
   matin: {
-    stone: [ST[4], SK[3], SK[4], WH[1], WH[3]], stoneB: [ST[4], ST[6], WH[0], WH[1], WH[3]],
+    stone: [ST[4], SK[3], SK[4], WH[1], WH[3]], stoneB: [ST[4], SK[2], WH[1], WH[2], WH[3]],
     zinc: [ST[2], ST[3], ST[4], ST[5], ST[6]], slate: [NI[1], ST[1], ST[2], ST[3], ST[4]], brick: [WO[1], OC[1], OC[2], OC[3], OC[4]],
     glass: [NI[4], NI[5], NI[6], NI[7], AM[8]], lit: [AM[5], AM[7], AM[8]], iron: NI[0], rim: AM[9], shade: ST[3], deep: DU[2], wood: [WO[1], WO[2], WO[3], WO[4]], shutter: [ST[2], ST[3], ST[4], ST[5]], mist: '#e2cdd0', mistFar: '#ead4c6', litWin: 0.0,
   },
@@ -471,7 +475,7 @@ const PA_VAP = {
 };
 function pa_puffSprite(r, lvl, tones, seed) {
   return pa_cache(`puff|${r}|${lvl}|${tones.join(',')}|${seed}`, () => {
-    const n = r * 2 + 3, b = new PaBuf(n, n), T = tones.map(pa_u32), c = r + 1;
+    const n = r * 2 + 3, b = new pa_Buf(n, n), T = tones.map(pa_u32), c = r + 1;
     const lobes = []; for (let i = 0; i < 5; i++) lobes.push([pa_h(i, seed) * TAU, 0.82 + 0.4 * pa_h(i, seed + 7), 0.12 + 0.2 * pa_h(i, seed + 3)]);
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
       const dx = (x - c) / r, dy = (y - c) / r, d = Math.hypot(dx, dy); let rr = 1;
@@ -669,7 +673,7 @@ function pa_landmark(b, kind, cx, yb, M, side) {
   }
 }
 function pa_buildLayer(env, kind, side) {
-  const D = PA_LAY[kind], P = D.P, H = D.H, M = pa_mat({ env }), b = new PaBuf(P, H), rnd = rng(kind === 'far' ? 11 : kind === 'mid' ? 23 : 37), chims = [];
+  const D = PA_LAY[kind], P = D.P, H = D.H, M = pa_mat({ env }), b = new pa_Buf(P, H), rnd = rng(kind === 'far' ? 11 : kind === 'mid' ? 23 : 37), chims = [];
   if (kind === 'far') {
     const lm = [['invalides', 96, 6], ['sacrecoeur', 232, 8], ['pantheon', 368, 4], ['notredame', 478, 4]];
     for (const [k, cx, dy] of lm) pa_landmark(b, k, cx, H - dy - 6, M, side);
@@ -698,9 +702,17 @@ function pa_toits(t, o = {}) {
     const off = ((cam * D.par) % P + P) % P, ty = Math.round(y + (o['d' + kind] ?? D.dy) - D.H - camY * D.par * 0.5);
     for (let x0 = -Math.round(off); x0 < LW; x0 += P) L.drawImage(lay.cv, x0, ty);
     info[kind] = { y: ty, bottom: ty + D.H };
+    if (kind === 'near' && (o.pigeons ?? 2) > 0) {
+      let k = 0;
+      for (const c of lay.chims) {
+        if (pa_h(c[2] * 7 + 3, 33) > 0.34 || k >= (o.pigeons ?? 2)) continue; k++;
+        let sx = c[0] - Math.round(off); while (sx < -30) sx += P; if (sx > LW + 30) continue;
+        pa_pigeon(sx + 3, ty + c[1] + 8, 1.15, t, { env, seed: c[2] + 2, dir: pa_h(c[2], 8) < 0.5 ? -1 : 1, mode: 'sit', shadow: 0, light: side });
+      }
+    }
     if (smoke > 0 && kind !== 'far') {
       for (const c of lay.chims) {
-        if (pa_h(c[2] * 13 + 5, 21) > 0.45 * smoke) continue;
+        if (pa_h(c[2] * 13 + 5, 21) > 0.3 * smoke) continue;
         let sx = c[0] - Math.round(off); while (sx < -30) sx += P; if (sx > LW + 30) continue;
         pa_vapeur(sx, ty + c[1], t, { env, kind: 'fumee', n: 10, h: kind === 'mid' ? 30 : 48, w: kind === 'mid' ? 1 : 2, w2: kind === 'mid' ? 5 : 9, wind: kind === 'mid' ? 9 : 16, rate: 0.28 + pa_h(c[2], 3) * 0.12, seed: c[2] + 3, a: 0.9 });
       }
@@ -748,7 +760,7 @@ function pa_greek(b, x, y, cw, ch, ink, seed, pitch = 3) {
   }
 }
 function pa_journalFlat(w, h, o) {
-  const b = new PaBuf(w, h), M = [WH[1], WH[2], WH[0], ST[2], ST[1], ST[4], NI[1]], paper = WH[2], ink = NI[1], gray = ST[3];
+  const b = new pa_Buf(w, h), M = [WH[1], WH[2], WH[0], ST[2], ST[1], ST[4], NI[1]], paper = WH[2], ink = NI[1], gray = ST[3], geo = { photo: null, titre: null };
   b.R(0, 0, w, h, paper);
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const u = i / w; if (pa_bay(i, j) < 0.22 * (1 - u) * (1 - u) * 2) b.px(i, j, WH[0]); }    // grain d'ombre à gauche
   const m = 5; let y = 4;
@@ -764,7 +776,9 @@ function pa_journalFlat(w, h, o) {
     const titre = o.titre || 'LA TOUR EIFFEL COÛTE TROP CHER';
     let sc = 3, lines = pa_wrap(titre, w - 2 * m, sc);
     while ((lines.length > 3 || lines.some(l => textW(l, sc) > w - 2 * m)) && sc > 1) { sc--; lines = pa_wrap(titre, w - 2 * m, sc); }
-    for (const l of lines) { const acc = /[ÉÈÊËÀÂÔÎÏÙÛÇ]/.test(l); if (acc) y += 2 * sc; b.text(l, Math.round((w - textW(l, sc)) / 2), y, ink, sc); y += 7 * sc + 2 * sc; }
+    const ty0 = y; let tw = 0;
+    for (const l of lines) { const acc = /[ÉÈÊËÀÂÔÎÏÙÛÇ]/.test(l); if (acc) y += 2 * sc; b.text(l, Math.round((w - textW(l, sc)) / 2), y, ink, sc); tw = Math.max(tw, textW(l, sc)); y += 7 * sc + 2 * sc; }
+    geo.titre = [Math.round((w - tw) / 2), ty0, tw, y - ty0 - 2 * sc];
     y += 1;
     const sous = o.sous ?? 'L\'ENTRETIEN DU MONUMENT EMBARRASSE L\'ÉTAT';
     if (sous) { const sl = pa_wrap(sous, w - 2 * m, 1); for (const l of sl.slice(0, 2)) { b.text(l, Math.round((w - textW(l, 1)) / 2), y, gray, 1); y += 9; } }
@@ -774,7 +788,7 @@ function pa_journalFlat(w, h, o) {
     const photo = o.photo === undefined ? 'tour' : o.photo;
     if (photo && bottom - y > 50) {
       const pw = Math.round((w - 2 * m) * 0.55), ph = Math.min(Math.round((bottom - y) * 0.62), Math.round(pw * 0.95));
-      pa_photoTour(b, m, y, pw, ph, 3, photo);
+      pa_photoTour(b, m, y, pw, ph, 3, photo); geo.photo = [m, y, pw, ph];
       const cx = m + pw + 4, cw2 = w - m - cx;
       pa_greek(b, cx, y, cw2, ph, gray, 5);
       b.R(m, y + ph + 1, pw, 1, ST[5]); pa_greek(b, m, y + ph + 3, pw, 5, ST[4], 7);
@@ -801,23 +815,25 @@ function pa_journalFlat(w, h, o) {
   // bords : contour fin et pli
   b.R(0, 0, w, 1, WH[0]); b.R(0, h - 1, w, 1, ST[6]); b.R(0, 0, 1, h, WH[0]); b.R(w - 1, 0, 1, h, ST[6]);
   if (o.pages === 2) { b.R(Math.floor(w / 2), 0, 1, h, ST[6]); b.dith(Math.floor(w / 2) + 1, 0, 3, h, WH[0], 0.6); b.dith(Math.floor(w / 2) - 3, 0, 3, h, WH[0], 0.3); }
-  return b.done();
+  geo.cv = b.done(); return geo;
 }
 // pa_journal(x, y, w, h, t, o) : voir l'en-tête
 function pa_journal(x, y, w, h, t, o = {}) {
   w = Math.round(w); h = Math.round(h);
   const key = `jr|${w}|${h}|${o.titre || ''}|${o.nom || ''}|${o.sous ?? ''}|${o.photo === undefined ? 'tour' : o.photo}|${o.side || ''}|${o.date || ''}|${o.pages || 1}`;
-  const cv = pa_cache(key, () => pa_journalFlat(w, h, o));
+  const G = pa_cache(key, () => pa_journalFlat(w, h, o)), cv = G.cv;
   const held = o.held ?? false, curl = o.curl ?? (held ? 0.6 : 0.12), tilt = o.tilt || 0, flap = o.flap ?? (held ? 0.5 : 0), sway = held ? Math.sin(t * 1.7) * 0.35 + Math.sin(t * 3.3) * 0.15 : 0;
+  const warp = sx => { const u = sx / Math.max(1, w - 1), bow = -curl * 5 * (1 - (2 * u - 1) ** 2) * (held ? 1 : 0.5) + curl * 2.2 * (2 * u - 1) ** 2, fl = flap * Math.sin(t * 8.5 + u * 2) * Math.pow(u, 3) * 2.4 + (u > 0.5 ? 0 : flap * Math.sin(t * 7 + 1) * Math.pow(1 - u, 4) * 0.8); return Math.round(bow + tilt * (sx - w / 2) + fl + sway * (u - 0.5) * 2); };
   L.setTransform(1, 0, 0, 1, 0, 0);
   if (o.shadow ?? !held) { L.save(); L.globalAlpha = 0.35; ell(x + w / 2 + 3, y + h + 1 + Math.abs(tilt) * w * 0.3, Math.round(w * 0.46), 3, NI[0]); L.restore(); }
-  for (let sx = 0; sx < w; sx++) {
-    const u = sx / Math.max(1, w - 1), bow = -curl * 5 * (1 - (2 * u - 1) ** 2) * (held ? 1 : 0.5) + curl * 2.2 * (2 * u - 1) ** 2, fl = flap * Math.sin(t * 8.5 + u * 2) * Math.pow(u, 3) * 2.4 + (u > 0.5 ? 0 : flap * Math.sin(t * 7 + 1) * Math.pow(1 - u, 4) * 0.8);
-    const dy = Math.round(bow + tilt * (sx - w / 2) + fl + sway * (u - 0.5) * 2);
-    L.drawImage(cv, sx, 0, 1, h, Math.round(x + sx), Math.round(y + dy), 1, h);
+  for (let sx = 0; sx < w; sx++) L.drawImage(cv, sx, 0, 1, h, Math.round(x + sx), Math.round(y + warp(sx)), 1, h);
+  // crayon rouge qui entoure le gros titre (o.circle : 0 → 1)
+  if ((o.circle || 0) > 0 && G.titre) {
+    const [tx, ty, tw, th] = G.titre, cx = tx + tw / 2, cy = ty + th / 2, rx = tw / 2 + 7, ry = th / 2 + 6, sweep = TAU * 1.08 * clamp(o.circle), a0 = -2.4;
+    for (let a = 0; a < sweep; a += 0.025) { const ang = a0 + a, px_ = cx + Math.cos(ang) * rx * (1 + 0.04 * a / TAU), py_ = cy + Math.sin(ang) * ry * (1 + 0.05 * a / TAU), sxx = clamp(px_, 0, w - 1); R(Math.round(x + px_), Math.round(y + py_ + warp(sxx)), 2, 2, RD[3]); }
   }
   const mid = y + h * 0.5;
-  return { x, y, w, h, gripL: [x + 2, mid], gripR: [x + w - 3, mid], top: y, bottom: y + h, cx: x + w / 2 };
+  return { x, y, w, h, gripL: [x + 2, mid], gripR: [x + w - 3, mid], top: y, bottom: y + h, cx: x + w / 2, photo: G.photo ? { x: x + G.photo[0], y: y + G.photo[1], w: G.photo[2], h: G.photo[3] } : null, titre: G.titre ? { x: x + G.titre[0], y: y + G.titre[1], w: G.titre[2], h: G.titre[3] } : null };
 }
 ICONES[0] = function (cx, cy) {                                       // petit journal plié avec son titre (17 × 17, couleurs exactes)
   const x0 = cx - 8, y0 = cy - 8, K = '#05040f', P_ = WH[2], I = ST[1];
@@ -839,7 +855,7 @@ const PA_COATS = [[WO[1], WO[3], WO[4]], [ST[1], ST[3], ST[5]], [GR[1], GR[2], G
 function pa_buildPerson(seed, dir, light, env, s, k) {
   const night = env === 'crepuscule', woman = pa_h(seed, 3) < 0.35, cc = PA_COATS[Math.floor(pa_h(seed, 2) * PA_COATS.length)];
   const hats = woman ? ['cloche', 'cloche', 'beret', 'none'] : ['melon', 'melon', 'canotier', 'casquette', 'beret', 'none'], hat = hats[Math.floor(pa_h(seed, 4) * hats.length)], acc = Math.floor(pa_h(seed, 5) * 5);
-  const W = Math.ceil(26 * s) + 4, H = Math.ceil(36 * s) + 3, b = new PaBuf(W, H), ox = W >> 1, oy = H - 2;
+  const W = Math.ceil(26 * s) + 4, H = Math.ceil(36 * s) + 3, b = new pa_Buf(W, H), ox = W >> 1, oy = H - 2;
   const X = v => ox + dir * v * s, Yp = v => oy - v * s, Th = Math.max(1, Math.round(2 * s));
   const skin = night ? SK[1] : SK[3], trousers = night ? NI[2] : (pa_h(seed, 6) < 0.5 ? ST[2] : WO[2]), c0 = night ? NI[Math.min(4, 1 + (cc[0] === RD[1] ? 1 : 0))] : cc[0], c1 = night ? DU[1] : cc[1], c2 = night ? DU[2] : cc[2];
   const sw = k < 0 ? 0 : Math.sin(k / 8 * TAU) * 3.4, bob = k < 0 ? (k === -2 ? 0.5 : 0) : Math.abs(Math.sin(k / 8 * TAU)) * 0.8;
@@ -858,7 +874,7 @@ function pa_buildPerson(seed, dir, light, env, s, k) {
   b.R(Math.min(X(-hw1), X(hw1)), Yp(hem), Math.round(hw1 * 2 * s), 1, c2);                                             // ourlet
   // bras et accessoires
   const arm = -sw * 0.7, hx = arm, hy = 14.5 + bob;
-  b.line(X(0), Yp(top - 1), X(hx), Yp(hy), c0, Th); px_(b, X(hx), Yp(hy - 0.4), skin, s);
+  b.line(X(0), Yp(top - 1), X(hx), Yp(hy), c0, Th); pa_px2(b, X(hx), Yp(hy - 0.4), skin, s);
   if (acc === 0) { b.line(X(hx), Yp(hy), X(hx + 4), Yp(hy + 5.5), night ? AM[3] : AM[5], Th); b.px(X(hx + 4), Yp(hy + 5.5), night ? AM[4] : AM[7]); }
   else if (acc === 1) { b.line(X(hx), Yp(hy), X(hx + 1.5), Yp(hy + 11), NI[0], 1); b.poly([[X(hx - 5), Yp(hy + 10.5)], [X(hx + 7), Yp(hy + 10.5)], [X(hx + 1.5), Yp(hy + 15)]], night ? NI[1] : RD[1]); }
   else if (acc === 2) b.R(Math.min(X(hx), X(hx + 4)), Yp(hy - 4), Math.round(4.4 * s), Math.round(4 * s), WO[2]);
@@ -875,7 +891,7 @@ function pa_buildPerson(seed, dir, light, env, s, k) {
   b.outline(NI[0]);
   return { cv: b.done(), ox, oy, w: W, h: H };
 }
-function px_(b, x, y, c, s) { b.R(x, y, Math.max(1, Math.round(s)), Math.max(1, Math.round(s)), c); }
+function pa_px2(b, x, y, c, s) { b.R(x, y, Math.max(1, Math.round(s)), Math.max(1, Math.round(s)), c); }
 // pa_passant(x, y, s, t, o) : passant de profil, (x, y) = pieds au sol ; s = 1 → ≈ 30 px de haut (à garder entre 0,5 et 1,6) ; o : dir ±1, speed px/s (0 = à l'arrêt : il respire), seed (allure : manteau, chapeau, baguette, parapluie, serviette, journal),
 // env, light (+1 : soleil à droite), shadow (ombre portée au sol, 0..1). Renvoie { x, y, h, top }.
 function pa_passant(x, y, s, t, o = {}) {
@@ -957,8 +973,9 @@ function pa_planterB(b, x, yf, w, M, light) {                                   
     b.px(x + i, cy_ + j, l > 0.62 ? LM[4] : l > 0.28 ? GR[4] : l > -0.1 ? GR[3] : l > -0.5 ? GR[2] : GR[1]);
   }
 }
+const pa_awnTones = (red, night) => night ? (red ? [RD[0], RD[0], RD[1], RD[2]] : [ST[1], ST[2], ST[3], ST[4]]) : (red ? [RD[1], RD[2], RD[3], RD[4]] : [WH[0], WH[1], WH[2], WH[3]]);
 function pa_buildCafeFacade(env, F) {                                   // façade haute + enseigne + devanture + auvent (statique) ; largeur 390, origine x = −60
-  const M = pa_mat({ env }), W = 390, ox = 60, b = new PaBuf(W, LH), night = env === 'crepuscule', side = 1;
+  const M = pa_mat({ env }), W = 390, ox = 60, b = new pa_Buf(W, LH), night = env === 'crepuscule', side = 1;
   const yAw = F - 178, yVal = F - 146, yW = F - 58;
   // façade haute
   pa_house(b, ox - 40, F - 206, 360, { M, det: 3, nfl: 7, fh: 30, ww: 11, wh: 20, wp: 23, roofH: 0, seed: 21, balc: [0, 2, 4, 6], side, bare: true, shut: 0.5, litP: M.litWin, tone: 0.2 });
@@ -988,14 +1005,14 @@ function pa_buildCafeFacade(env, F) {                                   // faça
   const aw0 = ox - 16, aw1 = ox + 286, nStripe = 25, sw = (aw1 - aw0) / nStripe;
   for (let k = 0; k < nStripe; k++) {
     const x0 = Math.round(aw0 + k * sw), x1 = Math.round(aw0 + (k + 1) * sw), red = k % 2 === 0;
-    const cA = red ? [RD[1], RD[2], RD[3], RD[4]] : [WH[0], WH[1], WH[2], WH[3]];
+    const cA = pa_awnTones(red, night);
     for (let y = yAw; y < yVal; y++) { const f = (y - yAw) / (yVal - yAw), c = f < 0.12 ? cA[0] : f < 0.5 ? cA[1] : f < 0.9 ? cA[2] : cA[3]; b.R(x0, y, x1 - x0, 1, c); }
     // pli : lumière à droite de chaque bande
     b.R(x1 - 1, yAw, 1, yVal - yAw, red ? RD[4] : WH[3]); b.R(x0, yAw, 1, yVal - yAw, red ? RD[0] : WH[0]);
   }
   b.R(aw0, yAw - 2, aw1 - aw0, 2, RD[0]); b.R(aw0, yAw, aw1 - aw0, 1, RD[0]);
   for (const q of [0.18, 0.5, 0.82]) { const ax = Math.round(aw0 + (aw1 - aw0) * q); b.line(ax, yAw + 4, ax + 14, yVal + 4, NI[1], 1); }
-  if (env !== 'crepuscule') { const sh = [[0, 0], [W * 0.62, 0], [W * 0.18, F - 206], [0, F - 206]]; const bb = new PaBuf(W, LH); bb.poly(sh, 1); for (let y = 0; y < LH; y++) for (let x = 0; x < W; x++) if (bb.d[y * W + x] && pa_bay(x, y) < 0.34 * (1 - Math.min(1, x / (W * 0.55)) * 0.5)) b.px(x, y, env === 'soir' ? DU[3] : M.stone[1]); }
+  if (env !== 'crepuscule') { const sh = [[0, 0], [W * 0.62, 0], [W * 0.18, F - 206], [0, F - 206]]; const bb = new pa_Buf(W, LH); bb.poly(sh, 1); for (let y = 0; y < LH; y++) for (let x = 0; x < W; x++) if (bb.d[y * W + x] && pa_bay(x, y) < 0.34 * (1 - Math.min(1, x / (W * 0.55)) * 0.5)) b.px(x, y, env === 'soir' ? DU[3] : M.stone[1]); }
   // ombre portée de l'auvent sur la devanture
   b.dith(fx - 10, yVal + 12, fw + 20, 8, st[0], 0.5); b.dith(fx - 10, yVal + 12, fw + 20, 3, GR[0], 0.8);
   return { cv: b.done(), ox, W };
@@ -1017,7 +1034,7 @@ function pa_cafeWindow(b, x, y, w, h, M, night, seed, door) {
   b.R(x, y, w, 1, GR[3]); b.R(x, y, 1, h, GR[2]); b.R(x + w - 1, y, 1, h, GR[3]); b.R(x, y + h - 1, w, 1, GR[0]);
 }
 function pa_buildCafeFloor(env, F) {                                    // sol de la terrasse, mobilier lointain ; largeur 390
-  const M = pa_mat({ env }), W = 390, ox = 60, b = new PaBuf(W, LH), night = env === 'crepuscule', yW = F - 58, vpx = ox + 135, vpy = yW - 150;
+  const M = pa_mat({ env }), W = 390, ox = 60, b = new pa_Buf(W, LH), night = env === 'crepuscule', yW = F - 58, vpx = ox + 135, vpy = yW - 150;
   const base = night ? [NI[1], NI[2], NI[3]] : env === 'soir' ? [DU[4], OC[4], OC[5]] : [SK[2], SK[3], SK[4]];
   for (let y = yW; y < LH; y++) { const f = (y - yW) / (LH - yW); b.R(0, y, W, 1, f < 0.15 ? base[0] : base[1]); }
   for (let y = yW; y < LH; y++) for (let x = 0; x < W; x++) { const f = (y - yW) / (LH - yW); if (pa_bay(x, y) < 0.5 * f) b.px(x, y, base[2]); }
@@ -1033,7 +1050,7 @@ function pa_buildCafeFloor(env, F) {                                    // sol d
   return { cv: b.done(), ox, W };
 }
 function pa_buildCafeFront(env, F, tx, o) {                             // premier plan : grand guéridon, bacs de buis ; largeur 390
-  const M = pa_mat({ env }), W = 390, ox = 60, b = new PaBuf(W, LH);
+  const M = pa_mat({ env }), W = 390, ox = 60, b = new pa_Buf(W, LH);
   pa_planterB(b, ox - 8, LH + 6, 62, M, 1); pa_planterB(b, ox + 280, LH + 12, 64, M, 1);
   pa_tableB(b, ox + tx, F + 40, 1.45, M, 1);
   return { cv: b.done(), ox, W };
@@ -1050,7 +1067,7 @@ function pa_cafe(t, o = {}) {
     const yVal = F - 146, aw0 = -16 - cam * 0.5, nS = 25, sw = (302) / nS;
     for (let k = 0; k < nS; k++) {
       const x0 = Math.round(aw0 + k * sw + 60 - 60), x1 = Math.round(aw0 + (k + 1) * sw + 0), red = k % 2 === 0, fl_ = Math.sin(t * 2.2 + k * 0.7) * 0.8;
-      const cA = red ? [RD[1], RD[2], RD[3], RD[4]] : [WH[0], WH[1], WH[2], WH[3]];
+      const cA = pa_awnTones(red, night);
       R(x0, yVal, x1 - x0, 9 + fl_, cA[2]); R(x0, yVal, x1 - x0, 2, cA[3]); R(x1 - 1, yVal, 1, 9 + fl_, cA[3]); R(x0, yVal, 1, 9, cA[0]);
       L.fillStyle = cA[2]; L.fillRect(x0 + 1, yVal + 9 + Math.round(fl_), x1 - x0 - 2, 2); R(x0 + 2, yVal + 11 + Math.round(fl_), x1 - x0 - 4, 1, cA[1]);
     }
@@ -1058,12 +1075,16 @@ function pa_cafe(t, o = {}) {
     // chaise du client (derrière lui) et ombres longues
     const seatCam = sx - cam * 1.0;
     L.save(); L.globalAlpha = 0.35; for (const [px0, w2] of [[seatCam, 20]]) ell(px0 - light * 14, F + 2, 26, 3, DU[1]); L.restore();
-    const cb = pa_cache(`cafeC|${env}`, () => { const bb = new PaBuf(60, 80); pa_chairB(bb, 30, 76, 1.3, M, 1, 0); return bb.done(); });
+    const cb = pa_cache(`cafeC|${env}`, () => { const bb = new pa_Buf(60, 80); pa_chairB(bb, 30, 76, 1.3, M, 1, 0); return bb.done(); });
     L.drawImage(cb, Math.round(seatCam - 30), Math.round(F - 76 + 0));
     // pigeons et passants du fond
     const np = o.people ?? 3, ng = o.pigeons ?? 2;
     for (let k = 0; k < np; k++) { const sp = 11 + 3 * k, per = 420, x = ((t * sp * (k % 2 ? -1 : 1) + k * 190) % per + per) % per - 75 - cam * 0.8; pa_passant(x, F - 54 + k * 3, 0.78, t, { env, seed: 5 + k * 3, dir: k % 2 ? -1 : 1, speed: sp, light, shadow: 0.8 }); }
     for (let k = 0; k < ng; k++) pa_pigeon(60 + k * 120 - cam * 0.9 + (k ? 20 : 0), F + 20 + k * 30, 1.2, t, { env, seed: 9 + k, dir: k % 2 ? -1 : 1, light });
+  }
+  if (night && layer !== 'front' && (o.glow ?? 1)) {                     // lumière chaude qui sort de la devanture et des globes
+    for (const gx of [75, 135, 195]) rgrad(gx - cam * 0.6, F - 70, 4, 90, [[0, 'rgba(255,200,110,0.40)'], [0.5, 'rgba(255,170,80,0.16)'], [1, 'rgba(255,150,60,0)']], 1, 'lighter');
+    rgrad(135 - cam * 0.6, F - 20, 6, 150, [[0, 'rgba(255,190,100,0.24)'], [1, 'rgba(255,150,60,0)']], 1, 'lighter');
   }
   if (layer !== 'back') {
     const fr = pa_cache(`cafeT|${env}|${F}|${tx}`, () => pa_buildCafeFront(env, F, tx, o));
@@ -1085,7 +1106,7 @@ const PA_CARS = {
   torpedo: { body: [GR[0], GR[1], GR[2], GR[4]], roof: [WO[1], WO[2], WO[3], WO[5]], fender: [NI[0], GR[0], GR[1], GR[3]], stripe: AM[8] },
 };
 function pa_buildCar(kind, env, s, dir) {
-  const K = PA_CARS[kind] || PA_CARS.taxi, night = env === 'crepuscule', W = Math.ceil(116 * s), H = Math.ceil(66 * s), bb = new PaBuf(W, H), bf = new PaBuf(W, H), ox = W >> 1, oy = H - 2;
+  const K = PA_CARS[kind] || PA_CARS.taxi, night = env === 'crepuscule', W = Math.ceil(116 * s), H = Math.ceil(66 * s), bb = new pa_Buf(W, H), bf = new pa_Buf(W, H), ox = W >> 1, oy = H - 2;
   const X = u => ox + (u - 52) * s * dir, Y = h => oy - h * s, P = pts => pts.map(p => [X(p[0]), Y(p[1])]);
   const chromeT = [ST[3], ST[5], ST[7], WH[3]], glass = night ? [NI[0], NI[1], NI[3], NI[5]] : [NI[3], NI[5], NI[7], NI[9]];
   const R_ = (b, u0, h0, u1, h1, c) => b.R(Math.min(X(u0), X(u1)), Y(h1), Math.max(1, Math.abs(X(u1) - X(u0))), Math.max(1, Math.abs(Y(h0) - Y(h1))), c);
@@ -1181,7 +1202,7 @@ function pa_shop(b, x, y, w, h, K, M, seed, night) {                    // devan
   b.dith(x, y + h - 4, w, 4, NI[0], 0.3);
 }
 function pa_buildRueBack(env, F) {                                      // façades d'en face (largeur 390, origine x = −60) : transparent au-dessus des toits
-  const M = pa_mat({ env }), W = 390, ox = 60, b = new PaBuf(W, LH), rnd = rng(77), night = env === 'crepuscule', yB = F - 36;
+  const M = pa_mat({ env }), W = 390, ox = 60, b = new pa_Buf(W, LH), rnd = rng(77), night = env === 'crepuscule', yB = F - 36;
   const ws = [98, 94, 104, 94]; let x = 0;
   for (let i = 0; i < ws.length; i++) {
     const w = ws[i], yCor = 142 + Math.floor(rnd() * 46), fh = 22, roofH = 26, gh = Math.round(fh * 1.3), nfl = Math.max(2, Math.round((yB - gh - yCor - 2) / fh));
@@ -1192,7 +1213,7 @@ function pa_buildRueBack(env, F) {                                      // faça
   return { cv: b.done(), ox, W };
 }
 function pa_buildRueGround(env, F) {                                    // trottoir et chaussée
-  const M = pa_mat({ env }), W = 390, ox = 60, b = new PaBuf(W, LH), night = env === 'crepuscule', yB = F - 36;
+  const M = pa_mat({ env }), W = 390, ox = 60, b = new pa_Buf(W, LH), night = env === 'crepuscule', yB = F - 36;
   const sw = night ? [NI[2], NI[3], NI[4]] : env === 'soir' ? [DU[4], OC[4], OC[5]] : [SK[2], SK[3], SK[4]];
   b.R(0, yB, W, F - yB, sw[1]);
   for (let j = 0; j < F - yB; j++) for (let i = 0; i < W; i++) if (pa_bay(i, j) < 0.35 * (j / (F - yB))) b.px(i, yB + j, sw[2]);
@@ -1200,7 +1221,7 @@ function pa_buildRueGround(env, F) {                                    // trott
   b.R(0, yB, W, 2, M.stone[0]); b.dith(0, yB + 2, W, 5, M.stone[0], 0.3);
   b.R(0, F - 3, W, 3, night ? NI[4] : WH[0]); b.R(0, F - 3, W, 1, night ? NI[5] : WH[2]); b.R(0, F, W, 2, M.stone[0]);                // bordure de granit
   // chaussée : pavés en rangées, perspective
-  const cob = night ? [NI[1], NI[2], NI[3], NI[4]] : env === 'soir' ? [DU[2], DU[3], DU[4], OC[3]] : [ST[2], ST[3], ST[4], ST[5]];
+  const cob = night ? [NI[1], NI[2], NI[3], NI[4]] : env === 'soir' ? [DU[1], DU[2], DU[3], DU[5]] : [ST[2], ST[3], ST[4], ST[5]];
   b.R(0, F + 2, W, LH - F - 2, cob[1]);
   let y = F + 3, row = 0;
   while (y < LH) {
@@ -1220,7 +1241,7 @@ function pa_buildRueGround(env, F) {                                    // trott
 function pa_buildItem(kind, env) {
   const M = pa_mat({ env }), night = env === 'crepuscule', G = [GR[0], GR[1], GR[2], GR[3]];
   if (kind === 'lamp') {
-    const W = 40, H = 96, b = new PaBuf(W, H), cx = 20, yb = H - 2;
+    const W = 40, H = 96, b = new pa_Buf(W, H), cx = 20, yb = H - 2;
     b.R(cx - 6, yb - 6, 12, 6, G[1]); b.R(cx - 6, yb - 6, 12, 1, G[3]); b.R(cx - 4, yb - 12, 8, 6, G[2]); b.R(cx - 3, yb - 14, 6, 2, G[3]);
     b.R(cx - 2, yb - 78, 4, 66, G[1]); b.R(cx + 1, yb - 78, 1, 66, G[3]); b.R(cx - 3, yb - 56, 6, 2, G[2]); b.R(cx - 4, yb - 40, 8, 2, G[2]);
     b.R(cx - 4, yb - 80, 8, 3, G[2]);
@@ -1229,7 +1250,7 @@ function pa_buildItem(kind, env) {
     b.outline(NI[0]); return { cv: b.done(), ox: cx, oy: yb, W, H, glow: [[cx - 10, yb - 86], [cx + 10, yb - 86]] };
   }
   if (kind === 'morris') {
-    const W = 44, H = 84, b = new PaBuf(W, H), cx = 22, yb = H - 2;
+    const W = 44, H = 84, b = new pa_Buf(W, H), cx = 22, yb = H - 2;
     b.ell(cx, yb - 3, 17, 4, G[0]); b.R(cx - 15, yb - 8, 30, 6, G[1]); b.R(cx - 15, yb - 8, 30, 1, G[3]);
     for (let j = 0; j < 52; j++) for (let i = -13; i <= 13; i++) {
       const u = i / 13, shade = u > 0.5 ? 3 : u > -0.1 ? 2 : u > -0.6 ? 1 : 0, y = yb - 9 - j, band = Math.floor(j / 13) % 4;
@@ -1243,7 +1264,7 @@ function pa_buildItem(kind, env) {
     b.outline(NI[0]); return { cv: b.done(), ox: cx, oy: yb, W, H };
   }
   if (kind === 'kiosk') {
-    const W = 64, H = 82, b = new PaBuf(W, H), cx = 32, yb = H - 2;
+    const W = 64, H = 82, b = new pa_Buf(W, H), cx = 32, yb = H - 2;
     b.R(cx - 26, yb - 6, 52, 6, G[0]); b.R(cx - 26, yb - 6, 52, 1, G[2]);
     b.R(cx - 24, yb - 54, 48, 48, G[1]); b.R(cx + 18, yb - 54, 6, 48, G[2]); b.R(cx - 24, yb - 54, 4, 48, G[0]);
     b.R(cx - 19, yb - 46, 38, 26, NI[0]); b.R(cx - 18, yb - 45, 36, 24, night ? AM[5] : WO[2]);
@@ -1256,7 +1277,7 @@ function pa_buildItem(kind, env) {
     b.outline(NI[0]); return { cv: b.done(), ox: cx, oy: yb, W, H };
   }
   if (kind === 'tree') {
-    const W = 110, H = 190, b = new PaBuf(W, H), cx = 55, yb = H - 2, rnd = rng(9);
+    const W = 110, H = 190, b = new pa_Buf(W, H), cx = 55, yb = H - 2, rnd = rng(9);
     const bark = [WO[1], WO[2], WO[3], WO[4]], leaf = [GR[0], GR[1], GR[2], GR[3], GR[4], LM[4]];
     for (let j = 0; j < 100; j++) { const w = 7 - j * 0.02 + (j < 8 ? (8 - j) * 0.6 : 0), lean = Math.sin(j * 0.07) * 2; for (let i = -w; i <= w; i++) { const u = i / w, t_ = pa_h2((cx + i) | 0, (yb - j) | 0, 3); b.px(cx + lean + i, yb - j, u > 0.4 ? bark[3] : u > -0.2 ? bark[2] : bark[1]); if (t_ < 0.18) b.px(cx + lean + i, yb - j, t_ < 0.09 ? ST[5] : bark[0]); } }
     for (const [dx, dy, r] of [[0, 128, 30], [-26, 112, 22], [26, 114, 24], [-14, 150, 24], [18, 150, 22], [0, 168, 18], [-32, 135, 14], [34, 138, 14]]) {
@@ -1269,13 +1290,13 @@ function pa_buildItem(kind, env) {
     return { cv: b.done(), ox: cx, oy: yb, W, H };
   }
   if (kind === 'banc') {
-    const W = 50, H = 30, b = new PaBuf(W, H), cx = 25, yb = H - 2;
+    const W = 50, H = 30, b = new pa_Buf(W, H), cx = 25, yb = H - 2;
     for (const sg of [-1, 1]) { b.R(cx + sg * 20 - 1, yb - 14, 3, 14, NI[1]); b.R(cx + sg * 20 - 3, yb - 2, 7, 2, NI[1]); }
     for (let j = 0; j < 3; j++) b.R(cx - 22, yb - 15 - j * 4, 45, 3, [WO[3], WO[2], WO[3]][j]); b.R(cx - 22, yb - 15, 45, 1, WO[5]);
     b.R(cx - 22, yb - 11, 45, 2, WO[3]); b.R(cx - 22, yb - 20, 45, 1, WO[5]);
     b.outline(NI[0]); return { cv: b.done(), ox: cx, oy: yb, W, H };
   }
-  const W = 20, H = 34, b = new PaBuf(W, H), cx = 10, yb = H - 2;                                          // boîte aux lettres
+  const W = 20, H = 34, b = new pa_Buf(W, H), cx = 10, yb = H - 2;                                          // boîte aux lettres
   b.R(cx - 5, yb - 4, 10, 4, NI[1]); b.R(cx - 6, yb - 26, 12, 22, YE[1]); b.R(cx + 2, yb - 26, 4, 22, YE[2]); b.R(cx - 6, yb - 26, 2, 22, YE[0]);
   b.R(cx - 6, yb - 30, 12, 5, YE[2]); b.R(cx - 5, yb - 32, 10, 2, YE[1]); b.R(cx - 3, yb - 22, 6, 1, NI[0]); b.R(cx - 3, yb - 15, 6, 4, WH[2]);
   b.outline(NI[0]); return { cv: b.done(), ox: cx, oy: yb, W, H };
@@ -1314,7 +1335,7 @@ function pa_rue(t, o = {}) {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // peintre de profil (dir = +1 regarde à droite), blouse blanche, casquette ; k = image du geste de pinceau (0..7) ; pose 'debout' | 'assis'
 function pa_buildPainter(seed, dir, s, k, pose, env) {
-  const night = env === 'crepuscule', W = Math.ceil(44 * s), H = Math.ceil(48 * s), b = new PaBuf(W, H), ox = Math.floor(W / 2) - Math.round(2 * s * dir), oy = H - 2;
+  const night = env === 'crepuscule', W = Math.ceil(44 * s), H = Math.ceil(48 * s), b = new pa_Buf(W, H), ox = Math.floor(W / 2) - Math.round(2 * s * dir), oy = H - 2;
   const X = v => ox + dir * v * s, Y = v => oy - v * s, Th = Math.max(1, Math.round(2 * s));
   const white = night ? [DU[2], DU[3], DU[4], DU[6]] : [ST[5], WH[0], WH[1], WH[3]], cap = [NI[2], ST[2], WO[2], GR[1]][Math.floor(pa_h(seed, 1) * 4)], skin = night ? SK[1] : SK[3];
   const sit = pose === 'assis', bob = Math.sin(k / 8 * TAU);
@@ -1405,7 +1426,7 @@ function pa_echafaudage(x, y, w, h, t, o = {}) {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // tuile de treillis (cellule T × T : montant à gauche, entretoise en haut, deux diagonales, goussets, rivets) ; fresh = peinture neuve
 function pa_buildLatTile(env, T, bar, fresh, hazeA) {
-  const night = env === 'crepuscule', b = new PaBuf(T, T), pw = bar, bw = Math.round(bar * 0.8), dw = Math.max(2, Math.round(bar * 0.62));
+  const night = env === 'crepuscule', b = new pa_Buf(T, T), pw = bar, bw = Math.round(bar * 0.8), dw = Math.max(2, Math.round(bar * 0.62));
   const tone = fresh ? (night ? [NI[0], NI[1], DU[1], DU[2], DU[3]] : [WO[3], OC[2], OC[3], OC[4], OC[5]]) : (night ? [NI[0], NI[0], NI[1], DU[0], DU[1]] : [WO[0], WO[1], WO[1], WO[2], OC[1]]);
   const rim = night ? DU[4] : fresh ? AM[9] : AM[7], rivD = night ? NI[0] : WO[0], rivL = night ? DU[3] : fresh ? AM[8] : OC[3], R2 = Math.SQRT1_2;
   for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
@@ -1441,7 +1462,7 @@ function pa_latLayer(cv, T, par, cam, camY, ox = 0, oy = 0) {
 }
 // montant d'avant-plan : colonne de fer à double T avec rivets, en contre-jour
 function pa_buildChord(env, w, hh) {
-  const night = env === 'crepuscule', b = new PaBuf(w, hh), tone = night ? [NI[0], NI[0], NI[1], DU[0], DU[1]] : [WO[0], WO[1], WO[2], OC[1], OC[2]], rim = night ? DU[5] : AM[9], fl = Math.round(w * 0.22);
+  const night = env === 'crepuscule', b = new pa_Buf(w, hh), tone = night ? [NI[0], NI[0], NI[1], DU[0], DU[1]] : [WO[0], WO[1], WO[2], OC[1], OC[2]], rim = night ? DU[5] : AM[9], fl = Math.round(w * 0.22);
   for (let x = 0; x < w; x++) for (let y = 0; y < hh; y++) {
     const u = x / w, web = x > fl && x < w - fl;
     let c = u < 0.12 ? 0 : u < 0.5 ? 1 : u < 0.8 ? 2 : u < 0.95 ? 3 : 4;
@@ -1459,14 +1480,15 @@ function pa_buildChord(env, w, hh) {
 // pa_tourDetail(t, o) : voir l'en-tête
 function pa_tourDetail(t, o = {}) {
   const env = o.env || 'matin', cam = pa_fin(o.cam), camY = pa_fin(o.camY), night = env === 'crepuscule', E = pa_env(o);
-  const out = {};
+  const out = {}, layer = o.layer || 'all';
   // 1. ciel et ville au loin
-  if (o.sky !== false) {
+  if (layer !== 'front' && o.sky !== false) {
     const c = pa_ciel(t, { env, h: o.h ?? 300, clouds: o.clouds ?? 3, cam: cam * 0.1, camY: camY * 0.1, cloudScale: 1.4, cloudSpeed: 4 });
     pa_toits(t, { env, layers: ['far'], y: (o.h ?? 300) + 24, cam: cam * 0.15, smoke: 0, dfar: 80 });
     if (o.haze !== false) k_haze(300, 480, E.mist, 0.5, { profile: 'top', cam: cam * 0.2, par: 0.3, t, seed: 3, wisp: 0.4 });
     out.sun = c.sun;
   }
+  if (layer === 'front') return pa_tourDetailFront(t, o, env, cam, camY, night, E, out);
   // 2. treillis lointain (autre face de la tour), brumeux
   const tb = pa_cache(`latB|${env}`, () => pa_buildLatTile(env, 48, 4, false, 0.55));
   pa_latLayer(tb, 48, 0.25 * 0 + cam, camY, 0.25, 0, 7);
@@ -1479,6 +1501,10 @@ function pa_tourDetail(t, o = {}) {
   const mx = -cam * 0.55, my = -camY * 0.55;
   if (o.scaffold ?? 1) pa_echafaudage((o.sx ?? 150) + mx, (o.sy ?? 60) + my, 96, 230, t, { env });
   if (o.peintres ?? 1) { const r = pa_peintres((o.px ?? 92) + mx, (o.py ?? 292) + my, o.ps ?? 1.5, t, { env, n: 2, seed: 2, ropeTop: -40 }); out.peintres = r; }
+  if (layer === 'back') return out;
+  return pa_tourDetailFront(t, o, env, cam, camY, night, E, out);
+}
+function pa_tourDetailFront(t, o, env, cam, camY, night, E, out) {
   // 5. montant d'avant-plan, poutre, rivets
   const ch = pa_cache(`chord|${env}`, () => pa_buildChord(env, 54, 192));
   const fx = (o.chordX ?? -14) - cam * 1.0, fyy = -camY * 1.0;
@@ -1537,7 +1563,7 @@ function pa_buildPiedLeg(b, q, env, side, W) {                           // un p
   for (let k = 1; k < nr * 3; k++) { const v = Math.pow(k / (nr * 3), 1.28), a = pa_quadPt(q, 0.045, v), c = pa_quadPt(q, 0.955, v); b.px(a[0], a[1], tone[0]); b.px(c[0], c[1], tone[4]); }
 }
 function pa_buildPiedMid(env, F) {                                      // pieds, arche, dessous de la plateforme, sol, ombres (largeur 350, origine x = −40)
-  const W = 350, ox = 40, b = new PaBuf(W, LH), night = env === 'crepuscule', M = pa_mat({ env }), hy = F - 22, cxm = ox + 135;
+  const W = 350, ox = 40, b = new pa_Buf(W, LH), night = env === 'crepuscule', M = pa_mat({ env }), hy = F - 22, cxm = ox + 135;
   const tone = night ? [NI[0], NI[0], NI[1], DU[0], DU[2]] : [WO[0], WO[1], WO[2], OC[1], OC[3]], rim = night ? DU[5] : AM[9];
   // sol : allée de sable vers l'horizon, pelouses, bordures
   const sand = night ? [NI[2], NI[3], NI[4]] : env === 'soir' ? [DU[4], OC[4], OC[5]] : [SK[2], SK[3], SK[4]], lawn = night ? [NI[1], NI[2], GR[0]] : [GR[2], GR[3], GR[4]];
@@ -1591,7 +1617,7 @@ function pa_buildPiedMid(env, F) {                                      // pieds
   return { cv: b.done(), ox, W, q1, q2, A, cxA, cyA, B };
 }
 function pa_buildPiedFar(env, F) {
-  const W = 330, ox = 30, b = new PaBuf(W, LH), M = pa_mat({ env }), hy = F - 22;
+  const W = 330, ox = 30, b = new pa_Buf(W, LH), M = pa_mat({ env }), hy = F - 22;
   // bâtiments lointains très brumeux (Ecole militaire, toits) sous l'horizon
   const rnd = rng(5); let x = 0;
   while (x < W) { const w = 14 + Math.floor(rnd() * 22), h = 6 + Math.floor(rnd() * 14); b.R(x, hy - h, w, h + 2, M.stoneB[2]); b.R(x, hy - h, w, 1, M.stoneB[3]); for (let i = 3; i < w - 2; i += 4) b.px(x + i, hy - h + 3, M.glass[1]); b.poly([[x, hy - h], [x + 3, hy - h - 3], [x + w - 3, hy - h - 3], [x + w, hy - h]], M.zinc[2]); x += w; }
@@ -1599,7 +1625,7 @@ function pa_buildPiedFar(env, F) {
   return { cv: b.done(), ox, W };
 }
 function pa_buildPiedFront(env, F) {                                    // guichet, barrières de file d'attente
-  const W = 350, ox = 40, b = new PaBuf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule';
+  const W = 350, ox = 40, b = new pa_Buf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule';
   // guichet : cabine de bois, toit incliné, fenêtre grillagée, enseigne
   const gx = ox + 196, gy = F - 4, gw = 50, gh = 56;
   b.R(gx, gy - gh, gw, gh, WO[2]); b.R(gx, gy - gh, gw, 2, WO[4]); b.R(gx + gw - 4, gy - gh + 2, 4, gh - 2, WO[4]); b.R(gx, gy - gh + 2, 4, gh - 2, WO[1]);
@@ -1616,24 +1642,26 @@ function pa_buildPiedFront(env, F) {                                    // guich
 }
 // pa_tourPied(t, o) : voir l'en-tête
 function pa_tourPied(t, o = {}) {
-  const env = o.env || 'matin', F = o.F ?? 410, cam = pa_fin(o.cam), light = (o.light ?? 1) < 0 ? -1 : 1, night = env === 'crepuscule', E = pa_env(o);
-  const c = pa_ciel(t, { env, h: F - 22, clouds: o.clouds ?? 4, cloudY0: 150, cloudY1: 330, cam: cam * 0.1, sunX: o.sunX ?? 150, sunDy: o.sunDy ?? 40, rays: 0.5, cloudScale: 1.3 });
+  const env = o.env || 'matin', F = o.F ?? 410, cam = pa_fin(o.cam), light = (o.light ?? 1) < 0 ? -1 : 1, night = env === 'crepuscule', E = pa_env(o), layer = o.layer || 'all';
+  let sun = null;
   const fa = pa_cache(`piedF|${env}|${F}`, () => pa_buildPiedFar(env, F)), md = pa_cache(`piedM|${env}|${F}`, () => pa_buildPiedMid(env, F)), fr = pa_cache(`piedR|${env}|${F}`, () => pa_buildPiedFront(env, F));
   L.setTransform(1, 0, 0, 1, 0, 0);
-  L.drawImage(fa.cv, Math.round(-fa.ox - cam * 0.15), 0);
-  if (o.haze ?? 1) k_haze(F - 60, F - 10, E.mist, 0.45, { profile: 'mid', cam: cam * 0.2, par: 0.3, t, seed: 2, wisp: 0.4 });
-  // rayons de soleil sous l'arche
-  if (o.rays ?? 1) k_rays(c.sun ? c.sun[0] : 150, c.sun ? c.sun[1] : 300, t, { angle: Math.PI * 0.5 + 0.12, spread: 1.0, len: 340, n: 7, strength: 0.34, seed: 6, cam, par: 0.3 });
-  // foule minuscule au loin sous l'arche, puis au pied des massifs
-  pa_foule(70 - cam * 0.4, 200 - cam * 0.4, F - 18, t, { n: 16, h: 4, speed: 4, seed: 3, env, depth: 8, light });
-  L.drawImage(md.cv, Math.round(-md.ox - cam * 0.5), 0);
-  pa_foule(10 - cam * 0.5, 262 - cam * 0.5, F + 14, t, { n: 12, h: 7, speed: 6, seed: 9, env, depth: 12, light });
-  L.drawImage(fr.cv, Math.round(-fr.ox - cam), 0);
-  pa_foule(20 - cam, 240 - cam, F + 44, t, { n: 7, h: 9, speed: 8, seed: 21, env, depth: 10, light });
-  // pigeons au sol, poussière dans le jour
-  for (let k = 0; k < (o.pigeons ?? 3); k++) pa_pigeon(60 + k * 70 - cam + Math.sin(t * 0.5 + k) * 5, F + 66 + k * 12, 1.4, t, { env, seed: 7 + k, dir: k % 2 ? -1 : 1, light });
-  if (o.dust ?? 1) k_dust(t, { n: 28, x0: 0, x1: 270, y0: 120, y1: 440, cam, par: 0.8, seed: 6 });
-  return { F, groundY: F + 70, sun: c.sun, guichet: [236 - cam, F - 4, 50], archTop: 134 };
+  if (layer === 'all' || layer === 'back') {
+    const c = pa_ciel(t, { env, h: F - 22, clouds: o.clouds ?? 4, cloudY0: 150, cloudY1: 330, cam: cam * 0.1, sunX: o.sunX ?? 150, sunDy: o.sunDy ?? 40, rays: 0.5, cloudScale: 1.3 }); sun = c.sun;
+    L.drawImage(fa.cv, Math.round(-fa.ox - cam * 0.15), 0);
+    if (o.haze ?? 1) k_haze(F - 60, F - 10, E.mist, 0.45, { profile: 'mid', cam: cam * 0.2, par: 0.3, t, seed: 2, wisp: 0.4 });
+    if (o.rays ?? 1) k_rays(c.sun ? c.sun[0] : 150, c.sun ? c.sun[1] : 300, t, { angle: Math.PI * 0.5 + 0.12, spread: 1.0, len: 340, n: 7, strength: 0.34, seed: 6, cam, par: 0.3 });
+    pa_foule(70 - cam * 0.4, 200 - cam * 0.4, F - 18, t, { n: 16, h: 4, speed: 4, seed: 3, env, depth: 8, light });
+    L.drawImage(md.cv, Math.round(-md.ox - cam * 0.5), 0);
+    pa_foule(10 - cam * 0.5, 262 - cam * 0.5, F + 14, t, { n: 12, h: 7, speed: 6, seed: 9, env, depth: 12, light });
+  }
+  if (layer === 'all' || layer === 'front') {
+    L.drawImage(fr.cv, Math.round(-fr.ox - cam), 0);
+    pa_foule(20 - cam, 240 - cam, F + 44, t, { n: 7, h: 9, speed: 8, seed: 21, env, depth: 10, light });
+    for (let k = 0; k < (o.pigeons ?? 3); k++) pa_pigeon(60 + k * 70 - cam + Math.sin(t * 0.5 + k) * 5, F + 66 + k * 12, 1.4, t, { env, seed: 7 + k, dir: k % 2 ? -1 : 1, light });
+    if (o.dust ?? 1) k_dust(t, { n: 28, x0: 0, x1: 270, y0: 120, y1: 440, cam, par: 0.8, seed: 6 });
+  }
+  return { F, groundY: F + 70, sun, guichet: [236 - cam, F - 4, 50], archTop: 134, legs: [[5 - cam * 0.5, 99 - cam * 0.5], [171 - cam * 0.5, 265 - cam * 0.5]] };
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════
@@ -1642,15 +1670,14 @@ function pa_tourPied(t, o = {}) {
 // Coordonnées de conception : u = distance en arrière du tampon avant (px à s = 1), h = hauteur au-dessus du rail. Locomotive 0 → 146, tender 148 → 216, voitures de 120 px.
 const PA_LOCO = { drivers: [62, 88, 114], rd: 17, bogie: [16, 33], rb: 7, trail: 136, rt: 9, tender: [160, 182, 204], rte: 8, len: 146, tlen: 216, carLen: 122, gap: 3 };
 function pa_buildLoco(env, s, dir) {
-  const night = env === 'crepuscule', D = PA_LOCO, W = Math.ceil((D.tlen + 26) * s), H = Math.ceil(100 * s), b = new PaBuf(W, H), oy = H - 2;
+  const night = env === 'crepuscule', D = PA_LOCO, W = Math.ceil((D.tlen + 26) * s), H = Math.ceil(100 * s), b = new pa_Buf(W, H), oy = H - 2;
   const X = u => dir > 0 ? W - 12 * s - u * s : 12 * s + u * s, Y = h => oy - h * s, P = pts => pts.map(p => [X(p[0]), Y(p[1])]);
   const R_ = (u0, h0, u1, h1, c) => b.R(Math.min(X(u0), X(u1)), Y(Math.max(h0, h1)), Math.max(1, Math.abs(X(u1) - X(u0))), Math.max(1, Math.abs(Y(h0) - Y(h1))), c);
   const blk = night ? [NI[0], NI[0], NI[1], DU[1], DU[3]] : [NI[0], GR[0], GR[1], GR[2], GR[4]], brass = night ? [DU[0], DU[2], DU[4], AM[6], AM[8]] : [AM[3], AM[5], AM[7], AM[9], AM[10]], steel = night ? [NI[1], NI[2], NI[3], NI[5], DU[4]] : [ST[1], ST[3], ST[5], ST[6], ST[7]];
-  const lit = dir > 0 ? 1 : -1;
   // châssis
   R_(2, 17, 142, 28, NI[1]); R_(2, 26, 142, 28, steel[0]);
   // cylindres, tiroir, longeron
-  R_(10, 14, 36, 31, steel[1]); R_(10, 29, 36, 31, steel[3]); R_(14, 31, 32, 37, steel[0]); R_(10, 14, 12, 31, steel[3]);
+  R_(10, 14, 36, 31, steel[1]); R_(10, 29, 36, 31, steel[3]); R_(14, 31, 32, 37, steel[0]); R_(10, 14, 12, 31, steel[3]); R_(30, 28, 46, 31, steel[2]);
   // chaudière : cylindre ombré
   b.polyG(P([[4, 30], [4, 56], [10, 62], [104, 62], [104, 30]]), [blk[0], blk[2], blk[3], blk[4]], 0.24, 0.6);
   for (const u of [28, 46, 64, 82, 98]) { R_(u, 31, u + 3, 61, brass[1]); R_(u, 60, u + 3, 61, brass[3]); R_(u, 31, u, 61, brass[0]); }
@@ -1728,7 +1755,7 @@ function pa_locoLive(x, y, s, t, dir, env, o) {
 // voiture à compartiments (sans roues) ; les fenêtres sont des TROUS dans le sprite : l'intérieur est dessiné dessous
 const PA_WIN = { n: 4, w: 20, h: 21, u0: 6, pitch: 28, h0: 35 };
 function pa_buildWagon(env, s, dir, variant) {
-  const night = env === 'crepuscule', D = PA_LOCO, Wd = Math.ceil((D.carLen + 14) * s), H = Math.ceil(76 * s), b = new PaBuf(Wd, H), oy = H - 2, X = u => dir > 0 ? Wd - 7 * s - u * s : 7 * s + u * s, Y = h => oy - h * s;
+  const night = env === 'crepuscule', D = PA_LOCO, Wd = Math.ceil((D.carLen + 14) * s), H = Math.ceil(76 * s), b = new pa_Buf(Wd, H), oy = H - 2, X = u => dir > 0 ? Wd - 7 * s - u * s : 7 * s + u * s, Y = h => oy - h * s;
   const R_ = (u0, h0, u1, h1, c) => b.R(Math.min(X(u0), X(u1)), Y(Math.max(h0, h1)), Math.max(1, Math.abs(X(u1) - X(u0))), Math.max(1, Math.abs(Y(h0) - Y(h1))), c);
   const P = pts => pts.map(p => [X(p[0]), Y(p[1])]);
   const body = night ? [NI[0], NI[1], DU[1], DU[3]] : (variant === 0 ? [WO[0], WO[1], WO[2], WO[4]] : variant === 1 ? [GR[0], GR[1], GR[2], GR[4]] : [RD[0], RD[1], RD[2], RD[4]]);
@@ -1752,19 +1779,19 @@ function pa_buildWagon(env, s, dir, variant) {
     R_(wu1 - 3, 28, wu1 - 1, 31, brass[3]);                                                                       // poignée
     const num = k === 1 && variant === 0 ? '1' : variant === 1 ? '2' : '3';
     b.text(num, Math.round((dir > 0 ? X(u0 + 14) : X(u0 + 12)) - 1), Y(28), brass[3], 1);
-    // marchepied
-    R_(u0 + 2, 12, u0 + 26, 14, ST[2]);
+    R_(u0 + 2, 12, u0 + 26, 14, ST[2]);                                                                           // marchepied
   }
   R_(0, 11, 2, 22, ST[3]); R_(120, 11, 124, 22, ST[3]);
   b.outline(NI[0]);
   return { cv: b.done(), W: Wd, H, X0: dir > 0 ? Wd - 7 * s : 7 * s, s };
 }
 // intérieur d'un compartiment (derrière la vitre) : fond chaud, banquettes, filet, voyageurs
+const pa_brassC = night => night ? AM[6] : AM[5];
 function pa_wagonInterior(env, w, h, seed, pax) {
   return pa_cache(`wint|${env}|${w}|${h}|${seed}|${pax}`, () => {
-    const night = env === 'crepuscule', b = new PaBuf(w, h), warm = night ? [AM[4], AM[5], AM[6], AM[7]] : [WO[0], WO[1], WO[2], WO[3]];
+    const night = env === 'crepuscule', b = new pa_Buf(w, h), warm = night ? [AM[4], AM[5], AM[6], AM[7]] : [WO[0], WO[1], WO[2], WO[3]];
     b.R(0, 0, w, h, warm[1]); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (pa_bay(i, j) < 0.3 * (1 - j / h)) b.px(i, j, warm[2]);
-    b.R(0, Math.round(h * 0.18), w, 1, brassC(night)); b.R(0, Math.round(h * 0.2), w, 2, warm[0]);                                   // filet à bagages
+    b.R(0, Math.round(h * 0.18), w, 1, pa_brassC(night)); b.R(0, Math.round(h * 0.2), w, 2, warm[0]);                                   // filet à bagages
     b.R(0, Math.round(h * 0.62), w, h, night ? RD[1] : RD[0]); b.R(0, Math.round(h * 0.62), w, 1, night ? RD[3] : RD[2]);             // dossier de banquette
     if (night) b.disc(w >> 1, 2, 3, AM[10]);
     for (let q = 0; q < pax; q++) {
@@ -1775,14 +1802,13 @@ function pa_wagonInterior(env, w, h, seed, pax) {
     return b.done();
   });
 }
-const brassC = night => night ? AM[6] : AM[5];
 // pa_train(x, y, s, t, o) : voir l'en-tête
 function pa_train(x, y, s, t, o = {}) {
   const env = o.env || 'matin', dir = (o.dir ?? 1) < 0 ? -1 : 1, sq = Math.round(s * 8) / 8, D = PA_LOCO, ncar = o.cars ?? 2, speed = o.speed ?? 0, night = env === 'crepuscule', th = o.ph ?? dir * Math.abs(speed) * t / (D.rd * sq);
   L.setTransform(1, 0, 0, 1, 0, 0);
   const info = { windows: [], front: [x, y], chimney: [x - dir * 15 * sq, y - 94 * sq], tail: x - dir * D.tlen * sq, cab: [x - dir * 104 * sq, y - 86 * sq, 42 * sq, 58 * sq], wheelsY: y - 17 * sq };
   const bob = speed ? Math.round(Math.sin(t * 19) * 0.5) : 0;
-  if (o.shadow ?? 1) { L.save(); L.globalAlpha = 0.4; ell(x - dir * (D.tlen / 2 + ncar * 60) * sq + (o.light ?? 1) * -10 * sq * 0, y + 1, Math.round((D.tlen / 2 + ncar * 62) * sq), Math.max(2, Math.round(3 * sq)), night ? NI[0] : DU[1]); L.restore(); }
+  if (o.shadow ?? 1) { L.save(); L.globalAlpha = 0.4; ell(x - dir * (D.tlen / 2 + ncar * 60) * sq, y + 1, Math.round((D.tlen / 2 + ncar * 62) * sq), Math.max(2, Math.round(3 * sq)), night ? NI[0] : DU[1]); L.restore(); }
   // voitures (derrière) : intérieur, caisse, roues
   for (let k = 0; k < ncar; k++) {
     const u0 = D.tlen + 6 + k * (D.carLen + D.gap), xf = x - dir * u0 * sq, variant = (k + (o.variant || 0)) % 3, sp = pa_cache(`wag|${env}|${sq}|${dir}|${variant}`, () => pa_buildWagon(env, sq, dir, variant));
@@ -1798,8 +1824,7 @@ function pa_train(x, y, s, t, o = {}) {
     }
     L.drawImage(sp.cv, left, top);
     for (const wu of [22, 32, 90, 100]) pa_wheel(Math.round(xf - dir * wu * sq), Math.round(y - 8 * sq) - 1, Math.round(8 * sq), th * D.rd / 8);
-    // rails d'attelage entre voitures
-    R(xf - dir * (D.carLen + 1) * sq - 1, y - 14 * sq, 4, 2, ST[3]);
+    R(xf - dir * (D.carLen + 1) * sq - 1, y - 14 * sq, 4, 2, ST[3]);                                                // attelage entre voitures
   }
   // locomotive et tender
   const lsp = pa_cache(`loco|${env}|${sq}|${dir}`, () => pa_buildLoco(env, sq, dir));
@@ -1813,7 +1838,7 @@ function pa_train(x, y, s, t, o = {}) {
 // 15. LA GARE : verrière, piliers de fonte, horloge, quai, bagages, panneaux
 // ════════════════════════════════════════════════════════════════════════════════════════
 function pa_buildGareBack(env, E) {                                       // verrière, ferme, fond de la halle, voie et ballast (largeur 360, origine x = −45)
-  const W = 360, ox = 45, b = new PaBuf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', soir = env === 'soir';
+  const W = 360, ox = 45, b = new pa_Buf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', soir = env === 'soir';
   const iron = night ? [NI[0], NI[0], NI[1], DU[0], DU[2]] : [WO[0], WO[1], WO[2], OC[1], OC[3]], rim = night ? DU[5] : AM[9];
   const glass = night ? [NI[1], NI[2], NI[3], NI[4]] : soir ? [DU[5], DU[6], DU[7], AM[9]] : [NI[8], NI[9], NE[2], NE[4]];
   // verrière : volume de verre au-dessus de la ferme
@@ -1850,16 +1875,14 @@ function pa_buildGareBack(env, E) {                                       // ver
   b.R(0, E - 6, W, 1, night ? NI[5] : ST[7]); b.R(0, E - 5, W, 1, night ? NI[3] : ST[4]); b.R(0, E - 1, W, 1, night ? NI[5] : ST[6]); b.R(0, E, W, 1, night ? NI[3] : ST[3]);
   return { cv: b.done(), ox, W };
 }
-function pa_buildGareFront(env, E) {                                     // quai : bordure, dalles, bagages, chariot, banc, réverbère, panneaux (largeur 360)
-  const W = 360, ox = 45, b = new PaBuf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', iron = night ? [NI[0], NI[1], NI[2], DU[1], DU[3]] : [WO[0], WO[1], WO[2], OC[1], OC[3]];
+function pa_buildGareFront(env, E) {                                     // quai : bordure, dalles, bagages, chariot, banc, réverbère (largeur 360)
+  const W = 360, ox = 45, b = new pa_Buf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', iron = night ? [NI[0], NI[1], NI[2], DU[1], DU[3]] : [WO[0], WO[1], WO[2], OC[1], OC[3]];
   const slab = night ? [NI[2], NI[3], NI[4]] : env === 'soir' ? [DU[4], OC[4], OC[5]] : [ST[4], ST[5], WH[0]];
   b.R(0, E + 1, W, 10, night ? NI[4] : WH[0]); b.R(0, E + 1, W, 1, night ? NI[5] : WH[3]); b.R(0, E + 9, W, 2, night ? NI[1] : ST[3]); for (let x = 0; x < W; x += 31) b.R(x, E + 2, 1, 8, night ? NI[3] : ST[5]);
   b.R(0, E + 11, W, 4, YE[1]); b.R(0, E + 11, W, 1, YE[3]);                                                             // ligne de sécurité jaune
   b.R(0, E + 15, W, LH - E - 15, slab[1]);
   let y = E + 15, row = 0; while (y < LH) { const f = (y - E) / (LH - E), rh = 5 + Math.round(f * 12); b.R(0, y, W, 1, M.stone[0]); const off = (row & 1) ? 22 : 0; for (let x = -off; x < W; x += 44) { b.R(x, y + 1, 1, rh - 1, M.stone[0]); } for (let x = 0; x < W; x++) if (pa_bay(x, y) < 0.15 + f * 0.1) for (let j = 1; j < rh; j++) if (pa_h2(x, y + j, 4) < 0.1) b.px(x, y + j, slab[2]); y += rh; row++; }
   // bagages : malles à sangles, valises, caisse
-  const trunk = (x, yf, w, h, c, strap) => { b.R(x, yf - h, w, h, c[1]); b.R(x, yf - h, w, 2, c[2]); b.R(x, yf - 2, w, 2, c[0]); b.R(x + w - 2, yf - h, 2, h, c[0]); b.R(x + 3, yf - h, 2, h, strap); b.R(x + w - 6, yf - h, 2, h, strap); b.R(x + (w >> 1) - 1, yf - h + 3, 3, 3, YE[1]); b.outline(NI[0], false); };
-  void trunk;
   const bag = (x, yf, w, h, c, strap) => { b.R(x, yf - h, w, h, c[1]); b.R(x, yf - h, w, 2, c[2]); b.R(x, yf - 2, w, 2, c[0]); b.R(x + w - 2, yf - h, 2, h, c[0]); b.R(x + 3, yf - h, 2, h, strap); b.R(x + w - 6, yf - h, 2, h, strap); b.R(x + (w >> 1) - 1, yf - h + 3, 3, 3, YE[1]); b.R(x - 1, yf - h - 1, w + 2, 1, NI[0]); b.R(x - 1, yf, w + 2, 1, NI[0]); b.R(x - 1, yf - h, 1, h, NI[0]); b.R(x + w, yf - h, 1, h, NI[0]); };
   bag(ox + 18, E + 56, 34, 22, night ? [NI[1], NI[2], NI[3]] : [WO[1], WO[2], WO[4]], iron[3]); bag(ox + 24, E + 34, 24, 14, night ? [NI[1], NI[2], NI[3]] : [GR[0], GR[1], GR[2]], YE[1]);
   bag(ox + 58, E + 56, 20, 14, night ? [NI[1], NI[2], NI[3]] : [RD[0], RD[1], RD[2]], YE[1]);
@@ -1874,11 +1897,11 @@ function pa_buildGareFront(env, E) {                                     // quai
   b.outline(NI[0]);
   return { cv: b.done(), ox, W };
 }
-// horloge de quai (cadran, aiguilles qui avancent)
+// pa_horloge(x, y, r, t, o) : horloge de quai (cadran rond, deux aiguilles). o : env, hour (8), minute (42), tick (secondes par minute affichée, 1,4 : les aiguilles avancent)
 function pa_horloge(x, y, r, t, o = {}) {
   const night = (o.env || 'matin') === 'crepuscule', hr = (o.hour ?? 8) % 12, mn = (o.minute ?? 42) + Math.floor(t / (o.tick ?? 1.4));
   disc(x, y, r + 3, NI[0]); disc(x, y, r + 2, night ? DU[2] : WO[2]); disc(x, y, r, NI[0]); disc(x, y, r - 1, night ? AM[8] : WH[2]);
-  for (let k = 0; k < 12; k++) { const a = k * TAU / 12 - Math.PI / 2; R(x + Math.cos(a) * (r - 3) - (k % 3 === 0 ? 0 : 0), y + Math.sin(a) * (r - 3), 1, 1, NI[0]); if (k % 3 === 0) { R(x + Math.cos(a) * (r - 4) - 0, y + Math.sin(a) * (r - 4), 2, 2, NI[0]); } }
+  for (let k = 0; k < 12; k++) { const a = k * TAU / 12 - Math.PI / 2; R(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3), 1, 1, NI[0]); if (k % 3 === 0) R(x + Math.cos(a) * (r - 4), y + Math.sin(a) * (r - 4), 2, 2, NI[0]); }
   const am = ((mn % 60) / 60) * TAU - Math.PI / 2, ah = ((hr + (mn % 60) / 60) / 12) * TAU - Math.PI / 2;
   lineP(x, y, x + Math.cos(ah) * (r * 0.5), y + Math.sin(ah) * (r * 0.5), NI[0], 2); lineP(x, y, x + Math.cos(am) * (r * 0.8), y + Math.sin(am) * (r * 0.8), NI[0], 1); disc(x, y, 1, RD[3]);
   px(x - r * 0.3, y - r * 0.4, WH[3]);
@@ -1899,7 +1922,7 @@ function pa_gare(t, o = {}) {
     const nom = o.nom ?? 'PARIS', pw = textW(nom, 2) + 14, px0 = Math.round(70 - cam * 0.5), py0 = 248;
     R(px0 - 1, py0 - 1, pw + 2, 22, NI[0]); R(px0, py0, pw, 20, night ? NI[3] : BL[1]); R(px0 + 1, py0 + 1, pw - 2, 18, night ? NI[2] : WH[2]); R(px0 + 2, py0 + 2, pw - 4, 16, night ? NI[1] : BL[2]); ptext(nom, px0 + 7, py0 + 3, WH[3], 2, null);
     L.fillStyle = WO[1]; L.fillRect(px0 + 6, py0 - 24, 1, 24); L.fillRect(px0 + pw - 7, py0 - 24, 1, 24);
-    if (o.dest) { const dt = o.dest, dw = textW(dt, 1) + 24, dx = Math.round(112 - cam * 0.5), dy = 232; R(dx - 1, dy - 1, dw + 2, 14, NI[0]); R(dx, dy, dw, 12, night ? NI[2] : WH[1]); R(dx + 1, dy + 1, dw - 2, 10, night ? NI[1] : NI[1]); ptext('→', dx + 4, dy + 2, YE[3], 1, null); ptext(dt, dx + 16, dy + 2, WH[3], 1, null); L.fillStyle = WO[1]; L.fillRect(dx + 8, dy - 18, 1, 18); L.fillRect(dx + dw - 8, dy - 18, 1, 18); }
+    if (o.dest) { const dt = o.dest, dw = textW(dt, 1) + 24, dx = Math.round(112 - cam * 0.5), dy = 232; R(dx - 1, dy - 1, dw + 2, 14, NI[0]); R(dx, dy, dw, 12, night ? NI[2] : WH[1]); R(dx + 1, dy + 1, dw - 2, 10, NI[1]); ptext('→', dx + 4, dy + 2, YE[3], 1, null); ptext(dt, dx + 16, dy + 2, WH[3], 1, null); L.fillStyle = WO[1]; L.fillRect(dx + 8, dy - 18, 1, 18); L.fillRect(dx + dw - 8, dy - 18, 1, 18); }
     // voyageurs sur le quai lointain, pigeons dans la halle
     for (let k = 0; k < (o.farPeople ?? 5); k++) { const x = 20 + k * 52 + Math.sin(t * 0.3 + k) * 4 - cam * 0.6; pa_passant(x, E - 9, 0.5, t, { env, seed: 40 + k, dir: k % 2 ? -1 : 1, speed: k % 3 === 0 ? 0 : 9, light, shadow: 0.5 }); }
     for (let k = 0; k < (o.birds ?? 3); k++) { const per = 12 + k * 3, ph = ((t / per + k * 0.31) % 1), x = ph * 340 - 40, y = 70 + Math.sin(ph * 9 + k) * 18 + k * 20; pa_pigeon(x, y, 1.1, t + k, { env, mode: 'fly', dir: 1, seed: 11 + k, shadow: 0 }); }
@@ -1908,7 +1931,7 @@ function pa_gare(t, o = {}) {
     const fr = pa_cache(`gareF|${env}|${E}`, () => pa_buildGareFront(env, E));
     L.drawImage(fr.cv, Math.round(-fr.ox - cam), 0);
     for (let k = 0; k < (o.people ?? 4); k++) { const sp = (k % 2 ? -1 : 1) * (10 + (k * 3) % 8), per = 430, x = (((t * sp + k * 118) % per) + per) % per - 90 - cam; pa_passant(x, E + 52 + (k % 3) * 14, 1.3, t, { env, seed: 60 + k * 5, dir: sp > 0 ? 1 : -1, speed: k === 1 ? 0 : Math.abs(sp), light }); }
-    if (night) rgrad(130 - 45 - cam + 45, E + 14, 2, 46, [[0, 'rgba(255,220,120,0.5)'], [1, 'rgba(255,190,80,0)']], 1, 'lighter');
+    if (night) rgrad(130 - cam, E + 14, 2, 46, [[0, 'rgba(255,220,120,0.5)'], [1, 'rgba(255,190,80,0)']], 1, 'lighter');
     if (o.dust ?? 1) k_dust(t, { n: 28, x0: 0, x1: 270, y0: 40, y1: 380, cam, par: 0.9, seed: 3 });
   }
   return info;
@@ -1919,7 +1942,7 @@ function pa_gare(t, o = {}) {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // agent de police 1925 : képi, pèlerine, ceinture blanche, bâton blanc ; modes 'stand' (2 images : respire), 'walk' (8), 'run' (8)
 function pa_buildAgent(dir, light, env, s, mode, k) {
-  const night = env === 'crepuscule', W = Math.ceil(34 * s), H = Math.ceil(44 * s), b = new PaBuf(W, H), ox = W >> 1, oy = H - 2, X = v => ox + dir * v * s, Y = v => oy - v * s, Th = Math.max(2, Math.round(2.8 * s));
+  const night = env === 'crepuscule', W = Math.ceil(34 * s), H = Math.ceil(44 * s), b = new pa_Buf(W, H), ox = W >> 1, oy = H - 2, X = v => ox + dir * v * s, Y = v => oy - v * s, Th = Math.max(2, Math.round(2.8 * s));
   const navy = night ? [NI[0], NI[1], NI[2], NI[3]] : [NI[1], NI[2], NI[3], NI[5]], skin = night ? SK[1] : SK[3];
   const run = mode === 'run', ph = mode === 'stand' ? 0 : k / 8 * TAU, sw = mode === 'stand' ? 0 : Math.sin(ph) * (run ? 6.4 : 3.6), bob = mode === 'stand' ? (k === 1 ? 0.6 : 0) : Math.abs(Math.sin(ph)) * (run ? 1.8 : 0.8), lean = run ? 2.4 : 0;
   const litR = (light > 0) === (dir > 0);
@@ -1952,7 +1975,7 @@ function pa_buildAgent(dir, light, env, s, mode, k) {
   b.outline(NI[0]);
   return { cv: b.done(), ox, oy, W, H };
 }
-// pa_agent(x, y, s, t, o) : policier de profil, (x, y) = pieds ; s = 1 → ≈ 36 px ; o : mode 'stand' | 'walk' | 'run', dir ±1, speed (px/s, règle le pas), env, light, shadow
+// pa_agent(x, y, s, t, o) : policier de profil, (x, y) = pieds ; s = 1 → ≈ 36 px (à garder entre 0,6 et 2) ; o : mode 'stand' | 'walk' | 'run', dir ±1, speed (px/s, règle le pas), seed, env, light, shadow
 function pa_agent(x, y, s, t, o = {}) {
   const mode = o.mode || 'stand', dir = (o.dir ?? 1) < 0 ? -1 : 1, env = o.env || 'matin', light = (o.light ?? 1) < 0 ? -1 : 1, sq = Math.round(s * 4) / 4, speed = o.speed ?? (mode === 'run' ? 70 : 18);
   const k = mode === 'stand' ? (Math.floor(t * 0.8) % 2) : Math.floor((((t * speed / (mode === 'run' ? 16 : 12) / sq + (o.seed || 0) * 0.37) % 1) + 1) % 1 * 8) % 8;
@@ -1963,8 +1986,8 @@ function pa_agent(x, y, s, t, o = {}) {
   return { x, y, h: 36 * sq, top: y - 36 * sq };
 }
 function pa_buildCommis(env, F) {                                       // façade, porte, plaque, lanterne, marches (largeur 330, origine x = −30)
-  const W = 330, ox = 30, b = new PaBuf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', yB = F - 36, gh = 100, yG = yB - gh, cxD = ox + 135;
-  const st = M.stone, st2 = M.stoneB;
+  const W = 330, ox = 30, b = new pa_Buf(W, LH), M = pa_mat({ env }), night = env === 'crepuscule', yB = F - 36, gh = 100, yG = yB - gh, cxD = ox + 135;
+  const st = M.stone;
   // étages et toit
   pa_house(b, 0, yG, W, { M, det: 3, nfl: 2, fh: 36, ww: 12, wh: 22, wp: 26, roofH: 44, seed: 61, balc: [0], side: 1, shut: 0.5, litP: night ? 0.45 : 0.05, tone: 0.2, chim: 2 });
   // rez-de-chaussée : pierre à bossages
@@ -1991,7 +2014,6 @@ function pa_buildCommis(env, F) {                                       // faça
     for (const [py0, ph] of [[dy0 + 6, 24], [dy0 + 34, 30]]) { b.R(lx + 3, py0, lw - 6, ph, NI[2]); b.R(lx + 3, py0, lw - 6, 1, NI[1]); b.R(lx + 3, py0 + ph - 1, lw - 6, 1, NI[5]); b.R(lx + 3, py0, 1, ph, NI[1]); b.R(lx + lw - 4, py0, 1, ph, NI[5]); }
   }
   b.R(dx0 + dw / 2 - 1, dy0, 2, dh, NI[0]); b.R(dx0 + dw / 2 - 5, dy0 + 38, 3, 6, AM[8]); b.R(dx0 + dw / 2 + 3, dy0 + 38, 3, 6, AM[8]);
-  for (let y = 0; y < 30; y++) { const hw = Math.round(Math.sqrt(Math.max(0, 1 - ((15 - y) / 15) ** 2)) * (dw / 2 + 2)); }
   // imposte demi-circulaire
   for (let i = 0; i < dw; i++) { const hh = Math.round(Math.sqrt(Math.max(0, 1 - ((i - dw / 2 + 0.5) / (dw / 2)) ** 2)) * 26); for (let j = 1; j <= hh; j++) b.px(dx0 + i, dy0 - j, j > hh - 2 ? st[4] : (night ? AM[7] : M.glass[1])); }
   for (let q = -22; q <= 22; q += 7) b.line(dx0 + dw / 2 + q * 0.2, dy0 - 1, dx0 + dw / 2 + q, dy0 - Math.round(Math.sqrt(Math.max(0, 1 - (q / 27) ** 2)) * 25), NI[0], 1);
@@ -2004,8 +2026,7 @@ function pa_buildCommis(env, F) {                                       // faça
   // lanterne bleue sur potence
   const lx = dx0 - 30, ly = dy0 - 22;
   b.line(lx + 16, ly - 6, lx + 4, ly - 6, NI[0], 2); b.line(lx + 4, ly - 6, lx + 4, ly - 1, NI[0], 1); b.R(lx - 4, ly, 17, 3, NI[0]); b.R(lx - 3, ly + 3, 15, 18, BL[3]); b.R(lx - 2, ly + 4, 13, 16, night ? CY[4] : BL[4]); b.R(lx - 2, ly + 4, 3, 16, BL[2]); b.R(lx - 4, ly + 21, 17, 3, NI[0]); b.R(lx + 4, ly + 4, 1, 16, BL[2]); b.px(lx + 8, ly + 7, WH[3]);
-  // panneau d'affichage à gauche : avis, affiches de recherche
-  const nx = ox + 22, ny = yB - 20 - 30; void nx; void ny;
+  // panneau d'affichage à droite : avis, affiches de recherche
   const bx = dx0 + dw + 20, by = yB - 76; b.R(bx - 2, by - 2, 34, 46, WO[1]); b.R(bx, by, 30, 42, WO[2]); for (let q = 0; q < 4; q++) { const ax = bx + 2 + (q & 1) * 14, ay = by + 2 + (q >> 1) * 20; b.R(ax, ay, 12, 17, q === 1 ? YE[2] : WH[1]); b.R(ax, ay, 12, 1, ST[5]); for (let l = 0; l < 6; l++) b.R(ax + 1, ay + 3 + l * 2, 10 - (l & 1) * 3, 1, NI[1]); if (q === 0) b.R(ax + 3, ay + 3, 6, 5, SK[3]); }
   // marches
   for (let k = 0; k < 3; k++) { const y = yB + k * 8, w = dw + 32 + k * 16, x = cxD - w / 2; b.R(x, y, w, 8, st[2]); b.R(x, y, w, 2, st[4]); b.R(x, y + 2, w, 1, st[3]); b.R(x, y + 7, w, 1, st[1]); b.dith(x, y + 3, w, 4, st[1], 0.35); b.R(x, y, 2, 8, st[1]); b.R(x + w - 2, y, 2, 8, st[4]); }
@@ -2021,9 +2042,9 @@ function pa_commissariat(t, o = {}) {
   L.setTransform(1, 0, 0, 1, 0, 0);
   if (layer === 'all' || layer === 'back') {
     if (o.sky ?? 1) pa_ciel(t, { env, h: o.h ?? 250, clouds: o.clouds ?? 4, cam: cam * 0.1, cloudScale: 1.2 });
-    // drapeau tricolore à la hampe sur la façade
     const gr = pa_cache(`rueG|${env}|${F}`, () => pa_buildRueGround(env, F));
     L.drawImage(cm.cv, Math.round(-cm.ox - cam * 0.6), 0);
+    // hampe et drapeau tricolore sur la façade
     const hx = Math.round(cm.ox - 30 + 196 - cam * 0.6), hy = 196;
     lineP(hx - 6, hy + 14, hx + 28, hy - 22, NI[0], 2); lineP(hx - 6, hy + 14, hx + 28, hy - 22, WO[4], 1); disc(hx + 28, hy - 23, 2, YE[2]);
     pa_flag(hx + 18, hy - 22, 30, 18, t, 1, 1.3);
@@ -2047,7 +2068,7 @@ function pa_commissariat(t, o = {}) {
 // 17. PIÈCES QUI S'ENVOLENT
 // ════════════════════════════════════════════════════════════════════════════════════════
 // pa_pieces(x, y, t, t0, o) : gerbe de pièces d'or lancée de (x, y) à l'instant t0 ; mode 'envol' (elles montent en tournoyant puis dérivent au vent et s'effacent) ou 'chute' (parabole)
-// o : n (14), dur (3,2 s), r rayon (3), vx dérive (14 px/s), spread (50), seed, mode, size
+// o : n (14), dur (3,2 s), r rayon (3), vx dérive (14 px/s), spread (50), seed, mode
 function pa_pieces(x, y, t, t0, o = {}) {
   const n = o.n ?? 14, dur = o.dur ?? 3.2, r0 = o.r ?? 3, vx = o.vx ?? 14, spread = o.spread ?? 50, seed = o.seed ?? 1, mode = o.mode || 'envol', u = t - t0;
   if (u < 0 || u > dur) return;
@@ -2063,5 +2084,24 @@ function pa_pieces(x, y, t, t0, o = {}) {
     if (w < 0.25 && Math.sin(spin * 2) > 0) { px(ax, ay - ry - 1, WH[3]); px(ax - 1, ay - ry - 2, YE[3]); px(ax + 1, ay - ry - 2, YE[3]); }
     L.restore();
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 18. IMMEUBLE HAUSSMANNIEN À LA DEMANDE
+// ════════════════════════════════════════════════════════════════════════════════════════
+// pa_immeuble(x, y, w, t, o) : façade haussmannienne mise en cache, (x, y) = coin bas gauche ; o : env, nfl (étages, 5), fh (hauteur d'étage, 24), ww/wh (fenêtre, 9×16), wp (pas des fenêtres), roofH (mansarde, 28 ; 0 = pas de toit),
+// shop (devanture sombre au rez-de-chaussée), balc (étages à balcon, [1, 3]), seed, shut (volets 0..1), litP (fenêtres allumées 0..1, par défaut selon l'ambiance), light (±1), zinc 'zinc' | 'slate', det 1..3 (3 = gros plan), smoke (0 : sans fumée).
+function pa_immeuble(x, y, w, t, o = {}) {
+  const env = o.env || 'matin', det = o.det ?? 3, nfl = o.nfl ?? 5, fh = o.fh ?? 24, roofH = o.roofH ?? 28, ww = o.ww ?? 9, wh = o.wh ?? 16, wp = o.wp ?? Math.round(ww * 1.9), seed = o.seed ?? 3, side = (o.light ?? 1) < 0 ? -1 : 1;
+  w = Math.round(w);
+  const key = `imm|${env}|${w}|${nfl}|${fh}|${roofH}|${ww}|${wh}|${wp}|${det}|${seed}|${side}|${o.shop ? 1 : 0}|${(o.balc || []).join(',')}|${o.shut ?? ''}|${o.litP ?? ''}|${o.zinc || ''}`;
+  const C = pa_cache(key, () => {
+    const hh = nfl * fh + (o.shop ? Math.round(fh * 1.3) : 0) + (roofH ? roofH + 24 : 4), b = new pa_Buf(w + 2, hh + 2), M = pa_mat({ env });
+    const r = pa_house(b, 1, hh, w, { M, det, nfl, fh, ww, wh, wp, roofH: roofH || 0, seed, balc: o.balc ?? [1, 3], side, shop: !!o.shop, shut: o.shut, litP: o.litP, zinc: o.zinc, bare: !roofH, tone: 0.3 });
+    return { cv: b.done(), h: hh + 2, chims: r.chims };
+  });
+  L.setTransform(1, 0, 0, 1, 0, 0); L.drawImage(C.cv, Math.round(x) - 1, Math.round(y) - C.h + 2);
+  if ((o.smoke ?? 1) && C.chims.length) pa_vapeur(Math.round(x) - 1 + C.chims[0][0], Math.round(y) - C.h + 2 + C.chims[0][1], t, { env, kind: 'fumee', n: 9, h: 40, w: 1, w2: 7, wind: 14, rate: 0.3, seed: seed + 1, a: 0.9 });
+  return { top: y - C.h + 2, h: C.h };
 }
 // @@FIN@@

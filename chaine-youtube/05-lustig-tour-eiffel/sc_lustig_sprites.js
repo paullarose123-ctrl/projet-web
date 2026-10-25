@@ -1,4 +1,82 @@
 'use strict';
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   sc_lustig_sprites.js — les PERSONNAGES de « L'homme qui a vendu la tour Eiffel » (Paris, 1925) : Victor Lustig, le marchand de ferraille
+   André Poisson, les cinq autres marchands, et l'icône ICONES[3] (le train de la fuite). Préfixe lu_ : aucun nom global sans lu_ (sauf ICONES[3]).
+   Tout se dessine sur L (270 × 480) AVANT le tramage, dans draw(u, t, S) (jamais dans ui()), sauf ICONES[3] (ui, couleurs exactes).
+   Fonctions pures du temps t (secondes) : aucun Math.random, aucun Date ; clignements et dérives viennent de hachages. Chaque appel ≈ 12 ms (groupe de cinq ≈ 40 ms).
+
+   MÉTHODE. Chaque personnage est un squelette 3D (bassin, torse, tête, bras et jambes à deux segments résolus par cinématique inverse), vu en projection orthographique
+   d'un point de vue légèrement surélevé : tout est donc cohérent de face, de trois quarts et de profil (o.yaw). Corps, vêtements, tête, chapeau : formes lisses à sections
+   elliptiques (dessinées dans le calque Y avec croissants de lumière, comme les animaux), ramenées aux tons de la fiche du personnage, liseré de contre-jour, ombre portée
+   projetée sur le sol, contour net ; yeux, sourcils, bouche, joues : pixels nets posés ensuite, exprès (aucune expression accidentelle).
+
+   ÉCHELLE. s = 1 : Lustig mesure 176 px (≈ 186 avec le chapeau), Poisson 163 px (rond, plus court), les marchands 160 à 180 px. Un plan « personnage en pied » : s ≈ 1,6 à 2,0 ;
+   « plan taille » : s ≈ 2,2 à 3 avec o.crop ; gros plan du visage : s ≈ 3,5 (la tête mesure alors ≈ 80 px). Sujet au-dessus de y = 355 : à vous de placer (cx, cy).
+
+   ════════════════════════════════════════════════════════════════════════════════════════════════
+   lu_lustig(cx, cy, s, t, o)   Victor Lustig, 45 ans, grand, mince, très élégant : cheveux plaqués en arrière, fine moustache, costume trois pièces anthracite, gilet clair à boutons,
+        cravate bordeaux, mouchoir blanc, fleur à la boutonnière, souliers vernis, feutre gris (homburg) ; demi-sourire calme (jamais un sourire de dessin animé).
+        (cx, cy) = point au sol sous le bassin (entre les pieds) ; avec o.crop : point de la taille / de la poitrine (voir o.crop) ; s = échelle (1 : 176 px) ; t = temps en secondes.
+   lu_marchand(cx, cy, s, t, o)   André Poisson : rond, cinquantaine, moustache en guidon, melon, costume brun un peu serré, gilet qui tire, cravate verte ; mêmes options et ancrages.
+   lu_groupe(x, y, s, t, o)   les cinq autres marchands, en demi-corps derrière la table (rangée de fond : 3, rangée de devant : 2) : voir plus bas.
+   lu_hat(cx, cy, s, rot, o)   un chapeau seul (sur une table, par terre, en l'air) : voir plus bas.   lu_figure(cx, cy, s, t, o, fiche) : le moteur commun (fiches : lu_WHO).
+
+   POSES (o.pose ; défaut 'stand') — la plupart bouclent sur t ; les ACTIONS (marquées u) se jouent avec o.u = secondes depuis le début de l'action (sans o.u : action terminée) :
+        Lustig :  'stand' (respire, déplace son poids, regard, clignements ; main gauche et droite ballantes)  · 'walk' (cycle de marche, o.ph, voir « marche »)
+                  'read' (tient un journal devant lui avec la main droite, le regard court le long des colonnes ; o.both = les deux mains sur le journal ; le journal est dessiné par le plan)
+                  'think' (main droite au menton, le bras gauche en travers du ventre)  · 'smile' (sourire plus net ; o.corner = sourire en coin, un sourcil plus haut ; main gauche au revers)
+                  'dress' u (de face : ajuste la cravate, puis les deux mains au chapeau qu'il rajuste, puis sourire en coin ; ≈ 3,6 s ; mettre o.yaw = 0 pour le miroir)
+                  'whisper' u (se penche en avant, doigt sur les lèvres, regard en coin vers la droite)  · 'handshake' u (bras droit tendu vers l'avant, main ouverte pouce en haut ; o.pump 0..1 = secousses)
+                  'tipHat' u (salue du chapeau : la main prend le bord, le soulève, hochement de tête, sourire, repose ; ≈ 1,7 s)  · 'run' (il s'enfuit : cycle de course, o.ph ; o.hat = 0..1,4 emporte le chapeau ; o.lookBack 0..1 tourne la tête vers l'arrière)
+        Poisson : 'stand' · 'walk' · 'handshake' u · 'eager' u (penché en avant, yeux brillants et écarquillés, se frotte les mains ; o.rub 0..1)
+                  'handover' u (tend une mallette à deux mains : le plan la dessine dans o.hold, la main R tient la poignée)  · 'shock' u (stupeur : tête en arrière, yeux écarquillés, mâchoire qui tombe,
+                  chapeau qui se soulève, bras ouverts, o.tremble 0..1)  · 'ashamed' u (tête basse, chapeau tenu à deux mains devant le ventre, joues qui rougissent : o.blush 0..1, défaut 1)
+                  'point' u (brandit un papier, protestant, rouge de colère : le papier est dessiné par le plan dans o.hold ; o.shake 0..1 le fait trembler)
+        Marchands du groupe : 'listen' (utilisée par lu_groupe).
+   FONDU ENTRE DEUX POSES : o.pose2 + o.mix (0..1) interpolent tous les paramètres (bras, tête, visage, jambes) avec un lissage (o.ease = false : linéaire).
+
+   OPTIONS COMMUNES (o)
+        o.yaw      lacet du corps en radians, 0 = de face, ±1,57 = de profil ; > 0 : regarde vers la DROITE de l'écran (avant o.flip). Défauts : 0,75 (3/4) ; 1,5 en marche ; chaque pose a le sien.
+        o.flip     true : image miroir (regarde vers la gauche) ; la lumière reste celle de l'écran.
+        o.light    sens de la lumière : nombre −1 (de gauche) … 1 (de droite, défaut) ou [lx, ly] (écran, vers la source, y vers le bas : [0.8, −0.6] = d'en haut à droite) ;
+        o.rim      couleur du liseré de contre-jour (défaut AM[9], soleil doré) ;  o.shadow opacité de l'ombre portée projetée (0,42 ; 0 = aucune ; ignorée avec o.crop) ;
+                   o.shadowK [kx, ky] cisaillement de l'ombre (défaut : calculé sur la lumière) ; o.shadowCol (défaut DU[1]) ;  o.sil '#rrggbb' : silhouette pleine (sans détails).
+        o.hat      true / absent : chapeau sur la tête ; false : pas de chapeau (tête nue : cheveux) ; nombre 0..1,4 : le chapeau est emporté (0 = quitte la tête, 1 = loin derrière, haut ; il
+                   tourne sur lui-même ; la position courante est renvoyée dans `hat`). o.hatStyle : 'homburg' (Lustig), 'bowler' (Poisson), 'top', 'fedora', 'boater', 'cap'.
+        o.hold     fonction de rappel (x, y, info) appelée pour la main qui tient un objet (défaut : main droite 'R' ; o.holdHand = 'L' | 'R') OU objet { L: fn, R: fn }.
+                   (x, y) = point de prise sur L (en pixels écran) ; info = { sd:'L'|'R', x, y, ang (angle de l'avant-bras à l'écran, rad), dir:[dx,dy] (unitaire, du poignet vers les doigts),
+                   back:[bx,by] (perpendiculaire), palm:[x,y], wrist:[x,y], tips:[[x,y]×4] (bouts des doigts), scale, flip }. Le personnage est déjà dessiné : la fonction dessine l'objet
+                   (mallette, journal, papier…) sur L avec les primitives du moteur ; les doigts et le pouce sont ensuite REPEINTS par-dessus l'objet (la main l'enserre sans se déformer).
+        o.cane     true : canne (jonc noir, pommeau d'argent) plantée devant lui dans la main droite (o.caneLean 0..1,5 : inclinaison) ; o.gloves : gants clairs.
+        o.mouth    nombre = ouverture 0..1 ; ou { open, smile } (smile −1..1) : remplace la bouche de la pose.     o.eye   nombre = paupières 0 (fermé) … 1 (grand ouvert) ; ou
+                   { lid, blink 0..1, look:[gx, gy] }.  o.look = [gx, gy] (−1..1) direction du regard (yeux seuls) ;  o.lookX tourne la tête (rad) ;  o.blush 0..1 joues rouges ;
+                   o.bend inclinaison supplémentaire du torse en avant (rad).
+        o.crop     'waist' (105 px au-dessus du sol à s = 1) | 'chest' | 'belly' | 'hips' | nombre : (cx, cy) devient ce point du corps et les JAMBES NE SONT PAS DESSINÉES (le bas du veston se prolonge
+                   derrière la table). o.clipY : ordonnée écran à partir de laquelle tout est effacé (table, bord de plan).
+        o.sit      true / 0..1 : assis (cuisses horizontales, pieds à plat devant, bassin à o.seat = 46 px du sol) ; le siège est dessiné par le plan.   o.elev : élévation de la caméra (rad, 0,12).
+        o.u        temps de l'action en secondes (voir les poses) ;  o.ph  phase de marche / course en cycles (défaut t / période).
+
+   RENVOIE { head:[x,y] (centre de la tête), eye:[x,y] (entre les yeux), mouth:[x,y], nose:[x,y] (bout du nez), handL:[x,y], handR:[x,y] (point de prise de la main GAUCHE / DROITE du personnage),
+             hands:{ L:{x,y,ang,dir,palm,wrist,tips}, R:{…} }, hat:[x,y,rot] (centre du bord du chapeau, rotation en rad ; null si absent), feet:[x,y] (milieu des pieds, au sol),
+             bbox:[x,y,w,h], mask(px, py) → vrai si le pixel (px, py) est occupé par le personnage, scale, flip }.   Tous les points sont en pixels du canevas 270 × 480.
+
+   MARCHE SANS GLISSEMENT. lu_WALK = { T (période d'un cycle de deux pas, s), stride, duty, speed } pour Lustig (lu_WALK_P pour Poisson ; lu_RUN pour la course de Lustig) ; speed en px/s à s = 1 de vue
+        de profil. Position : x = x0 + lu_WALK.speed * s * Math.sin(yaw) * (t − t0) (yaw défaut 1,5 : le facteur vaut ≈ 1 ; o.flip : signe −). Phase : o.ph = (t − t0) / lu_WALK.T,
+        ou lu_walkPh(distance / s, lu_WALK) pour une distance parcourue quelconque. Le pas est exact : le pied posé ne glisse pas. Course : o.ph = (t − t0) / lu_RUN.T, vitesse lu_RUN.speed.
+
+   GROUPE. lu_groupe(x, y, s, t, o) : cinq marchands différents et lisibles en silhouette — [0] le grand maigre (haut-de-forme, bouc, redingote noire), [1] le carré (casquette, grosse moustache,
+        tweed olive), [2] le chauve à lunettes (barbe blanche, costume bleu nuit), [3] le canotier (moustache rousse, costume sable), [4] le bourru (feutre brun, favoris, gris clair).
+        (x, y) = milieu de la rangée de devant, à la ceinture ; la table, dessinée par le plan, cache le bas. Rangée de fond (0, 2, 4) un peu plus haut et plus petite.
+        o.lean 0..1 : ils se penchent vers la cible (0 = droits, 1 = très penchés) ; o.aim : abscisse de la personne regardée, en px relatifs à x (à s = 1) : 0 = vers le spectateur ; +160 =
+        vers la droite ; chaque marchand tourne le buste et la tête vers elle ; o.nod 0..1 : hochements de tête décalés ; o.murmur 0..1 : lèvres qui bougent, têtes qui se tournent un peu
+        les uns vers les autres ; o.who = [indices] pour n'en montrer que certains ; o.clipY, o.light, o.rim, o.flip, o.hat (false : têtes nues), o.turn (échelle du lacet, 1).
+        Renvoie { members: [ancrages ×5 comme ci-dessus], head: [[x,y]×5], mouth: [[x,y]×5] }.
+
+   lu_hat(cx, cy, s, rot, o) : (cx, cy) = centre du plan du bord ; rot = rotation dans l'image (rad : chapeau qui roule, qui tombe) ; o.who 'lustig' (défaut), 'marchand', 'm1'…'m5' ; o.style ;
+        o.yaw (vue : 0 de face, 1,57 de profil, défaut 0,55) ; o.pitch (bord vers le bas > 0), o.roll (rad) : inclinaisons 3D ; o.light, o.rim, o.flip.
+
+   ICONES[3]  icône de case du carnet (17 × 17 px, couleurs exactes, contour sombre) : un petit train à vapeur vu de côté (cabine rouge, chaudière, cheminée et fumée, roues), la fuite.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 0. OUTILS (maths, splines, calque lisse → pixels nets)
 // ════════════════════════════════════════════════════════════════════════════════════════
@@ -294,7 +372,7 @@ function lu_mk(base, over) {                                    // fiche dériv�
 }
 
 const lu_SPEC_LUSTIG = {
-  id: 'lustig', H: 176,
+  id: 'lustig', H: 176, armO: 0.8,
   hipY: 93, hipSep: 8.4, thigh: 44.6, shin: 42.4, ankle: 6.2, kneeOut: 0.2,
   leg: { w: [16.2, 12.6, 12.2, 9.8], cuff: 10.6 },                 // largeurs : haut de cuisse, genou (fin cuisse), genou (début tibia), bas de pantalon
   // veston : sections (y local depuis le pivot du bassin, a, zf, zb)
@@ -302,17 +380,17 @@ const lu_SPEC_LUSTIG = {
   shY: 46.8, shX: 17.2, shZ: -0.5,
   arm: { U: 29.6, F: 25.2, hand: 17.0, w: [11.6, 10.0, 8.4], cuff: 9.0 },
   neck: { y0: 55, y1: 64, a: 4.3, zf: 5.0, zb: -4.2 },
-  head: { pivotY: 59.5, pivotZ: 0.6, up: 13.4, fwd: 0.5, levels: lu_HEAD0, scale: 1.0, nose: 4.3, noseW: 2.5, jaw: 1.0, earY: -0.8 },
+  head: { pivotY: 59.5, pivotZ: 0.6, up: 12.7, fwd: 0.5, levels: lu_HEAD0, scale: 1.0, nose: 4.3, noseW: 2.5, jaw: 1.0, earY: -0.8 },
   hat: { style: 'homburg', seat: 7.0, back: -0.9, tilt: [0.06, -0.06] },
   tie: { w: [[20, 0.6], [22, 2.4], [28, 3.2], [36, 2.8], [44, 2.2], [52, 1.8]], yEnd: 20.5 }, vestButtons: [12, 20, 28, 36],
-  facial: { mous: 'pencil' }, pocketSq: true, flower: true, hairStyle: 'slick',
+  facial: { mous: 'pencil' }, idleFace: { smile: 0.22, smileAsym: 0.3, lid: 0.86, brow: 0.1 }, pocketSq: true, flower: true, hairStyle: 'slick',
   walk: { T: 1.08, duty: 0.6, S: 54, lift: 7.5, bob: 3.7, bob0: 0.5, sway: 1.2, twist: 0.09, tilt: 0.03, lean: 0.045, armA: 0.34, bend: 0.12, heelUp: 0.32, toeOff: 0.5, wide: 0.2 },
   run: { T: 0.5, duty: 0.36, S: 78, lift: 20, lean: 0.34 },
   foot: { toe: 18.5, heel: -5.4, w: 8.2, h: 6.2 },
   // ouverture du veston (demi-angle sur la surface, selon y local) : se referme au bouton (y = 17), s'évase au-dessus et au-dessous
   open: [[-6, 0.62], [0, 0.46], [8, 0.3], [14, 0.2], [18, 0.14], [24, 0.22], [32, 0.34], [40, 0.44], [47, 0.5], [53, 0.54], [60, 0.54]],
   lapel: [[17, 0.0], [22, 0.14], [30, 0.26], [38, 0.33], [46, 0.35], [51, 0.28], [55, 0.1], [57, 0.0]],
-  mats: { jacket: lu_MATS.anthracite, lapel: lu_MATS.anthraciteL, vest: lu_MATS.cream, shirt: lu_MATS.shirt, skin: lu_MATS.skin, shoe: lu_MATS.patent, hat: lu_mat(ST[3], ST[4], ST[6], ST[2], ST[1]), ribbon: lu_MATS.ribbon, hair: lu_MATS.hairDark, tie: lu_MATS.red, brass: lu_MATS.brass, wood: lu_MATS.wood },
+  mats: { jacket: lu_MATS.anthracite, lapel: lu_MATS.anthraciteL, vest: lu_MATS.cream, shirt: lu_MATS.shirt, skin: lu_MATS.skin, shoe: lu_MATS.patent, hat: lu_mat(ST[3], ST[4], ST[6], ST[2], ST[1]), ribbon: lu_MATS.ribbon, hair: lu_MATS.hairDark, tie: lu_MATS.red, brass: lu_MATS.brass, wood: lu_MATS.wood, glove: lu_mat(ST[6], ST[7], WH[2], ST[5], ST[4]) },
   extra: [RD[3], YE[3]],
 };
 
@@ -331,7 +409,7 @@ function lu_landmarks(sp) {
 // 3. POSES : paramètres numériques (interpolables), puis squelette 3D
 // ════════════════════════════════════════════════════════════════════════════════════════
 const lu_ELEV = 0.12;                                               // élévation de la caméra (rad) : les cercles horizontaux (bords de chapeau, semelles) s'ouvrent en ellipses
-function lu_baseArm(sp) { return { o: 0.6, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 1.5, el: [0.35, -0.25, -0.8], hand: { curl: 0.32, thumb: 0.25, point: 0, spread: 0.1, bend: 0, hv: -1, roll: 0 }, zb: 0, glove: 0 }; }
+function lu_baseArm(sp) { return { o: 0.6, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 1.5, el: [0.35, -0.25, -0.8], hand: { curl: 0.32, thumb: 0.25, point: 0, spread: 0.1, bend: 0, hv: -1, roll: 0 }, zb: 0, glove: 0, tip: 0, tipK: 0.8, hd: [0, -1, 0], hdw: 0 }; }
 function lu_baseLeg(sp, side) { return { x: side * (sp.hipSep - 0.2), z: 0, h: 0, pitch: 0, yawF: -side * 0.16 }; }
 function lu_base(sp) {
   return {
@@ -347,7 +425,7 @@ function lu_base(sp) {
 }
 function lu_blend(A, B, m) {                                        // interpolation de deux structures de poses (les nombres seulement)
   if (typeof A === 'number') return A + (B - A) * m;
-  if (Array.isArray(A)) return A.map((v, i) => lu_blend(v, B[i], m));
+  if (Array.isArray(A)) return B === undefined || B === null ? A : A.map((v, i) => lu_blend(v, B[i], m));
   if (A && typeof A === 'object') { const o = {}; for (const k in A) o[k] = lu_blend(A[k], B[k], m); return o; }
   return m < 0.5 ? A : B;
 }
@@ -385,13 +463,15 @@ function lu_skeleton(sp, P) {
     const tg = lu_add3(K.sh[sd], lu_rotv(Mt, [sg * ar.o, ar.u, ar.f]));
     const pole = lu_rotv(Mt, [sg * ar.el[0], ar.el[1], ar.el[2]]);
     let r = lu_ik3(K.sh[sd], tg, sp.arm.U, sp.arm.F, pole), hax = null;
-    if (ar.hd) hax = lu_nrm3(lu_rotv(Mt, [sg * ar.hd[0], ar.hd[1], ar.hd[2]]));
-    if (ar.tip) {
-      const hl = sp.arm.hand * (ar.tipK ?? 0.8);
+    const hdv = lu_nrm3(lu_rotv(Mt, [sg * ar.hd[0], ar.hd[1], ar.hd[2]])), hdw = clamp(ar.hdw), tipf = clamp(ar.tip);
+    if (tipf > 0.001 || hdw > 0.001) {
+      const hl = sp.arm.hand * (ar.tipK ?? 0.8) * tipf;
       for (let it = 0; it < 4; it++) {
-        const fd = hax || lu_nrm3(lu_sub3(r.a, r.k));
+        const fd0 = lu_nrm3(lu_sub3(r.a, r.k)), fd = hdw > 0.001 ? lu_nrm3(lu_add3(lu_mul3(fd0, 1 - hdw), lu_mul3(hdv, hdw))) : fd0;
+        hax = hdw > 0.001 ? fd : null;
         r = lu_ik3(K.sh[sd], lu_sub3(tg, lu_mul3(fd, hl)), sp.arm.U, sp.arm.F, pole);
       }
+      const fd0 = lu_nrm3(lu_sub3(r.a, r.k)); if (hdw > 0.001) hax = lu_nrm3(lu_add3(lu_mul3(fd0, 1 - hdw), lu_mul3(hdv, hdw)));
     }
     K.el[sd] = r.k; K.wr[sd] = r.a;
     const fd = lu_nrm3(lu_sub3(r.a, r.k)); K.hdir[sd] = hax || fd; K.fdir = K.fdir || {}; K.fdir[sd] = fd;
@@ -436,6 +516,7 @@ function lu_hull(pts) {                                            // enveloppe 
   for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
   lo.pop(); up.pop(); return lo.concat(up);
 }
+const lg_yaw = (D, sd) => (sd === 'L' ? D.P.legL : D.P.legR).yawF * 0;
 function lu_drawLeg(D, sd) {
   const { c, K, sp } = D, M = sp.mats, W = sp.leg;
   // chaussure
@@ -450,6 +531,8 @@ function lu_drawLeg(D, sd) {
   const leg = lu_seg([lu_P2(A), lu_P2(B), lu_P2(C)], [W.w[0], (W.w[1] + W.w[2]) / 2, W.cuff], new Path2D(), 7);
   lu_part(D, leg, M.jacket, [2.0, 0.9], [2.6, 1.1]);
   lu_edge(D, leg, M.jacket[4], 1);
+  // pli du pantalon : ligne claire sur l'avant de la jambe
+  { const sn = Math.sin(D.P.yaw + (lg_yaw(D, sd))), r1 = W.w[0] * 0.5, dx = sn * r1 * 0.55; if (Math.abs(sn) < 0.93) lu_stroke(c, [[A[0] + dx, A[1] + 6], [B[0] + dx * 0.8, B[1]], [C[0] + dx * 0.6, C[1] - 4]], D.cw * 0.9, M.jacket[2]); }
   // revers : fine ligne sombre en bas du pantalon
   const dd = lu_dir2(B, C), nx = -dd[1], ny = dd[0], w2 = W.cuff / 2;
   lu_line(c, [[C[0] - nx * w2, C[1] - ny * w2], [C[0] + nx * w2, C[1] + ny * w2]], D.cw * 1.1, M.jacket[4]);
@@ -503,6 +586,9 @@ function lu_drawTorso(D) {
   }
   if (sp.flower) { const f = onS(44.5, 0.56, 0.8); if (f) { const e = lu_ell(f[0], f[1], 1.5, 1.5); lu_part(D, e, lu_MATS.red, [0.5, 0.3], [0.5, 0.3]); lu_fill(c, lu_ell(f[0] - 0.2, f[1] - 0.2, 0.6, 0.6), RD[4]); } }
   for (const sg of [-1, 1]) { const a = onS(2.5, sg * 1.02, 0.3), b = onS(1.0, sg * 0.82, 0.3); if (a && b) lu_line(c, [lu_P2(a), lu_P2(b)], D.cw * 1.4, M.jacket[4]); }
+  // plis de tension autour du bouton et ourlet du bas
+  if (!D.crop && sp.lapel[0][0] > 10) for (const sg of [-1, 1]) for (const [dy, dp] of [[-2.5, 0.32], [-5, 0.46]]) { const a = onS(sp.lapel[0][0] - 0.5, sg * 0.1, 0.2), b = onS(sp.lapel[0][0] + dy, sg * dp, 0.2); if (a && b) lu_line(c, [lu_P2(a), lu_P2(b)], D.cw * 0.9, M.jacket[3]); }
+  if (!D.crop) { const hy = sp.torso[0][0] + 2.2, pts = []; for (let k = -9; k <= 9; k++) { const phi = lu_phi0(S, hy) + k * 0.16; if (Math.cos(lu_wrap(phi - lu_phi0(S, hy))) > 0.1) pts.push(lu_P2(lu_sp(S, hy, phi, 0.05))); } if (pts.length > 2) lu_line(c, pts, D.cw * 1.0, M.jacket[3]); }
   c.restore();
   lu_edge(D, path, M.jacket[4], 1);
 }
@@ -577,9 +663,13 @@ function lu_drawArm(D, sd) {
   const fd = lu_dir2(E, W), hem = [W[0] - fd[0] * 2.4, W[1] - fd[1] * 2.4];
   const sleeve = lu_seg([lu_P2(Sx), lu_P2(E), hem], [A.w[0], A.w[1], A.w[2]], new Path2D(), 7);
   // manchette de chemise
-  const cuffP = lu_seg([[W[0] - fd[0] * 3.6, W[1] - fd[1] * 3.6], [W[0] + fd[0] * 0.8, W[1] + fd[1] * 0.8]], [A.cuff, A.cuff - 0.3], new Path2D(), 4);
+  const cuffP = lu_seg([[W[0] - fd[0] * 3.0, W[1] - fd[1] * 3.0], [W[0] + fd[0] * 0.7, W[1] + fd[1] * 0.7]], [A.cuff - 0.7, A.cuff - 1.0], new Path2D(), 4);
   lu_part(D, sleeve, M.jacket, [2.2, 1.0], [2.6, 1.1]); lu_edge(D, sleeve, M.jacket[4], 1);
   lu_part(D, cuffP, ar.glove ? (M.glove || M.shirt) : M.shirt, [0.9, 0.4], [1.0, 0.5]); lu_edge(D, cuffP, M.shirt[4], 0.8);
+  // plis du coude : deux traits courts du côté intérieur de la flexion
+  { const v1 = lu_dir2(E, [Sx[0], Sx[1]]), v2 = lu_dir2(E, [W[0], W[1]]), cs = v1[0] * v2[0] + v1[1] * v2[1];
+    if (cs > -0.8) { const bx = v1[0] + v2[0], by = v1[1] + v2[1], bl = Math.hypot(bx, by) || 1, ix = bx / bl, iy = by / bl, px_ = -iy, py_ = ix, w = A.w[1] * 0.42;
+      for (const k of [0.9, 2.4]) { const cx0 = E[0] + ix * (A.w[1] * 0.3 + k * 0.0), cy0 = E[1] + iy * (A.w[1] * 0.3 + k * 0.0); lu_line(c, [[cx0 + ix * k * 0.4 - px_ * w, cy0 + iy * k * 0.4 - py_ * w], [cx0 + ix * k * 0.9, cy0 + iy * k * 0.9], [cx0 + ix * k * 0.4 + px_ * w, cy0 + iy * k * 0.4 + py_ * w]], D.cw * 1.1, M.jacket[4]); } } }
   // la main (dessinée après la manche) ; l'ordre manche / main : la manche recouvre le poignet
   const hnd = lu_drawHand(D, sd);
   // petit pli au coude
@@ -731,14 +821,15 @@ function lu_faceFx(D, fin, info) {
     eyes.push({ sg, ex, ey, ew, eh, nD });
   }
   for (const e of eyes) {
-    const { sg, ex, ey, ew, eh } = e, x0 = ex - Math.floor(ew / 2), x1 = x0 + ew - 1, y0 = ey - Math.floor(eh / 2), y1 = y0 + eh - 1;
+    const gdn = clamp(gaze[1], -1, 1), eh = (gdn > 0.35 && e.eh >= 3) ? e.eh - 1 : e.eh, { sg, ex, ey, ew } = e, x0 = ex - Math.floor(ew / 2), x1 = x0 + ew - 1, y0 = ey - Math.floor(eh / 2) + ((gdn > 0.35 && e.eh >= 3) ? 1 : 0), y1 = y0 + eh - 1;
     if (eh > 0) {
       for (let y = y0; y <= y1; y++) hrow(x0, x1, y, WH[1]);
       if (ew >= 6 && eh >= 3) { put(x0, y0, M.skin[0]); put(x1, y0, M.skin[0]); }
       const iw = Math.max(1, Math.round(ew * 0.4 * F.pupil)), gx = clamp(gaze[0], -1, 1), gy = clamp(gaze[1], -1, 1);
       const ix0 = Math.round(x0 + (ew - iw) / 2 + gx * (ew - iw) / 2 * 0.9) , ih = eh, iy0 = Math.round(y0 + gy * 0.4);
       // l'iris est rogné par la paupière (haut) : la paupière couvre sa première rangée quand l'œil est mi-clos
-      for (let y = y0; y <= y1; y++) for (let x = ix0; x < ix0 + iw; x++) put(x, y, eyeCol);
+      const iyEnd = (gdn < -0.35 && eh >= 3) ? y1 - 1 : y1;
+      for (let y = y0; y <= iyEnd; y++) for (let x = ix0; x < ix0 + iw; x++) put(x, y, eyeCol);
       if (iw >= 3 && eh >= 2) put(ix0 + (iw >> 1), y0 + (eh > 2 ? 1 : 0), NI[0]);
       if (iw >= 3 && eh >= 3) put(ix0, y0 + 1, WH[3]);
       if (F.shine > 0.3 && eh >= 3) { put(ix0 + iw - 1, y1 - 0, WH[3]); put(ix0 + 1, y0, WH[3]); }
@@ -776,7 +867,7 @@ function lu_faceFx(D, fin, info) {
     }
   }
   // bouche : un trait ferme, coins relevés par le sourire ; ouverture éventuelle
-  const yc = (sp.mouthY ?? -7.0) - F.jaw * 0.5, mo = o.mouth !== undefined && typeof o.mouth === 'number' ? o.mouth : (o.mouth && o.mouth.open !== undefined ? o.mouth.open : F.mouth);
+  const yc = (sp.mouthY ?? -7.0) - F.jaw * 1.1, mo = o.mouth !== undefined && typeof o.mouth === 'number' ? o.mouth : (o.mouth && o.mouth.open !== undefined ? o.mouth.open : F.mouth);
   const sm_ = (o.mouth && typeof o.mouth === 'object' && o.mouth.smile !== undefined) ? o.mouth.smile : F.smile;
   const phM = lu_phi0(S, yc), nM = Math.cos(lu_wrap(0 - phM));
   if (nM > 0.1) {
@@ -786,9 +877,10 @@ function lu_faceFx(D, fin, info) {
     const lipC = sp.lipCol || SK[1];
     const seg_ = (a, b, col) => { const n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 1); for (let i = 0; i <= n; i++) put(Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n), col); };
     if (mo > 0.08) {
-      const hgt = Math.max(1, Math.round(mo * 2.4 * s)), wd = Math.max(2, Math.round(2.6 * s * nM));
-      for (let j = 0; j < hgt; j++) hrow(cm[0] - (wd >> 1) + (j === hgt - 1 && hgt > 2 ? 1 : 0), cm[0] + (wd >> 1) - (j === hgt - 1 && hgt > 2 ? 1 : 0), cm[1] + j, NI[1]);
-      if (hgt >= 2) hrow(cm[0] - (wd >> 1) + 1, cm[0] + (wd >> 1) - 1, cm[1], WH[2]);
+      const hgt = Math.max(1, Math.round((0.6 + 3.4 * mo) * s * 0.85)), wd = Math.max(2, Math.round((1.6 + 2.2 * mo) * s * nM)), top = cm[1] + Math.round(0.4 * mo * s);
+      for (let j = 0; j < hgt; j++) { const sh = (j >= hgt - 2 && hgt > 3) ? 1 + (j === hgt - 1 ? 1 : 0) : 0; hrow(cm[0] - (wd >> 1) + sh, cm[0] + (wd >> 1) - sh, top + j, NI[1]); }
+      if (hgt >= 3) hrow(cm[0] - (wd >> 1) + 1, cm[0] + (wd >> 1) - 1, top, WH[2]);
+      if (hgt >= 5) hrow(cm[0] - (wd >> 2), cm[0] + (wd >> 2), top + hgt - 2, RD[2]);
     } else { seg_(cl, cm, lipC); seg_(cm, cr, lipC); }
     // lèvre inférieure : un pixel plus clair dessous
     if (s >= 1.8 && mo <= 0.08) { const a = Math.min(cl[0], cr[0]) + 1, b = Math.max(cl[0], cr[0]) - 1; hrow(a, b, cm[1] + 1, M.skin[1]); }
@@ -1025,6 +1117,12 @@ function lu_drawHeadGroup(D) {
   lu_drawNeck(D);
   const Sh = lu_surf([[T - 7.5, tn + 0.9, tn + 1.0, -(tn + 0.9)], [T + 3.5, tn + 0.6, tn + 0.8, -(tn + 0.8)]], K.xfT);
   for (const sg of [-1, 1]) { const cb = lu_band(Sh, T - 2.6, T + 0.2, y => sg < 0 ? -2.6 : 0.2, y => sg < 0 ? -0.2 : 2.6, 6); if (cb) { const cp = polyPath(cb); lu_part(D, cp, M.shirt, [0.9, 0.4], [1.1, 0.5]); lu_edge(D, cp, M.shirt[4], 0.8); } }
+  // pointes du col de chemise de part et d'autre du nœud
+  for (const sg of [-1, 1]) {
+    const onS = (y, phi, grow) => { const ph0 = lu_phi0(S, y); return Math.cos(lu_wrap(phi - ph0)) > 0.12 ? lu_sp(S, y, phi, grow) : null; };
+    const a = onS(T - 1.4, sg * 0.2, 0.45), b = onS(T - 1.2, sg * 0.58, 0.45), c2 = onS(T - 6.2, sg * 0.34, 0.5);
+    if (a && b && c2) { const wp = polyPath([lu_P2(a), lu_P2(b), lu_P2(c2)]); lu_part(D, wp, M.shirt, [0.7, 0.3], [0.8, 0.4]); lu_edge(D, wp, M.shirt[4], 0.7); }
+  }
   // nœud de cravate
   if (sp.tie) { const kn = lu_band(S, T - 7.9, T - 2.3, y => -0.2, y => 0.2, 5, 0.9); if (kn) { const kp = polyPath(kn); lu_part(D, kp, M.tie, [0.8, 0.4], [1.0, 0.5]); lu_edge(D, kp, M.tie[4], 0.8); } }
   const hd = lu_drawHead(D);
@@ -1118,24 +1216,24 @@ const lu_SPEC_POISSON = lu_mk(lu_SPEC_LUSTIG, {
   id: 'poisson', H: 163,
   hipY: 80, hipSep: 9.4, thigh: 38.2, shin: 36.0, ankle: 5.8, kneeOut: 0.5,
   leg: { w: [21.0, 16.2, 15.6, 13.0], cuff: 13.6 },
-  torso: [[-9, 19.4, 14.0, -10.6], [0, 21.4, 17.8, -11.4], [10, 23.0, 21.4, -11.6], [20, 23.6, 22.0, -11.2], [30, 22.2, 17.4, -10.4], [38, 20.6, 12.4, -9.4], [44, 19.0, 10.0, -8.4], [48, 16.6, 8.6, -7.6], [51, 12.2, 7.4, -6.8], [53.4, 8.6, 6.8, -6.4]],
-  shY: 39.6, shX: 18.2, shZ: -1.0,
+  torso: [[-9, 19.4, 14.0, -10.6], [0, 22.0, 19.0, -11.8], [10, 24.2, 23.0, -12.2], [20, 24.6, 23.4, -11.8], [30, 22.6, 18.4, -10.8], [38, 20.8, 13.2, -9.6], [44, 19.0, 10.4, -8.6], [48, 16.6, 8.8, -7.6], [51, 12.2, 7.4, -6.8], [53.4, 8.6, 6.8, -6.4]],
+  shY: 39.0, shX: 19.4, shZ: -1.0,
   arm: { U: 26.4, F: 22.4, hand: 15.6, w: [14.2, 12.4, 10.6], cuff: 11.4 },
   neck: { y0: 49.0, y1: 57, a: 6.2, zf: 6.6, zb: -5.8 },
   head: { pivotY: 52.6, pivotZ: 0.2, up: 13.4, fwd: 0.6, levels: lu_HEAD_P, nose: 3.2, noseW: 3.1, jaw: 1.2, earY: -0.8, hairline: [[-4.2, 3.2], [-3.2, 2.4], [-2.4, 1.7], [-0.5, 1.55], [1.6, 1.42], [3.0, 1.3], [4.6, 1.0], [5.8, 0.7], [6.6, 0.3], [7.2, 0.0], [11.5, 0.0]] },
-  hat: { style: 'bowler', seat: 6.6, back: -0.7 },
+  armO: 5.2, hat: { style: 'bowler', seat: 6.6, back: -0.7 },
   foot: { toe: 17.2, heel: -5.0, w: 8.8, h: 5.8 },
   open: [[-9, 0.6], [0, 0.42], [10, 0.28], [20, 0.2], [28, 0.22], [36, 0.3], [44, 0.36], [50, 0.4], [58, 0.4]],
   lapel: [[24, 0.0], [30, 0.12], [36, 0.24], [42, 0.3], [47, 0.26], [51, 0.1], [53, 0.0]],
   tie: { w: [[26, 0.6], [28, 2.2], [34, 3.0], [42, 2.6], [48, 1.9]], yEnd: 26.4 }, vestButtons: [6, 13, 20, 27, 34], vestTip: -2,
-  facial: { mous: 'handlebar' },
+  facial: { mous: 'handlebar' }, pocketSq: false, flower: false, hairStyle: 'none', idleFace: null,
   walk: { T: 0.98, duty: 0.62, S: 44, lift: 6.2, bob: 3.0, bob0: 0.4, sway: 2.2, twist: 0.11, tilt: 0.045, lean: 0.06, armA: 0.26, bend: 0.1, heelUp: 0.28, toeOff: 0.42, wide: 1.2 },
   run: { T: 0.55, duty: 0.4, S: 62, lift: 16, lean: 0.28 },
   mats: {
     jacket: lu_MATS.brown, lapel: lu_MATS.brownL, vest: lu_mat(WO[5], WO[6], SK[4], WO[4], WO[3]), shirt: lu_mat(WH[1], WH[2], WH[3], WH[0], ST[6]), tie: lu_mat(GR[1], GR[2], GR[3], GR[0], GR[0]),
-    hat: lu_MATS.bowler, ribbon: lu_MATS.ribbon, hair: lu_mat(ST[3], ST[4], ST[6], ST[2], ST[1]), beard: lu_mat(WO[2], WO[3], WO[5], WO[1], WO[0]), shoe: lu_mat(WO[1], WO[3], WO[5], WO[0], NI[0]),
+    hat: lu_MATS.bowler, ribbon: lu_MATS.ribbon, glove: lu_mat(WH[0], WH[1], WH[2], ST[6], ST[5]), hair: lu_mat(ST[3], ST[4], ST[6], ST[2], ST[1]), beard: lu_mat(WO[2], WO[3], WO[5], WO[1], WO[0]), shoe: lu_mat(WO[1], WO[3], WO[5], WO[0], NI[0]),
   },
-  mouthY: -8.6, eyeCol: WO[2], browCol: WO[2], lipCol: RD[1], blinkSeed: 11, blushCol: RD[4],
+  mouthY: -7.9, eyeCol: WO[2], browCol: WO[2], lipCol: RD[1], blinkSeed: 11, blushCol: RD[4],
   extra: [RD[3], YE[3], RD[5], RD[4]],
 });
 
@@ -1146,6 +1244,13 @@ const lu_WHO = { lustig: lu_SPEC_LUSTIG, marchand: lu_SPEC_POISSON };
 INITS.push(() => { lu_prep(lu_SPEC_LUSTIG); lu_prep(lu_SPEC_POISSON); lu_GROUP.forEach(lu_prep); });
 function lu_lustig(cx, cy, s, t, o) { return lu_figure(cx, cy, s, t, o, lu_SPEC_LUSTIG); }
 function lu_marchand(cx, cy, s, t, o) { return lu_figure(cx, cy, s, t, o, lu_SPEC_POISSON); }
+
+// ── marche et course : vitesse et phase sans glissement
+// la marche de Lustig : cycle de T secondes (deux pas), vitesse de translation (px/s à s = 1, vue de profil) ; multiplier par s et par sin(yaw) pour la vitesse à l'écran
+function lu_gaitInfo(sp, kind) { const W = kind === 'run' ? sp.run : sp.walk, S = kind === 'run' ? W.S * 0.78 : W.S, D = W.duty; return { T: W.T, stride: S, duty: D, speed: S / (D * W.T) }; }
+const lu_WALK = lu_gaitInfo(lu_SPEC_LUSTIG, 'walk'), lu_WALK_P = lu_gaitInfo(lu_SPEC_POISSON, 'walk'), lu_RUN = lu_gaitInfo(lu_SPEC_LUSTIG, 'run');
+// phase (en cycles) après avoir parcouru la distance d (px à s = 1) : o.ph = lu_walkPh(d / s) ; marchand : lu_walkPh(d / s, lu_WALK_P)
+const lu_walkPh = (d, W = lu_WALK) => d * W.duty / W.stride;
 
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 12. LES CINQ AUTRES MARCHANDS (demi-corps autour d'une table) : variantes de la fiche de base, chacune lisible en silhouette
@@ -1165,14 +1270,14 @@ function lu_variant(base, id, v) {
   sp.tie = base.tie ? { w: base.tie.w.map(w => [w[0] * khh, w[1]]), yEnd: base.tie.yEnd * khh } : null;
   sp.arm = lu_mk(base.arm, { w: base.arm.w.map(w => w * (o.kx ?? 1) * 0.5 + w * 0.5) });
   sp.mats = Object.assign({}, base.mats, o.mats || {});
-  Object.assign(sp, o.set || {});
+  Object.assign(sp, { pocketSq: false, flower: false, idleFace: null, hairStyle: 'none' }, o.set || {});
   return sp;
 }
 const lu_SKIN_OLD = lu_mat(SK[3], SK[4], SK[4], SK[2], SK[1]);
 const lu_GROUP = [
   // A : le grand maigre, haut-de-forme, bouc, redingote noire, nœud papillon
   lu_variant(lu_SPEC_LUSTIG, 'm1', { kx: 0.88, kz: 0.92, kh: 1.03, kHead: 0.97, mats: { jacket: lu_mat(ST[1], ST[2], ST[3], ST[0], NI[0]), lapel: lu_mat(ST[2], ST[3], ST[4], ST[1], ST[0]), vest: lu_mat(ST[5], ST[6], ST[7], ST[4], ST[3]), hat: lu_mat(ST[1], ST[2], ST[4], ST[0], NI[0]), tie: lu_mat(NI[1], ST[1], ST[2], NI[0], NI[0]), hair: lu_mat(ST[4], ST[5], ST[6], ST[3], ST[2]), beard: lu_mat(ST[4], ST[5], ST[6], ST[3], ST[2]) },
-    set: { hat: { style: 'top', seat: 7.2, back: -0.9 }, facial: { beard: 'goatee' }, eyeCol: ST[2], browCol: ST[3], blinkSeed: 21, walk: lu_SPEC_LUSTIG.walk } }),
+    set: { hat: { style: 'top', seat: 7.2, back: -0.9 }, facial: { beard: 'goatee' }, pocketSq: true, eyeCol: ST[2], browCol: ST[3], blinkSeed: 21, walk: lu_SPEC_LUSTIG.walk } }),
   // B : le carré, casquette, grosse moustache en guidon, tweed olive
   lu_variant(lu_SPEC_POISSON, 'm2', { kx: 0.92, kz: 0.8, kh: 1.0, kHead: 0.96, mats: { jacket: lu_mat(LM[1], LM[2], LM[3], LM[0], LM[0]), lapel: lu_mat(LM[2], LM[3], LM[4], LM[1], LM[0]), vest: lu_mat(WO[4], WO[5], WO[6], WO[3], WO[2]), hat: lu_mat(ST[2], ST[3], ST[4], ST[1], ST[0]), tie: lu_mat(RD[1], RD[2], RD[3], RD[0], RD[0]), hair: lu_mat(WO[0], WO[1], WO[2], NI[0], NI[0]) },
     set: { hat: { style: 'cap', seat: 6.0, back: -0.4 }, facial: { mous: 'walrus' }, eyeCol: ST[2], browCol: WO[0], blinkSeed: 33, mouthY: -8.4, tie: { w: [[26, 0.6], [28, 2.2], [34, 3.0], [42, 2.6], [48, 1.9]], yEnd: 26.4 } } }),
@@ -1181,7 +1286,7 @@ const lu_GROUP = [
     set: { hat: { style: 'none' }, facial: { beard: 'full', mous: 'chevron' }, glasses: true, eyeCol: BL[2], browCol: ST[6], blinkSeed: 45, mouthY: -7.4 } }),
   // D : le jeune canotier, fine moustache rousse, costume sable
   lu_variant(lu_SPEC_LUSTIG, 'm4', { kx: 0.94, kz: 0.96, kh: 0.98, kHead: 0.99, mats: { jacket: lu_mat(WO[6], SK[4], WH[1], WO[5], WO[4]), lapel: lu_mat(SK[4], WH[1], WH[2], WO[6], WO[5]), vest: lu_mat(WH[1], WH[2], WH[3], WH[0], ST[6]), hat: lu_mat(SK[4], WH[1], WH[2], WO[6], WO[5]), ribbon: lu_mat(RD[2], RD[3], RD[4], RD[1], RD[0]), tie: lu_mat(CY[1], CY[2], CY[3], CY[0], CY[0]), hair: lu_mat(OC[3], OC[4], OC[5], OC[2], OC[1]) },
-    set: { hat: { style: 'boater', seat: 7.2, back: -0.6 }, facial: { mous: 'pencil' }, eyeCol: GR[3], browCol: OC[2], blinkSeed: 57 } }),
+    set: { hat: { style: 'boater', seat: 7.2, back: -0.6 }, facial: { mous: 'pencil' }, hairStyle: 'slick', flower: true, eyeCol: GR[3], browCol: OC[2], blinkSeed: 57 } }),
   // E : le bourru, feutre brun, favoris, gros sourcils, costume gris clair
   lu_variant(lu_SPEC_POISSON, 'm5', { kx: 0.86, kz: 0.75, kh: 0.97, kHead: 0.97, mats: { jacket: lu_mat(ST[4], ST[5], ST[6], ST[3], ST[2]), lapel: lu_mat(ST[5], ST[6], ST[7], ST[4], ST[3]), vest: lu_mat(WH[1], WH[2], WH[3], WH[0], ST[6]), hat: lu_mat(WO[3], WO[4], WO[5], WO[2], WO[1]), ribbon: lu_mat(NI[0], WO[0], WO[1], NI[0], NI[0]), tie: lu_mat(RD[1], RD[2], RD[3], RD[0], RD[0]), hair: lu_mat(WO[1], WO[2], WO[3], WO[0], NI[0]), beard: lu_mat(WO[1], WO[2], WO[3], WO[0], NI[0]) },
     set: { hat: { style: 'fedora', seat: 6.8, back: -0.7 }, facial: { mous: 'chevron', beard: 'chops' }, eyeCol: WO[3], browCol: WO[0], blinkSeed: 69, mouthY: -7.6, tie: { w: [[26, 0.6], [28, 2.2], [34, 3.0], [42, 2.6], [48, 1.9]], yEnd: 26.4 } } }),
@@ -1268,7 +1373,7 @@ ICONES[3] = function (cx, cy) {
 // ════════════════════════════════════════════════════════════════════════════════════════
 // 6. POSES (chaque fonction renvoie la structure complète des paramètres ; u = temps local de l'action, t = temps absolu)
 // ════════════════════════════════════════════════════════════════════════════════════════
-const lu_arm = (B, sd, v) => { const a = B[sd]; for (const k in v) { if (k === 'hand') Object.assign(a.hand, v.hand); else a[k] = v[k]; } return a; };
+const lu_arm = (B, sd, v) => { const a = B[sd]; for (const k in v) { if (k === 'hand') Object.assign(a.hand, v.hand); else if (k === 'tip') a.tip = v.tip === true ? 1 : (v.tip === false ? 0 : v.tip); else a[k] = v[k]; } if (v.hd && v.hdw === undefined) a.hdw = 1; return a; };
 const lu_ease = x => x * x * (3 - 2 * x);
 const lu_pk = (T, u) => lu_tab(T, u);                               // courbe d'animation [[temps, valeur], …]
 const lu_wave = (u, f, p = 0) => Math.sin(TAU * f * u + p);
@@ -1279,8 +1384,9 @@ function lu_idle(sp, t, B, o) {
   B.sway = 0.02 + 0.006 * sw; B.hipTilt = 0.03; B.hipX = -1.2 + 0.3 * sw; B.lean = 0.015 + 0.01 * br;
   B.legR = { x: -(sp.hipSep - 0.4), z: -1.2, h: 0, pitch: 0, yawF: 0.2 }; B.legL = { x: sp.hipSep + 1.2, z: sp.H * 0.026, h: 0, pitch: 0, yawF: -0.3 };
   B.head.yaw = -0.05 + 0.03 * Math.sin(t * 0.43); B.head.pitch = 0.02 + 0.012 * br;
-  lu_arm(B, 'L', { o: 0.8, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 2.6, el: [0.4, -0.2, -0.9], hand: { curl: 0.4, thumb: 0.15 } });
-  lu_arm(B, 'R', { o: 0.8, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 2.6, el: [0.4, -0.2, -0.9], hand: { curl: 0.4, thumb: 0.15 } });
+  if (sp.idleFace) Object.assign(B.face, sp.idleFace);
+  lu_arm(B, 'L', { o: sp.armO, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 2.6, el: [0.4, -0.2, -0.9], hand: { curl: 0.4, thumb: 0.15 } });
+  lu_arm(B, 'R', { o: sp.armO, u: -(sp.arm.U + sp.arm.F) * 0.985, f: 2.6, el: [0.4, -0.2, -0.9], hand: { curl: 0.4, thumb: 0.15 } });
   return B;
 }
 lu_POSES.stand = (sp, u, o, B, t) => { B.yaw = 0.75; return lu_idle(sp, t, B, o); };
@@ -1319,9 +1425,9 @@ lu_POSES.walk = (sp, u, o, B, t) => {
 // ── lecture : journal tenu devant soi (le journal est dessiné par le plan : voir o.hold et le champ `paper` renvoyé)
 lu_POSES.read = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  B.yaw = 0.6; B.lean = -0.03; B.head.pitch = 0.2 + 0.02 * Math.sin(t * 0.6); B.head.yaw = 0.12; B.gaze = [0.1, -0.5 - 0.0 * t];
+  B.yaw = 0.6; B.lean = -0.03; B.head.pitch = 0.2 + 0.02 * Math.sin(t * 0.6); B.head.yaw = 0.12;
   // le regard court le long des colonnes : très lentement de gauche à droite puis ligne suivante
-  const ln = (t * 0.45) % 1; B.gaze = [-0.5 + 1.0 * ln, -0.6 + 0.12 * Math.floor((t * 0.45) % 4)];
+  const ln = (t * 0.45) % 1; B.gaze = [-0.5 + 1.0 * ln, 0.55 + 0.08 * Math.floor((t * 0.45) % 4)];
   B.face.lid = 0.62; B.face.brow = -0.05;
   lu_arm(B, 'R', { o: -9, u: -4, f: 26, el: [0.5, -1, -0.2], hand: { curl: 0.7, thumb: 0.5, roll: 0.0 } });
   if (o.both) lu_arm(B, 'L', { o: -9, u: -4, f: 26, el: [0.5, -1, -0.2], hand: { curl: 0.7, thumb: 0.5 } });
@@ -1332,7 +1438,7 @@ lu_POSES.read = (sp, u, o, B, t) => {
 // ── réflexion : main au menton, l'autre bras en travers soutient le coude
 lu_POSES.think = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  B.yaw = 0.7; B.lean = -0.02; B.head.pitch = 0.1; B.head.yaw = 0.12; B.head.roll = -0.06; B.gaze = [0.35, 0.55 + 0.15 * Math.sin(t * 0.8)];
+  B.yaw = 0.7; B.lean = -0.02; B.head.pitch = 0.1; B.head.yaw = 0.12; B.head.roll = -0.06; B.gaze = [0.45, -0.45 + 0.15 * Math.sin(t * 0.8)];
   B.face.lid = 0.7; B.face.brow = 0.08; B.face.browIn = 0.1; B.face.smile = 0.05;
   lu_arm(B, 'R', { tip: true, o: -16, u: 13, f: 11, hd: [-0.3, 1, 0.25], el: [0.3, -1, 0.2], hand: { curl: 0.6, thumb: 0.1, point: 0, roll: -0.2 } });
   lu_arm(B, 'L', { o: -29, u: -25, f: 13, el: [0.2, -0.6, -0.6], hand: { curl: 0.5, thumb: 0.3 } });
@@ -1351,7 +1457,7 @@ lu_POSES.smile = (sp, u, o, B, t) => {
 // ── doigt sur les lèvres, penché en avant (chuchote)
 lu_POSES.whisper = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  const k = lu_ss(0, 0.6, o.u !== undefined ? o.u : 1);
+  const uw = o.u !== undefined ? o.u : 9, k = clamp(lu_pk([[0, 0], [0.1, -0.08], [0.45, 1.1], [0.7, 1], [9, 1]], uw), -0.2, 1.2);
   B.yaw = 1.05; B.lean = 0.36 * k; B.drop = 3 * k; B.hipZ = -2 * k; B.head.pitch = 0.08 * k; B.head.yaw = 0.18 * k; B.head.roll = 0.04; B.gaze = [0.7, -0.05];
   B.face.lid = 0.62; B.face.smile = 0.18; B.face.smileAsym = 0.25; B.face.brow = 0.1; B.face.browAsym = 0.4;
   lu_arm(B, 'R', { tip: k > 0.01, o: lerp(0.8, -15, k), u: lerp(-54, 19, k), f: lerp(2, 12, k), hd: [-0.3, 1, 0.15], el: [0.7, -1, 0.1], hand: { curl: 0.85, thumb: 0.2, point: 1, roll: -0.15 } });
@@ -1362,7 +1468,7 @@ lu_POSES.whisper = (sp, u, o, B, t) => {
 // ── poignée de main : bras droit tendu vers l'avant, main ouverte pouce en haut ; o.pump (0..1) : les secousses
 lu_POSES.handshake = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  const k = lu_ss(0, 0.5, o.u !== undefined ? o.u : 1), pump = (o.pump || 0) * Math.sin(TAU * 2.4 * t) * 3.2;
+  const k = clamp(lu_pk([[0, 0], [0.1, -0.05], [0.4, 1.08], [0.6, 1], [9, 1]], o.u !== undefined ? o.u : 9), -0.1, 1.2), pump = (o.pump || 0) * Math.sin(TAU * 2.4 * t) * 3.2;
   B.yaw = 1.2; B.lean = 0.07 * k; B.head.yaw = 0.1; B.gaze = [0.7, 0.0]; B.head.pitch = 0.03;
   B.face.smile = 0.5; B.face.smileAsym = 0.2; B.face.lid = 0.75; B.face.brow = 0.12;
   lu_arm(B, 'R', { o: lerp(0.8, -7, k), u: lerp(-54, -16, k) + pump, f: lerp(2, 42, k), el: [0.5, -1, -0.1], hand: { curl: lerp(0.4, 0.15, k), thumb: lerp(0.15, 0.9, k), roll: 0, spread: 0.2 * k } });
@@ -1370,8 +1476,9 @@ lu_POSES.handshake = (sp, u, o, B, t) => {
   return B;
 };
 // ── se recoiffe : cravate, puis chapeau (face à la caméra) ; u en secondes depuis le début
-lu_POSES.dress = (sp, u, o, B, t) => {
+lu_POSES.dress = (sp, u0, o, B, t) => {
   lu_idle(sp, t, B, o);
+  const u = o.u !== undefined ? o.u : 99;
   const T = [0, 0.4, 1.4, 1.9, 3.0, 3.5];
   const tie = lu_pk([[0, 0], [0.4, 1], [1.4, 1], [1.8, 0]], u), hat = lu_pk([[1.4, 0], [1.9, 1], [3.0, 1], [3.45, 0]], u);
   const hatUp = hat, tieUp = tie;
@@ -1393,9 +1500,10 @@ lu_POSES.dress = (sp, u, o, B, t) => {
   return B;
 };
 // ── salue du chapeau
-lu_POSES.tipHat = (sp, u, o, B, t) => {
+lu_POSES.tipHat = (sp, u0, o, B, t) => {
   lu_idle(sp, t, B, o);
-  const up = lu_pk([[0, 0], [0.3, 0.55], [0.55, 1], [1.25, 1], [1.7, 0]], u), nod = lu_pk([[0, 0], [0.5, 0], [0.8, 1], [1.1, 1], [1.5, 0]], u);
+  const u = o.u !== undefined ? o.u : 99;
+  const up = clamp(lu_pk([[0, 0], [0.12, -0.05], [0.3, 0.55], [0.46, 1.08], [0.6, 1], [1.25, 1], [1.7, 0]], u), -0.1, 1.2), nod = lu_pk([[0, 0], [0.5, 0], [0.8, 1], [1.1, 1], [1.5, 0]], u);
   B.yaw = 0.42; B.head.pitch = 0.1 * nod; B.head.yaw = 0.05 - 0.1 * up; B.gaze = [0.35, 0.0];
   B.face.smile = 0.6 * lu_ss(0.25, 0.7, u) * (1 - lu_ss(1.3, 1.7, u)); B.face.smileAsym = 0.2; B.face.lid = 0.74; B.face.brow = 0.1 * up;
   lu_arm(B, 'R', { tip: up > 0.01, o: lerp(0.8, -7.5, up), u: lerp(-54, 34.0, up), f: lerp(2, 12.5, up), hd: [-0.8, 0.8, 0.45], el: [0.6, -1, 0.0], hand: { curl: lerp(0.4, 0.78, up), thumb: lerp(0.15, 0.55, up), roll: -0.2 * up } });
@@ -1411,7 +1519,7 @@ lu_POSES.run = (sp, u, o, B, t) => {
   const leg = (q, sg) => {
     let z, h, pitch;
     if (q < D) { const uu = q / D; z = S * 0.3 - S * 0.78 * uu; h = 0; pitch = 0.2 * Math.max(0, 1 - uu / 0.25) - 0.55 * lu_ss(0.55, 1, uu); }
-    else { const r = (q - D) / (1 - D); z = lerp(-S * 0.48, S * 0.3, lu_ss(0, 1, r)); h = W.lift * Math.pow(Math.sin(Math.PI * r), 0.85) + 4 * Math.sin(Math.PI * r); pitch = -0.7 * (1 - lu_ss(0, 0.5, r)) + 0.1 * lu_ss(0.6, 1, r); }
+    else { const r = (q - D) / (1 - D); z = lerp(-S * 0.48, S * 0.3, lu_ss(0, 1, r)); h = W.lift * 1.55 * Math.pow(Math.sin(Math.PI * Math.pow(r, 0.72)), 1.1); pitch = -0.95 * (1 - lu_ss(0, 0.55, r)) + 0.15 * lu_ss(0.6, 1, r); }
     return { x: sg * (sp.hipSep - 1.2), z, h, pitch, yawF: -sg * 0.05 };
   };
   B.legR = leg(pp % 1, -1); B.legL = leg((pp + 0.5) % 1, 1);
@@ -1432,10 +1540,10 @@ const lu_P_ARMS = (sp) => -(sp.arm.U + sp.arm.F) * 0.985;
 // il se frotte les mains, yeux brillants, penché vers l'affaire
 lu_POSES.eager = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  const k = lu_ss(0, 0.4, o.u !== undefined ? o.u : 1), rub = Math.sin(TAU * 3.0 * t) * 1.9 * (o.rub ?? 1);
+  const k = clamp(lu_pk([[0, 0], [0.12, -0.05], [0.4, 1.12], [0.6, 1], [9, 1]], o.u !== undefined ? o.u : 9), -0.1, 1.2), rub = Math.sin(TAU * 3.0 * t) * 1.9 * (o.rub ?? 1);
   B.yaw = 0.78; B.lean = 0.2 * k; B.drop = 1.2 * k; B.hipZ = -1.2 * k; B.head.pitch = -0.05 * k; B.head.yaw = 0.14 * k; B.gaze = [0.55, 0.05];
   Object.assign(B.face, { lid: 1.0, wide: 0.55 * k, shine: 1, brow: 0.6 * k, browIn: 0.35 * k, smile: 0.75 * k, smileAsym: 0.1, mouth: 0.18 * k, blush: 0.22 * k, pupil: 1 });
-  for (const [sd, sgn] of [['R', 1], ['L', -1]]) lu_arm(B, sd, { tip: true, tipK: 0.5, o: lerp(1.2, -11, k), u: lerp(lu_P_ARMS(sp), -20, k), f: lerp(2, 17, k) + sgn * rub * k, hd: [-0.5, 0.25, 1], el: [0.6, -1, -0.3], hand: { curl: lerp(0.4, 0.55, k), thumb: 0.5, spread: 0.1, roll: sgn * 0.2 * k } });
+  for (const [sd, sgn] of [['R', 1], ['L', -1]]) lu_arm(B, sd, { tip: true, tipK: 0.5, o: lerp(sp.armO, -11, k), u: lerp(lu_P_ARMS(sp), -20, k), f: lerp(2, 17, k) + sgn * rub * k, hd: [-0.5, 0.25, 1], el: [0.6, -1, -0.3], hand: { curl: lerp(0.4, 0.55, k), thumb: 0.5, spread: 0.1, roll: sgn * 0.2 * k } });
   B.R.zb = 40; B.L.zb = 41;
   return B;
 };
@@ -1445,19 +1553,19 @@ lu_POSES.handover = (sp, u, o, B, t) => {
   const k = lu_ss(0, 0.45, o.u !== undefined ? o.u : 1);
   B.yaw = 1.0; B.lean = 0.1 * k; B.head.pitch = 0.06 * k; B.head.yaw = 0.12; B.gaze = [0.6, 0.1];
   Object.assign(B.face, { lid: 0.95, wide: 0.2, smile: 0.5, brow: 0.3 * k, browIn: 0.2, mouth: 0.05, blush: 0.15 * k });
-  lu_arm(B, 'R', { o: lerp(1.2, -5, k), u: lerp(lu_P_ARMS(sp), -23, k), f: lerp(2, 30, k), el: [0.5, -1, -0.2], hand: { curl: 0.9, thumb: 0.6, roll: 0.0 } });
-  lu_arm(B, 'L', { o: lerp(1.2, -5, k), u: lerp(lu_P_ARMS(sp), -26, k), f: lerp(2, 30, k), el: [0.5, -1, -0.2], hand: { curl: 0.7, thumb: 0.3, roll: 0.0 } });
+  lu_arm(B, 'R', { o: lerp(sp.armO, -5, k), u: lerp(lu_P_ARMS(sp), -23, k), f: lerp(2, 30, k), el: [0.5, -1, -0.2], hand: { curl: 0.9, thumb: 0.6, roll: 0.0 } });
+  lu_arm(B, 'L', { o: lerp(sp.armO, -5, k), u: lerp(lu_P_ARMS(sp), -26, k), f: lerp(2, 30, k), el: [0.5, -1, -0.2], hand: { curl: 0.7, thumb: 0.3, roll: 0.0 } });
   B.R.zb = 40; B.L.zb = 41;
   return B;
 };
 // stupeur : tête en arrière, yeux écarquillés, mâchoire qui tombe, chapeau qui se soulève (o.u : temps depuis le choc)
 lu_POSES.shock = (sp, u, o, B, t) => {
   lu_idle(sp, t, B, o);
-  const uu = o.u !== undefined ? o.u : 1, k = lu_ss(0, 0.16, uu), rec = k * (1 - 0.35 * lu_ss(0.3, 1.2, uu)), tr = Math.sin(TAU * 11 * t) * (o.tremble ?? 0.5);
+  const uu = o.u !== undefined ? o.u : 1, k = clamp(lu_pk([[0, 0], [0.09, 1.22], [0.2, 1], [9, 1]], uu), 0, 1.25), rec = k * (1 - 0.35 * lu_ss(0.3, 1.2, uu)), tr = Math.sin(TAU * 11 * t) * (o.tremble ?? 0.5);
   B.yaw = 0.6; B.lean = -0.1 * rec; B.hipZ = 1.5 * rec; B.head.pitch = -0.12 * rec; B.head.yaw = 0.1; B.gaze = [0.2, 0.0]; B.shrug = 2.4 * rec;
   Object.assign(B.face, { lid: 1.0, wide: 1.0 * k, brow: 1.0 * k, browIn: 0.35 * k, mouth: 0.95 * k, jaw: 1 * k, pupil: lerp(1, 0.55, k), smile: -0.1 * k, blush: 0 });
   B.hat.dy = 5.5 * k + 0.6 * tr * k; B.hat.pitch = -0.38 * k; B.hat.dz = -0.5 * k;
-  for (const [sd, sg] of [['R', -1], ['L', 1]]) lu_arm(B, sd, { o: lerp(1.2, 8, k), u: lerp(lu_P_ARMS(sp), -14, k) + tr * 0.5 * k, f: lerp(2, 20, k), el: [0.9, -0.5, -0.4], hand: { curl: 0.12 * k + 0.4 * (1 - k), thumb: 1, spread: 1.0 * k, roll: sg * -0.5 * k } });
+  for (const [sd, sg] of [['R', -1], ['L', 1]]) lu_arm(B, sd, { o: lerp(sp.armO, 8, k), u: lerp(lu_P_ARMS(sp), -14, k) + tr * 0.5 * k, f: lerp(2, 20, k), el: [0.9, -0.5, -0.4], hand: { curl: 0.12 * k + 0.4 * (1 - k), thumb: 1, spread: 1.0 * k, roll: sg * -0.5 * k } });
   B.R.zb = 40; B.L.zb = 41;
   return B;
 };
@@ -1468,7 +1576,7 @@ lu_POSES.ashamed = (sp, u, o, B, t) => {
   B.yaw = 0.7; B.lean = 0.14 * k; B.shrug = -1.6 * k; B.drop = 1.0 * k; B.head.pitch = 0.42 * k; B.head.yaw = 0.3 * k; B.head.roll = -0.07 * k; B.gaze = [-0.35, 0.9];
   Object.assign(B.face, { lid: lerp(0.9, 0.5, k), brow: 0.25 * k, browIn: 0.85 * k, smile: -0.45 * k, mouth: 0, blush: o.blush ?? k, squint: 0.1 * k });
   B.hatHeld = k > 0.4 ? 1 : 0; B.heldTilt = 0.5;
-  for (const [sd, sg] of [['R', -1], ['L', 1]]) lu_arm(B, sd, { tip: true, tipK: 0.45, o: lerp(1.2, -9.5, k), u: lerp(lu_P_ARMS(sp), -38, k), f: lerp(2, 20, k), hd: [-0.7, 0.1, 1], el: [0.9, -1, -0.4], hand: { curl: 0.75, thumb: 0.5, roll: sg * 0.2 } });
+  for (const [sd, sg] of [['R', -1], ['L', 1]]) lu_arm(B, sd, { tip: true, tipK: 0.45, o: lerp(sp.armO, -9.5, k), u: lerp(lu_P_ARMS(sp), -38, k), f: lerp(2, 20, k), hd: [-0.7, 0.1, 1], el: [0.9, -1, -0.4], hand: { curl: 0.75, thumb: 0.5, roll: sg * 0.2 } });
   B.R.zb = 40; B.L.zb = 41;
   return B;
 };
@@ -1478,8 +1586,8 @@ lu_POSES.point = (sp, u, o, B, t) => {
   const k = lu_ss(0, 0.3, o.u !== undefined ? o.u : 1), sh = Math.sin(TAU * 4.6 * t) * 2.6 * (o.shake ?? 0.6) * k;
   B.yaw = 0.85; B.lean = 0.12 * k; B.head.pitch = -0.04; B.head.yaw = 0.15 * k; B.gaze = [0.6, 0.1];
   Object.assign(B.face, { lid: 0.9, wide: 0.1, brow: 0.0, browIn: -0.9 * k, smile: -0.3 * k, mouth: 0.55 * k * (0.6 + 0.4 * Math.abs(Math.sin(TAU * 2.3 * t))), blush: 0.7 * k, squint: 0.15 * k });
-  lu_arm(B, 'R', { tip: true, tipK: 0.5, o: lerp(1.2, -5, k), u: lerp(lu_P_ARMS(sp), 28, k) + sh, f: lerp(2, 24, k), hd: [-0.1, 1, 0.3], el: [0.9, -1, -0.2], hand: { curl: 0.88, thumb: 0.5 } });
-  lu_arm(B, 'L', { o: 4, u: lerp(lu_P_ARMS(sp), -50, k), f: 4, el: [0.7, -0.2, -0.8], hand: { curl: 0.9, thumb: 0.6 } });
+  lu_arm(B, 'R', { tip: true, tipK: 0.5, o: lerp(sp.armO, -5, k), u: lerp(lu_P_ARMS(sp), 28, k) + sh, f: lerp(2, 24, k), hd: [-0.1, 1, 0.3], el: [0.9, -1, -0.2], hand: { curl: 0.88, thumb: 0.5 } });
+  lu_arm(B, 'L', { o: sp.armO + 2, u: lerp(lu_P_ARMS(sp), -50, k), f: 4, el: [0.7, -0.2, -0.8], hand: { curl: 0.9, thumb: 0.6 } });
   B.R.zb = 40;
   return B;
 };

@@ -98,10 +98,10 @@ HO_LAB.machine = {
 HO_LAB.briques = {
   draw(u, t) {
     vgrad(0, 0, LW, LH, [[0, AM[4]], [1, AM[2]]]);
-    ho_windowSprite; hc().drawImage(ho_windowSprite(46, 130), 10, 30);
+    ho_windowSprite; ho_ctx().drawImage(ho_windowSprite(46, 130), 10, 30);
     ho_curtain(2, 30, 18, 140, t, { seed: 1 }); ho_curtain(66, 30, 18, 140, t, { flip: true, seed: 2 });
-    hc().drawImage(ho_columnSprite(34, 300, 1), 90, 20);
-    hc().drawImage(ho_columnSprite(34, 300, -1), 220, 20);
+    ho_ctx().drawImage(ho_columnSprite(34, 300, 1), 90, 20);
+    ho_ctx().drawImage(ho_columnSprite(34, 300, -1), 220, 20);
     ho_lustre(150, 0, 1, t);
     ho_lustre(60, 250, 0.6, t);
   },
@@ -171,3 +171,63 @@ HO_LAB.chambre = {
 
 HO_LAB.facade0 = { draw(u, t) { ho_facade(t, { light: 0 }); } };
 HO_LAB.facade1 = { draw(u, t) { ho_facade(t, { light: 1 }); } };
+
+HO_LAB.icons = {
+  draw(u, t) { R(0, 0, LW, LH, NI[2]); },
+  ui(u, t) { hudTracker(1, 1, 1); hudLieu(1); ICONES[1](30, 80); ICONES[2](60, 80); ICONES[1](100, 80); R(90, 70, 20, 20, 'rgba(0,0,0,0)'); hudTracker(2, 2, 1, 8, 120); },
+};
+
+HO_LAB.salonCam = { draw(u, t) { ho_salon(t, { cam: 25 }); ho_table(135 - 25, 322, 1, t); } };
+HO_LAB.salonCam2 = { draw(u, t) { ho_salon(t, { cam: -25 }); ho_table(135 + 25, 322, 1, t); } };
+
+HO_LAB.fuzz = {
+  draw(u, t) {
+    const p = (u * 0.37) % 1, q = (u * 0.9) % 1;
+    vgrad(0, 0, LW, LH, [[0, NI[2]], [1, NI[0]]]);
+    ho_document(10, 10, 100, 140, t, { write: p, seal: p, sign: p, stamp: p, rot: p * 0.3 - 0.15, wave: p * 3, alpha: 0.8, curl: true, warm: p, title: 'TITRE', sub: 'SOUS', head: null });
+    ho_document(120, 10, 20, 20, t, {}); ho_document(150, 10, 60, 40, t, { head: 'ARNAQUE LONGUE', stamp: 1, stampText: 'PAS DE PLAINTE' });
+    ho_contrat(10, 160, 60, 80, t, { sign1: p, sign2: q, seal: p, stamp: p, stampText: 'JAMAIS A LUI', stampBarre: p, rot: 0.2, wave: 2 });
+    ho_enveloppe(150, 100, 1.5, t, { open: p, seal: q, letter: q, face: p > 0.5 ? 'face' : 'dos', rot: p });
+    ho_enveloppe(0, 0, 1, t, { fly: { p, from: [0, 300], to: [270, 100], arc: 80, spin: 2 }, open: 1 - p });
+    ho_affiche(80, 160, 100, 140, t, { ruin: p, ball: q, stamp: p }); ho_affiche(190, 160, 70, 90, t, { kind: 'dossier', out: p, stamp: q });
+    ho_tampon(135, 400, 1.1, t, 1.5, { texte: 'ARNAQUE', view: p > 0.5 ? 'pov' : 'side' }); ho_tampon(135, 300, 0.6, t, 1.0, { texte: 'ÉÇ SECRET', frame: 'fill', barre: p, stay: true });
+    ho_empreinte(135, 440, 1, 'PAS DE PLAINTE', { barre: q, wet: p, rot: 0.1 });
+    ho_billets(60, 440, 1, t, { kind: 'liasse', n: 12, layout: 'pyramide' }); ho_billets(60, 440, 1, t, { kind: 'rang', n: 5 }); ho_billets(60, 440, 0.5, t, { kind: 'pluie', n: 30 }); ho_billets(100, 300, 1, t, { kind: 'vol', loop: false, t0: 100 + 0.5 });
+    ho_mallette(70, 300, 1.2, t, { open: p, glow: q, shake: 1 }); ho_valise(190, 300, 1, t, { open: q }); ho_telephone(230, 440, 1.5, t, { ring: p, lift: q });
+    ho_machine(70, 440, 1, t, { rate: 0, paper: 0 }); ho_machine(190, 440, 0.7, t, { rate: 20, paper: p, t0: 100.3 });
+    ho_cachet(135, 200, 1, t, 100 + 0.2, {}); ho_lustre(135, 0, 0.3, t, { flame: 0, sparkle: 0 }); ho_cendrier(40, 40, 3, t); ho_bougie(200, 200, 2, t, { out: true }); ho_lampe(60, 200, 0.5, t, { on: p }); ho_encrier(30, 200, 3, t, { dip: p }); ho_pile(40, 300, 2, t, { lift: p });
+    ho_portier(100, 100, 3, t); ho_voiture(135, 200, 0.5, t, { flip: true, lights: 1 }); ho_drapeau(30, 30, 40, 20, t, { dir: -1 }); ho_lampadaire(250, 300, 1, t, { on: p }); ho_passant(50, 300, 2, t, { kind: 1, dir: -1 });
+    ho_chapeau(40, 100, 2, { kind: 'haut', rot: 0.3 }); ho_canne(200, 300, 1); ho_gueridon(100, 300, 40, 30); ho_lampeChevet(100, 280, 1, t, { on: p });
+  },
+};
+HO_LAB.fuzz2 = {
+  draw(u, t) {
+    const p = (u * 0.37) % 1, c = Math.sin(u) * 30;
+    ho_salon(t, { cam: c, layer: 'back' }); ho_table(135 - c, 322, 0.5 + p * 2, t, { items: { carafes: 3, verres: 0, papiers: 4, cendrier: 0 } }); ho_salon(t, { cam: c, layer: 'front', light: p });
+  },
+};
+HO_LAB.fuzz3 = { draw(u, t) { const c = Math.sin(u) * 30; ho_salon(t, { cam: c, view: 'close', light: 0.5 }); ho_table(135, 330, 2.3, t); } };
+HO_LAB.fuzz4 = { draw(u, t) { const c = Math.sin(u) * 30, p = (u * 0.37) % 1; ho_bureau(t, { cam: c, lamp: p, machine: { rate: 12, t0: 100, paper: p }, pile: { lift: p }, items: { bougie: p > 0.5 } }); ho_bureau(t, { layer: 'front' }); } };
+HO_LAB.fuzz5 = { draw(u, t) { const c = Math.sin(u) * 30, p = (u * 0.37) % 1; ho_chambre(t, { cam: c, lamp: p, valise: { open: p, s: 0.9 }, reflect: inf => { ho_chapeau(inf.cx, inf.cy, 1, {}); }, hat: 'haut' }); } };
+HO_LAB.fuzz6 = { draw(u, t) { const c = Math.sin(u) * 30, p = (u * 0.37) % 1; ho_facade(t, { cam: c, light: p, car: { flip: p > 0.5 } }); ho_facade(t, { layer: 'front', light: p, doorman: false }); } };
+
+HO_LAB.miroir2 = {
+  draw(u, t) {
+    vgrad(0, 0, LW, LH, [[0, NI[3]], [1, NI[1]]]);
+    const draw1 = inf => { layerBegin(); Y.fillStyle = ST[3]; Y.fillRect(inf.cx - 10, inf.bottom - 110, 20, 80); Y.beginPath(); Y.arc(inf.cx + 5, inf.bottom - 120, 9, 0, TAU); Y.fill(); layerEnd({ outline: '#05040f' }); };
+    ho_miroir(70, 340, 88, 176, t, { reflect: draw1, flip: false });
+    ho_miroir(190, 340, 88, 176, t, { reflect: draw1, flip: true, reflectAlpha: 0.8 });
+  },
+};
+
+HO_LAB.imprints2 = {
+  draw(u, t) {
+    R(0, 0, LW, LH, WH[1]);
+    ho_empreinte(70, 60, 0.8, 'SECRET', { frame: 'disc' });
+    ho_empreinte(200, 60, 0.8, 'FAUX', { frame: 'disc', col: 'blue' });
+    ho_empreinte(135, 150, 1, 'ARNAQUE', { col: 'black', frame: 'rect' });
+    ho_empreinte(135, 230, 1.3, 'VENDUE', { barre: 1, wet: 1 });
+    ho_empreinte(135, 320, 0.9, 'JAMAIS A LUI', { frame: 'fill' });
+    ho_empreinte(135, 400, 1, 'ÉCRASÉ ÇA', { frame: 'double' });
+  },
+};
