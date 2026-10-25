@@ -5,7 +5,7 @@
 // (voix_piece.wav : python room.py build/voix.wav build/test/voix_piece.wav --humide -22 avec un python qui a scipy et soundfile)
 import fs from 'fs'; import { execFileSync, spawnSync } from 'child_process'; import { readWav, analyse } from './son_analyse.mjs';
 const pre = process.argv[2] || 'build/test/full', voice = process.argv[3] || 'build/test/voix_piece.wav', evf = process.argv[4] || 'build/test/events_reel.json';
-const D = JSON.parse(fs.readFileSync(evf, 'utf8')).dur.toFixed(3), TL = JSON.parse(fs.readFileSync('build/timeline.json', 'utf8'));
+const D = JSON.parse(fs.readFileSync(evf, 'utf8')).dur.toFixed(3), TL = JSON.parse(fs.readFileSync(process.env.TLF || 'build/timeline.json', 'utf8'));
 const VCHAIN = 'aresample=48000,highpass=f=70,equalizer=f=160:t=q:w=1:g=1.0,acompressor=threshold=0.14:ratio=1.6:attack=15:release=220:makeup=1.1';
 const out = (process.env.MIXDIR || 'build/test') + '/mix';
 const G = `[0:a]${VCHAIN},apad=whole_dur=${D},pan=stereo|c0=c0|c1=c0,asplit=4[vo][key][key2][vo2];[1:a]volume=0.7[mu];[mu][key]sidechaincompress=threshold=0.03:ratio=2.2:attack=30:release=450[mud0];[2:a]volume=0.6[fx0];[fx0][key2]sidechaincompress=threshold=0.04:ratio=2.5:attack=15:release=250[fx0b];` +

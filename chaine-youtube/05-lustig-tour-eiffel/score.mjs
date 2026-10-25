@@ -172,10 +172,6 @@ function harp(t0, n, o = {}) {                           // harpe : corde plus b
   const { gain = 0.05, pan = 0, send = 0.5, t60 = 3.2 } = o, f = hz(n), len = Math.floor(Math.min(4, t60 * 1.2) * SR), buf = ksString(f, len, { a: 0.85, t60, pos: 0.3, exc: 0.55 });
   dull(buf, clamp(f * 12, 2500, 6500), clamp(f * 3.5, 800, 3000), 0.5); emit(buf, t0, pan, send, gain * 1.4);
 }
-function bassPluck(t0, n, o = {}) {                      // contrebasse pincée douce (jamais de basse électronique)
-  const { gain = 0.07, pan = 0, send = 0.2, t60 = 1.0 } = o, f = hz(n), len = Math.floor(t60 * 1.3 * SR), buf = ksString(f, len, { a: 0.5, t60, pos: 0.12, exc: 0.8 }), L = new Filt().set(Math.max(260, f * 5), 0.7);
-  for (let i = 0; i < len; i++) { L.run(buf[i]); buf[i] = L.lp; } emit(buf, t0, pan, send, gain * 1.2);
-}
 function pad(t0, dur, notes, o = {}) {                   // nappe douce (sinusoïdes désaccordées, trémolo lent) : celle de la marque, inchangée
   const { gain = 0.06, att = 1.2, rel = 1.5, det = 7, bright = 0.2, send = 0.5, trem = 0.18 } = o;
   if (att < 0.3) logOn(t0, 'pad', gain);                  // une nappe à attaque courte compte comme une note (--check)
@@ -249,14 +245,6 @@ const BIRD = {
   warble: (t, s, o) => chirp(t, 1.1, [[0, 3000 * s], [0.3, 3300 * s], [0.7, 2800 * s], [1, 3100 * s]], { ...o, fm: [11, 520 * s], fm2: [17, 240 * s], att: 0.1, h2: 0.08 }),
 };
 
-function pizz(t0, n, o = {}) {                           // corde pincée d'orchestre (violoncelle / alto) : Karplus-Strong court, claquement du doigt, un peu de caisse
-  const { gain = 0.06, pan = 0, send = 0.3, t60 = 0.5, a = 0.58, bright = 1 } = o, f = hz(n), len = Math.floor(Math.min(1.8, t60 * 1.7 + 0.15) * SR), buf = ksString(f, len, { a, t60, pos: 0.14, exc: 0.85 });
-  dull(buf, clamp(f * 9 * bright, 1200, 5200), clamp(f * 2.2, 260, 1300), 0.07); bodyRes(buf, 0.5);
-  const sn = lpNoise(Math.floor(0.004 * SR), 0.1); for (let i = 0; i < sn.length; i++) buf[i] += sn[i] * 0.3 * (1 - i / sn.length);
-  let e = 1e-12; for (let i = 0; i < 7200 && i < len; i++) e += buf[i] * buf[i]; const r0 = Math.sqrt(e / 7200), lim = 3.5 * r0;       // niveau normalisé (RMS des 150 premières ms, pointes écrêtées en douceur) : chaque note a le même niveau quel que soit le hasard de la pincée
-  e = 1e-12; for (let i = 0; i < len; i++) { buf[i] = lim * Math.tanh(buf[i] / lim); if (i < 7200) e += buf[i] * buf[i]; }
-  emit(buf, t0, pan, send, gain * 1.5 * 0.1 / Math.sqrt(e / 7200));
-}
 function hum(t0, dur, n, o = {}) {                       // ronflement électrique : fondamentale grave et harmoniques 2 à 6 (audibles sur un petit haut-parleur), battement lent, trémolo
   const { gain = 0.03, att = 1.0, rel = 1.2, send = 0.3, h = [0.45, 1, 0.8, 0.5, 0.3, 0.14], pan = 0 } = o, f = hz(n);
   logOn(t0, 'hum', gain); const s0 = Math.floor(t0 * SR), len = Math.floor((dur + rel) * SR); let p1 = 0, p2 = 0;
@@ -267,7 +255,6 @@ function hum(t0, dur, n, o = {}) {                       // ronflement électriq
     put(s0 + i, gain * v * e * e * (1 + 0.1 * Math.sin(TAU * 0.23 * x)), pan, send);
   }
 }
-const semi = (n, st) => hz(n) * Math.pow(2, st / 12);    // note décalée de `st` demi-tons
 
 // ───────── ambiances : tampons temporaires normalisés en RMS ─────────
 function layer(a, b, o, gen) {                           // gen() dessine dans le bus temporaire B (temps absolus) ; niveau RMS réglé (dBFS avant mastering) sur la couche elle-même, sur une couche de référence de 14 s (ref : les sons rares gardent le même niveau quelle que soit la durée du plan), ou fixe (fixed : multiplicateur) ; fondus d'entrée / sortie, envoi de réverbération
@@ -380,7 +367,7 @@ function acc(t0, dur, fs, o = {}) {                       // accordéon musette 
         const saw = ph * 2 - 1 - blep(ph, dph), pul = (ph < 0.3 ? 1 : -1) + blep(ph, dph) - blep((ph - 0.3 + 1) % 1, dph), w = 0.6 * saw + 0.4 * pul;
         F.run(w); G.run(w);
         const e = (x < att ? sm(x / att) : x > dur ? Math.max(0, 1 - (x - dur) / rel) : 1) * (1 + swell * Math.sin(Math.PI * clamp(x / dur))) * (trem ? 1 - trem * (0.5 + 0.5 * Math.sin(TAU * trate * x)) : 1);
-        put(s0 + i, gain * lv * e * (F.lp * 0.8 + G.bp * 0.3) / Math.sqrt(nF) * 0.55, pan + pn * 0.6, send);
+        put(s0 + i, gain * lv * e * (F.lp * 0.8 + G.bp * 0.3) / Math.sqrt(nF) * 1.4, pan + pn * 0.6, send);
       }
     }
   });
@@ -503,7 +490,7 @@ function genHonks(o) {                                   // klaxon d'époque à 
 }
 function genCreaks(o) {                                  // grincements de fer et de bois : une dent de scie grave qui glisse, passée dans deux résonances nasales (700-1 300 Hz), enveloppe irrégulière
   const { seed = 351, rate = 0.25, f = [90, 220], mulAmp = null, dur = [0.3, 1.1] } = o;
-  return b => { const rg = mkRnd(seed), t1 = (b.off + b.n) / SR; let t = b.off / SR + rg() * 2;
+  return b => { const rg = mkRnd(seed), t1 = (b.off + b.n) / SR; let t = b.off / SR - 0.4 + rg() * 0.9;          // le premier grincement tombe dans les premières secondes du plan
     while (t < t1) { const d = lerp(dur[0], dur[1], rg()), L = Math.floor(d * SR), s0 = Math.floor(t * SR), fa = lerp(f[0], f[1], rg()), fb = fa * (0.7 + 0.6 * rg()), pan = rg() * 1.6 - 0.8, ga = (mulAmp ? mulAmp(t) : 1) * (0.5 + 0.5 * rg()), A = new Filt(), Bq = new Filt(), r1 = 700 + 600 * rg(), r2 = 1500 + 800 * rg(), w = wander(Math.floor(seed + t * 7), 14 + 10 * rg(), 1 / SR); let ph = 0;
       for (let i = 0; i < L; i++) { const x = i / SR, u = i / L, fq = (fa + (fb - fa) * u) * (1 + 0.05 * w()); ph += fq / SR; if (ph >= 1) ph -= 1; const s = ph * 2 - 1; if ((i & 15) === 0) { A.set(r1 * (1 + 0.15 * u), 9); Bq.set(r2, 8); } A.run(s); Bq.run(s);
         const e = Math.pow(Math.sin(Math.PI * u), 0.8) * (0.55 + 0.45 * Math.abs(w())); put(s0 + i, (A.bp + 0.5 * Bq.bp) * e * ga, pan, 0.35); }
@@ -640,7 +627,7 @@ function placeAmb(p, a, b, fi, fo, M) {                  // les couches d'un lie
     case 'demolition': {                                 // le murmure du salon retombe, remplacé par le chantier lointain (acier qui grince, coups sur la poutre) pendant la chute de la tour ; le tout s'éteint avant la pluie de pièces
       const tc = evT('coins', a, b, a + 1.2) - 0.3, ch = x => sm((x - a + 0.05) / 0.35) * (1 - sm((x - tc) / 0.4));
       L('murmur_de', -39, genMurmur({ n: 7, seed: 595, lp: 1700, pitch: [90, 220], rate: [2, 3.8], spread: 0.8 }), { ref: true, mul: x => 1 - sm((x - a - 0.1) / 0.8) });
-      L('creaks_de', -37, genCreaks({ seed: 596, rate: 1.1, f: [70, 150], dur: [0.4, 1.4] }), { ref: true, mul: ch });
+      L('creaks_de', -42, genCreaks({ seed: 596, rate: 1.1, f: [70, 150], dur: [0.4, 1.4] }), { ref: true, mul: ch });
       L('clangs_de', -44, genClangs({ seed: 597, rate: 0.8 }), { ref: true, mul: ch });
       L('wind_de', -45, genWind({ f0: 400, q: 1.3, whistle: 0.4, rumble: 0.4, seed: 598, depth: 0.8, hiss: 0.1, wf: 800, rate: 0.7 }), { mul: ch });
       L('hush_de', -52, genHush({ seed: 599, f: 800 })); break; }
@@ -681,7 +668,7 @@ function ambiances() {
     let a = s.a, b = s.b, fi = 0.12, fo = 0.12, M = null;
     if (s.p === 'salon') { M = x => 1 - 0.45 * closeUp(x); }
     if (s.p === 'demolition') fo = 0.3;
-    if (s.p === 'tour_pied' && cutC4 > a && cutC4 < b + 0.3) { b = cutC4; fo = 0.03; const c4 = sh(/^c4_/); const t4 = c4 ? c4.t0 : cutC4 - 1.5; M = x => 1 - 0.7 * sm((x - t4) / Math.max(0.5, cutC4 - t4)); }      // la nappe se resserre dans c4 puis se coupe net à `arnaquer`
+    if (s.p === 'tour_pied' && cutC4 > a && cutC4 < b + 0.3) { b = cutC4; fo = 0.03; const c4 = sh(/^c4_/), t4 = c4 ? c4.t0 : cutC4 - 1.5, tD = Math.min(t4 - 0.3, wt('c3', 'découvre') - 0.1); M = x => x < tD ? 1 : x < t4 ? lerp(1, 0.55, sm((x - tD) / (t4 - tD))) : lerp(0.55, 0.12, sm((x - t4) / Math.max(0.5, cutC4 - t4))); }      // la nappe se resserre dans c4 puis se coupe net à `arnaquer`
     if (s.p === 'commissariat' && s.a >= SEG.honte[0] - 0.05 && s.a < SEG.honte[0] + 0.3) { fi = 0.7; }           // après le silence du tampon, la rue revient doucement
     if (s.p === 'crepuscule' && s.b > VOICE_END) { fo = 1.3; const e = VOICE_END; M = x => x < e ? 1 : lerp(1, 0, sm((x - e) / 1.1)); }                 // éteinte avant le plan de sortie
     if (s.p === 'train') { const arg = sh(/^d3_argent$/); if (arg) M = x => 1 - 0.55 * sm((x - arg.t0 + 0.05) / 0.2); }
@@ -692,11 +679,7 @@ function ambiances() {
 
 // ───────── musique ─────────
 const grid = (a, b, nominal) => { const n = Math.max(1, Math.round((b - a) / nominal)), d = (b - a) / n; return { n, d, t: k => a + k * d }; };      // pas élastiques : un nombre entier de temps entre deux repères de la voix
-const firstEv = (types, a, b) => { for (const ty of types) { const e = evIn(ty, a, b); if (e) return e.t; } return null; };
-const lastEv = (types, a, b) => { let r = null; for (const e of EVENTS) if (types.includes(e.type) && e.t >= a && e.t < b) r = e.t; return r; };
-const beatsOf = (a, b, bpm) => { const r = []; let t = a; while (t < b - 1e-6) { r.push(t); t += 60 / (typeof bpm === 'function' ? bpm(t) : bpm); } return r; };
 const T_LOGO = at('logo');                               // seul événement obligatoire : le son de marque
-const rise = (u, k = 1.6) => Math.pow(clamp(u), k);
 
 
 // ───────── musique : harmonie, groove « pompe » à la manouche, lignes mélodiques ─────────
@@ -862,8 +845,8 @@ function musPiege() {                                    // LE PIÈGE : salon do
   acc(tVen - 0.12, tDec - tVen - 0.1, voice('A6', 57, 4).map(mtof), { gain: 0.028, att: 0.45, rel: 0.1, swell: 0.1 });
   hit(F2.t1 + 0.07, 'A6', 1.4, { hold: 0.25, rel: 0.1, rim: true, dm: 0.7, until: tDec - 0.04 });
   CUTS.music.push([tDec - 0.03, tDec + 0.37, 0.025]);   // coupure nette de la musique du salon à l'arrivée au pied de la tour
-  // 4) c3 : la clarinette seule, une note longue et un peu fausse (haute de 30 cents, qui dérive encore) ; la guitare n'ose pas revenir
-  clar(tDec + 0.42, 2.2, mtof(71), { gain: 0.022, detune: 30, drift: 25, vib: 0.01, vrate: 4.3, vdel: 0.8, att: 0.25, rel: 0.35, bright: 0.7, send: 0.6, breath: 0.08 });
+  // 4) c3 : la clarinette seule, une note longue et un peu fausse (haute de 22 cents, qui dérive de 15 de plus) ; la guitare n'ose pas revenir
+  clar(tDec + 0.42, 2.2, mtof(71), { gain: 0.022, detune: 22, drift: 15, vib: 0.01, vrate: 4.3, vdel: 0.8, att: 0.25, rel: 0.35, bright: 0.7, send: 0.6, breath: 0.08 });
   drone(wt('c3', 'découvre') - 0.05, tSt - wt('c3', 'découvre') - 0.1, mtof(33), mtof(33), { gain: 0.022, att: 1.6, rel: 0.03, send: 0.3 });       // sous « découvre la vérité » : un bourdon grave (la) qui monte doucement
   // 5) c4 : un seul accord grave tenu (la mineur) qui gonfle sous le tampon, puis plus rien
   acc(tArn + 0.05, tSt - tArn - 0.08, [mtof(45), mtof(52), mtof(57), mtof(60)], { gain: 0.036, att: 0.7, rel: 0.03, bright: 0.6, low: 0.5, swell: 0, air: 0.4 });
@@ -926,7 +909,7 @@ function musSortie() {                                   // SORTIE : l'accord de
 const LV = {                                             // niveau de l'événement avant mastering, exprimé en « crête finale visée » (dBFS) corrigée de l'écart mesuré dû à la réverbération : la crête finale mesurée est dans son_notes.md
   ding: -11.8, no: -10, label: -10, blip: -12, counter: -10, pop: -10, scribble: -12.8, page: -10.1, whoosh: -8.4, reveal: -7.5, suspense: -11.3, wind: -11, heartbeat: -8, glow: -11.3, sparkle: -11.3, steam: -10.5,
   step: -10, hop: -10, bird: -12.3, run: -10, crack: -6.5, shake: -9.5,       // retouchés pour la vidéo 5
-  stamp: -6, coins: -10.5, typing: -11.5, train: -9.5, gasp: -12.5, knock: -8,       // nouveaux types
+  stamp: -3.5, coins: -10.5, typing: -11.5, train: -9.5, gasp: -12.5, knock: -8,       // nouveaux types
   endCard: -9.6, logo: -5.6, letters: -8.7, swoosh: -9, thud: -7,
 };
 const shotIdAt = t => { const s = SHOTS_EV.find(s => t >= s.t0 - 0.001 && t < s.t1); return s ? s.id : ''; };
@@ -968,12 +951,13 @@ const SFX = {
   // ─ nouveaux types de la vidéo 5
   stamp(x, v) {                                          // coup de tampon : bois sur papier, mat (aucune résonance qui sonne), petite pièce autour (deux réflexions assourdies) ; v = force
     const s = clamp(v, 0.5, 2.2), h = clamp((s - 0.5) / 1.7);
-    tone(x, 0.16, { f0: 205 - 70 * h, f1: 120 - 35 * h, curve: 0.5, gain: 0.3, att: 0.0008, rel: 0.03, dec: 0.03 + 0.012 * h, harm: [1, 0.35], send: 0.1 });       // le corps : le manche et la table qui encaissent
-    nzb(x, 0.05, { f0: 850, f1: 600, q: 0.9, gain: 0.22, att: 0.0005, rel: 0.03, dec: 0.012, send: 0.08 });                                                       // le « chok » du bois
+    tone(x, 0.16, { f0: 205 - 70 * h, f1: 120 - 35 * h, curve: 0.5, gain: 0.15, att: 0.0008, rel: 0.03, dec: 0.03 + 0.012 * h, harm: [1, 0.35], send: 0.1 });       // le corps : le manche et la table qui encaissent
+    nzb(x, 0.05, { f0: 850, f1: 600, q: 0.9, gain: 0.5, att: 0.0005, rel: 0.03, dec: 0.014, send: 0.08 });
+    nzb(x, 0.03, { f0: 1500, f1: 1100, q: 1.2, gain: 0.3, att: 0.0004, rel: 0.02, dec: 0.009, send: 0.05 });                                                       // le « chok » du bois
     nzb(x, 0.014, { f0: 3300, q: 0.7, gain: 0.11, att: 0.0003, rel: 0.009, send: 0.05 });                                                                          // le claquement du papier (mat : pas d'aigus au-delà de 5 kHz)
     nzb(x + 0.003, 0.035, { f0: 1700, q: 1.3, gain: 0.07, att: 0.0005, rel: 0.02, dec: 0.01 });                                                                    // le caoutchouc qui s'écrase
-    if (h > 0.2) tone(x, 0.3, { f0: 80, f1: 46, curve: 0.5, gain: 0.22 * h, att: 0.002, rel: 0.06, dec: 0.06, harm: [1, 0.3], send: 0.1 });                           // le poids, quand il est lourd
-    for (const [dt, g] of [[0.009, 0.3], [0.019, 0.17]]) { nzb(x + dt, 0.04, { type: 'lp', f0: 1500, f1: 700, gain: 0.2 * g, att: 0.001, rel: 0.025, dec: 0.012, pan: dt > 0.01 ? 0.3 : -0.3 }); tone(x + dt, 0.1, { f0: 190, f1: 130, gain: 0.2 * g, att: 0.001, rel: 0.02, dec: 0.03, pan: dt > 0.01 ? 0.3 : -0.3 }); }
+    if (h > 0.2) tone(x, 0.3, { f0: 80, f1: 46, curve: 0.5, gain: 0.13 * h, att: 0.002, rel: 0.06, dec: 0.06, harm: [1, 0.3], send: 0.1 });                           // le poids, quand il est lourd
+    for (const [dt, g] of [[0.009, 0.3], [0.019, 0.17]]) { nzb(x + dt, 0.04, { type: 'lp', f0: 1500, f1: 700, gain: 0.2 * g, att: 0.001, rel: 0.025, dec: 0.012, pan: dt > 0.01 ? 0.3 : -0.3 }); tone(x + dt, 0.1, { f0: 190, f1: 130, gain: 0.1 * g, att: 0.001, rel: 0.02, dec: 0.03, pan: dt > 0.01 ? 0.3 : -0.3 }); }
     return 0.6 + 0.4 * clamp(s / 1.6); },
   coins(x, v) {                                          // pièces d'or qui tintent et se répandent + liasses de billets froissées ; v = durée (la densité des tintements décroît)
     const d = durOf(v, 1.2), n = Math.round(20 + 38 * d);
@@ -995,12 +979,12 @@ const SFX = {
   knock(x, v) {                                          // coups à une porte de bois (deux « toc » ; v ≥ 2 : v coups) : le battant qui encaisse, le « tok » de la phalange, la porte creuse qui répond
     const n = v >= 2 ? Math.round(clamp(v, 2, 5)) : 2;
     for (let k = 0; k < n; k++) { const t = x + k * 0.17 * (0.95 + 0.1 * rnd()), g = k === 0 ? 1 : 0.85; tone(t, 0.16, { f0: 150, f1: 95, gain: 0.3 * g, att: 0.0008, rel: 0.03, dec: 0.035, harm: [1, 0.3], send: 0.2 }); nzb(t, 0.03, { f0: 720, q: 2.5, gain: 0.2 * g, att: 0.0004, rel: 0.02, dec: 0.01, send: 0.15 }); tone(t, 0.2, { f0: 310, gain: 0.1 * g, att: 0.001, rel: 0.04, dec: 0.07, send: 0.3 }); nzb(t, 0.008, { type: 'hp', f0: 2500, gain: 0.08 * g, att: 0.0003, rel: 0.005 }); } },
-  train(x, v) {                                          // locomotive à vapeur : « chuff » qui s'accélèrent (départ, v ≥ 2 s) ou passage rapide (v < 2 s), roues sur les joints, coup de sifflet au départ ; v = durée
-    const d = durOf(v, 2.5), pass = d < 2, chuff = (t, g, pan) => { nzb(t, 0.16, { f0: 900, f1: 420, q: 0.7, gain: 0.2 * g, att: 0.012, rel: 0.1, dec: 0.06, pan, send: 0.2 }); nzb(t, 0.1, { type: 'lp', f0: 400, f1: 150, gain: 0.2 * g, att: 0.006, rel: 0.06, dec: 0.04, pan }); tone(t, 0.14, { f0: 70, f1: 45, gain: 0.2 * g, att: 0.004, rel: 0.04, dec: 0.05, harm: [1, 0.4], pan }); nzb(t + 0.04, 0.1, { type: 'hp', f0: 3000, gain: 0.03 * g, att: 0.01, rel: 0.06, pan }); };
-    let t = x; while (t < x + d) { const u = (t - x) / d, iv = pass ? lerp(0.2, 0.15, u) : lerp(0.55, 0.19, u * u), g = pass ? 0.5 + 0.5 * Math.sin(Math.PI * u) : 0.6 + 0.4 * u, pan = pass ? -0.7 + 1.4 * u : -0.15 + 0.3 * u; chuff(t, g, pan); t += iv * (0.96 + 0.08 * rnd()); }
-    if (d >= 1.2) { let tc = x + 0.4; while (tc < x + d) { const u = (tc - x) / d; nzb(tc, 0.014, { f0: 1300, q: 1.5, gain: 0.07 * (0.4 + u), att: 0.0004, rel: 0.009, pan: 0.3, send: 0.2 }); tc += lerp(0.5, 0.17, u); } }
-    if (!pass) for (const [fr, lv] of [[640, 1], [800, 0.8]]) tone(x + 0.05, 0.9, { f0: fr * 0.99, f1: fr, curve: 0.2, gain: 0.12 * lv, att: 0.07, rel: 0.4, harm: [1, 0.5, 0.3, 0.15], vib: 0.008, vrate: 5.5, send: 0.4 });
-    if (!pass) nzb(x + 0.05, 0.9, { f0: 3800, q: 2, gain: 0.02, att: 0.07, rel: 0.4, send: 0.4 }); },
+  train(x, v) {                                          // locomotive à vapeur : v ≥ 2 s = départ (« chuff » qui s'accélèrent, roues sur les joints, coup de sifflet) ; v < 2 s = arrivée (les « chuff » ralentissent, crissement des freins, sifflement de la vapeur) ; v = durée
+    const d = durOf(v, 2.5), arr = d < 2, chuff = (t, g, pan) => { nzb(t, 0.16, { f0: 900, f1: 420, q: 0.7, gain: 0.2 * g, att: 0.012, rel: 0.1, dec: 0.06, pan, send: 0.2 }); nzb(t, 0.1, { type: 'lp', f0: 400, f1: 150, gain: 0.2 * g, att: 0.006, rel: 0.06, dec: 0.04, pan }); tone(t, 0.14, { f0: 70, f1: 45, gain: 0.2 * g, att: 0.004, rel: 0.04, dec: 0.05, harm: [1, 0.4], pan }); nzb(t + 0.04, 0.1, { type: 'hp', f0: 3000, gain: 0.03 * g, att: 0.01, rel: 0.06, pan }); };
+    let t = x; while (t < x + d) { const u = (t - x) / d, iv = arr ? lerp(0.17, 0.5, u * u) : lerp(0.55, 0.19, u * u), g = arr ? 1 - 0.4 * u : 0.6 + 0.4 * u, pan = arr ? -0.5 + 0.5 * u : -0.15 + 0.3 * u; chuff(t, g, pan); t += iv * (0.96 + 0.08 * rnd()); }
+    if (d >= 1.2) { let tc = x + 0.4; while (tc < x + d) { const u = (tc - x) / d; nzb(tc, 0.014, { f0: 1300, q: 1.5, gain: 0.07 * (arr ? 1.4 - u : 0.4 + u), att: 0.0004, rel: 0.009, pan: 0.3, send: 0.2 }); tc += arr ? lerp(0.17, 0.45, u) : lerp(0.5, 0.17, u); } }
+    if (!arr) { for (const [fr, lv] of [[640, 1], [800, 0.8]]) tone(x + 0.05, 0.9, { f0: fr * 0.99, f1: fr, curve: 0.2, gain: 0.12 * lv, att: 0.07, rel: 0.4, harm: [1, 0.5, 0.3, 0.15], vib: 0.008, vrate: 5.5, send: 0.4 }); nzb(x + 0.05, 0.9, { f0: 3800, q: 2, gain: 0.02, att: 0.07, rel: 0.4, send: 0.4 }); }
+    else { const tb = x + d * 0.4, db = d * 0.6; nzb(tb, db, { f0: 2900, f1: 1500, q: 9, gain: 0.07, att: db * 0.3, rel: db * 0.4, am: 0.4, arate: 38, pan: -0.1, send: 0.35, curve: 0.8 }); nzb(tb, db, { f0: 4300, f1: 2300, q: 12, gain: 0.03, att: db * 0.3, rel: db * 0.4, send: 0.35, curve: 0.8 }); nzb(tb + db * 0.5, db * 0.6, { type: 'hp', f0: 3500, gain: 0.04, att: db * 0.2, rel: db * 0.3, send: 0.3 }); } },
   shake(x) {                                             // l'image tremble après un choc : grave qui roule, objets qui vibrent sur la table
     tone(x, 0.5, { f0: 62, f1: 40, curve: 0.5, gain: 0.25, att: 0.004, rel: 0.12, dec: 0.13, harm: [1, 0.4], send: 0.2 }); nzb(x, 0.35, { type: 'lp', f0: 220, f1: 90, gain: 0.2, att: 0.004, rel: 0.2, dec: 0.1 });
     for (let k = 0; k < 7; k++) nzb(x + 0.03 + 0.4 * Math.pow(rnd(), 1.4), 0.01, { f0: 1100 + 1400 * rnd(), q: 2, gain: 0.06 * (1 - 0.1 * k), att: 0.0004, rel: 0.006, dec: 0.004, pan: rr(-0.6, 0.6) }); },
@@ -1023,12 +1007,12 @@ SFX.thud = x => { thud(x, 0.6); };
 // ───────── exécution ─────────
 const finalToPre = d => Math.atanh(clamp(dbv(d), 0, 0.98)) / 1.4;     // crête finale visée (après tanh(1,4 x)) → crête avant mastering
 const CAP = mkBus(Math.floor(16 * SR), 0);
-// Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : épisode 1, mesuré, le jet de sang
-// couvrait « yeux » de 17 dB et la reconnaissance de parole lisait « l'heure » ; l'urne et l'éternuement couvraient « nez »), −5 dB de plus sur le DERNIER mot d'une phrase
-// (« degrés », « explosion », « volts »…) et jusqu'à −8 dB de plus quand plusieurs bruitages s'empilent sur ce mot (la puissance totale reste bornée : mesuré sur « volts » avec les
-// plans réels, zap + compteur + ding + reveal + sparkle couvraient la voix, écart 1,8 dB). Les sons de réussite (ding, no) ne sont pas baissés par les mots mais le sont de −9 dB sur un mot final ; la marque reste entière.
+// Bruitages en retrait sous la voix : −11 dB quand le début du bruitage tombe sur un mot (la fin d'une phrase est souvent très douce : sur l'épisode 1, un jet couvrait « yeux » de 17 dB
+// et la reconnaissance de parole lisait « l'heure »), −5 dB de plus sur le DERNIER mot d'une phrase (« pas », « cher », « Lustig », « arnaquer », « propriétaire »…) et jusqu'à −8 dB de plus
+// quand plusieurs bruitages s'empilent sur ce mot (la puissance totale reste bornée). Les sons de réussite (ding, no) ne sont pas baissés par les mots mais le sont de −9 dB sur un mot final ;
+// la marque reste entière ; le coup de tampon (fil conducteur de la vidéo) est moins baissé (DUCK_SOFT). Aucun bruitage n'est retardé : tous sont posés sur l'image.
 const DUCK_EXEMPT = new Set(['ding', 'no', 'endCard', 'logo', 'letters']);
-const DUCK_SOFT = { stamp: [-5, -3] };                     // [sur un mot, en plus sur un dernier mot] : le coup de tampon est le fil conducteur, bref (≈ 70 ms de corps) et grave : moins baissé que les autres bruitages
+const DUCK_SOFT = { stamp: [-3, -4] };                     // [sur un mot, en plus sur un dernier mot] : le coup de tampon est le fil conducteur, bref (≈ 70 ms de corps) et grave : moins baissé que les autres bruitages
 const WORDS_ALL = TLJ.phrases.flatMap(p => p.words);
 const FINALS = TLJ.phrases.map(p => p.words[p.words.length - 1]);
 const BRAND = new Set(['endCard', 'logo', 'letters']);
