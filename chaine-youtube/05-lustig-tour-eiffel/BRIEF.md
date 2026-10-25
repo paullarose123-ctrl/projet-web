@@ -2,23 +2,19 @@
 
 Même moteur, même style, même voix que l'épisode de référence (dossier voisin `../04-anecdotes-animaux-2/`, terminé : on peut y lire `sc_*.js` pour des exemples de plans et de sprites, et `son_*.md` pour des exemples de notes de son). **Lire d'abord `GUIDE.md` (moteur, conventions, outils, pièges) et `STYLE.md` de CE dossier**, puis ce brief, qui dit ce qui change. La vidéo est verticale (1080 × 1920, 30 i/s), pixel art 270 × 480 agrandi ×4, palette fixe, tout dessiné en JavaScript ; ambiance **nature**, couleurs vives, plans pleins, tout bouge. La timeline de la voix (temps de chaque mot) est dans `build/timeline.js` : **tout se cale sur `wt()` / `wt1()` / `P.<id>`, jamais sur des secondes écrites en dur** (la timeline peut être provisoire au début, puis recalée par la vraie voix : vos plans suivront).
 
-## Qui fait quoi
+## Qui fait quoi (deux vagues)
 
-| Segment | Fichier | Phrases | Préfixe de sprites |
-|---|---|---|---|
-| `intro` | `sc_intro.js` | i1, i2 | `in_` / `fn_` |
-| `idee` | `sc_idee.js` | a1, a2 | `id_` |
-| `faux` | `sc_faux.js` | b1, b2 | `fa_` |
-| `piege` | `sc_piege.js` | c1, c2, c3, c4 | `pi_` |
-| `honte` | `sc_honte.js` | d1, d2, d3 | `ho_` |
-| `fin` | `sc_fin.js` | fin, fin2 | `in_` / `fn_` |
+**Vague 1 : sprites seulement** (trois artistes en parallèle, chacun vérifie ses dessins en image, planches de poses et cycles en bande, et documente l'API dans l'en-tête de son fichier) :
 
-- **L'IDÉE** (case 1/4, « 1/4 PARIS 1925 ») : segment `idee`, fichiers `sc_idee_sprites.js`, `sc_idee.js`, `son_idee.md`.
-- **LES FAUX PAPIERS** (case 2/4, « 2/4 HOTEL DE LUXE ») : segment `faux`, fichiers `sc_faux_sprites.js`, `sc_faux.js`, `son_faux.md`.
-- **LE PIEGE** (case 3/4, « 3/4 LA VENTE ») : segment `piege`, fichiers `sc_piege_sprites.js`, `sc_piege.js`, `son_piege.md`.
-- **LA HONTE** (case 4/4, « 4/4 LA FUITE ») : segment `honte`, fichiers `sc_honte_sprites.js`, `sc_honte.js`, `son_honte.md`.
+| Artiste | Fichier de sprites (préfixe) | Contenu |
+|---|---|---|
+| **personnages** | `sc_lustig_sprites.js` (`lu_`) | Victor Lustig (élégant, 45 ans) et le marchand de ferraille (André Poisson : rond, moustache, chapeau melon) ; poses et gestes, mains qui tiennent des accessoires ; les cinq autres marchands en groupe autour d'une table ; `ICONES[3]` (la fuite : un train / un chapeau qui s'envole) |
+| **extérieurs** | `sc_paris_sprites.js` (`pa_`) | Paris en 1925 : la tour Eiffel (pleine hauteur, gros plan de la ferronnerie, pied de la tour), toits et rues, terrasse de café, échafaudage de peinture, gare et train à vapeur, voiture d'époque, porte du commissariat ; ciels et lumières de la journée (soleil bas, crépuscule) ; `ICONES[0]` (le journal) |
+| **intérieurs et accessoires** | `sc_hotel_sprites.js` (`ho_`) | l'hôtel de luxe (salon doré, lustre, colonnes, tentures, grande table), chambre de Lustig et miroir, bureau du faussaire, faux documents (papier à en-tête, sceaux, cire), le tampon rouge « VENDUE » (et ses variantes de texte), machine à écrire, enveloppes, mallette et liasses de billets, contrat, téléphone ; `ICONES[1]` (le document tamponné) et `ICONES[2]` (la mallette) |
 
-Le HUD (cases du carnet en haut à gauche) est dans `cadre.js` : `hudTracker(k, fait, p)` et `hudLieu(k, nChars)`, `ICONES[k]` à définir par chaque artiste. Le scientifique (`drawScientist(cx, cy, s, t, { hairStyle: 'curlyFade', … })`, `scientist.js`) garde la coiffure de l'auteur ; l'accroche, la finale et la sortie (`outro.js`) sont faites par le chef de projet.
+**Vague 2 : plans** (les mêmes artistes, relancés par message quand les trois API de sprites existent) : `idee` (`sc_idee.js`), `faux` (`sc_faux.js`), `piege` (`sc_piege.js`), `honte` (`sc_honte.js`) sont répartis entre eux par le chef de projet ; l'accroche (`sc_intro.js`) et la fin (`sc_fin.js`) sont faites par le chef de projet avec les sprites des trois artistes.
+
+Le fil conducteur : **le tampon rouge « VENDUE »** (il s'écrase sur l'écran dans l'accroche, tamponne le contrat et les faux documents, et revient barré à la fin) et **le dossier « AFFAIRE LUSTIG »** (quatre cases en haut à gauche : `hudTracker(k, fait, p)` ; `BETES[k]` : 0 L'IDÉE, 1 LES FAUX PAPIERS, 2 LE PIEGE, 3 LA HONTE ; icônes `ICONES[k]` 17 × 17 px : journal, document tamponné, mallette, train).
 
 ## Texte exact de la voix (à illustrer, mot pour mot)
 
@@ -40,15 +36,26 @@ Le HUD (cases du carnet en haut à gauche) est dans `cadre.js` : `hudTracker(k, 
 
 ## Faits (à respecter ; ne rien afficher qui contredise la voix)
 
-*(à compléter par le chef de projet avant de lancer les artistes : pour chaque animal, les faits vérifiés, les étiquettes permises, ce que le texte simplifie. Modèle : section « Faits » de `../04-anecdotes-animaux-2/BRIEF-EP2.md` et `faits.md`.)*
+Voir `faits.md` pour les sources et les réserves. En bref :
+- **Victor Lustig** (né en 1890 en Bohême, mort en 1947), escroc élégant et polyglotte. En 1925 à Paris : il lit (dans la presse) que l'entretien de la **tour Eiffel** coûte très cher (repeinte tous les sept ans ; construite pour l'Exposition universelle de 1889, elle ne devait pas rester) ; il se fait passer pour un **haut fonctionnaire** (sous-directeur général du ministère des Postes et Télégraphes) avec de **faux papiers à en-tête** ; il invite **cinq ou six marchands de ferraille** dans un **hôtel de luxe** (le Crillon, à Paris) et leur annonce, sous le sceau du secret, que la tour va être **démolie et vendue pour son fer**.
+- Un des marchands (**André Poisson**, nouveau venu à Paris et désireux d'être reconnu) est choisi ; il paie (le prix et un pot-de-vin) ; Lustig et son complice partent avec l'argent (en train vers Vienne). Le marchand, **trop honteux, ne porte pas plainte**. Lustig **revient à Paris** (quelques semaines ou mois plus tard) et **recommence** avec de nouveaux marchands : **cette fois l'un d'eux alerte la police**, Lustig s'enfuit (vers les États-Unis).
+- Ce que la vidéo ne montre **pas** : les sommes exactes (les sources diffèrent), le nom du complice, la suite (faux-monnayeur, prison d'Alcatraz). Pas de chiffres à l'écran sur l'argent. « Quelques jours plus tard » (dit par la voix) : ne rien montrer qui le contredise (ni une date précise ni un calendrier).
+- Étiquettes permises : « PARIS 1925 », « HAUT FONCTIONNAIRE », « FAUX », « OFFICIEL » (sur les faux documents), « SECRET », « VENDUE », « ARNAQUE », « PAS DE PLAINTE », « LA TOUR EIFFEL : A DEMOLIR ? » (sur l'affiche ou le document), « AFFAIRE LUSTIG ». Texte pixel : majuscules, pas de guillemets.
 
-## Plans suggérés (découpables autrement ; chaque coupe 0,05 à 0,15 s avant un début de mot)
+## Plans suggérés (découpables autrement ; chaque coupe 0,05 à 0,15 s avant un début de mot ; 5 à 7 plans par segment, sauf l'accroche)
 
-*(à compléter : pour chaque segment, 6 à 7 plans, un événement visuel par idée de la voix ; modèle : section « Plans suggérés » de `../04-anecdotes-animaux-2/BRIEF-EP2.md`. Chaque anecdote a un « mais comment ? » et une image que personne n'a vue ; un plan de planche du carnet (coupe, schéma) pour le mécanisme ; la case du carnet cochée à la fin de l'anecdote.)*
+Ambiance : **Paris des Années folles**, lumière dorée rasante (matin de coupe), puis lumières chaudes d'intérieur (hôtel), puis crépuscule (fuite). Décors pleins, détaillés (façades haussmanniennes, toits de zinc, cheminées, lampadaires, affiches), tout vit (fumée de cheminée, pigeons, passants, rideaux, poussière dans les rayons).
+
+- **intro** (chef de projet) : `i_tour` la tour Eiffel monte dans le cadre (travelling vers le haut), tampon rouge « VENDUE » qui s'écrase (événement `stamp`) sur « appartenait » ; `i_dossier` le dossier « AFFAIRE LUSTIG » se referme/s'ouvre sur la silhouette de Lustig, « Et voici comment il a fait ».
+- **idee** (a1, a2) : `a1_journal` Lustig à une terrasse de café lit un journal ; l'article sur la tour (échafaudage, peintres, pièces de monnaie qui s'envolent de la tour) sur « coûte extrêmement cher » ; `a1_tour` gros plan sur la ferronnerie, ouvriers qui repeignent, l'argent qui s'échappe ; `a2_miroir` Lustig devant un miroir ajuste cravate, chapeau, décorations : « HAUT FONCTIONNAIRE » (étiquette) ; son sourire en coin ; case 1/4 cochée.
+- **faux** (b1, b2) : `b1_faussaire` le bureau du faussaire : machine à écrire, en-tête, sceau, cire, tampon « OFFICIEL » (événements `typing`, `stamp`) ; `b1_invitations` les enveloppes s'envolent vers cinq ou six marchands ; `b1_hotel` façade et salon de l'hôtel de luxe ; `b2_secret` Lustig se penche sur la table, doigt sur les lèvres (« SECRET »), les marchands se rapprochent ; `b2_demolition` l'affiche / le document : la tour démolie, le fer vendu au poids (boulet de démolition, tas de poutres) ; case 2/4 cochée.
+- **piege** (c1–c4) : `c1_marchand` le marchand (yeux brillants) convaincu : « L'AFFAIRE DU SIECLE » ; `c2_valise` la mallette de billets passe de main en main (`coins`), poignée de main, tampon « VENDUE » sur le contrat, sourire de Lustig ; `c3_decouverte` quelques jours plus tard, le marchand brandit son contrat au pied de la tour, un gardien secoue la tête (`knock` / `gasp`) ; `c4_arnaque` le marchand comprend : « ARNAQUE » écrasé en rouge ; case 3/4 cochée.
+- **honte** (d1–d3) : `d1_question` « ? » géant, le marchand devant la porte du commissariat ; `d2_honte` il hésite, rougit, tourne les talons chapeau à la main : « PAS DE PLAINTE » ; `d3_train` Lustig dans un train à vapeur avec la mallette (`train`), disparaît dans la fumée ; `d3_retour` le train revient en gare de Paris, Lustig descend, rouvre le dossier : les mêmes enveloppes ; case 4/4 cochée.
+- **fin** (fin, fin2) : `f1_echec` un marchand flaire la ruse, décroche le téléphone / court au commissariat, Lustig voit les policiers, son sourire s'efface, il s'enfuit (chapeau qui s'envole) ; `f2_tour` la tour Eiffel au crépuscule, le tampon « VENDUE » apparaît puis est barré par « JAMAIS A LUI » (mot à mot « sans jamais en être propriétaire ») ; carton final (2 s) : « 1925 · LA TOUR EIFFEL N'ÉTAIT PAS A VENDRE » (ou équivalent, au plus 2 lignes).
 
 ## Vocabulaire des événements de bruitage
 
-Celui du GUIDE.md §4 (`valide.mjs` connaît la liste : `VOCAB`). Un événement par chose visible, à l'instant exact de l'image. Un type nouveau doit être ajouté à `VOCAB` (valide.mjs) ET sonorisé dans `score.mjs`.
+Celui du GUIDE.md §4 (`valide.mjs` connaît la liste : `VOCAB`), plus ces types **nouveaux** pour cette vidéo : `stamp` (coup de tampon sec, v = force), `coins` (pièces / liasse de billets froissée, v = durée), `typing` (machine à écrire, v = durée), `train` (locomotive à vapeur qui démarre / passe, v = durée), `gasp` (inspiration de surprise), `knock` (coup à une porte). Un événement par chose visible, à l'instant exact de l'image. Un type nouveau doit être ajouté à `VOCAB` (valide.mjs) ET sonorisé dans `score.mjs`.
 
 ## Livrables et règles (comme dans le GUIDE.md)
 

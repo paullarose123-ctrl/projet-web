@@ -10,7 +10,7 @@ const exe = CHROME;
 const br = await puppeteer.launch({ executablePath: exe, headless: true, args: ['--allow-file-access-from-files', '--no-sandbox'], protocolTimeout: 900000 });
 const pg = await br.newPage(); pg.on('pageerror', e => console.error('PAGE ERROR', e.message));
 await pg.goto(pathToFileURL(path.resolve(page)).href + '?render=1'); await pg.waitForFunction('window.READY===true', { timeout: 300000 });
-const VOCAB = new Set(['ding', 'no', 'label', 'blip', 'counter', 'pop', 'scribble', 'page', 'scan', 'zoom', 'whoosh', 'reveal', 'suspense', 'wind', 'snowfall', 'frost', 'crack', 'drip', 'thaw', 'heartbeat', 'beep', 'flatline', 'glow', 'sparkle', 'ribbit', 'hop', 'step', 'sniff', 'squirt', 'splat', 'yelp', 'shake', 'sneeze', 'yip', 'run', 'ruler', 'bird', 'vote', 'endCard', 'logo', 'letters', 'zap', 'splash', 'steam', 'bang', 'bubbles', 'flop', 'slap', 'heat', 'buzz']);
+const VOCAB = new Set(['ding', 'no', 'label', 'blip', 'counter', 'pop', 'scribble', 'page', 'scan', 'zoom', 'whoosh', 'reveal', 'suspense', 'wind', 'snowfall', 'frost', 'crack', 'drip', 'thaw', 'heartbeat', 'beep', 'flatline', 'glow', 'sparkle', 'ribbit', 'hop', 'step', 'sniff', 'squirt', 'splat', 'yelp', 'shake', 'sneeze', 'yip', 'run', 'ruler', 'bird', 'vote', 'endCard', 'logo', 'letters', 'zap', 'splash', 'steam', 'bang', 'bubbles', 'flop', 'slap', 'heat', 'buzz', 'stamp', 'coins', 'typing', 'train', 'gasp', 'knock']);
 const res = await pg.evaluate(() => {
   const words = WORDS.map(w => ({ w: w.w, t0: w.t0, t1: w.t1 }));
   const shots = SHOTS.filter(s => !s.id.startsWith('_')).map(s => ({
