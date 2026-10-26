@@ -1551,106 +1551,121 @@ h3 {
   }
 }
 
-/* ───────────── Divisions : médaillon de l'animal, anneau du métal ───────────── */
+/* ───────────── Divisions : le blason pastel de la division, sa couleur de métal à plat ───────────── */
 .division {
-  --metal: linear-gradient(135deg, #b8733a, #f0b47a 45%, #7a4520);
-  --metal-glow: rgba(214, 140, 80, 0.45);
+  --metal: #eebf98;
   grid-template-columns: auto 1fr;
   align-items: center;
 }
 
 .division--argent {
-  --metal: linear-gradient(135deg, #8d98a3, #f3f6f8 45%, #69737d);
-  --metal-glow: rgba(220, 230, 240, 0.4);
+  --metal: #d3dce6;
 }
 
 .division--or {
-  --metal: linear-gradient(135deg, #b8862b, #fff1b8 45%, #8f6215);
-  --metal-glow: rgba(243, 210, 120, 0.55);
+  --metal: #f3d98a;
 }
 
 .division--platine {
-  --metal: linear-gradient(135deg, #7fa7b3, #e8fbff 45%, #57808c);
-  --metal-glow: rgba(170, 230, 245, 0.5);
+  --metal: #b9e3e3;
 }
 
 .division--diamant {
-  --metal: conic-gradient(from 20deg, #9fe8ff, #f4d4ff, #b7ffe3, #fff, #9fe8ff);
-  --metal-glow: rgba(190, 220, 255, 0.65);
+  --metal: #d5c8f4;
 }
 
 .division--legende {
-  --metal: conic-gradient(from 0deg, #ffd76a, #ff8f78, #f2b8cf, #ffd76a, #fff3c4, #ffd76a);
-  --metal-glow: rgba(255, 190, 110, 0.75);
+  --metal: #f6ad97;
 }
 
 .division__emblem {
   display: grid;
   justify-items: center;
-  gap: 6px;
+  gap: 4px;
   grid-row: span 2;
 }
 
-.division__photo {
-  width: 86px !important;
-  height: 86px !important;
-  padding: 4px;
-  border-radius: 50%;
-  background: var(--metal);
-  box-shadow: 0 0 22px var(--metal-glow), 0 6px 16px rgba(0, 0, 0, 0.45);
-}
-
-/* au centre du médaillon, l'emblème de la famille (comme sur les cartes), clair sur fond sombre */
-.division__logo {
-  display: grid;
-}
-
-.division__logo span {
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.35);
-  background: radial-gradient(circle at 40% 35%, #2b3330, #0d1210 72%);
-  box-shadow: inset 0 0 0 3px rgba(255, 248, 236, 0.08);
-  color: #f6ecd2;
-}
-
-.division__logo svg {
-  width: 58%;
-  height: 58%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
-}
-
-.division--diamant .division__photo,
-.division--legende .division__photo {
-  animation: medal-glow 2.6s ease-in-out infinite;
-}
-
-@keyframes medal-glow {
-  50% {
-    box-shadow: 0 0 34px var(--metal-glow), 0 6px 16px rgba(0, 0, 0, 0.45);
-  }
+.dbadge.division__badge {
+  width: 118px;
 }
 
 .division__metal {
   padding: 2px 10px;
   border-radius: 99px;
   background: var(--metal);
-  color: #1e1608;
+  color: #1c3124;
   font-family: var(--font-display);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .division .division__progress {
   grid-column: 2;
+}
+
+/* le prochain blason, en ombre, à côté de la jauge */
+.division__next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.division__next .dbadge {
+  width: 46px;
+  flex: none;
+}
+
+.division__next span {
+  display: grid;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.division__next b {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* l'échelle des dix blasons */
+.division__ladder {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 12px 4px 4px;
+  list-style: none;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  scrollbar-width: thin;
+}
+
+.division__ladder li {
+  flex: 1 0 64px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.division__ladder .dbadge {
+  width: 52px;
+}
+
+.division__ladder li.is-won {
+  color: var(--text-dim);
+}
+
+.division__ladder li.is-current {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.division__ladder li.is-current .dbadge {
+  width: 64px;
+  margin-top: -8px;
 }
 
 @media (min-width: 760px) {
@@ -1669,15 +1684,52 @@ h3 {
   .division h2 {
     font-size: 1.5rem;
   }
-  .division__photo {
-    width: 70px !important;
-    height: 70px !important;
+  .dbadge.division__badge {
+    width: 96px;
+  }
+}
+
+/* fin du duel : le blason de la promotion, ou celui de la division et ses points */
+.final__promotion,
+.final__league {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: left;
+}
+
+.final__promotion h2 {
+  margin: 0;
+}
+
+.final__promotion p {
+  margin: 0;
+}
+
+.final .dbadge.final__badge {
+  width: 140px;
+  flex: none;
+  animation:
+    badge-promote 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards,
+    dbadge-glow 2.8s 0.9s ease-in-out infinite;
+}
+
+.final .dbadge.final__badge--small {
+  width: 64px;
+  animation: dbadge-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes badge-promote {
+  from {
+    transform: scale(0.3) rotate(-12deg);
+    opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .division__photo {
-    animation: none !important;
+  .final__badge {
+    animation: none;
   }
 }
 
@@ -2359,6 +2411,59 @@ h3 {
 
 @media (prefers-reduced-motion: reduce) {
   .mx-scene * {
+    animation: none !important;
+  }
+}
+
+/* ───────────── Blasons des divisions : à plat, une lueur douce de leur couleur autour du rang actuel ───────────── */
+.dbadge {
+  --glow: rgba(238, 191, 152, 0.5);
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.dbadge--argent {
+  --glow: rgba(211, 220, 230, 0.5);
+}
+
+.dbadge--or {
+  --glow: rgba(243, 217, 138, 0.55);
+}
+
+.dbadge--platine {
+  --glow: rgba(185, 227, 227, 0.55);
+}
+
+.dbadge--diamant {
+  --glow: rgba(213, 200, 244, 0.6);
+}
+
+.dbadge--legende {
+  --glow: rgba(246, 173, 151, 0.65);
+}
+
+.dbadge.is-current {
+  filter: drop-shadow(0 0 8px var(--glow)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  animation: dbadge-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes dbadge-glow {
+  50% {
+    filter: drop-shadow(0 0 16px var(--glow)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* une division pas encore atteinte : le blason en ombre */
+.dbadge.is-locked {
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dbadge {
     animation: none !important;
   }
 }

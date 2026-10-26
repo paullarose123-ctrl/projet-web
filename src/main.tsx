@@ -6,7 +6,7 @@ import './styles/card.css';
 import './styles/app.css';
 import './styles/motion.css';
 import { App } from './App';
-import { AllCards, Gallery, MexicoBackdropPreview } from './dev/Gallery';
+import { AllCards, DivisionBadges, Gallery, MexicoBackdropPreview } from './dev/Gallery';
 import { useGame } from './store/game';
 import { startAutoSave } from './store/account';
 import { startAnalytics } from './analytics';
@@ -16,7 +16,8 @@ if (import.meta.env.DEV) (window as unknown as { __game: typeof useGame }).__gam
 
 // #galerie affiche la planche de contrôle visuel (matières de cartes et drapeaux) ;
 // #toutes-les-cartes affiche toutes les cartes, pour la planche de revue ; #serie-2 celles du Mexique ;
-// #fonds-mexique=panteon (monarcas, xochimilco, volcanes, barrancas, desierto, selva) un décor d'ouverture du Mexique.
+// #fonds-mexique=panteon (monarcas, xochimilco, volcanes, barrancas, desierto, selva) un décor d'ouverture du Mexique ;
+// #divisions les dix blasons de la ligue.
 const hash = typeof window !== 'undefined' ? window.location.hash : '';
 
 // la partie d'un joueur connecté part toute seule dans son compte
@@ -25,5 +26,5 @@ startAutoSave();
 startAnalytics();
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : hash === '#serie-2' ? <AllCards serie={2} /> : hash.startsWith('#fonds-mexique') ? <MexicoBackdropPreview scene={hash.split('=')[1] ?? ''} /> : <App />}</StrictMode>,
+  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : hash === '#serie-2' ? <AllCards serie={2} /> : hash.startsWith('#fonds-mexique') ? <MexicoBackdropPreview scene={hash.split('=')[1] ?? ''} /> : hash === '#divisions' ? <DivisionBadges /> : <App />}</StrictMode>,
 );

@@ -8,6 +8,7 @@ import { FREE_PACK, SHOP_PACKS, sportPack } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
 import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
+import { DivisionBadge } from '../components/DivisionBadge';
 
 // Page de contrôle visuel (#galerie) : un échantillon de cartes, les emblèmes des familles et tous les drapeaux.
 const SAMPLE = ['lion', 'tigre', 'elephant', 'loup', 'orque', 'requin-blanc', 'panda', 'gorille', 'aigle-royal', 'crocodile-du-nil', 'berger-allemand', 'chat', 'axolotl', 'pieuvre', 'kangourou', 'fourmi'];
@@ -157,6 +158,27 @@ export function MexicoBackdropPreview({ scene }: { scene: string }) {
   return (
     <div className="opening__backdrop">
       <MexicoBackdrop className="opening__scene" scene={name} seed="aperçu" />
+    </div>
+  );
+}
+
+/** Les dix blasons des divisions (#divisions), de la plus basse à la légende, puis les états de l'échelle. */
+export function DivisionBadges() {
+  const numbers = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+  return (
+    <div style={{ padding: 24, background: '#0e1712', minHeight: '100vh', display: 'grid', gap: 24 }}>
+      <div id="blasons" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 200px)', gap: 24 }}>
+        {numbers.map((n) => (
+          <DivisionBadge key={n} number={n} state={n === 5 ? 'current' : 'won'} />
+        ))}
+      </div>
+      <div id="petits" style={{ display: 'flex', gap: 10 }}>
+        {numbers.map((n) => (
+          <div key={n} style={{ width: 64 }}>
+            <DivisionBadge number={n} state={n > 6 ? 'won' : n === 6 ? 'current' : 'locked'} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
