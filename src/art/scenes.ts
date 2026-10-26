@@ -9,6 +9,13 @@ export const SITE_SCENE: SceneDef = {
   palette: { sky: ['#0a1411', '#23402f'], sun: '#efe1b8', far: '#2b4a3a', near: '#08110d', accent: '#ffffff' },
 };
 
+/** Le même sous-bois pendant Halloween et le Jour des morts : ciel violet et grosse lune orange. */
+export const SITE_SCENE_HALLOWEEN: SceneDef = {
+  kind: 'foret',
+  stars: true,
+  palette: { sky: ['#110a20', '#3a1f46'], sun: '#ffb35c', far: '#2e2142', near: '#0a0712', accent: '#ffffff' },
+};
+
 /** Accueil (boosters gratuits) : sommets à l'aube et un aigle. */
 export const HERO_SCENE: SceneDef = {
   kind: 'montagne',

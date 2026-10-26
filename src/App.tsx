@@ -18,6 +18,7 @@ import { PackOpening } from './overlays/PackOpening';
 import { CardDetail } from './overlays/CardDetail';
 import { Toasts } from './components/Toasts';
 import { Fireflies } from './components/Fireflies';
+import { HalloweenNight, useHalloween } from './components/Halloween';
 import { MiniPack } from './components/MiniPack';
 import { Juice } from './components/Juice';
 import { useOnline } from './store/online';
@@ -27,7 +28,7 @@ import { OnlinePlayers } from './components/OnlinePlayers';
 import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
 import { Landscape } from './components/PackScene';
-import { SITE_SCENE } from './art/scenes';
+import { SITE_SCENE, SITE_SCENE_HALLOWEEN } from './art/scenes';
 
 const NAV: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   {
@@ -193,6 +194,11 @@ export function App() {
   const tick = useGame((s) => s.tick);
   const muted = useGame((s) => s.muted);
   const musicOff = useGame((s) => s.musicOff);
+  // saison d'Halloween et du Jour des morts : couleurs et décors de fête (voir components/Halloween.tsx)
+  const halloween = useHalloween();
+  useEffect(() => {
+    document.documentElement.classList.toggle('saison-halloween', halloween);
+  }, [halloween]);
 
   useEffect(() => {
     setMuted(muted);
@@ -258,9 +264,10 @@ export function App() {
 
   return (
     <div className="app">
-      {/* fond de page : un sous-bois sous les étoiles, fixe derrière le contenu */}
-      <Landscape className="backdrop" scene={SITE_SCENE} seed="sous-bois" maxWidth={600} />
+      {/* fond de page : un sous-bois sous les étoiles (sous la lune orange d'Halloween en saison), fixe derrière le contenu */}
+      <Landscape className="backdrop" scene={halloween ? SITE_SCENE_HALLOWEEN : SITE_SCENE} seed="sous-bois" maxWidth={600} />
       <Fireflies />
+      <HalloweenNight />
       <Topbar />
       <main className="content" id="contenu">
         {/* chaque écran arrive en pivotant en 3D, du côté de l'onglet choisi */}

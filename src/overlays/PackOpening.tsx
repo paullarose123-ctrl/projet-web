@@ -22,6 +22,7 @@ import type { NatureShape } from '../components/natureShapes';
 import { Confetti, type ConfettiHandle } from '../components/Confetti';
 import { sfx } from '../audio/sfx';
 import { usePhoto } from '../photos';
+import { HalloweenOpening } from '../components/Halloween';
 
 // pack : le sachet attend ; charging : il se charge et tremble ; tearing : il se déchire et les cartes sortent
 type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
@@ -501,6 +502,7 @@ export function PackOpening() {
       <div className="opening__backdrop" aria-hidden="true">
         {backdrop?.mexique && <MexicoBackdrop className="opening__scene" scene={backdrop.mexique} seed={backdrop.seed} />}
         {backdrop && !backdrop.mexique && <Landscape className="opening__scene" scene={backdrop.scene} seed={backdrop.seed} />}
+        {backdrop && !backdrop.mexique && <HalloweenOpening />}
       </div>
       <div className="opening__rays" aria-hidden="true" />
       <div className="opening__dust" aria-hidden="true">

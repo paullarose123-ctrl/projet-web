@@ -132,7 +132,7 @@
       linear-gradient(90deg, rgba(8, 10, 14, 0.85) 0%, rgba(8, 10, 14, 0.55) 40%, rgba(8, 10, 14, 0) 72%),
       linear-gradient(0deg, rgba(8, 10, 14, 0.55), transparent 45%);
   }
-  .screen__head--art > div:not(.segmented) {
+  .screen__head--art > div:not(.segmented, .hw-head) {
     max-width: 52ch;
   }
 }
@@ -6266,4 +6266,203 @@
   flex-wrap: wrap;
   gap: 10px;
   margin: 14px 0 6px;
+}
+
+/* ───────────── Saison : Halloween et Jour des morts (du 20 octobre au 1er novembre) ─────────────
+   L'accent passe à l'orange du cempasúchil (onglet actif, carte du logo, surtitres), les lucioles deviennent des
+   braises de bougie, et les décors de components/Halloween.tsx s'installent dans les marges et le ciel des en-têtes. */
+:root.saison-halloween {
+  --accent-text: #f4a94e;
+}
+
+.saison-halloween .firefly {
+  background: #ffd08a;
+  box-shadow: 0 0 6px 2px rgba(255, 168, 70, 0.8), 0 0 18px 6px rgba(240, 110, 40, 0.35);
+}
+
+/* calque de la nuit : derrière le contenu, au-dessus du fond */
+.hw-night {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* chauves-souris qui traversent l'écran en ondulant */
+.hw-bat {
+  position: absolute;
+  left: -60px;
+  width: var(--size, 30px);
+  fill: #140b20;
+  opacity: 0.85;
+  overflow: visible;
+  animation: hw-cross var(--dur, 30s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes hw-cross {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(calc(25vw + 30px), var(--rise, -40px));
+  }
+  50% {
+    transform: translate(calc(50vw + 60px), 0);
+  }
+  75% {
+    transform: translate(calc(75vw + 90px), var(--rise, -40px));
+  }
+  100% {
+    transform: translate(calc(100vw + 120px), 0);
+  }
+}
+
+.hw-flap {
+  transform-box: fill-box;
+  transform-origin: 50% 40%;
+  animation: hw-flap 0.32s ease-in-out infinite alternate;
+}
+
+@keyframes hw-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.35);
+  }
+}
+
+/* citrouilles, cempasúchil et bougies dans les deux coins du bas, au-dessus de la barre de navigation */
+.hw-corner {
+  position: absolute;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  width: min(300px, 42vw);
+  overflow: visible;
+}
+
+.hw-corner--left {
+  left: 0;
+}
+
+.hw-corner--right {
+  right: 0;
+}
+
+@media (min-width: 760px) {
+  .hw-corner {
+    bottom: 0;
+  }
+}
+
+/* le ciel des en-têtes : guirlande de cempasúchil, pendeloques, toile et araignée */
+.screen__head--art > .hw-head,
+.hero > .hw-head {
+  position: absolute;
+  inset: 8px 8px auto;
+  z-index: 0;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+
+.hw-head__garland {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background-repeat: repeat-x;
+  background-size: auto 20px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.hw-head__pendants {
+  position: absolute;
+  top: 10px;
+  left: 18px;
+  width: 116px;
+  overflow: visible;
+}
+
+.hw-head__corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 220px;
+  overflow: visible;
+}
+
+.hw-spider {
+  animation: hw-spider 5s ease-in-out infinite alternate;
+}
+
+@keyframes hw-spider {
+  from {
+    transform: translateY(-3px);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+/* l'annonce de la saison sur l'accueil */
+.hw-banner {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  border-color: rgba(244, 169, 78, 0.35);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(122, 63, 160, 0.35), transparent 60%),
+    linear-gradient(160deg, #1d1230, #120c1c);
+}
+
+.hw-banner__art {
+  width: 100%;
+  overflow: visible;
+}
+
+.hw-banner__text {
+  display: grid;
+  gap: 6px;
+}
+
+.hw-banner h2 {
+  margin: 0;
+  text-wrap: balance;
+}
+
+.hw-banner p {
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .hw-banner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .hw-banner__art {
+    width: 190px;
+    margin: -8px 0 -4px;
+  }
+}
+
+/* les chauves-souris passent aussi derrière l'ouverture d'un booster */
+.hw-opening {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-bat {
+    display: none;
+  }
+  .hw-flap,
+  .hw-spider {
+    animation: none;
+  }
 }

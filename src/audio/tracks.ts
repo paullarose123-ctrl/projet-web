@@ -1,7 +1,9 @@
-import { bass, bed, bell, bird, boom, bubble, cricket, flute, kalimba, midi, piano, pluck, strings, tick, type Bus } from './engine';
+import { air, bass, bed, bell, bird, boom, bubble, cricket, flute, kalimba, marimba, midi, piano, pluck, strings, tick, type Bus } from './engine';
+import { isHalloween } from '../engine/season';
 
 // Les morceaux de la radio du jeu : sept pièces calmes de la même famille, façon documentaire nature,
-// chacune avec son paysage (une clairière au matin, la pluie sur la canopée, la savane la nuit…).
+// chacune avec son paysage (une clairière au matin, la pluie sur la canopée, la savane la nuit…),
+// et deux pièces de saison pour Halloween et le Jour des morts, qui ne passent qu'à cette période.
 // Tout est composé en direct avec Web Audio : aucun fichier, aucun droit d'auteur.
 // Chaque morceau joue une grille de 8 mesures (16 pour la valse) en plusieurs passages qui changent
 // d'instruments (introduction, thème, variation, retour du thème), puis un accord final qui résonne.
@@ -16,6 +18,8 @@ export interface Track {
   bars: number;
   /** programme la mesure `i`, qui commence au temps `t0` (horloge audio) */
   bar: (ac: AudioContext, out: Bus, t0: number, i: number) => void;
+  /** morceau de saison, joué seulement pendant sa fête (voir engine/season.ts) */
+  season?: 'halloween';
 }
 
 /** Une note de mélodie : temps dans la mesure, note MIDI, durée en temps (pour la flûte). */
@@ -502,7 +506,163 @@ function nid(): Track {
   };
 }
 
-/** Tous les morceaux de la radio. */
-export function allTracks(): Track[] {
-  return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
+// ───────────── Saison : 8. Nuit des citrouilles (mi mineur, 64 bpm) : piano grave, célesta, cordes, vent ─────────────
+
+const CITROUILLES: Chord[] = [
+  { r: 40, c: [55, 59, 64] }, // Mi m
+  { r: 36, c: [55, 60, 64] }, // Do
+  { r: 45, c: [57, 60, 64] }, // La m
+  { r: 47, c: [57, 59, 63] }, // Si 7
+  { r: 40, c: [55, 59, 64] }, // Mi m
+  { r: 36, c: [55, 60, 64] }, // Do
+  { r: 42, c: [57, 60, 64] }, // Fa# demi-diminué
+  { r: 47, c: [57, 59, 63] }, // Si 7
+];
+const CITROUILLES_MELODY: Note[][] = [
+  [[0, 71, 1], [1, 72, 1], [2, 71, 1], [3, 67, 1]],
+  [[0, 64, 2], [2, 67, 1], [3, 72, 1]],
+  [[0, 71, 1.5], [1.5, 69, 0.5], [2, 72, 1], [3, 76, 1]],
+  [[0, 75, 2], [2, 71, 2]],
+  [[0, 76, 1], [1, 75, 1], [2, 76, 1], [3, 79, 1]],
+  [[0, 79, 1], [1, 76, 1], [2, 72, 2]],
+  [[0, 72, 1], [1, 69, 1], [2, 66, 1], [3, 63, 1]],
+  [[0, 71, 4]],
+];
+
+/** Hulotte au loin : deux notes graves et voilées, la seconde qui tombe. */
+function owl(ac: AudioContext, out: Bus, t: number) {
+  flute(ac, out, midi(64), t, 0.45, 0.018, -0.5);
+  flute(ac, out, midi(62), t + 0.7, 0.9, 0.016, -0.5);
+}
+
+function citrouilles(): Track {
+  const bpm = 64;
+  const beat = 60 / bpm;
+  const BAR = beat * 4;
+  const bars = 34;
+  return {
+    id: 'citrouilles',
+    title: 'Nuit des citrouilles',
+    season: 'halloween',
+    bpm,
+    beats: 4,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars);
+      // le vent dans les branches nues, et parfois une hulotte
+      if (i % 4 === 0) air(ac, out, t0, BAR * 4, { gain: 0.012, from: 380, to: 900, q: 1.6, attack: BAR * 1.5, pan: -0.3, send: 0.6 });
+      if (i % 8 === 5) owl(ac, out, t0 + rand(0, BAR * 0.5));
+      if (outro) {
+        if (!last) {
+          roll(ac, out, [28, 40, 52, 55, 59, 64, 71], t0, 0.07, 0.24);
+          bell(ac, out, midi(83), t0 + BAR * 0.5, 0.04, 0.2, 4);
+          strings(ac, out, [55, 59, 64].map(midi), t0, BAR * 1.6, 0.026, { attack: 1.4, release: 3.5, open: 900 });
+          bass(ac, out, midi(28), t0, BAR, 0.1);
+        }
+        return;
+      }
+      const { r, c } = CITROUILLES[step];
+      // ostinato grave au piano, en croches : la basse, puis l'accord qui monte et redescend
+      const spread = [r + 12, c[0], c[1], c[2]];
+      [0, 1, 2, 3, 2, 1, 2, 1].forEach((k, s) => piano(ac, out, midi(spread[k]), t0 + s * (beat / 2), s === 0 ? 0.075 : 0.05, -0.25 + k * 0.12, 2.2));
+      bass(ac, out, midi(r), t0, BAR * 0.9, 0.1);
+      // un coup de timbale sourd au début de chaque phrase
+      if (step === 0 || step === 4) boom(ac, out, t0, 0.12, 55);
+      if (section > 0) strings(ac, out, c.map(midi), t0, BAR - 0.2, section === 2 ? 0.03 : 0.022, { attack: 1.4, release: 2, open: 900 });
+      const phrase = CITROUILLES_MELODY[step];
+      if (section === 1 || section === 3) play(phrase, t0, beat, (f, t) => bell(ac, out, f, t, 0.06, 0.2, 2.4), 12);
+      if (section === 2) play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.92, 0.045, 0.15));
+      if (section === 3) play(phrase, t0, beat, (f, t) => piano(ac, out, f, t, 0.05, -0.1, 2.4));
+    },
+  };
+}
+
+// ───────────── Saison : 9. Valse des calaveras (ré mineur, 3/4, 104 bpm) : guitare, marimba, flûte, cloches ─────────────
+
+const CALAVERAS: Chord[] = [
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 45, c: [55, 61, 64] }, // La 7
+  { r: 45, c: [55, 61, 64] }, // La 7
+  { r: 45, c: [55, 61, 64] }, // La 7
+  { r: 45, c: [55, 61, 64] }, // La 7
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 38, c: [57, 60, 66] }, // Ré 7
+  { r: 38, c: [57, 60, 66] }, // Ré 7
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 45, c: [57, 62, 65] }, // Ré m / La
+  { r: 40, c: [55, 61, 64] }, // La 7 / Mi
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 38, c: [57, 62, 65] }, // Ré m
+];
+const CALAVERAS_MELODY: Note[][] = [
+  [[0, 69], [1, 74], [2, 77]],
+  [[0, 76, 2], [2, 74]],
+  [[0, 73], [1, 76], [2, 79]],
+  [[0, 77, 2], [2, 76]],
+  [[0, 76], [1, 73], [2, 69]],
+  [[0, 67, 2], [2, 69]],
+  [[0, 65], [1, 69], [2, 74]],
+  [[0, 74, 3]],
+  [[0, 72], [1, 74], [2, 78]],
+  [[0, 81, 2], [2, 78]],
+  [[0, 79], [1, 74], [2, 70]],
+  [[0, 67, 2], [2, 70]],
+  [[0, 69], [1, 74], [2, 77]],
+  [[0, 76], [1, 73], [2, 67]],
+  [[0, 74, 3]],
+  [],
+];
+
+/** Note de marimba : les notes longues sont jouées en trémolo, comme les marimbistes du Chiapas. */
+function marimbaNote(ac: AudioContext, out: Bus, freq: number, t: number, length: number, gain: number) {
+  const hits = length > 1.2 ? Math.round(length * 6) : 1;
+  for (let k = 0; k < hits; k++) marimba(ac, out, freq, t + (k * length) / hits, gain * (k ? 0.55 : 1), 0.15);
+}
+
+function calaveras(): Track {
+  const bpm = 104;
+  const beat = 60 / bpm;
+  const BAR = beat * 3;
+  const bars = 66;
+  return {
+    id: 'calaveras',
+    title: 'Valse des calaveras',
+    season: 'halloween',
+    bpm,
+    beats: 3,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (Math.random() < 0.3) cricket(ac, out, t0 + rand(0, BAR), 0.005);
+      if (outro) {
+        if (!last) {
+          [38, 50, 57, 62, 65, 69, 74].forEach((n, k) => pluck(ac, out, midi(n), t0 + k * 0.09, 0.15, (k - 3) * 0.12, 0.45));
+          marimbaNote(ac, out, midi(74), t0 + BAR * 0.4, 2.4, 0.1);
+          bell(ac, out, midi(62), t0 + BAR * 0.6, 0.05, -0.3, 4);
+          strings(ac, out, [57, 62, 65].map(midi), t0, BAR * 2, 0.024, { attack: 1, release: 3 });
+        }
+        return;
+      }
+      const { r, c } = CALAVERAS[step];
+      // la guitare : « oum-pa-pa », basse au premier temps, accord aux deux suivants
+      pluck(ac, out, midi(r + 12), t0, 0.24, -0.2, 0.4);
+      bass(ac, out, midi(r), t0, beat * 1.2, 0.09);
+      for (const b of [1, 2]) c.forEach((n, k) => pluck(ac, out, midi(n), t0 + b * beat + k * 0.02, b === 1 ? 0.1 : 0.08, 0.1 + k * 0.12, 0.5));
+      // les cloches de l'église du village, au loin, en début de grille
+      if (step === 0) bell(ac, out, midi(50), t0, 0.04, -0.4, 4.5);
+      if (section === 1 || section === 3) strings(ac, out, c.map(midi), t0, BAR - 0.15, 0.022, { attack: 0.8, release: 1.2, open: 1300 });
+      const phrase = CALAVERAS_MELODY[step];
+      if (section !== 1) play(phrase, t0, beat, (f, t, length) => marimbaNote(ac, out, f, t, length, section === 3 ? 0.1 : 0.12));
+      if (section === 1) play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.05, 0.1));
+      if (section === 2 && phrase[0]) bell(ac, out, midi(phrase[0][1] + 12), t0, 0.025, -0.2, 1.6);
+    },
+  };
+}
+
+/** Les morceaux de la radio : les sept de toujours, plus ceux de la saison en cours. */
+export function allTracks(now: number = Date.now()): Track[] {
+  return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid(), ...(isHalloween(now) ? [citrouilles(), calaveras()] : [])];
 }
