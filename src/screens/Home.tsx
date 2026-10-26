@@ -17,6 +17,7 @@ import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
 import { accountsEnabled } from '../account/supabase';
 import { OnlinePlayers } from '../components/OnlinePlayers';
+import { HalloweenBanner, HalloweenHead } from '../components/Halloween';
 
 // Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe).
 const SHOWCASE: CardFace[] = [
@@ -225,6 +226,7 @@ function FreePackHero() {
   return (
     <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
       <Landscape className="hero__art" scene={HERO_SCENE} seed="accueil" />
+      <HalloweenHead seed="accueil" garland={false} />
       <div className="hero__pack">
         <div className="hero__boosters">
           {choices.map((pack) => {
@@ -456,6 +458,7 @@ export function HomeScreen() {
   return (
     <div className="screen screen--home">
       <FreePackHero />
+      <HalloweenBanner />
       <OnlinePlayers />
       <ExpansionBanner />
       <AccountInvite />

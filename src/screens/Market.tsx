@@ -17,6 +17,7 @@ import { accountsEnabled } from '../account/supabase';
 import type { OnlineListing } from '../account/market';
 import type { CardFace } from '../engine/types';
 import type { MarketFilters } from '../store/ui';
+import { HalloweenHead } from '../components/Halloween';
 
 function normalize(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -503,6 +504,7 @@ export function MarketScreen() {
     <div className="screen">
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.mercato} seed="marché" />
+        <HalloweenHead seed="marché" />
         <div>
           <p className="eyebrow">Bourse d’échange</p>
           <h1>Marché</h1>

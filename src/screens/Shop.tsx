@@ -12,6 +12,7 @@ import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
 import { isReleased } from '../engine/series';
 import { useNow } from '../hooks/useNow';
+import { HalloweenHead } from '../components/Halloween';
 
 function percent(value: number): string {
   if (value > 0 && value < 0.0001) return '< 0,01 %';
@@ -121,6 +122,7 @@ export function ShopScreen() {
     <div className="screen">
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.boutique} seed="boutique" />
+        <HalloweenHead seed="boutique" />
         <div>
           <p className="eyebrow">Boutique</p>
           <h1>Packs</h1>

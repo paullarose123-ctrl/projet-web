@@ -17,6 +17,7 @@ import { FamilyBadge, SerieBadge } from '../components/FamilyBadge';
 import { familyProgress, serieBadge, serieProgress } from '../engine/badges';
 import { releasedSeries } from '../engine/series';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
+import { HalloweenHead } from '../components/Halloween';
 
 // Écran Profil : le compte du joueur (création, connexion, sauvegarde), sa vitrine de cartes préférées,
 // ses badges de collection, et ses amis (demandes d'ami à accepter) : leur photo, leur vitrine et un duel contre elle.
@@ -573,6 +574,7 @@ export function ProfileScreen() {
     <div className="screen">
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.profil} seed="profil" />
+        <HalloweenHead seed="profil" />
         <div className="profile-id">
           <button type="button" className="profile-id__photo" onClick={() => setPicking(true)} aria-label="Changer ma photo de profil">
             <Avatar athleteId={avatar} pseudo={session?.pseudo} className="avatar--big" />

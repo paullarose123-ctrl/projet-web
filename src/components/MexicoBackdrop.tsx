@@ -29,7 +29,7 @@ const PAPEL = ['#e4407b', '#f4a62a', '#2fb5a8', '#8a5cd6', '#9fd356', '#fff3dd',
 type Paint = (r: Rng, w: number, id: string) => ReactNode;
 
 /** Animation décalée d'un élément (durée et retard en secondes). */
-const timing = (duration: number, delay: number, extra?: CSSProperties): CSSProperties => ({
+export const timing = (duration: number, delay: number, extra?: CSSProperties): CSSProperties => ({
   animationDuration: `${duration.toFixed(2)}s`,
   animationDelay: `${(-delay).toFixed(2)}s`,
   ...extra,
@@ -52,7 +52,7 @@ function Sky({ id, stops }: { id: string; stops: [number, string][] }) {
 }
 
 /** Lueur ronde (astre, bougie, lanterne). */
-function Glow({ id, name, color, opacity = 1 }: { id: string; name: string; color: string; opacity?: number }) {
+export function Glow({ id, name, color, opacity = 1 }: { id: string; name: string; color: string; opacity?: number }) {
   return (
     <radialGradient id={`${id}-${name}`}>
       <stop offset="0" stopColor={color} stopOpacity={0.75 * opacity} />
@@ -92,7 +92,7 @@ function Moon({ id, x, y, size }: { id: string; x: number; y: number; size: numb
 }
 
 /** Pompons de cempasúchil, rangés par couleur : [x, y, rayon]. */
-function Marigolds({ list, dark = '#9c4a0c' }: { list: [number, number, number][]; dark?: string }) {
+export function Marigolds({ list, dark = '#9c4a0c' }: { list: [number, number, number][]; dark?: string }) {
   const byColor = MARIGOLD.map(() => '');
   let hearts = '';
   list.forEach(([x, y, s], i) => {
@@ -110,7 +110,7 @@ function Marigolds({ list, dark = '#9c4a0c' }: { list: [number, number, number][
 }
 
 /** Une bougie et sa flamme qui vacille. */
-function candle(key: string | number, id: string, x: number, y: number, h: number, r: Rng): ReactNode {
+export function candle(key: string | number, id: string, x: number, y: number, h: number, r: Rng): ReactNode {
   const w = Math.max(0.9, h * 0.26);
   return (
     <g key={key}>
@@ -193,7 +193,7 @@ function Papel({ id, w, lines }: { id: string; w: number; lines: { y: number; sa
 }
 
 /** Calavera de sucre : le crâne blanc décoré de fleurs, posé sur l'autel. */
-function Calavera({ x, y, s, accent }: { x: number; y: number; s: number; accent: string }) {
+export function Calavera({ x, y, s, accent }: { x: number; y: number; s: number; accent: string }) {
   const at = (a: number, b: number): Pt => [x + a * s, y + b * s];
   const skull = `${circle(x, y - 5 * s, 4.2 * s)}${poly([at(-3, -3.6), at(3, -3.6), at(2.6, -0.6), at(1.6, 0), at(-1.6, 0), at(-2.6, -0.6)])}`;
   let petals = '';

@@ -23,6 +23,7 @@ import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
 import { Avatar } from '../components/Avatar';
 import { TIER_NAMES, divisionInfo, divisionName } from '../engine/divisions';
+import { HalloweenHead } from '../components/Halloween';
 
 // Duel de records : 5 animaux, 5 records tirés au sort. Ce sont les vraies mesures des espèces
 // (poids, taille, longévité, population restante) qui décident de chaque manche.
@@ -417,6 +418,7 @@ export function MatchScreen() {
     <div className="screen">
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.matchs} seed="arène" />
+        <HalloweenHead seed="arène" />
         <div>
           <p className="eyebrow">Duel de records</p>
           <h1>{match ? `${match.me.name} contre ${match.opp.name}` : 'Composer mon équipe'}</h1>

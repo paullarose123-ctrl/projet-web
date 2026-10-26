@@ -3,6 +3,7 @@ import { allTracks, type Track } from './tracks';
 
 // La radio du jeu : sept morceaux calmes de la même famille (src/audio/tracks.ts), joués l'un après l'autre
 // dans un ordre mélangé, sans jamais repasser deux fois le même avant d'avoir entendu tous les autres.
+// En saison (Halloween et Jour des morts), ses deux morceaux de fête s'y ajoutent, et la radio commence par l'un d'eux.
 // Entre deux morceaux, l'accord final résonne puis quelques secondes de calme, avec des oiseaux au loin.
 // Chaque morceau a son propre bus : on peut passer au suivant en fondu sans couper les notes déjà prévues.
 
@@ -47,6 +48,9 @@ function nextInQueue(): Track {
   if (!queue.length) {
     queue = [...TRACKS].sort(() => Math.random() - 0.5);
     if (queue.length > 1 && queue[0].id === lastId) queue.push(queue.shift()!);
+    // en saison, le premier morceau de la partie est un morceau de fête
+    const festive = queue.findIndex((track) => track.season);
+    if (!lastId && festive > 0) queue.unshift(...queue.splice(festive, 1));
   }
   const track = queue.shift()!;
   lastId = track.id;
