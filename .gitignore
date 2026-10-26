@@ -6,3 +6,4 @@ artifact/
 .DS_Store
 tmp/
 *.tsbuildinfo
+promo/captures/
