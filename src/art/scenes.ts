@@ -31,11 +31,11 @@ export const SCREEN_SCENES = {
     creature: 'lapin',
     palette: { sky: ['#203a5c', '#f6b26b'], sun: '#fff0cf', far: '#7d9a6a', near: '#12200f', accent: '#ff8fb1' },
   },
-  // marché : savane au couchant et girafes
+  // marché : sous la surface d'un récif, un banc de poissons dans les rayons de lumière
   mercato: {
-    kind: 'savane',
-    creature: 'girafes',
-    palette: { sky: ['#3d1a3a', '#ff8f4a'], sun: '#ffe2a2', far: '#b4573c', near: '#1b0b0f', accent: '#ffe2a2' },
+    kind: 'recif',
+    creature: 'banc',
+    palette: { sky: ['#6fe0ea', '#2470b0'], sun: '#f2feff', far: '#4aa6d6', near: '#0c3364', accent: '#ffd166' },
   },
   // arène : volcan en éruption et ptérosaures
   matchs: {

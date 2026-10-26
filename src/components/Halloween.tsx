@@ -262,8 +262,9 @@ export function HalloweenBanner() {
         <p className="eyebrow">Halloween · Jour des morts</p>
         <h2 id="hw-title">Nuit des citrouilles et fête des morts</h2>
         <p className="muted">
-          Jusqu’au 1er novembre, le jeu se pare d’orange et de cempasúchil, et la radio joue deux morceaux de saison : « Nuit des
-          citrouilles » et « Valse des calaveras ». Le 1er novembre, jour des morts au Mexique, la Série 2 · Mexique arrive.
+          Jusqu’au 1er novembre, le jeu se pare d’orange et de cempasúchil, et la radio ne joue que ses trois morceaux de saison :
+          « Nuit des citrouilles », « Valse des calaveras » et « Bal des squelettes ». Le 1er novembre, jour des morts au Mexique, la
+          Série 2 · Mexique arrive.
         </p>
       </div>
     </section>

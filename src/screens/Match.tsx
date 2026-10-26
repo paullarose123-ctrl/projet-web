@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGame } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
@@ -21,31 +22,44 @@ import { Balles } from '../components/Balles';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
-import { Avatar } from '../components/Avatar';
+import { SportIcon } from '../components/SportIcon';
 import { TIER_NAMES, divisionInfo, divisionName } from '../engine/divisions';
 import { HalloweenHead } from '../components/Halloween';
 
 // Duel de records : 5 animaux, 5 records tirés au sort. Ce sont les vraies mesures des espèces
 // (poids, taille, longévité, population restante) qui décident de chaque manche.
 
-function Picker({ onPick, onClose, exclude }: { onPick: (uid: string) => void; onClose: () => void; exclude: string[] }) {
+/**
+ * Choix de l'équipe : on touche jusqu'à 5 animaux d'affilée (chacun reçoit son numéro de passage), puis on valide.
+ * Une seule carte par espèce dans la liste ; toucher une carte déjà choisie la retire.
+ */
+function Picker({ initial, onConfirm, onClose }: { initial: string[]; onConfirm: (uids: string[]) => void; onClose: () => void }) {
   const collection = useGame((s) => s.collection);
+  const toast = useGame((s) => s.toast);
   const [query, setQuery] = useState('');
+  const [chosen, setChosen] = useState<string[]>(() => initial.filter(Boolean).slice(0, TEAM_SIZE));
   const cards = useMemo(() => {
     const q = query.trim().toLowerCase();
     const seen = new Set<string>();
     return collection
-      .filter((c) => !exclude.includes(c.uid) && canDuel(ATHLETES_BY_ID[c.athleteId]))
+      .filter((c) => canDuel(ATHLETES_BY_ID[c.athleteId]))
       .filter((c) => !q || displayName(ATHLETES_BY_ID[c.athleteId]).toLowerCase().includes(q))
       .filter((c) => {
-        // une seule carte par espèce dans la liste
+        // une seule carte par espèce dans la liste (celle de l'équipe si elle y est déjà)
         if (seen.has(c.athleteId)) return false;
+        const twin = chosen.find((uid) => uid !== c.uid && collection.find((o) => o.uid === uid)?.athleteId === c.athleteId);
+        if (twin) return false;
         seen.add(c.athleteId);
         return true;
       })
       .sort((a, b) => ATHLETES_BY_ID[a.athleteId].last.localeCompare(ATHLETES_BY_ID[b.athleteId].last, 'fr'))
-      .slice(0, 120);
-  }, [collection, exclude, query]);
+      .slice(0, 160);
+  }, [collection, query, chosen]);
+  const toggle = (uid: string) => {
+    if (chosen.includes(uid)) setChosen(chosen.filter((x) => x !== uid));
+    else if (chosen.length < TEAM_SIZE) setChosen([...chosen, uid]);
+    else toast('info', `Ton équipe a déjà ${TEAM_SIZE} animaux : retires-en un pour en choisir un autre`);
+  };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -53,13 +67,15 @@ function Picker({ onPick, onClose, exclude }: { onPick: (uid: string) => void; o
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  // au premier plan de la page : l'écran du duel est animé en 3D, ce qui placerait sinon la fenêtre sous la navigation
+  return createPortal(
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="picker-title" onClick={onClose}>
       <div className="modal__panel picker" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="modal__close" onClick={onClose} aria-label="Fermer">
           ×
         </button>
-        <h2 id="picker-title">Choisir un animal</h2>
+        <h2 id="picker-title">Choisir mon équipe</h2>
+        <p className="muted small">Touche jusqu’à {TEAM_SIZE} animaux : leur numéro donne l’ordre de l’équipe. Touche-les de nouveau pour les retirer.</p>
         <label className="field">
           <span className="visually-hidden">Rechercher</span>
           <input type="search" placeholder="Rechercher dans ta réserve" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
@@ -68,13 +84,35 @@ function Picker({ onPick, onClose, exclude }: { onPick: (uid: string) => void; o
           <p className="muted">Aucune carte disponible. Ouvre des boosters pour agrandir ta réserve.</p>
         ) : (
           <div className="card-grid">
-            {cards.map((card) => (
-              <Card key={card.uid} card={card} size="sm" hideFacts tilt onClick={() => onPick(card.uid)} />
-            ))}
+            {cards.map((card) => {
+              const rank = chosen.indexOf(card.uid);
+              return (
+                <div key={card.uid} className={`picker__pick${rank >= 0 ? ' is-chosen' : ''}`}>
+                  <Card card={card} size="sm" hideFacts tilt onClick={() => toggle(card.uid)} />
+                  {rank >= 0 && (
+                    <span className="picker__rank" aria-label={`Animal n° ${rank + 1} de l’équipe`}>
+                      {rank + 1}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+        <div className="picker__bar">
+          <span className="picker__count">
+            <b>{chosen.length}</b>/{TEAM_SIZE} animaux choisis
+          </span>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setChosen([])} disabled={!chosen.length}>
+            Tout retirer
+          </button>
+          <button type="button" className="btn btn--primary" onClick={() => onConfirm(chosen)}>
+            Valider l’équipe
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -82,13 +120,14 @@ function TeamBuilder() {
   const collection = useGame((s) => s.collection);
   const team = useGame((s) => s.team);
   const setTeamSlot = useGame((s) => s.setTeamSlot);
+  const setTeam = useGame((s) => s.setTeam);
   const autoTeam = useGame((s) => s.autoTeam);
   const clearTeam = useGame((s) => s.clearTeam);
   const startMatch = useGame((s) => s.startMatch);
   const division = useGame((s) => s.division);
   const points = useGame((s) => s.divisionPoints);
   const openDetail = useUi((s) => s.openDetail);
-  const [picking, setPicking] = useState<number | null>(null);
+  const [picking, setPicking] = useState(false);
 
   const slots: Array<OwnedCard | null> = Array.from({ length: TEAM_SIZE }, (_, i) => {
     const card = collection.find((c) => c.uid === team[i]);
@@ -100,7 +139,12 @@ function TeamBuilder() {
     <>
       <section className={`panel division division--${divisionInfo(division).tier}`}>
         <div className="division__emblem" aria-hidden="true">
-          <Avatar athleteId={divisionInfo(division).athleteId} className="division__photo" />
+          {/* l'emblème de la famille de l'animal de la division, comme le médaillon des cartes */}
+          <span className="division__photo division__logo">
+            <span>
+              <SportIcon sport={ATHLETES_BY_ID[divisionInfo(division).athleteId].sport} />
+            </span>
+          </span>
           <span className="division__metal">{TIER_NAMES[divisionInfo(division).tier]}</span>
         </div>
         <div>
@@ -136,6 +180,9 @@ function TeamBuilder() {
             <button type="button" className="btn btn--ghost btn--sm" onClick={autoTeam} disabled={!collection.length} title="Cinq animaux de ta réserve, tirés au hasard">
               Équipe au hasard
             </button>
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => setPicking(true)} disabled={!collection.length}>
+              Choisir mes {TEAM_SIZE} animaux
+            </button>
           </div>
         </div>
         <p className="muted small">
@@ -149,7 +196,7 @@ function TeamBuilder() {
                 <>
                   <Card card={card} size="sm" hideFacts tilt onClick={() => openDetail({ card })} />
                   <div className="team-slot__actions">
-                    <button type="button" className="btn btn--ghost btn--xs" onClick={() => setPicking(i)}>
+                    <button type="button" className="btn btn--ghost btn--xs" onClick={() => setPicking(true)}>
                       Changer
                     </button>
                     <button type="button" className="btn btn--ghost btn--xs" onClick={() => setTeamSlot(i, null)} aria-label={`Retirer ${ATHLETES_BY_ID[card.athleteId].last}`}>
@@ -158,7 +205,7 @@ function TeamBuilder() {
                   </div>
                 </>
               ) : (
-                <button type="button" className="team-slot__empty" onClick={() => setPicking(i)}>
+                <button type="button" className="team-slot__empty" onClick={() => setPicking(true)}>
                   <span>+</span>
                   Choisir
                 </button>
@@ -198,13 +245,13 @@ function TeamBuilder() {
         </ul>
       </details>
 
-      {picking !== null && (
+      {picking && (
         <Picker
-          exclude={team.filter((uid, i) => i !== picking && uid)}
-          onClose={() => setPicking(null)}
-          onPick={(uid) => {
-            setTeamSlot(picking, uid);
-            setPicking(null);
+          initial={slots.map((card) => card?.uid ?? '')}
+          onClose={() => setPicking(false)}
+          onConfirm={(uids) => {
+            setTeam(uids);
+            setPicking(false);
           }}
         />
       )}
