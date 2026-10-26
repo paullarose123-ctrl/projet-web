@@ -1,34 +1,18 @@
-import { memo, useId, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { memo, useId, useMemo, type ReactNode } from 'react';
 import { circle, ellipse, f, mulberry32, poly, type Pt, type Rng } from '../art/kit';
 import { isHalloween } from '../engine/season';
 import { useNow } from '../hooks/useNow';
 import { Calavera, Glow, Marigolds, candle, timing } from './MexicoBackdrop';
 
 // Décor de la saison d'Halloween et du Jour des morts (du 20 octobre au 1er novembre, voir engine/season.ts) :
-// des chauves-souris qui traversent le ciel du jeu, des citrouilles qui luisent, des fleurs de cempasúchil,
-// des bougies et des calaveras, une toile d'araignée dans le coin de chaque écran. Rien ne gêne la lecture :
-// tout reste dans les marges, le ciel des en-têtes et le fond. Hors saison, ces composants n'affichent rien.
+// une guirlande de cempasúchil sous la barre du haut, des citrouilles qui luisent, des bougies et des calaveras,
+// une toile d'araignée dans le coin de chaque en-tête. Rien ne gêne la lecture : tout reste dans les marges, le ciel
+// des en-têtes et le fond. Hors saison, ces composants n'affichent rien.
 // Les flammes et les lueurs reprennent les animations des décors du Mexique (classe mx-scene, voir motion.css).
 
 /** La saison est-elle ouverte ? (relu chaque minute) */
 export function useHalloween(): boolean {
   return isHalloween(useNow(60_000));
-}
-
-/** Chauve-souris ailes ouvertes, centrée sur son corps (envergure 24). */
-const BAT =
-  'M0 -1.6C0.8 -2.8 2 -2.8 2.6 -1.5C4.8 -4.4 8.6 -5 12 -3.2C10.3 -2.6 9.6 -1.2 9.8 0.4C8.4 -0.6 7 -0.4 6.2 0.9C5.4 -0.1 4 -0.1 3 1.1C2.1 0.5 1 0.6 0 1.9C-1 0.6 -2.1 0.5 -3 1.1C-4 -0.1 -5.4 -0.1 -6.2 0.9C-7 -0.4 -8.4 -0.6 -9.8 0.4C-9.6 -1.2 -10.3 -2.6 -12 -3.2C-8.6 -5 -4.8 -4.4 -2.6 -1.5C-2 -2.8 -0.8 -2.8 0 -1.6Z' +
-  'M-1.2 -2.2L-1.6 -3.9L-0.4 -2.5Z M1.2 -2.2L1.6 -3.9L0.4 -2.5Z';
-
-/** Une chauve-souris qui bat des ailes (à placer dans un SVG). */
-function bat(key: number, x: number, y: number, s: number, r: Rng, color = '#160c22'): ReactNode {
-  return (
-    <g key={key} transform={`translate(${f(x)} ${f(y)}) scale(${s.toFixed(2)})`}>
-      <g className="mx-fly" style={timing(5 + r() * 4, r() * 6, { ['--drift' as string]: `${f(3 + r() * 5)}px` })}>
-        <path className="hw-flap" d={BAT} fill={color} style={timing(0.28 + r() * 0.14, r())} />
-      </g>
-    </g>
-  );
 }
 
 /** Citrouille sculptée posée en (x, y), le visage éclairé de l'intérieur. */
@@ -112,30 +96,7 @@ const GARLAND_TILE = (() => {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 })();
 
-// ───────────── le ciel du jeu : chauves-souris qui le traversent, citrouilles au pied de la page ─────────────
-
-/** Des chauves-souris qui traversent le calque de gauche à droite, à des hauteurs et des vitesses variées. */
-function BatFlight({ count, seed, top = 46 }: { count: number; seed: number; top?: number }) {
-  const flight = useMemo(() => {
-    const r = mulberry32(seed);
-    return Array.from({ length: count }, () => ({
-      top: `${(4 + r() * top).toFixed(1)}%`,
-      ['--dur' as string]: `${(26 + r() * 22).toFixed(1)}s`,
-      ['--delay' as string]: `${(-r() * 40).toFixed(1)}s`,
-      ['--rise' as string]: `${Math.round(-30 - r() * 60)}px`,
-      ['--size' as string]: `${Math.round(22 + r() * 22)}px`,
-    })) as CSSProperties[];
-  }, [count, seed, top]);
-  return (
-    <>
-      {flight.map((style, i) => (
-        <svg key={i} className="hw-bat" style={style} viewBox="-13 -6 26 9">
-          <path className="hw-flap" d={BAT} />
-        </svg>
-      ))}
-    </>
-  );
-}
+// ───────────── le pied de la page : citrouilles, cempasúchil et bougies ─────────────
 
 /** Citrouilles, cempasúchil et bougies posés dans les deux coins du bas de l'écran. */
 function Corners({ className }: { className: string }) {
@@ -174,23 +135,20 @@ export const HalloweenNight = memo(function HalloweenNight() {
   if (!halloween) return null;
   return (
     <div className="hw-night" aria-hidden="true">
-      <BatFlight count={7} seed={31} />
       <Corners className="hw-corner--back" />
     </div>
   );
 });
 
 /**
- * Calque fixe devant le contenu, sous les barres et les fenêtres : quelques chauves-souris cerclées de lueur orange
- * qui traversent l'écran, et sur téléphone, où le contenu couvre tout le fond, les citrouilles et les bougies des
- * coins posées sur la barre du bas. Rien n'y capte les clics.
+ * Calque fixe devant le contenu, sous les barres et les fenêtres : sur téléphone, où le contenu couvre tout le fond,
+ * les citrouilles et les bougies des coins s'y posent sur la barre du bas. Rien n'y capte les clics.
  */
 export const HalloweenFlyover = memo(function HalloweenFlyover() {
   const halloween = useHalloween();
   if (!halloween) return null;
   return (
     <div className="hw-flyover" aria-hidden="true">
-      <BatFlight count={3} seed={47} top={70} />
       <Corners className="hw-corner--front" />
     </div>
   );
@@ -220,15 +178,14 @@ export function PumpkinMark({ className = '' }: { className?: string }) {
   );
 }
 
-// ───────────── le ciel des en-têtes : guirlande, toile d'araignée, chauves-souris ─────────────
+// ───────────── le ciel des en-têtes : pendeloques, toile d'araignée ─────────────
 
 /**
- * Décor posé dans le ciel d'un en-tête illustré : une guirlande de cempasúchil qui festonne sur toute la largeur,
- * une calavera et une citrouille en pendeloques à gauche, une toile, une araignée et trois chauves-souris à droite.
- * Tout reste dans le haut de l'en-tête, au-dessus du titre et des boutons. Sur l'accueil, la guirlande sans les
- * pendeloques (`pendants` faux), qui passeraient sur le booster.
+ * Décor posé dans le ciel d'un en-tête illustré : une calavera et une citrouille en pendeloques à gauche, une toile et
+ * une araignée à droite. Tout reste dans le haut de l'en-tête, au-dessus du titre et des boutons. Sur l'accueil, la
+ * toile seule (`pendants` faux) : les pendeloques passeraient sur le booster.
  */
-export function HalloweenHead({ seed = 'en-tête', garland = true, pendants = garland }: { seed?: string; garland?: boolean; pendants?: boolean }) {
+export function HalloweenHead({ seed = 'en-tête', pendants = true }: { seed?: string; pendants?: boolean }) {
   const halloween = useHalloween();
   const id = `hh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const art = useMemo(() => {
@@ -245,9 +202,6 @@ export function HalloweenHead({ seed = 'en-tête', garland = true, pendants = ga
         <>
           <path d={cobweb(100, 0, 30, -1)} fill="none" stroke="rgba(255, 250, 240, 0.42)" strokeWidth={0.35} />
           {spider(84, 4, 20, 1.1)}
-          {bat(1, 42, 14, 0.55, r)}
-          {bat(2, 62, 28, 0.4, r)}
-          {bat(3, 24, 32, 0.32, r)}
         </>
       ),
     };
@@ -255,7 +209,6 @@ export function HalloweenHead({ seed = 'en-tête', garland = true, pendants = ga
   if (!halloween) return null;
   return (
     <div className="hw-head" aria-hidden="true">
-      {garland && <div className="hw-head__garland" style={{ backgroundImage: GARLAND_TILE }} />}
       {pendants && (
         <svg className="mx-scene hw-head__pendants" viewBox="0 0 80 40">
           <defs>
@@ -286,8 +239,6 @@ export function HalloweenBanner() {
         <Calavera x={62} y={50} s={1.3} accent="#2fb5a8" />
         {candle(2, id, 46, 53, 7, r)}
         {candle(3, id, 78, 53, 5, r)}
-        {bat(4, 74, 16, 0.5, r, '#2a1a3e')}
-        {bat(5, 18, 22, 0.38, r, '#2a1a3e')}
       </>
     );
   }, [id]);
@@ -317,18 +268,5 @@ export function HalloweenBanner() {
         </p>
       </div>
     </section>
-  );
-}
-
-// ───────────── derrière l'ouverture d'un booster ─────────────
-
-/** Des chauves-souris qui passent devant le paysage d'une ouverture de booster. */
-export function HalloweenOpening() {
-  const halloween = useHalloween();
-  if (!halloween) return null;
-  return (
-    <div className="hw-opening" aria-hidden="true">
-      <BatFlight count={5} seed={23} top={36} />
-    </div>
   );
 }
