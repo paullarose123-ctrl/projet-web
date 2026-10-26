@@ -1060,9 +1060,12 @@ export function useSceneWidth(ref: RefObject<SVGSVGElement | null>, maxWidth = 9
     const el = ref.current;
     if (!el) return undefined;
     const update = () => {
-      const box = el.getBoundingClientRect();
-      if (!box.width || !box.height) return;
-      const w = Math.round((H * box.width) / box.height / 20) * 20;
+      // la taille de mise en page, pas celle à l'écran : pendant l'arrivée en 3D d'un écran, l'élément paraît écrasé
+      // par la perspective, et le paysage serait calculé trop étroit puis recadré (getBoundingClientRect)
+      const width = el.clientWidth || el.getBoundingClientRect().width;
+      const height = el.clientHeight || el.getBoundingClientRect().height;
+      if (!width || !height) return;
+      const w = Math.round((H * width) / height / 20) * 20;
       setWidth(Math.min(maxWidth, Math.max(SPAN, w)));
     };
     update();

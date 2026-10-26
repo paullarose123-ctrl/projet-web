@@ -1,5 +1,5 @@
 // Les divisions de la Ligue des naturalistes : de la 10 (débutants) à la 1 (élite), chacune porte le nom d'un animal
-// et d'un métal, du « Hérisson de bronze » au « Lion légendaire ». L'animal sert d'emblème (sa photo dans un médaillon).
+// et d'un métal, du « Hérisson de bronze » au « Lion légendaire ». L'emblème de la famille de l'animal orne le médaillon.
 
 export type DivisionTier = 'bronze' | 'argent' | 'or' | 'platine' | 'diamant' | 'legende';
 

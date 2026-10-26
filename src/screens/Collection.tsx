@@ -271,10 +271,10 @@ function Album() {
 
   const athletes = useMemo(
     () =>
-      // dans l'ordre des numéros de collection
+      // de la plus rare (Icônes, Légendaires) à la plus commune, puis dans l'ordre des numéros de collection
       cards
         .filter((a) => (sport === 'habitats' ? !!a.habitat : a.sport === sport && !a.habitat))
-        .sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b))),
+        .sort((a, b) => rarityOf(b).order - rarityOf(a).order || collectionNumber(a).localeCompare(collectionNumber(b))),
     [sport, cards],
   );
   const owned = athletes.filter((a) => discovered[a.id]).length;

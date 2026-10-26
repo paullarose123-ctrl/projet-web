@@ -3,7 +3,7 @@ import { isHalloween } from '../engine/season';
 
 // Les morceaux de la radio du jeu : sept pièces calmes de la même famille, façon documentaire nature,
 // chacune avec son paysage (une clairière au matin, la pluie sur la canopée, la savane la nuit…),
-// et deux pièces de saison pour Halloween et le Jour des morts, qui ne passent qu'à cette période.
+// et trois pièces de saison pour Halloween et le Jour des morts : pendant la saison, la radio ne joue qu'elles.
 // Tout est composé en direct avec Web Audio : aucun fichier, aucun droit d'auteur.
 // Chaque morceau joue une grille de 8 mesures (16 pour la valse) en plusieurs passages qui changent
 // d'instruments (introduction, thème, variation, retour du thème), puis un accord final qui résonne.
@@ -662,7 +662,89 @@ function calaveras(): Track {
   };
 }
 
-/** Les morceaux de la radio : les sept de toujours, plus ceux de la saison en cours. */
+// ───────────── Saison : 10. Bal des squelettes (sol mineur, 6/8, 168 croches/min) : marimba, pizzicati, célesta ─────────────
+
+const SQUELETTES: Chord[] = [
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 48, c: [55, 60, 63] }, // Do m
+  { r: 50, c: [54, 57, 60] }, // Ré 7
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 39, c: [55, 58, 63] }, // Mi b
+  { r: 48, c: [55, 60, 63] }, // Do m
+  { r: 50, c: [54, 57, 60] }, // Ré 7
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 41, c: [57, 60, 65] }, // Fa
+  { r: 46, c: [58, 62, 65] }, // Si b
+  { r: 39, c: [55, 58, 63] }, // Mi b
+  { r: 48, c: [55, 60, 63] }, // Do m
+  { r: 50, c: [54, 57, 60] }, // Ré 7
+  { r: 43, c: [55, 58, 62] }, // Sol m
+  { r: 43, c: [55, 58, 62] }, // Sol m
+];
+// en croches : position dans la mesure (0 à 5), note, durée
+const SQUELETTES_MELODY: Note[][] = [
+  [[0, 74, 2], [2, 70, 1], [3, 67, 3]],
+  [[0, 69, 1], [1, 70, 1], [2, 72, 1], [3, 74, 3]],
+  [[0, 75, 2], [2, 74, 1], [3, 72, 3]],
+  [[0, 66, 3], [3, 69, 3]],
+  [[0, 74, 2], [2, 70, 1], [3, 67, 3]],
+  [[0, 70, 1], [1, 72, 1], [2, 74, 1], [3, 75, 3]],
+  [[0, 72, 2], [2, 75, 1], [3, 79, 2], [5, 78, 1]],
+  [[0, 78, 3], [3, 74, 3]],
+  [[0, 79, 2], [2, 74, 1], [3, 70, 3]],
+  [[0, 77, 2], [2, 72, 1], [3, 69, 3]],
+  [[0, 74, 1], [1, 77, 1], [2, 82, 1], [3, 81, 3]],
+  [[0, 79, 3], [3, 75, 3]],
+  [[0, 72, 1], [1, 75, 1], [2, 79, 1], [3, 84, 3]],
+  [[0, 78, 2], [2, 74, 1], [3, 72, 1], [4, 69, 1], [5, 66, 1]],
+  [[0, 67, 6]],
+  [],
+];
+
+function squelettes(): Track {
+  const bpm = 168;
+  const eighth = 60 / bpm;
+  const BAR = eighth * 6;
+  const bars = 50;
+  return {
+    id: 'squelettes',
+    title: 'Bal des squelettes',
+    season: 'halloween',
+    bpm,
+    beats: 6,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (i % 8 === 6) owl(ac, out, t0 + rand(0, BAR * 0.5));
+      if (outro) {
+        if (!last) {
+          [31, 43, 55, 58, 62, 67].forEach((n, k) => pluck(ac, out, midi(n), t0 + k * 0.08, 0.14, (k - 3) * 0.12, 0.35));
+          marimba(ac, out, midi(79), t0 + BAR * 0.5, 0.1, 0.2);
+          bell(ac, out, midi(67), t0 + BAR * 0.7, 0.045, -0.2, 4);
+          strings(ac, out, [55, 58, 62].map(midi), t0, BAR * 2, 0.022, { attack: 1, release: 3, open: 900 });
+        }
+        return;
+      }
+      const { r, c } = SQUELETTES[step];
+      // pizzicati : la basse sur les temps forts (1 et 4), l'accord en réponse (3 et 6)
+      for (const b of [0, 3]) pluck(ac, out, midi(r), t0 + b * eighth, 0.2, -0.25, 0.3);
+      bass(ac, out, midi(r - 12), t0, BAR * 0.45, 0.07);
+      for (const b of [2, 5]) c.forEach((n, k) => pluck(ac, out, midi(n), t0 + b * eighth + k * 0.015, 0.075, 0.1 + k * 0.12, 0.35));
+      // les os qui s'entrechoquent : un tic de bois sur chaque temps
+      for (const b of [0, 3]) tick(ac, out, t0 + b * eighth, b ? 0.03 : 0.045, b ? 2400 : 1900);
+      if (step === 0) boom(ac, out, t0, 0.1, 60);
+      if (section === 1) strings(ac, out, c.map(midi), t0, BAR - 0.1, 0.02, { attack: 0.6, release: 1, open: 1100 });
+      const phrase = SQUELETTES_MELODY[step];
+      if (section === 0 || section === 2) play(phrase, t0, eighth, (f, t) => marimba(ac, out, f, t, 0.12, 0.15));
+      if (section === 1) play(phrase, t0, eighth, (f, t) => bell(ac, out, f, t, 0.055, 0.2, 1.8), 12);
+      if (section === 2 && phrase[0]) bell(ac, out, midi(phrase[0][1] + 12), t0, 0.022, -0.2, 1.4);
+    },
+  };
+}
+
+/** Les morceaux de la radio : les sept de toujours ou, pendant la saison d'Halloween et du Jour des morts, ses trois morceaux. */
 export function allTracks(now: number = Date.now()): Track[] {
-  return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid(), ...(isHalloween(now) ? [citrouilles(), calaveras()] : [])];
+  if (isHalloween(now)) return [citrouilles(), calaveras(), squelettes()];
+  return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
 }

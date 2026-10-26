@@ -190,6 +190,8 @@ export interface GameState {
   placeBid: (listingId: string, amount: number) => boolean;
   toggleWatch: (listingId: string) => void;
   setTeamSlot: (slot: number, uid: string | null) => void;
+  /** compose toute l'équipe d'un coup (jusqu'à 5 cartes, dans l'ordre) */
+  setTeam: (uids: string[]) => void;
   autoTeam: () => void;
   /** retire les cinq animaux de l'équipe d'un coup */
   clearTeam: () => void;
@@ -629,6 +631,8 @@ export const useGame = create<GameState>()(
             team[slot] = uid ?? '';
             return { team };
           }),
+
+        setTeam: (uids) => set({ team: Array.from({ length: TEAM_SIZE }, (_, i) => uids[i] ?? '') }),
 
         autoTeam: () => set((s) => ({ team: autoTeamFrom(s.collection, Math.random, s.team) })),
 
