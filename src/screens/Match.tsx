@@ -5,16 +5,20 @@ import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { displayName } from '../engine/cards';
 import {
+  MAX_QUESTIONS,
   RECORDS,
+  RECORDS_BY_THEME,
   RECORD_ORDER,
   ROUNDS,
   TEAM_SIZE,
+  THEMES,
   canDuel,
   duelResult,
   formatRecordValue,
   rewardFor,
   type DuelRound,
   type DuelState,
+  type Theme,
 } from '../engine/duel';
 import type { OwnedCard } from '../engine/types';
 import { Card } from '../components/Card';
@@ -258,15 +262,16 @@ function TeamBuilder() {
           <h2>Règles du duel de records</h2>
         </summary>
         <p>
-          Un duel se joue en {ROUNDS} manches. Chaque manche est une question tirée au sort, annoncée dès le début : un record (le plus lourd, le plus petit…)
-          ou une question oui/non (« Vient d’Afrique ? », « Est un oiseau ? »). Tu choisis quel animal envoyer, sans voir ses mesures : c’est un jeu de culture
-          générale. Chaque animal ne joue qu’une fois. Ce sont les vraies mesures de l’espèce qui comptent ; un animal dont la mesure n’est pas connue perd la
-          manche, et pour une question, oui bat non.
+          Un duel se joue en {ROUNDS} manches. Chaque manche est une question tirée au sort, annoncée dès le début : un record (le plus lourd, le plus menacé…)
+          ou une question oui/non (« Pond des œufs ? », « Sait voler ? », « Plus lourd qu’un humain ? »). Les {RECORD_ORDER.length} questions sont rangées en{' '}
+          {Object.keys(THEMES).length} thèmes ; un duel en pioche cinq différents, avec au plus {MAX_QUESTIONS} questions oui/non. Tu choisis quel animal
+          envoyer, sans voir ses mesures : c’est un jeu de culture générale. Chaque animal ne joue qu’une fois. Ce sont les vraies données de l’espèce qui
+          comptent (celles de sa fiche « En savoir plus ») ; un animal dont la mesure n’est pas connue perd la manche, et pour une question, oui bat non.
         </p>
         <ul className="rules__events">
-          {RECORD_ORDER.map((id) => (
-            <li key={id}>
-              <b>{RECORDS[id].name}</b> : {RECORDS[id].desc}
+          {(Object.keys(THEMES) as Theme[]).map((theme) => (
+            <li key={theme}>
+              <b>{THEMES[theme]}</b> : {RECORDS_BY_THEME[theme].map((id) => RECORDS[id].name).join(' · ')}
             </li>
           ))}
         </ul>
@@ -302,11 +307,16 @@ function RoundResolution({ match, log, onNext }: { match: DuelState; log: DuelRo
   const side = (who: 'me' | 'opp') => {
     const card = who === 'me' ? me : opp;
     const value = who === 'me' ? log.myValue : log.oppValue;
+    // « Oui · 220 kg » : la réponse en grand, la vraie mesure dessous
+    const [answer, detail] = formatRecordValue(card, log.record, value).split(' · ');
     return (
       <div className={`clash__side clash__side--${who}${log.winner === who ? ' is-winner' : ''}`}>
         <p className="clash__team">{who === 'me' ? match.me.name : match.opp.name}</p>
         <Card card={card} size="md" hideFacts />
-        <p className="clash__power clash__power--record">{formatRecordValue(card, log.record, value)}</p>
+        <p className="clash__power clash__power--record">
+          {answer}
+          {detail && <small className="clash__detail">{detail}</small>}
+        </p>
       </div>
     );
   };

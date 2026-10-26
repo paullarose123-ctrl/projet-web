@@ -3,7 +3,7 @@ import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
 import { baseValueOf, canBePrime, canBeReverse, currentFace, rarityOf } from '../cards';
 import { FREE_ODDS, FREE_PACK, NO_DUPE_WINDOW, SHOP_PACKS, openPack, primeOdds, sportPack } from '../packs';
 import { advanceMarket, createAiListing, createMarket, createMyListing, marketPrice, netAfterTax, TARGET_LISTINGS, type MarketState } from '../market';
-import { MAX_QUESTIONS, RECORDS, ROUNDS, aiSkill, autoTeamFrom, classeOf, compare, createDuel, drawRecords, duelResult, formatRecordValue, playDuelRound, recordValue, type DuelCard } from '../duel';
+import { MAX_QUESTIONS, RECORDS, RECORDS_BY_THEME, RECORD_ORDER, ROUNDS, THEMES, aiSkill, autoTeamFrom, classeOf, compare, createDuel, drawRecords, duelResult, formatRecordValue, playDuelRound, recordValue, type DuelCard, type Theme } from '../duel';
 import { mulberry32 } from '../random';
 import { completedFamilies, familyProgress, newBadges } from '../badges';
 import { SPORTS } from '../../data/sports';
@@ -293,13 +293,53 @@ describe('duel de records', () => {
     expect(formatRecordValue({ athleteId: 'thylacine', variant: 'base' }, 'rare')).toBe('Éteint');
   });
 
-  it('varie les questions : 5 différentes, dont au plus deux questions oui/non', () => {
+  it('varie les questions : 5 thèmes différents, dont au plus trois questions oui/non, et toutes finissent par sortir', () => {
     const rng = mulberry32(12);
-    for (let i = 0; i < 200; i++) {
+    const seen = new Set<string>();
+    for (let i = 0; i < 2000; i++) {
       const records = drawRecords(rng);
-      expect(new Set(records).size).toBe(ROUNDS);
+      expect(records).toHaveLength(ROUNDS);
+      expect(new Set(records.map((id) => RECORDS[id].theme)).size).toBe(ROUNDS);
       expect(records.filter((id) => RECORDS[id].question).length).toBeLessThanOrEqual(MAX_QUESTIONS);
+      records.forEach((id) => seen.add(id));
     }
+    expect(seen.size).toBe(RECORD_ORDER.length);
+    expect(RECORD_ORDER.length).toBeGreaterThanOrEqual(35);
+    for (const theme of Object.keys(THEMES) as Theme[]) expect(RECORDS_BY_THEME[theme].length).toBeGreaterThan(0);
+  });
+
+  it('répond juste aux nouvelles questions : régime, rythme, œufs, vol, menaces, comparaisons', () => {
+    const face = (id: string) => ({ athleteId: id, variant: 'base' as const });
+    const v = (id: string, record: keyof typeof RECORDS) => recordValue(face(id), record);
+    expect(v('ornithorynque', 'oeufs')).toBe(1);
+    expect(v('poule', 'oeufs')).toBe(1);
+    expect(v('lion', 'oeufs')).toBe(0);
+    expect(v('requin-blanc', 'oeufs')).toBe(0);
+    expect(v('requin-baleine', 'oeufs')).toBe(0);
+    expect(v('poule', 'vole')).toBe(1);
+    expect(v('autruche', 'vole')).toBe(0);
+    expect(v('manchot-empereur', 'vole')).toBe(0);
+    expect(v('pipistrelle', 'vole')).toBe(1);
+    expect(v('polatouche', 'vole')).toBe(0);
+    expect(v('exocet', 'vole')).toBe(0);
+    expect(v('abeille', 'insecte')).toBe(1);
+    expect(v('mygale', 'insecte')).toBe(0);
+    expect(v('axolotl', 'amphibien')).toBe(1);
+    expect(v('lion', 'carnivore')).toBe(1);
+    expect(v('zebre', 'carnivore')).toBe(0);
+    expect(v('zebre', 'herbivore')).toBe(1);
+    expect(v('effraie', 'nocturne')).toBe(1);
+    expect(v('tigre', 'plus-lourd-qu-un-humain')).toBe(1);
+    expect(v('chat', 'plus-lourd-qu-un-humain')).toBe(0);
+    expect(v('souris', 'moins-d-un-kilo')).toBe(1);
+    expect(v('tigre', 'menacee')).toBe(1);
+    // le tigre (en danger) est plus menacé que le lion (vulnérable)
+    expect(compare('menace', v('tigre', 'menace'), v('lion', 'menace'))).toBe('me');
+    expect(formatRecordValue(face('tigre'), 'menace')).toBe('En danger');
+    expect(formatRecordValue(face('tigre'), 'plus-lourd-qu-un-humain')).toBe('Oui · 220 kg');
+    expect(formatRecordValue(face('lion'), 'carnivore')).toBe('Oui · Carnivore');
+    expect(v('loup', 'plusieurs-continents')).toBe(1);
+    expect(v('kangourou', 'plusieurs-continents')).toBe(0);
   });
 
   it('répond juste aux questions de continent et de classe', () => {
