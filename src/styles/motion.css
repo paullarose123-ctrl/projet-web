@@ -1699,6 +1699,14 @@ h3 {
   text-align: left;
 }
 
+.final__delta.is-up {
+  color: var(--good);
+}
+
+.final__delta.is-down {
+  color: var(--bad);
+}
+
 .final__promotion h2 {
   margin: 0;
 }

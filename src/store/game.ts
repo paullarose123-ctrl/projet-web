@@ -36,6 +36,12 @@ export const START_BALLES = 5_000;
 export const UNLIMITED_BALLES = 99_999_999_999;
 export const DIVISION_POINTS_TO_PROMOTE = 7;
 
+/** Points de ligue d'un duel : victoire +3, nul +1, défaite −2. Un duel entre amis ne compte pas pour la ligue. */
+export function leaguePoints(result: 'win' | 'draw' | 'loss', friend?: string): number {
+  if (friend) return 0;
+  return result === 'win' ? 3 : result === 'draw' ? 1 : -2;
+}
+
 /** Graines rendues pour chaque carte d'une espèce retirée du jeu (sauvegardes < v4). */
 const REMOVED_CARD_REFUND = 2_000;
 
@@ -671,8 +677,8 @@ export const useGame = create<GameState>()(
           const result = duelResult(match);
           const reward = rewardFor(result, match.division);
           let division = state.division;
-          // un duel entre amis rapporte des graines mais ne compte pas pour la ligue
-          let points = state.divisionPoints + (match.friend ? 0 : result === 'win' ? 3 : result === 'draw' ? 1 : 0);
+          // un duel entre amis rapporte des graines mais ne compte pas pour la ligue ; les points ne descendent pas sous zéro
+          let points = Math.max(0, state.divisionPoints + leaguePoints(result, match.friend));
           let promoted = false;
           if (points >= DIVISION_POINTS_TO_PROMOTE && division > 1) {
             division -= 1;

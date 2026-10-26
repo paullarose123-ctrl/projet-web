@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DIVISION_POINTS_TO_PROMOTE, useGame } from '../store/game';
+import { DIVISION_POINTS_TO_PROMOTE, leaguePoints, useGame } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { displayName } from '../engine/cards';
@@ -180,7 +180,7 @@ function TeamBuilder() {
               <span className="meter">
                 <span className="meter__fill" style={{ width: `${(points / DIVISION_POINTS_TO_PROMOTE) * 100}%` }} />
               </span>
-              <span className="muted small">Victoire +3, nul +1</span>
+              <span className="muted small">Victoire +3, nul +1, défaite −2</span>
             </>
           ) : (
             <span>Tu es au sommet de la ligue : le blason légendaire est à toi.</span>
@@ -348,9 +348,10 @@ function DuelView({ match }: { match: DuelState }) {
 
   if (match.finished && !revealing) {
     const result = duelResult(match);
-    // les points que ce duel rapporte à la ligue, et la promotion qu'ils déclenchent peut-être
-    const gained = match.friend ? 0 : result === 'win' ? 3 : result === 'draw' ? 1 : 0;
-    const promotion = !match.friend && division > 1 && divisionPoints + gained >= DIVISION_POINTS_TO_PROMOTE;
+    // les points que ce duel rapporte (ou fait perdre) à la ligue, et la promotion qu'ils déclenchent peut-être
+    const after = Math.max(0, divisionPoints + leaguePoints(result, match.friend));
+    const delta = after - divisionPoints;
+    const promotion = !match.friend && division > 1 && after >= DIVISION_POINTS_TO_PROMOTE;
     return (
       <section className={`panel final final--${result}`}>
         <p className="eyebrow">Fin du duel · {match.friend ? `contre ton ami ${match.friend}` : `Division ${divisionName(match.division)}`}</p>
@@ -368,11 +369,20 @@ function DuelView({ match }: { match: DuelState }) {
           !match.friend && (
             <div className="final__league">
               <DivisionBadge number={division} state="current" className="final__badge final__badge--small" />
-              <span>
-                {division > 1
-                  ? `${gained ? `+${gained} point${gained > 1 ? 's' : ''} · ` : ''}${Math.min(DIVISION_POINTS_TO_PROMOTE, divisionPoints + gained)}/${DIVISION_POINTS_TO_PROMOTE} pour le blason ${divisionName(division - 1)}`
-                  : 'Le blason légendaire reste à toi'}
-              </span>
+              {division > 1 ? (
+                <span>
+                  {delta !== 0 && (
+                    <b className={delta > 0 ? 'final__delta is-up' : 'final__delta is-down'}>
+                      {delta > 0 ? '+' : '−'}
+                      {Math.abs(delta)} point{Math.abs(delta) > 1 ? 's' : ''}
+                    </b>
+                  )}
+                  {delta !== 0 && ' · '}
+                  {Math.min(DIVISION_POINTS_TO_PROMOTE, after)}/{DIVISION_POINTS_TO_PROMOTE} pour le blason {divisionName(division - 1)}
+                </span>
+              ) : (
+                <span>Le blason légendaire reste à toi</span>
+              )}
             </div>
           )
         )}
