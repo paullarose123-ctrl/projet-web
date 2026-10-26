@@ -34,7 +34,7 @@ export const MAX_FREE_PACKS = 5;
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
 export const UNLIMITED_BALLES = 99_999_999_999;
-const DIVISION_POINTS_TO_PROMOTE = 7;
+export const DIVISION_POINTS_TO_PROMOTE = 7;
 
 /** Graines rendues pour chaque carte d'une espèce retirée du jeu (sauvegardes < v4). */
 const REMOVED_CARD_REFUND = 2_000;

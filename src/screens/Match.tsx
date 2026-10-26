@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useGame } from '../store/game';
+import { DIVISION_POINTS_TO_PROMOTE, useGame } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { displayName } from '../engine/cards';
@@ -22,7 +22,7 @@ import { Balles } from '../components/Balles';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
-import { SportIcon } from '../components/SportIcon';
+import { DivisionBadge } from '../components/DivisionBadge';
 import { TIER_NAMES, divisionInfo, divisionName } from '../engine/divisions';
 import { HalloweenHead } from '../components/Halloween';
 
@@ -116,6 +116,11 @@ function Picker({ initial, onConfirm, onClose }: { initial: string[]; onConfirm:
   );
 }
 
+/** « Hérisson de bronze » → « Hérisson », « Lion légendaire » → « Lion ». */
+function shortDivisionName(number: number): string {
+  return divisionName(number).replace(/ (de |d’).*$| légendaire$/, '');
+}
+
 function TeamBuilder() {
   const collection = useGame((s) => s.collection);
   const team = useGame((s) => s.team);
@@ -128,6 +133,14 @@ function TeamBuilder() {
   const points = useGame((s) => s.divisionPoints);
   const openDetail = useUi((s) => s.openDetail);
   const [picking, setPicking] = useState(false);
+  const ladder = useRef<HTMLOListElement>(null);
+
+  // sur un petit écran, l'échelle défile : on la centre sur le blason de la division actuelle
+  useEffect(() => {
+    const list = ladder.current;
+    const current = list?.querySelector<HTMLElement>('.is-current');
+    if (list && current) list.scrollLeft = current.offsetLeft - list.offsetLeft - (list.clientWidth - current.offsetWidth) / 2;
+  }, [division]);
 
   const slots: Array<OwnedCard | null> = Array.from({ length: TEAM_SIZE }, (_, i) => {
     const card = collection.find((c) => c.uid === team[i]);
@@ -139,12 +152,7 @@ function TeamBuilder() {
     <>
       <section className={`panel division division--${divisionInfo(division).tier}`}>
         <div className="division__emblem" aria-hidden="true">
-          {/* l'emblème de la famille de l'animal de la division, comme le médaillon des cartes */}
-          <span className="division__photo division__logo">
-            <span>
-              <SportIcon sport={ATHLETES_BY_ID[divisionInfo(division).athleteId].sport} />
-            </span>
-          </span>
+          <DivisionBadge number={division} state="current" className="division__badge" />
           <span className="division__metal">{TIER_NAMES[divisionInfo(division).tier]}</span>
         </div>
         <div>
@@ -156,18 +164,37 @@ function TeamBuilder() {
           </p>
         </div>
         <div className="division__progress">
-          <span>
-            {division > 1 ? `${points}/7 points pour monter en division ${divisionName(division - 1)}` : 'Tu es au sommet de la ligue'}
-          </span>
-          {division > 1 && (
+          {division > 1 ? (
             <>
+              {/* le prochain blason, encore dans l'ombre */}
+              <div className="division__next">
+                <DivisionBadge number={division - 1} state="locked" />
+                <span>
+                  Prochain blason
+                  <b>{divisionName(division - 1)}</b>
+                </span>
+              </div>
+              <span>
+                {points}/{DIVISION_POINTS_TO_PROMOTE} points pour monter
+              </span>
               <span className="meter">
-                <span className="meter__fill" style={{ width: `${(points / 7) * 100}%` }} />
+                <span className="meter__fill" style={{ width: `${(points / DIVISION_POINTS_TO_PROMOTE) * 100}%` }} />
               </span>
               <span className="muted small">Victoire +3, nul +1</span>
             </>
+          ) : (
+            <span>Tu es au sommet de la ligue : le blason légendaire est à toi.</span>
           )}
         </div>
+        {/* l'échelle des dix blasons : gagnés, actuel, à conquérir */}
+        <ol ref={ladder} className="division__ladder" aria-label="Les dix divisions de la ligue">
+          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
+            <li key={n} className={n === division ? 'is-current' : n > division ? 'is-won' : 'is-locked'}>
+              <DivisionBadge number={n} state={n === division ? 'current' : n > division ? 'won' : 'locked'} />
+              <span>{shortDivisionName(n)}</span>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="panel">
@@ -309,6 +336,8 @@ function RoundResolution({ match, log, onNext }: { match: DuelState; log: DuelRo
 function DuelView({ match }: { match: DuelState }) {
   const play = useGame((s) => s.playMatchRound);
   const finish = useGame((s) => s.finishMatch);
+  const division = useGame((s) => s.division);
+  const divisionPoints = useGame((s) => s.divisionPoints);
   const abandon = useGame((s) => s.abandonMatch);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealing, setRevealing] = useState(false);
@@ -319,10 +348,34 @@ function DuelView({ match }: { match: DuelState }) {
 
   if (match.finished && !revealing) {
     const result = duelResult(match);
+    // les points que ce duel rapporte à la ligue, et la promotion qu'ils déclenchent peut-être
+    const gained = match.friend ? 0 : result === 'win' ? 3 : result === 'draw' ? 1 : 0;
+    const promotion = !match.friend && division > 1 && divisionPoints + gained >= DIVISION_POINTS_TO_PROMOTE;
     return (
       <section className={`panel final final--${result}`}>
         <p className="eyebrow">Fin du duel · {match.friend ? `contre ton ami ${match.friend}` : `Division ${divisionName(match.division)}`}</p>
         <h1>{result === 'win' ? 'Victoire !' : result === 'draw' ? 'Match nul' : 'Défaite'}</h1>
+        {promotion ? (
+          <div className="final__promotion">
+            <DivisionBadge number={division - 1} state="current" className="final__badge" />
+            <div>
+              <p className="eyebrow">Promotion !</p>
+              <h2>Division {divisionName(division - 1)}</h2>
+              <p className="muted">Ce nouveau blason est à toi : encaisse pour monter dans la ligue.</p>
+            </div>
+          </div>
+        ) : (
+          !match.friend && (
+            <div className="final__league">
+              <DivisionBadge number={division} state="current" className="final__badge final__badge--small" />
+              <span>
+                {division > 1
+                  ? `${gained ? `+${gained} point${gained > 1 ? 's' : ''} · ` : ''}${Math.min(DIVISION_POINTS_TO_PROMOTE, divisionPoints + gained)}/${DIVISION_POINTS_TO_PROMOTE} pour le blason ${divisionName(division - 1)}`
+                  : 'Le blason légendaire reste à toi'}
+              </span>
+            </div>
+          )
+        )}
         <p className="final__score">
           {match.me.name} {match.me.score} – {match.opp.score} {match.opp.name}
         </p>
