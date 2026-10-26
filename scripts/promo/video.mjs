@@ -1,7 +1,9 @@
-// Rend la vidéo de la Série 2 (Mexique) au format TikTok : 1080 × 1920, 30 images/s, avec sa musique.
+// Rend une vidéo de promotion au format TikTok : 1080 × 1920, 30 images/s, avec sa musique.
+// Les vidéos sont des pages de développement (promo/mexique.html, promo/halloween.html, voir src/promo/mount.tsx).
 // Prérequis : le serveur de développement lancé (npm run dev), Playwright et ffmpeg installés.
-//   node scripts/promo/mexique.mjs [--url http://localhost:5173/promo/mexique.html] [--out promo-mexique.mp4]
-//   node scripts/promo/mexique.mjs --apercu 0,3,9,12.5,19   (quelques images seulement, pour vérifier)
+//   node scripts/promo/video.mjs --url http://localhost:5173/promo/halloween.html --out promo-halloween.mp4
+//   node scripts/promo/video.mjs --url … --apercu 0,3,9,12.5,19   (quelques images seulement, pour vérifier)
+// Une option donnée deux fois garde la dernière (npm run promo:mexique -- --out autre.mp4).
 
 import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
@@ -10,7 +12,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const arg = (name, fallback) => {
-  const i = process.argv.indexOf(`--${name}`);
+  const i = process.argv.lastIndexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : fallback;
 };
 const url = `${arg('url', 'http://localhost:5173/promo/mexique.html')}?capture`;
@@ -23,6 +25,7 @@ const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: p
 const page = await browser.newPage({ viewport: { width: 540, height: 960 }, deviceScaleFactor: 2 });
 await page.goto(url);
 await page.evaluate(() => document.fonts.ready);
+await page.evaluate(() => window.__promo.ready);
 await page.waitForTimeout(800);
 const duration = await page.evaluate(() => window.__promo.duration);
 

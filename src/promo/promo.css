@@ -326,3 +326,177 @@ body {
 .affiche__url {
   top: 774px;
 }
+
+/* ───────────── vidéo d'Halloween ───────────── */
+
+/* le sous-bois vire au violet de la nuit d'Halloween juste avant l'éclair */
+.promo-hw__dusk {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 70%, rgba(110, 42, 74, 0.6), rgba(20, 8, 34, 0.95));
+}
+
+.promo-hw__darken {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, rgba(14, 6, 24, 0.55), rgba(10, 4, 18, 0.95));
+}
+
+.promo-hw__flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 55%, #fff4e0, rgba(255, 170, 80, 0.85) 38%, rgba(255, 140, 60, 0) 78%);
+  pointer-events: none;
+}
+
+/* la guirlande de cempasúchil du jeu, en deux rangs */
+.promo-hw__garland {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40px;
+  background-repeat: repeat-x;
+  background-size: auto 40px;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.45));
+}
+
+.promo-hw__web {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  width: 230px;
+  overflow: visible;
+}
+
+.promo-hw__eyebrow {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffd9a8;
+  text-shadow: 0 2px 10px rgba(10, 4, 18, 0.9);
+}
+
+.promo-hw__title {
+  font-family: var(--font-display);
+  font-size: 104px;
+  line-height: 1;
+  color: #ffb052;
+  text-shadow:
+    0 5px 0 #6b2a12,
+    0 0 40px rgba(255, 140, 50, 0.55),
+    0 12px 34px rgba(10, 4, 18, 0.8);
+  transform-origin: 50% 60%;
+}
+
+.promo-hw__kicker {
+  font-family: var(--font-card);
+  font-style: italic;
+  font-size: 30px;
+  color: #fff4e6;
+  text-shadow: 0 2px 14px rgba(10, 4, 18, 0.9);
+}
+
+.promo-hw__pill span {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 200, 140, 0.5);
+  background: rgba(60, 22, 70, 0.75);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffe9cc;
+}
+
+.promo-hw__caption {
+  left: 30px;
+  right: 30px;
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1.1;
+  color: #fff4e6;
+  text-shadow: 0 3px 16px rgba(10, 4, 18, 0.9);
+}
+
+/* le téléphone qui montre le vrai jeu */
+.promo-hw__phone {
+  position: absolute;
+  left: 50%;
+  top: 236px;
+  width: 300px;
+  aspect-ratio: 390 / 844;
+  padding: 10px;
+  border-radius: 40px;
+  background: linear-gradient(160deg, #2a1838, #120a1c);
+  box-shadow:
+    0 0 0 2px rgba(255, 170, 90, 0.45),
+    0 0 70px rgba(255, 140, 60, 0.35),
+    0 34px 60px rgba(0, 0, 0, 0.65);
+}
+
+.promo-hw__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 30px;
+  background: #0e1712;
+}
+
+.promo-hw__screen img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 50% 30%;
+}
+
+/* fin : la citrouille, la date */
+.promo-hw__emblem {
+  position: absolute;
+  left: 50%;
+  top: 292px;
+  width: 170px;
+  height: 160px;
+  margin-left: -85px;
+  display: grid;
+  place-items: center;
+}
+
+.promo-hw__emblem-glow {
+  position: absolute;
+  inset: -60px;
+  background: radial-gradient(circle, rgba(255, 150, 60, 0.6), rgba(255, 150, 60, 0) 65%);
+}
+
+.promo-hw__pumpkin {
+  position: relative;
+  width: 150px;
+  height: auto;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
+}
+
+.promo-hw__until {
+  color: #ffd9a8;
+}
+
+.promo-hw__date {
+  font-family: var(--font-display);
+  font-size: 72px;
+  line-height: 1;
+  color: #ffb052;
+  text-shadow:
+    0 4px 0 #6b2a12,
+    0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.promo-hw__next {
+  font-family: var(--font-card);
+  font-style: italic;
+  font-size: 22px;
+  color: #f8c3cf;
+}

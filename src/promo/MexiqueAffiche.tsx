@@ -1,7 +1,8 @@
 import { CardBackMexique } from '../components/CardBackMexique';
 import { Logo } from '../components/Logo';
 import { PackArtMexique } from '../components/PackArtMexique';
-import { DURATION, MexicoScene, Papel, Petals } from './MexiquePromo';
+import { Petals } from './anim';
+import { DURATION, MexicoScene, Papel } from './MexiquePromo';
 
 // Affiche de la Série 2 (une seule image, 1080 × 1920) : le Mexique de la vidéo au soleil levé, le booster
 // devant le soleil, entouré de dos de cartes, puis la date de sortie. Le texte reste dans le haut et le

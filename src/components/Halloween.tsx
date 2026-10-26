@@ -33,7 +33,7 @@ function pumpkin(key: number, id: string, x: number, y: number, s: number, r: Rn
 }
 
 /** Toile d'araignée accrochée dans un coin (cx, cy), dont les rayons partent vers le bas et du côté `toward`. */
-function cobweb(cx: number, cy: number, size: number, toward: 1 | -1): string {
+export function cobweb(cx: number, cy: number, size: number, toward: 1 | -1): string {
   const spokes = 6;
   const angles = Array.from({ length: spokes }, (_, k) => (Math.PI / 2) * (k / (spokes - 1)));
   const point = (a: number, d: number): Pt => [cx + toward * Math.sin(a) * d, cy + Math.cos(a) * d];
@@ -54,7 +54,7 @@ function cobweb(cx: number, cy: number, size: number, toward: 1 | -1): string {
 }
 
 /** Araignée suspendue à son fil, qui monte et descend doucement. */
-function spider(x: number, top: number, drop: number, s: number): ReactNode {
+export function spider(x: number, top: number, drop: number, s: number): ReactNode {
   let legs = '';
   for (const side of [-1, 1]) {
     for (const [ax, ay, bx, by] of [
@@ -80,7 +80,7 @@ function spider(x: number, top: number, drop: number, s: number): ReactNode {
  * Guirlande de cempasúchil, en motif qui se répète sur toute la largeur d'un en-tête : à chaque festonnage, la
  * ficelle pend un peu et porte une rangée de pompons orange et jaunes.
  */
-const GARLAND_TILE = (() => {
+export const GARLAND_TILE = (() => {
   const w = 96;
   const colors = ['#f7a21b', '#ffbf3f', '#f37b20', '#ffd166'];
   let flowers = '';

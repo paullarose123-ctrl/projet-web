@@ -23,8 +23,8 @@ export interface Track {
 }
 
 /** Une note de mélodie : temps dans la mesure, note MIDI, durée en temps (pour la flûte). */
-type Note = [beat: number, note: number, length?: number];
-interface Chord {
+export type Note = [beat: number, note: number, length?: number];
+export interface Chord {
   /** basse (MIDI) */
   r: number;
   /** accord (MIDI) */
@@ -530,7 +530,7 @@ const CITROUILLES_MELODY: Note[][] = [
 ];
 
 /** Hulotte au loin : deux notes graves et voilées, la seconde qui tombe. */
-function owl(ac: AudioContext, out: Bus, t: number) {
+export function owl(ac: AudioContext, out: Bus, t: number) {
   flute(ac, out, midi(64), t, 0.45, 0.018, -0.5);
   flute(ac, out, midi(62), t + 0.7, 0.9, 0.016, -0.5);
 }
@@ -664,7 +664,7 @@ function calaveras(): Track {
 
 // ───────────── Saison : 10. Bal des squelettes (sol mineur, 6/8, 168 croches/min) : marimba, pizzicati, célesta ─────────────
 
-const SQUELETTES: Chord[] = [
+export const SQUELETTES: Chord[] = [
   { r: 43, c: [55, 58, 62] }, // Sol m
   { r: 43, c: [55, 58, 62] }, // Sol m
   { r: 48, c: [55, 60, 63] }, // Do m
@@ -683,7 +683,7 @@ const SQUELETTES: Chord[] = [
   { r: 43, c: [55, 58, 62] }, // Sol m
 ];
 // en croches : position dans la mesure (0 à 5), note, durée
-const SQUELETTES_MELODY: Note[][] = [
+export const SQUELETTES_MELODY: Note[][] = [
   [[0, 74, 2], [2, 70, 1], [3, 67, 3]],
   [[0, 69, 1], [1, 70, 1], [2, 72, 1], [3, 74, 3]],
   [[0, 75, 2], [2, 74, 1], [3, 72, 3]],
