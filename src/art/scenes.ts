@@ -23,6 +23,13 @@ export const HERO_SCENE: SceneDef = {
   palette: { sky: ['#1a2c4e', '#f4a06a'], sun: '#ffe7bd', far: '#8a8fb0', near: '#101528', accent: '#fdf2e6' },
 };
 
+/** Accueil pendant la saison d'Halloween : les mêmes sommets sous un ciel de nuit, une grosse lune orange. */
+export const HERO_SCENE_HALLOWEEN: SceneDef = {
+  kind: 'montagne',
+  stars: true,
+  palette: { sky: ['#120a24', '#7a2f4a'], sun: '#ffa94d', far: '#4b3463', near: '#0c0716', accent: '#b9a3d6' },
+};
+
 /** Bannières des écrans */
 export const SCREEN_SCENES = {
   // collection : prairie au crépuscule, un lapin dans les fleurs

@@ -6461,6 +6461,107 @@
   }
 }
 
+/* les barres du haut et du bas passent à la nuit violette, bordées d'orange */
+.saison-halloween .topbar {
+  background: rgba(30, 15, 40, 0.86);
+  border-bottom-color: rgba(244, 169, 78, 0.3);
+}
+
+.saison-halloween .bottomnav {
+  background: rgba(27, 14, 37, 0.95);
+  border-top-color: rgba(244, 169, 78, 0.35);
+}
+
+/* la guirlande de cempasúchil pend sous la barre du haut */
+.hw-garland {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: 0;
+  right: 0;
+  height: 18px;
+  background-repeat: repeat-x;
+  background-size: auto 18px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+
+.pumpkin-mark {
+  width: 1em;
+  height: 0.86em;
+  filter: drop-shadow(0 0 6px rgba(255, 150, 60, 0.6));
+}
+
+/* l'onglet actif : la pousse passe à l'orange des bougies */
+.saison-halloween .bottomnav__item.is-active::before {
+  box-shadow: 0 0 14px rgba(255, 150, 60, 0.8);
+}
+
+/* les boutons principaux en orange citrouille pastel (le booster du Mexique garde son rose) */
+.saison-halloween .btn--primary:not(.btn--booster-mx) {
+  --pastel: #f9c48f;
+  --ink: #4a2208;
+  --edge: #d98a4a;
+  background: var(--pastel);
+  color: var(--ink);
+  border-color: transparent;
+  text-shadow: none;
+  box-shadow: 0 4px 0 var(--edge), 0 10px 20px rgba(4, 12, 10, 0.35);
+}
+
+.saison-halloween .btn--primary:not(.btn--booster-mx):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pastel) 88%, #ffffff);
+  box-shadow: 0 6px 0 var(--edge), 0 14px 26px rgba(4, 12, 10, 0.4);
+}
+
+.saison-halloween .btn--primary:not(.btn--booster-mx):active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.3);
+}
+
+.saison-halloween .btn--primary::after {
+  display: none;
+}
+
+/* devant le contenu, sous les barres : chauves-souris cerclées de lueur, coins posés sur la barre du bas (téléphone) */
+.hw-flyover {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hw-flyover .hw-bat {
+  fill: #1c1029;
+  opacity: 1;
+  filter: drop-shadow(0 0 3px rgba(255, 160, 70, 0.9));
+}
+
+.hw-corner--front {
+  display: none;
+}
+
+@media (max-width: 759px) {
+  .hw-corner--back {
+    display: none;
+  }
+  .hw-corner--front {
+    display: block;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) - 6px);
+    width: min(124px, 32vw);
+  }
+  /* sur téléphone, le décor des en-têtes plus grand */
+  .hw-head__garland {
+    height: 24px;
+    background-size: auto 24px;
+  }
+  .hw-head__pendants {
+    width: 138px;
+  }
+  .hw-head__corner {
+    width: 250px;
+  }
+}
+
 /* l'annonce de la saison sur l'accueil */
 .hw-banner {
   display: grid;

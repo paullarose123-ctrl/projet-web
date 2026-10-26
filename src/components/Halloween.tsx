@@ -137,10 +137,9 @@ function BatFlight({ count, seed, top = 46 }: { count: number; seed: number; top
   );
 }
 
-/** Calque fixe derrière le contenu, au-dessus du sous-bois du fond (même place que les lucioles). */
-export const HalloweenNight = memo(function HalloweenNight() {
-  const halloween = useHalloween();
-  const id = `hw${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+/** Citrouilles, cempasúchil et bougies posés dans les deux coins du bas de l'écran. */
+function Corners({ className }: { className: string }) {
+  const id = `hc${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const corners = useMemo(() => {
     const r = mulberry32(7);
     const scene = (flip: boolean) => (
@@ -154,12 +153,10 @@ export const HalloweenNight = memo(function HalloweenNight() {
     );
     return { left: scene(false), right: scene(true) };
   }, [id]);
-  if (!halloween) return null;
   return (
-    <div className="hw-night" aria-hidden="true">
-      <BatFlight count={7} seed={31} />
+    <>
       {(['left', 'right'] as const).map((side) => (
-        <svg key={side} className={`mx-scene hw-corner hw-corner--${side}`} viewBox="0 30 86 34">
+        <svg key={side} className={`mx-scene hw-corner hw-corner--${side} ${className}`} viewBox="0 30 86 34">
           <defs>
             <Glow id={id} name="flame" color="#ffb347" />
             <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
@@ -167,19 +164,71 @@ export const HalloweenNight = memo(function HalloweenNight() {
           {corners[side]}
         </svg>
       ))}
+    </>
+  );
+}
+
+/** Calque fixe derrière le contenu, au-dessus du sous-bois du fond (même place que les lucioles). */
+export const HalloweenNight = memo(function HalloweenNight() {
+  const halloween = useHalloween();
+  if (!halloween) return null;
+  return (
+    <div className="hw-night" aria-hidden="true">
+      <BatFlight count={7} seed={31} />
+      <Corners className="hw-corner--back" />
     </div>
   );
 });
+
+/**
+ * Calque fixe devant le contenu, sous les barres et les fenêtres : quelques chauves-souris cerclées de lueur orange
+ * qui traversent l'écran, et sur téléphone, où le contenu couvre tout le fond, les citrouilles et les bougies des
+ * coins posées sur la barre du bas. Rien n'y capte les clics.
+ */
+export const HalloweenFlyover = memo(function HalloweenFlyover() {
+  const halloween = useHalloween();
+  if (!halloween) return null;
+  return (
+    <div className="hw-flyover" aria-hidden="true">
+      <BatFlight count={3} seed={47} top={70} />
+      <Corners className="hw-corner--front" />
+    </div>
+  );
+});
+
+// ───────────── les barres du haut et du bas ─────────────
+
+/** Guirlande de cempasúchil qui pend sous la barre du haut. */
+export function HalloweenGarland() {
+  const halloween = useHalloween();
+  if (!halloween) return null;
+  return <div className="hw-garland" aria-hidden="true" style={{ backgroundImage: GARLAND_TILE }} />;
+}
+
+/** Petite citrouille sculptée : la marque du logo sur téléphone, pendant la saison. */
+export function PumpkinMark({ className = '' }: { className?: string }) {
+  const at = (a: number, b: number): Pt => [a, b];
+  const eyes = poly([at(-3, -5.6), at(-1.2, -5.6), at(-2.1, -7.2)]) + poly([at(1.2, -5.6), at(3, -5.6), at(2.1, -7.2)]);
+  const mouth = poly([at(-3.4, -3.6), at(-2.2, -2.8), at(-1.2, -3.4), at(0, -2.6), at(1.2, -3.4), at(2.2, -2.8), at(3.4, -3.6), at(2.4, -1.6), at(0, -1.1), at(-2.4, -1.6)]);
+  return (
+    <svg className={`pumpkin-mark ${className}`} viewBox="-6.6 -11 13.2 11.4" aria-hidden="true">
+      <path d={ellipse(-2.6, -4, 3.6, 4) + ellipse(2.6, -4, 3.6, 4)} fill="#d9661b" />
+      <path d={ellipse(0, -4.1, 3.8, 4.2)} fill="#f08a2a" />
+      <path d="M-0.5 -8Q-0.2 -10.2 1.2 -10.6L1.4 -9.8Q0.6 -9.4 0.6 -8Z" fill="#4f6a2a" />
+      <path d={eyes + mouth} fill="#ffd36b" />
+    </svg>
+  );
+}
 
 // ───────────── le ciel des en-têtes : guirlande, toile d'araignée, chauves-souris ─────────────
 
 /**
  * Décor posé dans le ciel d'un en-tête illustré : une guirlande de cempasúchil qui festonne sur toute la largeur,
  * une calavera et une citrouille en pendeloques à gauche, une toile, une araignée et trois chauves-souris à droite.
- * Tout reste dans le haut de l'en-tête, au-dessus du titre et des boutons. Sur l'accueil (`garland` faux), seul le
- * coin droit, pour ne pas passer sous les textes.
+ * Tout reste dans le haut de l'en-tête, au-dessus du titre et des boutons. Sur l'accueil, la guirlande sans les
+ * pendeloques (`pendants` faux), qui passeraient sur le booster.
  */
-export function HalloweenHead({ seed = 'en-tête', garland = true }: { seed?: string; garland?: boolean }) {
+export function HalloweenHead({ seed = 'en-tête', garland = true, pendants = garland }: { seed?: string; garland?: boolean; pendants?: boolean }) {
   const halloween = useHalloween();
   const id = `hh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const art = useMemo(() => {
@@ -207,7 +256,7 @@ export function HalloweenHead({ seed = 'en-tête', garland = true }: { seed?: st
   return (
     <div className="hw-head" aria-hidden="true">
       {garland && <div className="hw-head__garland" style={{ backgroundImage: GARLAND_TILE }} />}
-      {garland && (
+      {pendants && (
         <svg className="mx-scene hw-head__pendants" viewBox="0 0 80 40">
           <defs>
             <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
