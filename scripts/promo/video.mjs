@@ -15,7 +15,8 @@ const arg = (name, fallback) => {
   const i = process.argv.lastIndexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : fallback;
 };
-const url = `${arg('url', 'http://localhost:5173/promo/mexique.html')}?capture`;
+const base = arg('url', 'http://localhost:5173/promo/mexique.html');
+const url = `${base}${base.includes('?') ? '&' : '?'}capture`;
 const out = arg('out', 'promo-mexique.mp4');
 const fps = Number(arg('fps', '30'));
 const preview = arg('apercu', '');
