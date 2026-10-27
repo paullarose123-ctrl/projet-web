@@ -31,12 +31,18 @@ const FACT = 6.2;
 const CTA = 8.8;
 export const DURATION = 11.5;
 
+/** Le numéro affiché « n/10 » (?n=…), quand l'ordre de publication diffère de celui de la liste. */
+export function quizNumber(index: number): number {
+  const n = Number(new URLSearchParams(location.search).get('n'));
+  return Number.isInteger(n) && n > 0 ? n : index + 1;
+}
+
 export function quizIndex(): number {
   const q = Number(new URLSearchParams(location.search).get('q') ?? 0);
   return Math.max(0, Math.min(QUIZ.length - 1, Number.isFinite(q) ? q : 0));
 }
 
-export function QuizPromo({ t, index }: { t: number; index: number }) {
+export function QuizPromo({ t, index, number = index + 1 }: { t: number; index: number; number?: number }) {
   const quiz = QUIZ[index];
   const face = (id: string) => ({ uid: id, athleteId: id, variant: 'base' as const });
   const winner = compare(quiz.record, recordValue(face(quiz.a), quiz.record), recordValue(face(quiz.b), quiz.record));
@@ -71,7 +77,7 @@ export function QuizPromo({ t, index }: { t: number; index: number }) {
         <div className="quiz__shade" />
       </div>
       <Line className="quiz__eyebrow" style={{ ...rise(life(t, 0.1, 0.5, CTA - 0.3, CTA)), top: 92 }}>
-        Quiz animaux · {index + 1}/10
+        Quiz animaux · {number}/10
       </Line>
       <Line className="quiz__question" style={{ ...pop(span(t, 0.2, 0.8)), opacity: clamp(span(t, 0.2, 0.4)) * (1 - ctaOut), top: 124 }}>
         {quiz.question}
