@@ -49,16 +49,16 @@ function AccountInvite() {
   const setTab = useUi((s) => s.setTab);
   if (!guest || !accountsEnabled()) return null;
   return (
-    <section className="panel invite" aria-labelledby="invite-title">
+    <section className={`panel invite${packsOpened > 0 ? ' invite--alert' : ''}`} aria-labelledby="invite-title">
       <div>
-        <h2 id="invite-title">Garde ta collection pour toujours</h2>
+        <h2 id="invite-title">{packsOpened > 0 ? 'Tes cartes ne sont pas encore sauvegardées !' : 'Garde ta collection pour toujours'}</h2>
         <p className="muted">
           {packsOpened > 0
             ? 'Crée un compte avec un pseudo et un mot de passe : ta progression sera sauvegardée et tu la retrouveras partout.'
             : 'Un pseudo, un mot de passe, et ta progression est sauvegardée : tu la retrouves sur n’importe quel appareil.'}
         </p>
       </div>
-      <button type="button" className="btn btn--primary" onClick={() => setTab('profil')}>
+      <button type="button" className={`btn ${packsOpened > 0 ? 'btn--danger' : 'btn--primary'}`} onClick={() => setTab('profil')}>
         Créer mon compte
       </button>
     </section>
@@ -459,10 +459,10 @@ export function HomeScreen() {
   return (
     <div className="screen screen--home">
       <FreePackHero />
+      <AccountInvite />
       <HalloweenBanner />
       <OnlinePlayers />
       <ExpansionBanner />
-      <AccountInvite />
       <div className="grid-2">
         <CollectionSummary />
         <Objectives />
