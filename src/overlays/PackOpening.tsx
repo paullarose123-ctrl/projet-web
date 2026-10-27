@@ -22,6 +22,8 @@ import type { NatureShape } from '../components/natureShapes';
 import { Confetti, type ConfettiHandle } from '../components/Confetti';
 import { sfx } from '../audio/sfx';
 import { usePhoto } from '../photos';
+import { useAccount } from '../store/account';
+import { accountsEnabled } from '../account/supabase';
 
 // pack : le sachet attend ; charging : il se charge et tremble ; tearing : il se déchire et les cartes sortent
 type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
@@ -353,6 +355,9 @@ function Walkout({ card, serie, onDone }: { card: CardFace; serie: number; onDon
 export function PackOpening() {
   const opening = useGame((s) => s.opening);
   const close = useGame((s) => s.closeOpening);
+  // sans compte, les cartes ne vivent que dans ce navigateur : on le dit au moment où on vient d'en gagner
+  const guest = useAccount((s) => !s.session) && accountsEnabled();
+  const setTab = useUi((s) => s.setTab);
   const quickSell = useGame((s) => s.quickSell);
   const freePacks = useGame((s) => s.freePacks);
   const openFreePack = useGame((s) => s.openFreePack);
@@ -676,6 +681,24 @@ export function PackOpening() {
             {cards.filter((c) => c.isNew).length} nouvelle{cards.filter((c) => c.isNew).length > 1 ? 's' : ''} carte
             {cards.filter((c) => c.isNew).length > 1 ? 's' : ''} · {dupes.length} doublon{dupes.length > 1 ? 's' : ''}
           </p>
+          {guest && (
+            <div className="save-alert" role="alert">
+              <p>
+                <b>Tes cartes ne sont pas encore sauvegardées !</b> Crée un compte gratuit (un pseudo, un mot de passe) pour ne jamais les perdre et les
+                retrouver sur tous tes appareils.
+              </p>
+              <button
+                type="button"
+                className="btn btn--danger btn--sm"
+                onClick={() => {
+                  close();
+                  setTab('profil');
+                }}
+              >
+                Créer mon compte
+              </button>
+            </div>
+          )}
           <div className="opening__grid">
             {cards.map((card, i) => (
               <div key={card.uid} className={`opening__cell${i === focusIndex ? ' is-focus' : ''}`}>
