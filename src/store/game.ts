@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { CardFace, OwnedCard } from '../engine/types';
 import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
-import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE } from '../data/remplacements';
+import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE2_REMPLACEES } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
@@ -792,18 +792,19 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 10,
+      version: 11,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
-        // versions 5, 7, 8 et 9 : des espèces sont remplacées par une autre ; les cartes déjà obtenues deviennent la
-        // nouvelle espèce (identifiants remplacés partout dans la sauvegarde). Avant le nettoyage de la version 4,
-        // qui retire les cartes d'espèces inconnues.
+        // versions 5, 7, 8, 9 et 11 : des espèces sont remplacées par une autre ; les cartes déjà obtenues deviennent
+        // la nouvelle espèce (identifiants remplacés partout dans la sauvegarde). Avant le nettoyage des espèces
+        // inconnues (versions 4 et 11).
         const replacements = {
           ...(version < 5 ? ESPECES_REMPLACEES : {}),
           ...(version < 7 ? ICONES_REMPLACEES : {}),
           ...(version < 8 ? PREHISTOIRE_REMPLACEE : {}),
           ...(version < 9 ? ICONES_RETIREES : {}),
+          ...(version < 11 ? SERIE2_REMPLACEES : {}),
         };
         if (Object.keys(replacements).length) {
           let text = JSON.stringify(state);
@@ -811,8 +812,9 @@ export const useGame = create<GameState>()(
           state = JSON.parse(text) as GameState;
         }
         // version 8 : le T. rex et le mammouth avaient une version Prime, pas le lion de l'Atlas qui les remplace ;
-        // version 10 : plus de Reverse pour les Communes, les Peu communes et les Icônes (elles deviennent classiques)
-        if (version < 10) state = dropInvalidPrimes(state);
+        // version 10 : plus de Reverse pour les Communes, les Peu communes et les Icônes (elles deviennent classiques) ;
+        // version 11 : une espèce remplacée de la Série 2 n'a pas forcément la rareté de celle d'avant
+        if (version < 11) state = dropInvalidPrimes(state);
         if (version < 3) {
           // version 3 : les cartes Mythe ne sont plus que des créatures fantastiques. Chaque sanctuaire ou divinité
           // déjà obtenu devient la créature de la même famille (identifiants remplacés partout dans la sauvegarde).
@@ -835,9 +837,10 @@ export const useGame = create<GameState>()(
           // seules les espèces vedettes gardent la leur
           state = dropInvalidPrimes(state);
         }
-        if (version < 4) {
+        if (version < 11) {
           // version 4 : des espèces ont été retirées du jeu. Leurs cartes disparaissent de la réserve, du marché,
-          // de l'équipe et de l'album, et les graines de leur revente rapide sont rendues au joueur.
+          // de l'équipe et de l'album, et les graines de leur revente rapide sont rendues au joueur. Refait en
+          // version 11 : une carte inconnue restée dans une sauvegarde empêcherait le jeu de s'ouvrir.
           const known = (id: string) => !!ATHLETES_BY_ID[id];
           const gone = state.collection.filter((card) => !known(card.athleteId));
           const goneUids = new Set(gone.map((card) => card.uid));
@@ -853,7 +856,7 @@ export const useGame = create<GameState>()(
             myListings: state.market.myListings.filter((listing) => known(listing.card.athleteId)),
           };
           if (state.stats.bestPull && !known(state.stats.bestPull.athleteId)) state.stats = { ...state.stats, bestPull: undefined };
-          state.match = null;
+          if (version < 4 || gone.length) state.match = null;
         }
         return state;
       },
