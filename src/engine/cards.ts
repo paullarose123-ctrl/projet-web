@@ -222,16 +222,18 @@ export function athletesByRarity(): Record<RarityId, Athlete[]> {
 
 // ───────────── Numéros de collection ─────────────
 // Chaque espèce a son numéro dans l'album de sa série, famille par famille (dans l'ordre du jeu), sans trou :
-// N° 001 à N° 4xx pour la Série 1, M01 à M54 pour la Série 2 (Mexique). Dans chaque famille, ses Icônes (espèces
-// disparues) viennent en dernier. Les Habitats ont leur propre suite : H01, H02… (MH1, MH2… pour le Mexique).
+// N° 001 à N° 4xx pour la Série 1, M1 à M116 pour la Série 2 (Mexique). Dans chaque famille, ses Icônes (espèces
+// disparues) viennent en dernier. Les Habitats de la Série 1 ont leur propre suite (H01, H02…) ; ceux du Mexique
+// continuent la numérotation de la série après la dernière espèce.
 let numbers: Map<string, string> | null = null;
 
 export function collectionNumber(athlete: Athlete): string {
   if (!numbers) {
     numbers = new Map();
-    const series: Array<{ number: number; species: (n: number) => string; habitat: (n: number) => string }> = [
-      { number: 1, species: (n) => String(n).padStart(3, '0'), habitat: (n) => `H${String(n).padStart(2, '0')}` },
-      { number: 2, species: (n) => `M${String(n).padStart(3, '0')}`, habitat: (n) => `MH${n}` },
+    // habitat(h, n) : n° du h-ième Habitat de la série, n étant le nombre d'espèces numérotées avant lui
+    const series: Array<{ number: number; species: (n: number) => string; habitat: (h: number, n: number) => string }> = [
+      { number: 1, species: (n) => String(n).padStart(3, '0'), habitat: (h) => `H${String(h).padStart(2, '0')}` },
+      { number: 2, species: (n) => `M${n}`, habitat: (h, n) => `M${n + h}` },
     ];
     for (const serie of series) {
       const cards = ATHLETES.filter((a) => (a.serie ?? 1) === serie.number);
@@ -242,7 +244,7 @@ export function collectionNumber(athlete: Athlete): string {
         }
       }
       let h = 0;
-      for (const a of cards) if (a.habitat) numbers.set(a.id, serie.habitat(++h));
+      for (const a of cards) if (a.habitat) numbers.set(a.id, serie.habitat(++h, n));
     }
   }
   return numbers.get(athlete.id) ?? '';

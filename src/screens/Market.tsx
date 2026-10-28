@@ -246,7 +246,7 @@ function BuyTab() {
         case 'price-desc':
           return b.buyNow - a.buyNow;
         case 'number':
-          return collectionNumber(ATHLETES_BY_ID[a.card.athleteId]).localeCompare(collectionNumber(ATHLETES_BY_ID[b.card.athleteId]));
+          return collectionNumber(ATHLETES_BY_ID[a.card.athleteId]).localeCompare(collectionNumber(ATHLETES_BY_ID[b.card.athleteId]), 'fr', { numeric: true });
         default:
           return a.expiresAt - b.expiresAt;
       }

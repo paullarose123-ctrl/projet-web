@@ -253,7 +253,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     prime ? 'is-prime' : '',
     reverse ? 'is-reverse' : '',
     habitat ? 'is-habitat' : '',
-    // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, nom en caractères de bois, pyramide
+    // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, pyramide sur l'horizon
     mexique ? 'serie-2' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',

@@ -78,7 +78,7 @@ function Club() {
     });
     const rank = (g: Group) => rarityOf(ATHLETES_BY_ID[g.cards[0].athleteId]).order * 1000 + (g.cards[0].variant === 'prime' ? 500 : g.cards[0].variant === 'reverse' ? 200 : 0) + rarityScore(ATHLETES_BY_ID[g.cards[0].athleteId]);
     list = list.sort((a, b) => {
-      if (sort === 'number') return collectionNumber(ATHLETES_BY_ID[a.cards[0].athleteId]).localeCompare(collectionNumber(ATHLETES_BY_ID[b.cards[0].athleteId]));
+      if (sort === 'number') return collectionNumber(ATHLETES_BY_ID[a.cards[0].athleteId]).localeCompare(collectionNumber(ATHLETES_BY_ID[b.cards[0].athleteId]), 'fr', { numeric: true });
       if (sort === 'rarity') return rank(b) - rank(a);
       if (sort === 'recent') return Math.max(...b.cards.map((c) => c.obtainedAt)) - Math.max(...a.cards.map((c) => c.obtainedAt));
       return ATHLETES_BY_ID[a.cards[0].athleteId].last.localeCompare(ATHLETES_BY_ID[b.cards[0].athleteId].last, 'fr');
@@ -274,7 +274,7 @@ function Album() {
       // de la plus rare (Icônes, Légendaires) à la plus commune, puis dans l'ordre des numéros de collection
       cards
         .filter((a) => (sport === 'habitats' ? !!a.habitat : a.sport === sport && !a.habitat))
-        .sort((a, b) => rarityOf(b).order - rarityOf(a).order || collectionNumber(a).localeCompare(collectionNumber(b))),
+        .sort((a, b) => rarityOf(b).order - rarityOf(a).order || collectionNumber(a).localeCompare(collectionNumber(b), 'fr', { numeric: true })),
     [sport, cards],
   );
   const owned = athletes.filter((a) => discovered[a.id]).length;
