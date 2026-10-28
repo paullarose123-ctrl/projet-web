@@ -107,7 +107,8 @@ function Frame({ mexique = false }: { mexique?: boolean }) {
   if (mexique) {
     return (
       <svg className="card__frame" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
-        <path className="card__panel" d={`${MX.panel} ${MX.window} ${MX.plate}`} fillRule="evenodd" />
+        {/* la plaque du sous-titre reste pleine, de la couleur du cadre, pour que le texte clair s'y lise */}
+        <path className="card__panel" d={`${MX.panel} ${MX.window}`} fillRule="evenodd" />
         <path className="card__trim" d={MX.panel} />
         <path className="card__trim card__trim--thin" d={MX.thin} />
         <path className="card__trim card__trim--window" d={MX.window} />
