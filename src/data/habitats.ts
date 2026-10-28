@@ -254,7 +254,7 @@ const DEFS_MEXIQUE: Def[] = [
   {
     id: 'mer-de-cortes', name: 'Mer de Cortés', sport: 'marins', country: 'MX', fame: 92,
     lieu: 'Entre la Basse-Californie et le Mexique continental', superficie: '160 000 km²',
-    especes: ['vaquita', 'baleine-grise', 'totoaba', 'calmar-de-humboldt', 'fou-a-pattes-bleues', 'mx-requin-baleine'],
+    especes: ['vaquita', 'baleine-grise', 'crotale-de-santa-catalina', 'calmar-de-humboldt', 'fou-a-pattes-bleues', 'mx-requin-baleine'],
     fact: 'Jacques-Yves Cousteau l’avait surnommée « l’aquarium du monde » : on y croise près d’un tiers des espèces de baleines et de dauphins de la planète.',
     protection: 'Îles et aires protégées du golfe de Californie, patrimoine mondial de l’UNESCO depuis 2005.',
     scene: { kind: 'ocean', creature: 'baleine', palette: { sky: ['#f08a5d', '#ffe2b8'], sun: '#fff6e4', far: '#c97a6a', near: '#0a3550', accent: '#ffffff' } },

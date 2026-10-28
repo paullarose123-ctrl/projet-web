@@ -244,7 +244,7 @@ function pondDesOeufs(e: Encyclo, a: Athlete): boolean {
 /** Oiseaux qui ne volent pas ; et parmi les autres animaux, ceux qui volent vraiment (planer ne compte pas). */
 const OISEAUX_COUREURS = new Set(['manchot-empereur', 'autruche', 'autruche-d-arabie', 'kiwi', 'casoar', 'emeu', 'emeu-de-king-island']);
 const VOLANTS = new Set([
-  'vampire', 'pipistrelle', 'chauve-souris-des-agaves', 'chauve-souris-pecheuse',
+  'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
   'abeille', 'monarque', 'mx-monarque', 'coccinelle', 'moustique', 'dynaste-hercule', 'lucane', 'libellule', 'luciole', 'cigale',
   'frelon', 'frelon-geant', 'criquet-pelerin', 'bourdon', 'morpho', 'guepe', 'goliath', 'melipone', 'bousier', 'mante-religieuse',
   'baronia', 'haricot-sauteur', 'ver-de-maguey',
