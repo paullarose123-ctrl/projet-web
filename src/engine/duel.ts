@@ -136,7 +136,7 @@ const CLASSE_A_PART: Record<string, Classe> = {
   poule: 'oiseau', canard: 'oiseau', oie: 'oiseau', dindon: 'oiseau', pigeon: 'oiseau', perruche: 'oiseau',
   'poisson-rouge': 'poisson', escargot: 'autre', 'ver-a-soie': 'insecte',
   mygale: 'autre', 'mx-mygale': 'autre', scorpion: 'autre', 'veuve-noire': 'autre', epeire: 'autre', 'araignee-paon': 'autre',
-  'mille-pattes': 'autre',
+  'mille-pattes': 'autre', 'scorpion-de-durango': 'autre', 'mygale-a-pattes-de-feu': 'autre',
 };
 
 export function classeOf(a: Athlete): Classe {
@@ -247,6 +247,7 @@ const VOLANTS = new Set([
   'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
   'abeille', 'monarque', 'mx-monarque', 'coccinelle', 'moustique', 'dynaste-hercule', 'lucane', 'libellule', 'luciole', 'cigale',
   'frelon', 'frelon-geant', 'criquet-pelerin', 'bourdon', 'morpho', 'guepe', 'goliath', 'melipone', 'bousier', 'mante-religieuse',
+  'baronia', 'haricot-sauteur', 'ver-de-maguey',
 ]);
 const vole = (a: Athlete) => (classeOf(a) === 'oiseau' ? !OISEAUX_COUREURS.has(a.id) : VOLANTS.has(a.id));
 

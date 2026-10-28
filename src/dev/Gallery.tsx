@@ -34,16 +34,16 @@ export function reviewOrder() {
  */
 export function AllCards({ serie }: { serie?: number }) {
   const cards = serie
-    ? ATHLETES.filter((a) => (a.serie ?? 1) === serie).sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b)))
+    ? ATHLETES.filter((a) => (a.serie ?? 1) === serie).sort((a, b) => collectionNumber(a).localeCompare(collectionNumber(b), 'fr', { numeric: true }))
     : reviewOrder();
-  // après les cartes d'une série : ses versions Prime, et une Reverse par rareté qui en a
+  // après les cartes d'une série : ses versions Prime, puis la Reverse de chaque carte qui en a une (Rares, Épiques,
+  // Légendaires)
   const variants = serie
     ? [
         ...cards.filter((a) => a.prime).map((a) => ({ athleteId: a.id, variant: 'prime' as const })),
-        ...(['rare', 'epique', 'legendaire'] as const).flatMap((id) => {
-          const a = cards.find((c) => !c.habitat && !isIcon(c) && rarityOf(c).id === id);
-          return a ? [{ athleteId: a.id, variant: 'reverse' as const }] : [];
-        }),
+        ...cards
+          .filter((c) => !c.habitat && !isIcon(c) && ['rare', 'epique', 'legendaire'].includes(rarityOf(c).id))
+          .map((a) => ({ athleteId: a.id, variant: 'reverse' as const })),
       ]
     : [];
   return (

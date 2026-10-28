@@ -9,17 +9,19 @@ import './promo.css';
 import { SITE_SCENE } from '../art/scenes';
 import { Card } from '../components/Card';
 import { Logo } from '../components/Logo';
+import { PackArtMexique } from '../components/PackArtMexique';
 import { Landscape } from '../components/PackScene';
 
 // Flyer à imprimer (A4, rendu par scripts/promo/flyer.mjs) : le sous-bois du jeu, cinq vraies cartes en éventail,
-// ce qu'on fait dans le jeu et un QR code vers animalcards.fr (promo/qr-animalcards.svg).
+// l'annonce de la Série 2 · Mexique, ce qu'on fait dans le jeu et un QR code vers animalcards.fr
+// (promo/qr-animalcards.svg, avec ?utm_campaign=flyer pour compter les visites venues du flyer).
 
 const FAN: { id: string; variant: 'base' | 'prime' }[] = [
   { id: 'ara', variant: 'base' },
   { id: 'panda', variant: 'base' },
   { id: 'lion', variant: 'base' },
   { id: 'tigre', variant: 'base' },
-  { id: 'lamantin', variant: 'base' },
+  { id: 'mx-axolotl', variant: 'base' },
 ];
 
 const ICONS: Record<string, ReactNode> = {
@@ -54,6 +56,16 @@ function Flyer() {
         ))}
       </div>
       <h1 className="flyer__title">Collectionne plus de 450 animaux du monde entier&nbsp;!</h1>
+      <div className="flyer__news">
+        <div className="flyer__news-pack">
+          <PackArtMexique />
+        </div>
+        <div>
+          <p className="flyer__news-tag">Nouveau</p>
+          <p className="flyer__news-title">La Série 2 · Mexique vient de sortir&nbsp;!</p>
+          <p className="flyer__news-sub">116 nouvelles cartes : axolotl, jaguar, quetzal, monarque…</p>
+        </div>
+      </div>
       <ul className="flyer__features">
         {FEATURES.map(([icon, title, sub]) => (
           <li key={icon}>
