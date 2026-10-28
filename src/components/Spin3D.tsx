@@ -2,6 +2,9 @@ import { useEffect, useRef, type PointerEvent } from 'react';
 import type { CardFace, OwnedCard } from '../engine/types';
 import { Card, type CardSize } from './Card';
 import { CardBack } from './CardBack';
+import { CardBackMexique } from './CardBackMexique';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { serieOf } from '../engine/series';
 import { sfx } from '../audio/sfx';
 
 // Carte en vrai volume : on la fait tourner sur elle-même au doigt ou à la souris (avec de l'élan),
@@ -18,6 +21,8 @@ interface Spin3DProps {
 }
 
 export function Spin3D({ card, size = 'lg', locked = false }: Spin3DProps) {
+  const athlete = ATHLETES_BY_ID[card.athleteId];
+  const mexique = !!athlete && serieOf(athlete) === 2;
   const stage = useRef<HTMLDivElement>(null);
   const object = useRef<HTMLDivElement>(null);
   const state = useRef({
@@ -153,9 +158,8 @@ export function Spin3D({ card, size = 'lg', locked = false }: Spin3DProps) {
         {Array.from({ length: THICKNESS }, (_, i) => (
           <div key={i} className="spin3d__layer" style={{ transform: `translateZ(${(i - (THICKNESS - 1) / 2) * 0.7}px)` }} />
         ))}
-        <div className="spin3d__face spin3d__back">
-          <CardBack />
-        </div>
+        {/* le dos de la série de la carte (le Mexique pour la Série 2) */}
+        <div className="spin3d__face spin3d__back">{mexique ? <CardBackMexique /> : <CardBack />}</div>
       </div>
       <div className="spin3d__shadow" aria-hidden="true" />
     </div>
