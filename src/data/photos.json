@@ -8,6 +8,19 @@
   "page": "https://pixabay.com/photos/bee-insect-lavender-honey-bee-167789/",
   "v": "e1a5fe98"
  },
+ "abronia": {
+  "file": "abronia.webp",
+  "cutout": false,
+  "author": "Photo (c)2007 Derek Ramsey ( Ram-Man )",
+  "license": "CC BY-SA 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+  "page": "https://commons.wikimedia.org/wiki/File:Arboreal_Alligator_Lizard_Abronia_graminea_2900px.jpg",
+  "brut": [
+   1800,
+   1334
+  ],
+  "v": "7e36118c"
+ },
  "achoque": {
   "file": "achoque.webp",
   "cutout": false,
@@ -69,6 +82,45 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/351768042",
   "v": "aeb1a63a"
+ },
+ "amazone-a-couronne-lilas": {
+  "file": "amazone-a-couronne-lilas.webp",
+  "cutout": false,
+  "author": "CDest",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:Lilac-crowned_Amazon.jpg",
+  "brut": [
+   1800,
+   1800
+  ],
+  "v": "c14c0d6b"
+ },
+ "amazone-a-joues-vertes": {
+  "file": "amazone-a-joues-vertes.webp",
+  "cutout": false,
+  "author": "Glandauer /Roger Moore",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Red_Crowned_Amazon.jpg",
+  "brut": [
+   1317,
+   1667
+  ],
+  "v": "06966f44"
+ },
+ "ameca-papillon": {
+  "file": "ameca-papillon.webp",
+  "cutout": false,
+  "author": "Marie France Janelle",
+  "license": "CC BY-SA 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+  "page": "https://commons.wikimedia.org/wiki/File:Ameca_splendens_male.JPG",
+  "brut": [
+   944,
+   682
+  ],
+  "v": "6924ffd2"
  },
  "anaconda": {
   "file": "anaconda.webp",
@@ -262,6 +314,19 @@
   ],
   "v": "59fb85f5"
  },
+ "baronia": {
+  "file": "baronia.webp",
+  "cutout": false,
+  "author": "Fritz Geller-Grimm",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Baronia_brevicornis_no1_2.jpg",
+  "brut": [
+   1800,
+   1195
+  ],
+  "v": "3d7417cc"
+ },
  "barracuda": {
   "file": "barracuda.webp",
   "cutout": false,
@@ -355,6 +420,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/723881839",
   "v": "6014025a"
+ },
+ "bipes": {
+  "file": "bipes.webp",
+  "cutout": false,
+  "author": "marlin harms",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Bipes_biporus.jpg",
+  "brut": [
+   1050,
+   700
+  ],
+  "v": "1d0ea08a"
  },
  "bison": {
   "file": "bison.webp",
@@ -476,6 +554,32 @@
   "licenseUrl": "https://pixabay.com/fr/service/license-summary/",
   "page": "https://pixabay.com/photos/pike-fish-water-plants-5328779/",
   "v": "7f1360b7"
+ },
+ "brotule-aveugle": {
+  "file": "brotule-aveugle.webp",
+  "cutout": false,
+  "author": "Hectonichus",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Amblyopsidae_-_Typhliasina_pearsei.JPG",
+  "brut": [
+   1340,
+   1007
+  ],
+  "v": "285681fc"
+ },
+ "bruant-de-worthen": {
+  "file": "bruant-de-worthen.webp",
+  "cutout": false,
+  "author": "Annika Lindqvist",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Spizella_wortheni_45825660.jpg",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "4b21d48f"
  },
  "bubale": {
   "file": "bubale.webp",
@@ -811,6 +915,19 @@
   ],
   "v": "aeaf04f8"
  },
+ "chauve-souris-pecheuse": {
+  "file": "chauve-souris-pecheuse.webp",
+  "cutout": false,
+  "author": "Santana SE, Dial TO, Eiting TP, Alfaro ME",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Myotis_vivesi.jpg",
+  "brut": [
+   413,
+   272
+  ],
+  "v": "79eecc43"
+ },
  "cheval": {
   "file": "cheval.webp",
   "cutout": false,
@@ -837,6 +954,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
   "page": "https://commons.wikimedia.org/wiki/File:Athene_cunicularia_-near_Goiania,_Goias,_Brazil-8_edit.jpg",
   "v": "3504eb7e"
+ },
+ "chevechette-du-tamaulipas": {
+  "file": "chevechette-du-tamaulipas.webp",
+  "cutout": false,
+  "author": "Annika Lindqvist",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Glaucidium_sanchezi.jpg",
+  "brut": [
+   500,
+   375
+  ],
+  "v": "92bdfa40"
  },
  "chevre": {
   "file": "chevre.webp",
@@ -922,6 +1052,19 @@
   "licenseUrl": "https://unsplash.com/license",
   "page": "https://unsplash.com/photos/Gy46uFdzdec",
   "v": "068bb2dd"
+ },
+ "cichlide-de-cuatro-cienegas": {
+  "file": "cichlide-de-cuatro-cienegas.webp",
+  "cutout": false,
+  "author": "Tomolyka at Hungarian Wikipedia",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Herichthys_minckleyi.jpg",
+  "brut": [
+   309,
+   233
+  ],
+  "v": "32462b67"
  },
  "cigale": {
   "file": "cigale.webp",
@@ -1030,6 +1173,58 @@
   "page": "https://commons.wikimedia.org/wiki/File:Buff-tailed_coronet_(Boissonneaua_flavescens_flavescens)_Caldas.jpg",
   "v": "9788f209"
  },
+ "colibri-d-elisa": {
+  "file": "colibri-d-elisa.webp",
+  "cutout": false,
+  "author": "Adrianh Martínez Orozco",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Doricha_eliza_109753702.jpg",
+  "brut": [
+   1625,
+   2048
+  ],
+  "v": "b81b80e4"
+ },
+ "colibri-heloise": {
+  "file": "colibri-heloise.webp",
+  "cutout": false,
+  "author": "John Gould",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:MonographTrochi3Goul_0108_bis_(cropped).jpg",
+  "brut": [
+   1678,
+   1595
+  ],
+  "v": "6dd68f31"
+ },
+ "colin-barbu": {
+  "file": "colin-barbu.webp",
+  "cutout": false,
+  "author": "John Gould / Henry Constantine Richter",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:Dendrortyx_barbatus_-_A_monograph_of_the_Odontophorin%C3%A6,_or,_Partridges_of_America.jpg",
+  "brut": [
+   1800,
+   1185
+  ],
+  "v": "090672b0"
+ },
+ "colin-elegant": {
+  "file": "colin-elegant.webp",
+  "cutout": false,
+  "author": "Francisco Farriols Sarabia",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Callipepla_douglasii_75772806.jpg",
+  "brut": [
+   1800,
+   1339
+  ],
+  "v": "c848a6b5"
+ },
  "colobe": {
   "file": "colobe.webp",
   "cutout": false,
@@ -1074,6 +1269,19 @@
   ],
   "v": "ec1125c4"
  },
+ "conure-a-front-brun": {
+  "file": "conure-a-front-brun.webp",
+  "cutout": false,
+  "author": "TJ Lin",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Rhynchopsitta_terrisi_-captive-8a.jpg",
+  "brut": [
+   850,
+   850
+  ],
+  "v": "65542061"
+ },
  "conure-de-caroline": {
   "file": "conure-de-caroline.webp",
   "cutout": false,
@@ -1086,6 +1294,32 @@
    1200
   ],
   "v": "1f17e197"
+ },
+ "conure-de-socorro": {
+  "file": "conure-de-socorro.webp",
+  "cutout": false,
+  "author": "Ignacio March Mifsut",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Psittacara_brevipes.jpg",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "822fba2f"
+ },
+ "coquette-du-guerrero": {
+  "file": "coquette-du-guerrero.webp",
+  "cutout": false,
+  "author": "Andre Sebastian",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Lophornis_brachylophus_Short-crested_coquette;_La_Pintada,_Guerrero,_Mexico.jpg",
+  "brut": [
+   500,
+   375
+  ],
+  "v": "66b13ede"
  },
  "corail": {
   "file": "corail.webp",
@@ -1247,6 +1481,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/63666236",
   "v": "f5529e57"
+ },
+ "crotale-de-santa-catalina": {
+  "file": "crotale-de-santa-catalina.webp",
+  "cutout": false,
+  "author": "Yinan Chen",
+  "license": "Public Domain",
+  "licenseUrl": "https://web.archive.org/web/20230926203737/https://creativecommons.org/licenses/publicdomain/",
+  "page": "https://commons.wikimedia.org/wiki/File:Gfp-santa-cataline-island-rattlesnake.jpg",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "f75b0d5a"
  },
  "crotale-du-mexique": {
   "file": "crotale-du-mexique.webp",
@@ -1426,6 +1673,32 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
   "page": "https://commons.wikimedia.org/wiki/File:Tachyglossus_aculeatus_%E2%80%93_Short-beaked_echidna_%E2%80%93_Kolczatka_australijska.jpg",
   "v": "f701ebe3"
+ },
+ "ecrevisse-naine-de-patzcuaro": {
+  "file": "ecrevisse-naine-de-patzcuaro.webp",
+  "cutout": false,
+  "author": "Tommy Kronkvist",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Cambarellus_patzcuarensis-01.jpg",
+  "brut": [
+   1364,
+   930
+  ],
+  "v": "43f5b4d8"
+ },
+ "ecureuil-a-ventre-roux": {
+  "file": "ecureuil-a-ventre-roux.webp",
+  "cutout": false,
+  "author": "Gerardo Noriega",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Ardilla_gris_mexicana.JPG",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "71ea41ed"
  },
  "ecureuil-roux": {
   "file": "ecureuil-roux.webp",
@@ -1699,6 +1972,45 @@
   "licenseUrl": "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html",
   "page": "https://commons.wikimedia.org/wiki/File:Serengeti_Thomson-Gazelle3.jpg",
   "v": "0081ba6c"
+ },
+ "geai-a-face-noire": {
+  "file": "geai-a-face-noire.webp",
+  "cutout": false,
+  "author": "Ron Knight from Seaford, East Sussex, United Kingdom",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Black-throated_Magpie-Jay_(Calocitta_colliei)_(8079391079)_(cropped).jpg",
+  "brut": [
+   598,
+   598
+  ],
+  "v": "fa0eced5"
+ },
+ "geai-nain": {
+  "file": "geai-nain.webp",
+  "cutout": false,
+  "author": "Dominic Sherony",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Dwarf_Jay_(Cyanolyca_nana).jpg",
+  "brut": [
+   1208,
+   914
+  ],
+  "v": "afb5563b"
+ },
+ "geai-panache": {
+  "file": "geai-panache.webp",
+  "cutout": false,
+  "author": "Ron Knight from Seaford, East Sussex, United Kingdom",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Tufted_Jay.jpg",
+  "brut": [
+   600,
+   600
+  ],
+  "v": "0c530ef3"
  },
  "gecko": {
   "file": "gecko.webp",
@@ -2252,6 +2564,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Bubo_scandiacus_Delta_3.jpg",
   "v": "ddca15c5"
  },
+ "haricot-sauteur": {
+  "file": "haricot-sauteur.webp",
+  "cutout": false,
+  "author": "RichG at English Wikipedia",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:JBmoth001.jpg",
+  "brut": [
+   347,
+   331
+  ],
+  "v": "191201c5"
+ },
  "harpie": {
   "file": "harpie.webp",
   "cutout": false,
@@ -2431,6 +2756,19 @@
   "page": "https://www.inaturalist.org/photos/122416475",
   "v": "00debe84"
  },
+ "junco-de-guadalupe": {
+  "file": "junco-de-guadalupe.webp",
+  "cutout": false,
+  "author": "Pau Aleixandre, Julio Hernández Montoya, Borja Milá",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Junco_insularis_Pau_Aleixandre.jpg",
+  "brut": [
+   1061,
+   861
+  ],
+  "v": "8c32086f"
+ },
  "kangourou": {
   "file": "kangourou.webp",
   "cutout": false,
@@ -2579,6 +2917,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Hydrurga_leptonyx_on_ice.jpg",
   "v": "b7b01ef7"
  },
+ "lezard-cornu-du-plateau": {
+  "file": "lezard-cornu-du-plateau.webp",
+  "cutout": false,
+  "author": "painter from Brockhaus and Efron Encyclopedic Dictionary",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:Brockhaus_and_Efron_Encyclopedic_Dictionary_b49_082-4_(Phrynosoma_orbiculare).jpg",
+  "brut": [
+   758,
+   569
+  ],
+  "v": "f7295b2a"
+ },
  "lezard-vert": {
   "file": "lezard-vert.webp",
   "cutout": false,
@@ -2605,6 +2956,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
   "page": "https://commons.wikimedia.org/wiki/File:Zaj%C4%85c_szarak_na_polu_w_Grocholicach_w_gminie_Sadowie_w_wojew%C3%B3dztwie_%C5%9Bwi%C4%99tokrzyskim,_20260419_0913_5163.jpg",
   "v": "97223ca5"
+ },
+ "lievre-de-tehuantepec": {
+  "file": "lievre-de-tehuantepec.webp",
+  "cutout": false,
+  "author": "tereso30",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Lepus_flavigularis_2.jpg",
+  "brut": [
+   350,
+   350
+  ],
+  "v": "86c69483"
  },
  "limule": {
   "file": "limule.webp",
@@ -2968,6 +3332,19 @@
   "page": "https://www.inaturalist.org/photos/108961003",
   "v": "18718ca3"
  },
+ "mexclapique": {
+  "file": "mexclapique.webp",
+  "cutout": false,
+  "author": "Juan Cruzado Cortés",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Girardinichthys_viviparus_321628.png",
+  "brut": [
+   547,
+   291
+  ],
+  "v": "4e1f6c20"
+ },
  "milan-royal": {
   "file": "milan-royal.webp",
   "cutout": false,
@@ -2995,6 +3372,32 @@
   "page": "https://pixabay.com/photos/sparrow-sperling-house-sparrow-bird-2404824/",
   "v": "bc887f61"
  },
+ "molly-des-sources-soufrees": {
+  "file": "molly-des-sources-soufrees.webp",
+  "cutout": false,
+  "author": "Juliane Lukas",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:School_of_sulphur_mollies.png",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "399aceff"
+ },
+ "molly-voile": {
+  "file": "molly-voile.webp",
+  "cutout": false,
+  "author": "Massysmith",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Poecilia_velifera.jpg",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "a9f83647"
+ },
  "moloch": {
   "file": "moloch.webp",
   "cutout": false,
@@ -3012,6 +3415,32 @@
   "licenseUrl": "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html",
   "page": "https://commons.wikimedia.org/wiki/File:Monarch_Butterfly_Pink_Zinnia_1800px.jpg",
   "v": "0fbedea4"
+ },
+ "moqueur-bleu": {
+  "file": "moqueur-bleu.webp",
+  "cutout": false,
+  "author": "Martín Márquez",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Melanotis_caerulescens_-_Victoria.jpg",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "211d455d"
+ },
+ "moqueur-de-socorro": {
+  "file": "moqueur-de-socorro.webp",
+  "cutout": false,
+  "author": "Eveha , via Totodu74",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Mimus_graysoni_(Museum_de_Gen%C3%A8ve).jpg",
+  "brut": [
+   980,
+   764
+  ],
+  "v": "fe915939"
  },
  "morpho": {
   "file": "morpho.webp",
@@ -3258,6 +3687,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Brachypelma_smithi_2009_G09.jpg",
   "v": "794435b0"
  },
+ "mygale-a-pattes-de-feu": {
+  "file": "mygale-a-pattes-de-feu.webp",
+  "cutout": false,
+  "author": "Original uploader was Algirdas at lt.wikipedia",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Brachypelma_sp.,_2006-12-02.jpg",
+  "brut": [
+   965,
+   1057
+  ],
+  "v": "268a999e"
+ },
  "narval": {
   "file": "narval.webp",
   "cutout": false,
@@ -3374,6 +3816,19 @@
   "licenseUrl": "https://pixabay.com/fr/service/license-summary/",
   "page": "https://pixabay.com/photos/sea-lion-sea-park-fauna-mamals-1521993/",
   "v": "e396355d"
+ },
+ "otarie-de-guadalupe": {
+  "file": "otarie-de-guadalupe.webp",
+  "cutout": false,
+  "author": "Auteur inconnu",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:Arctocephalus_townsendi.jpg",
+  "brut": [
+   600,
+   405
+  ],
+  "v": "56c19f34"
  },
  "otocyon": {
   "file": "otocyon.webp",
@@ -3591,6 +4046,32 @@
   "page": "https://commons.wikimedia.org/wiki/File:Vermivora_bachmanii.jpg",
   "v": "50f7246d"
  },
+ "paruline-rouge": {
+  "file": "paruline-rouge.webp",
+  "cutout": false,
+  "author": "Forest Botial-Jarvis",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Cardellina_rubra_-_Forest_Botial-Jarvis_-_665345143.jpeg",
+  "brut": [
+   1800,
+   1309
+  ],
+  "v": "bc8d7690"
+ },
+ "passerin-arc-en-ciel": {
+  "file": "passerin-arc-en-ciel.webp",
+  "cutout": false,
+  "author": "Kurt Bauschardt",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Passerina_leclancherii_by_Kurt_Bauschardt_(cropped).jpg",
+  "brut": [
+   786,
+   502
+  ],
+  "v": "b8a7c579"
+ },
  "pastenague": {
   "file": "pastenague.webp",
   "cutout": false,
@@ -3640,6 +4121,19 @@
   "page": "https://pixabay.com/photos/budgerigars-fence-post-desert-10407090/",
   "v": "52e1f57c"
  },
+ "petit-duc-du-balsas": {
+  "file": "petit-duc-du-balsas.webp",
+  "cutout": false,
+  "author": "biolsamuel",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Megascops_seductus_99384227.jpg",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "606e4eb0"
+ },
  "petite-roussette": {
   "file": "petite-roussette.webp",
   "cutout": false,
@@ -3648,6 +4142,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/431068031",
   "v": "331690a8"
+ },
+ "petrel-de-guadalupe": {
+  "file": "petrel-de-guadalupe.webp",
+  "cutout": false,
+  "author": "depiction by John Gerrard Keulemans from 'Monograph of the Petrels' by Frederick Godman fr",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:Oceanodroma.macrodactyla.jpg",
+  "brut": [
+   1560,
+   1122
+  ],
+  "v": "9bfa5d8c"
  },
  "phacochere": {
   "file": "phacochere.webp",
@@ -3724,6 +4231,19 @@
   "licenseUrl": "",
   "page": "https://commons.wikimedia.org/wiki/File:Portuguese_Man-O-War_(Physalia_physalis).jpg",
   "v": "8e834856"
+ },
+ "pic-elegant": {
+  "file": "pic-elegant.webp",
+  "cutout": false,
+  "author": "dominic sherony , cropped by User:Sadalmelik",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Golden-cheeked_Woodpecker_crop.jpg",
+  "brut": [
+   472,
+   590
+  ],
+  "v": "0cd36280"
  },
  "pic-vert": {
   "file": "pic-vert.webp",
@@ -3823,6 +4343,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
   "page": "https://commons.wikimedia.org/wiki/File:Anemone_purple_anemonefish.jpg",
   "v": "bccdb057"
+ },
+ "poisson-de-tequila": {
+  "file": "poisson-de-tequila.webp",
+  "cutout": false,
+  "author": "Cedricguppy - Loury Cédric",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Zoogoneticus_tequila_-_PorteDoreeParis_29.JPG",
+  "brut": [
+   1800,
+   1014
+  ],
+  "v": "4ad1cabe"
  },
  "poisson-lune": {
   "file": "poisson-lune.webp",
@@ -3927,6 +4460,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Dumbo-hires.jpg",
   "v": "3ea5d760"
  },
+ "poulpe-maya": {
+  "file": "poulpe-maya.webp",
+  "cutout": false,
+  "author": "Jim",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "page": "https://commons.wikimedia.org/wiki/File:Octopus_maya.jpg",
+  "brut": [
+   540,
+   643
+  ],
+  "v": "3268d1ee"
+ },
  "protee": {
   "file": "protee.webp",
   "cutout": false,
@@ -3953,6 +4499,19 @@
   "licenseUrl": "https://pixabay.com/fr/service/license-summary/",
   "page": "https://pixabay.com/photos/flea-siphonaptera-insect-parasite-63043/",
   "v": "f2c5e9e1"
+ },
+ "puffin-de-townsend": {
+  "file": "puffin-de-townsend.webp",
+  "cutout": false,
+  "author": "Don Faulkner",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Townsends_Shearwater_(4684878289).jpg",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "8fedcfbb"
  },
  "puma": {
   "file": "puma.webp",
@@ -4057,6 +4616,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Ecnomiohyla_rabborum.jpg",
   "v": "3b3693ac"
  },
+ "rainette-geante-du-mexique": {
+  "file": "rainette-geante-du-mexique.webp",
+  "cutout": false,
+  "author": "Sergiocastro",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Agalychnis_Dacnicolor.jpg",
+  "brut": [
+   720,
+   480
+  ],
+  "v": "383477bb"
+ },
  "rainette-verte": {
   "file": "rainette-verte.webp",
   "cutout": false,
@@ -4074,6 +4646,19 @@
   "licenseUrl": "https://pixabay.com/fr/service/license-summary/",
   "page": "https://pixabay.com/photos/rodent-rat-rats-nature-animal-10079153/",
   "v": "b09a2c13"
+ },
+ "rat-kangourou-de-phillips": {
+  "file": "rat-kangourou-de-phillips.webp",
+  "cutout": false,
+  "author": "Juan Cruzado Cortés",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Dipodomys_phillipsii_perotensis_4697582.jpg",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "f7c9f2d8"
  },
  "rat-taupe-nu": {
   "file": "rat-taupe-nu.webp",
@@ -4101,6 +4686,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
   "page": "https://commons.wikimedia.org/wiki/File:Racoon_clinging_to_a_tree.JPG",
   "v": "41ea897b"
+ },
+ "raton-laveur-de-cozumel": {
+  "file": "raton-laveur-de-cozumel.webp",
+  "cutout": false,
+  "author": "Juan Cruzado Cortés",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Procyon_pygmaeus_68285864_(cropped).jpg",
+  "brut": [
+   1428,
+   952
+  ],
+  "v": "535d9824"
  },
  "renard-polaire": {
   "file": "renard-polaire.webp",
@@ -4353,6 +4951,32 @@
   "page": "https://www.inaturalist.org/photos/186036678",
   "v": "c4b436e9"
  },
+ "salamandre-d-alchichica": {
+  "file": "salamandre-d-alchichica.webp",
+  "cutout": false,
+  "author": "Ruth Percino Daniel",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Ambystoma_taylori.jpeg",
+  "brut": [
+   683,
+   512
+  ],
+  "v": "c4e43d99"
+ },
+ "salamandre-de-bell": {
+  "file": "salamandre-de-bell.webp",
+  "cutout": false,
+  "author": "Sillytreespirit",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:P._bellii.jpg",
+  "brut": [
+   1800,
+   957
+  ],
+  "v": "c6a0ee5d"
+ },
  "salamandre-geante": {
   "file": "salamandre-geante.webp",
   "cutout": false,
@@ -4397,6 +5021,19 @@
   "licenseUrl": "https://unsplash.com/license",
   "page": "https://unsplash.com/photos/3CETwKAWY_U",
   "v": "766d352d"
+ },
+ "scorpion-de-durango": {
+  "file": "scorpion-de-durango.webp",
+  "cutout": false,
+  "author": "Drini (Pedro Sánchez)",
+  "license": "CC BY 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+  "page": "https://commons.wikimedia.org/wiki/File:Centruroides_suffusus.jpg",
+  "brut": [
+   1298,
+   827
+  ],
+  "v": "4b7b036a"
  },
  "seiche": {
   "file": "seiche.webp",
@@ -4473,6 +5110,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
   "page": "https://commons.wikimedia.org/wiki/File:Maus_au%C3%9Fer_Haus.JPG",
   "v": "50193e3e"
+ },
+ "souris-des-volcans": {
+  "file": "souris-des-volcans.webp",
+  "cutout": false,
+  "author": "(c) Juan Cruzado Cortés, some rights reserved (CC BY-SA)",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Mexican_volcano_mouse_imported_from_iNaturalist_photo_70082694_on_18_April_2022.jpg",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "e78911c0"
  },
  "springbok": {
   "file": "springbok.webp",
@@ -4657,6 +5307,19 @@
   "page": "https://commons.wikimedia.org/wiki/File:Alligator_Snapping_Turtle_(Macrochelys_temminckii)_(35856633000).jpg",
   "v": "445c89b3"
  },
+ "tortue-boite-de-coahuila": {
+  "file": "tortue-boite-de-coahuila.webp",
+  "cutout": false,
+  "author": "User:Postdlf",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Terrapene_coahuila_at_the_Columbus_Zoo-2011_07_11_IMG_0667.JPG",
+  "brut": [
+   1800,
+   2692
+  ],
+  "v": "ca10a852"
+ },
  "tortue-d-hermann": {
   "file": "tortue-d-hermann.webp",
   "cutout": false,
@@ -4687,6 +5350,19 @@
   "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
   "page": "https://commons.wikimedia.org/wiki/File:Lonesome_George_(2009).jpg",
   "v": "9cbb2a6b"
+ },
+ "tortue-du-bolson": {
+  "file": "tortue-du-bolson.webp",
+  "cutout": false,
+  "author": "Mbtrap",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Itzelbolson1small.jpg",
+  "brut": [
+   1800,
+   1350
+  ],
+  "v": "9a93bf3d"
  },
  "tortue-geante": {
   "file": "tortue-geante.webp",
@@ -4754,6 +5430,19 @@
   ],
   "v": "fa3ce368"
  },
+ "toui-du-mexique": {
+  "file": "toui-du-mexique.webp",
+  "cutout": false,
+  "author": "Ron Knight from Seaford, East Sussex, United Kingdom",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Mexican_Parrotlet_(Forpus_cyanopygius)_(8079380755).jpg",
+  "brut": [
+   960,
+   641
+  ],
+  "v": "3fd1ab96"
+ },
  "triton-crete": {
   "file": "triton-crete.webp",
   "cutout": false,
@@ -4762,6 +5451,32 @@
   "licenseUrl": "",
   "page": "https://commons.wikimedia.org/wiki/File:Kammmolchmaennchen.jpg",
   "v": "43a40fd1"
+ },
+ "troglodyte-du-yucatan": {
+  "file": "troglodyte-du-yucatan.webp",
+  "cutout": false,
+  "author": "Juan Cruzado Cortés",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Campylorhynchus_yucatanicus_186161019.jpg",
+  "brut": [
+   1647,
+   1235
+  ],
+  "v": "232ededd"
+ },
+ "trogon-citrin": {
+  "file": "trogon-citrin.webp",
+  "cutout": false,
+  "author": "Citreoline_Trogan.jpg : dominic sherony derivative work: Berichard ( talk )",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Trogon_citreolus_1.jpg",
+  "brut": [
+   1096,
+   1632
+  ],
+  "v": "73bdd03e"
  },
  "tuatara": {
   "file": "tuatara.webp",
@@ -4820,6 +5535,19 @@
   "licenseUrl": "https://pixabay.com/fr/service/license-summary/",
   "page": "https://pixabay.com/photos/silkworm-mulberry-silk-insect-worm-5370807/",
   "v": "55fdbc7e"
+ },
+ "ver-de-maguey": {
+  "file": "ver-de-maguey.webp",
+  "cutout": false,
+  "author": "Adalbert Seitz",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:HesperiarisMaleFromSeitz1924.jpg",
+  "brut": [
+   660,
+   331
+  ],
+  "v": "ee74159c"
  },
  "veuve-noire": {
   "file": "veuve-noire.webp",

@@ -1805,6 +1805,11 @@
       ],
       "miroir": true
     },
+    "puffin-de-townsend": [
+      0.49,
+      0.46,
+      2.6
+    ],
     "pygargue": {
       "corps": [
         0.3,
@@ -2260,6 +2265,11 @@
       ],
       "miroir": true
     },
+    "tortue-du-bolson": [
+      0.64,
+      0.66,
+      1.35
+    ],
     "toucan": {
       "corps": [
         0.05,
@@ -2268,6 +2278,11 @@
         0.98
       ]
     },
+    "toui-du-mexique": [
+      0.48,
+      0.5,
+      1.5
+    ],
     "triton-crete": {
       "cadre": [
         0.7,

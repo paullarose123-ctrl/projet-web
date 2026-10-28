@@ -136,7 +136,7 @@ const CLASSE_A_PART: Record<string, Classe> = {
   poule: 'oiseau', canard: 'oiseau', oie: 'oiseau', dindon: 'oiseau', pigeon: 'oiseau', perruche: 'oiseau',
   'poisson-rouge': 'poisson', escargot: 'autre', 'ver-a-soie': 'insecte',
   mygale: 'autre', 'mx-mygale': 'autre', scorpion: 'autre', 'veuve-noire': 'autre', epeire: 'autre', 'araignee-paon': 'autre',
-  'mille-pattes': 'autre',
+  'mille-pattes': 'autre', 'scorpion-de-durango': 'autre', 'mygale-a-pattes-de-feu': 'autre',
 };
 
 export function classeOf(a: Athlete): Classe {
@@ -244,9 +244,10 @@ function pondDesOeufs(e: Encyclo, a: Athlete): boolean {
 /** Oiseaux qui ne volent pas ; et parmi les autres animaux, ceux qui volent vraiment (planer ne compte pas). */
 const OISEAUX_COUREURS = new Set(['manchot-empereur', 'autruche', 'autruche-d-arabie', 'kiwi', 'casoar', 'emeu', 'emeu-de-king-island']);
 const VOLANTS = new Set([
-  'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
+  'vampire', 'pipistrelle', 'chauve-souris-des-agaves', 'chauve-souris-pecheuse',
   'abeille', 'monarque', 'mx-monarque', 'coccinelle', 'moustique', 'dynaste-hercule', 'lucane', 'libellule', 'luciole', 'cigale',
   'frelon', 'frelon-geant', 'criquet-pelerin', 'bourdon', 'morpho', 'guepe', 'goliath', 'melipone', 'bousier', 'mante-religieuse',
+  'baronia', 'haricot-sauteur', 'ver-de-maguey',
 ]);
 const vole = (a: Athlete) => (classeOf(a) === 'oiseau' ? !OISEAUX_COUREURS.has(a.id) : VOLANTS.has(a.id));
 

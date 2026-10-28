@@ -24,11 +24,11 @@ describe('Série 2 · Mexique', () => {
   };
   const PAID = [...SHOP_PACKS, sportPack('felins', SPORTS.felins.name)];
 
-  it('compte une soixantaine de cartes : espèces, Icônes et Habitats', () => {
+  it('compte 116 cartes : espèces, Icônes et Habitats', () => {
     const cards = cardsOfSerie(2);
-    expect(cards.length).toBe(60);
+    expect(cards.length).toBe(116);
     expect(cards.filter((a) => a.habitat).length).toBe(6);
-    expect(cards.filter((a) => a.retired && !a.habitat).length).toBe(5);
+    expect(cards.filter((a) => a.retired && !a.habitat).length).toBe(6);
     expect(new Set(ATHLETES.map((a) => a.id)).size).toBe(ATHLETES.length);
   });
 
@@ -68,7 +68,7 @@ describe('Série 2 · Mexique', () => {
     expect(freePackOf(2, OCT_31)).toBe(FREE_PACK);
     expect(freePackOf(2, NOV_1)).toBe(FREE_PACK_MEXIQUE);
     expect(releasedAthletes(OCT_31).some((a) => serieOf(a) === 2)).toBe(false);
-    expect(releasedAthletes(NOV_1).filter((a) => serieOf(a) === 2).length).toBe(60);
+    expect(releasedAthletes(NOV_1).filter((a) => serieOf(a) === 2).length).toBe(116);
     const before = createMarket(OCT_31, mulberry32(3));
     expect(before.listings.every((l) => serieOf(ATHLETES_BY_ID[l.card.athleteId]) === 1)).toBe(true);
   });

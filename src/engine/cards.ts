@@ -231,7 +231,7 @@ export function collectionNumber(athlete: Athlete): string {
     numbers = new Map();
     const series: Array<{ number: number; species: (n: number) => string; habitat: (n: number) => string }> = [
       { number: 1, species: (n) => String(n).padStart(3, '0'), habitat: (n) => `H${String(n).padStart(2, '0')}` },
-      { number: 2, species: (n) => `M${String(n).padStart(2, '0')}`, habitat: (n) => `MH${n}` },
+      { number: 2, species: (n) => `M${String(n).padStart(3, '0')}`, habitat: (n) => `MH${n}` },
     ];
     for (const serie of series) {
       const cards = ATHLETES.filter((a) => (a.serie ?? 1) === serie.number);
