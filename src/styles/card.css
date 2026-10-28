@@ -1264,41 +1264,32 @@
   --trim: #ffd56b;
 }
 
-/* Prime du Mexique : les trois bandes du drapeau (vert, blanc, rouge) semées de paillettes, cadre vert profond */
-.card.serie-2.is-prime {
-  --foil:
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.9) 0 0.05em, transparent 0.12em) 0 0 / 1.3em 1.7em,
-    radial-gradient(circle at 70% 60%, rgba(255, 236, 170, 0.8) 0 0.05em, transparent 0.1em) 0 0 / 0.9em 1.1em,
-    linear-gradient(90deg, #0b7a4b 0%, #13965c 30%, #f7f5ee 36%, #ffffff 50%, #f7f5ee 64%, #d8283c 70%, #b5132a 100%);
-  --panel: #0c3a28;
-  --trim: #f4efe0;
-  --metal: linear-gradient(180deg, #ffffff 0%, #f1fbf5 50%, #ffe1e4 100%);
-  --metal-edge: #062016;
-  --plate-ink: #0c3a28;
-  --tier-bg: linear-gradient(90deg, #0b7a4b 0 33%, #ffffff 33% 67%, #d8283c 67%);
-  --tier-ink: #0c3a28;
-  --hill-far: #145c3e;
-  --hill-near: #0f4a32;
-  --greca: rgba(255, 255, 255, 0.55);
-}
-
-.serie-2.is-prime .card__tier i {
-  background: none;
-  color: #0c3a28;
-  text-shadow: 0 0 0.25em #ffffff, 0 0 0.12em #ffffff;
+/* Prime du Mexique : la carte garde son cadre de Prime ; seul le voile irisé posé sur la photo (et le reflet qui
+   glisse dessus) prend le vert, le blanc et le rouge du drapeau, au lieu du rose, de la menthe et de la pervenche */
+.serie-2.is-prime.has-photo .card__window::after {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 0.05em, transparent 0.12em) 0 0 / 0.6em 0.8em,
+    repeating-radial-gradient(ellipse at 15% 115%, rgba(255, 255, 255, 0.3) 0 0.1em, transparent 0.1em 1.1em),
+    repeating-linear-gradient(125deg, #b4e6c8 0 2.2em, #ffffff 2.2em 4.4em, #f6bcc2 4.4em 6.6em);
 }
 
 .serie-2.is-prime .card__scene {
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.35) 0 0.06em, transparent 0.14em) 0 0 / 0.7em 0.9em,
-    linear-gradient(90deg, #0b7a4b 0 33%, #f4f1e8 33% 67%, #c8233a 67%);
+    repeating-linear-gradient(135deg, #a9dcbd 0 1.6em, #f6f4ee 1.6em 3.4em, #f0b3b9 3.4em 5em);
 }
 
-.serie-2.is-prime.has-photo .card__window::after {
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 0.05em, transparent 0.12em) 0 0 / 0.6em 0.8em,
-    linear-gradient(90deg, rgba(11, 122, 75, 0.9) 0 30%, rgba(255, 255, 255, 0.6) 40% 60%, rgba(216, 40, 60, 0.9) 70%);
-  opacity: 0.55;
+.serie-2.is-prime .card__holo {
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(40, 170, 100, 0) 0%,
+    rgba(40, 170, 100, 0.45) 9%,
+    rgba(255, 255, 255, 0.45) 18%,
+    rgba(230, 60, 75, 0.45) 27%,
+    rgba(230, 60, 75, 0) 36%
+  );
+  background-size: 260% 260%;
+  background-position: var(--mx, 50%) var(--my, 50%);
 }
 
 .card.serie-2 .card__hills::before {
