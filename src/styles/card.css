@@ -1252,15 +1252,15 @@
   --plate-ink: #241a52;
 }
 
-/* la Légendaire garde les couleurs franches de son crépuscule (les autres raretés sont en pastel) : violet, corail et
-   soleil, avec une frise et des liserés d'or qui la distinguent tout de suite d'une Rare */
+/* la Légendaire du Mexique : un miroir d'obsidienne, la pierre noire des Aztèques, avec ses reflets irisés, semé
+   de paillettes d'or ; frise et liserés dorés. Rien à voir avec le corail pastel des Rares. */
 .card.serie-2.r-legendaire:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
-    radial-gradient(circle, rgba(255, 244, 200, 0.9) 0 0.04em, transparent 0.1em) 0 0 / 1.1em 1.3em,
-    radial-gradient(42% 20% at 50% 96%, rgba(255, 230, 140, 0.95), transparent 70%),
-    conic-gradient(from 210deg at 35% 30%, rgba(255, 90, 180, 0.22), rgba(255, 230, 90, 0.2), rgba(90, 255, 190, 0.18), rgba(90, 170, 255, 0.22), rgba(200, 90, 255, 0.2), rgba(255, 90, 180, 0.22)),
-    linear-gradient(172deg, #3b1f73 0%, #8f3a86 30%, #e2566a 58%, #ff9f4a 82%, #ffd166 100%);
-  --greca: rgba(255, 214, 120, 0.9);
+    radial-gradient(circle, rgba(255, 224, 140, 0.95) 0 0.04em, transparent 0.1em) 0 0 / 1.1em 1.3em,
+    radial-gradient(circle at 60% 40%, rgba(255, 240, 200, 0.7) 0 0.03em, transparent 0.08em) 0 0 / 0.7em 0.9em,
+    conic-gradient(from 200deg at 30% 25%, rgba(255, 90, 180, 0.28), rgba(255, 220, 90, 0.24), rgba(90, 255, 190, 0.22), rgba(90, 170, 255, 0.28), rgba(200, 90, 255, 0.24), rgba(255, 90, 180, 0.28)),
+    linear-gradient(172deg, #1d1626 0%, #2e2238 38%, #17121e 68%, #3b2c17 100%);
+  --greca: rgba(255, 208, 104, 0.95);
   --trim: #ffd56b;
 }
 
@@ -1270,13 +1270,13 @@
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 0.05em, transparent 0.12em) 0 0 / 0.6em 0.8em,
     repeating-radial-gradient(ellipse at 15% 115%, rgba(255, 255, 255, 0.3) 0 0.1em, transparent 0.1em 1.1em),
-    repeating-linear-gradient(125deg, #b4e6c8 0 2.2em, #ffffff 2.2em 4.4em, #f6bcc2 4.4em 6.6em);
+    repeating-linear-gradient(125deg, #6cc898 0 2.2em, #ffffff 2.2em 4.4em, #f07c88 4.4em 6.6em);
 }
 
 .serie-2.is-prime .card__scene {
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.35) 0 0.06em, transparent 0.14em) 0 0 / 0.7em 0.9em,
-    repeating-linear-gradient(135deg, #a9dcbd 0 1.6em, #f6f4ee 1.6em 3.4em, #f0b3b9 3.4em 5em);
+    repeating-linear-gradient(135deg, #74c79c 0 1.6em, #f6f4ee 1.6em 3.4em, #ec8590 3.4em 5em);
 }
 
 .serie-2.is-prime .card__holo {
