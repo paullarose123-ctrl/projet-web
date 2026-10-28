@@ -73,8 +73,22 @@ export const PREHISTOIRE_REMPLACEE: Record<string, string> = {
   deinosuchus: 'emeu-de-king-island',
 };
 
+/**
+ * Espèces de la Série 2 (Mexique) remplacées avant sa sortie, faute de vraie photo libre → espèce de la même famille
+ * et, pour l'Icône, Icône (sauvegardes < v11 de la page d'aperçu : la série n'était pas sortie sur le site public).
+ */
+export const SERIE2_REMPLACEES: Record<string, string> = {
+  totoaba: 'xenotoca-a-queue-rouge',
+  'fourmi-a-escamoles': 'ver-de-maguey',
+  'quiscale-a-bec-fin': 'skiffia-dore',
+};
+
+/** Retirés du jeu puis revenus : le phoque moine des Caraïbes est redevenu une Icône, dans la Série 2. */
+const REVENUS = new Set(['phoque-moine-des-caraibes']);
+
 /** Identifiant actuel d'une carte qui a pu être enregistrée avant un remplacement. */
 export function currentAthleteId(id: string): string {
-  const next = PREHISTOIRE_REMPLACEE[id] ?? ICONES_REMPLACEES[id] ?? id;
-  return ICONES_RETIREES[next] ?? next;
+  const next = PREHISTOIRE_REMPLACEE[id] ?? (REVENUS.has(id) ? undefined : ICONES_REMPLACEES[id]) ?? id;
+  const icon = ICONES_RETIREES[next] ?? next;
+  return SERIE2_REMPLACEES[icon] ?? icon;
 }

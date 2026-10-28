@@ -86,6 +86,11 @@ describe('boosters', () => {
     expect(currentFace({ athleteId: 'coccinelle', variant: 'reverse' }).variant).toBe('base');
     expect(currentFace({ athleteId: 'tigre', variant: 'reverse' }).variant).toBe('reverse');
     expect(currentFace({ athleteId: 't-rex', variant: 'prime' })).toEqual({ athleteId: 'lion-de-l-atlas', variant: 'base' });
+    // le phoque moine des Caraïbes, revenu en Icône de la Série 2, reste lui-même ; les espèces retirées de la Série 2
+    // avant sa sortie deviennent leur remplaçante
+    expect(currentFace({ athleteId: 'phoque-moine-des-caraibes', variant: 'base' }).athleteId).toBe('phoque-moine-des-caraibes');
+    expect(currentFace({ athleteId: 'quiscale-a-bec-fin', variant: 'base' }).athleteId).toBe('skiffia-dore');
+    expect(currentFace({ athleteId: 'totoaba', variant: 'base' }).athleteId).toBe('xenotoca-a-queue-rouge');
     const zebre = ATHLETES_BY_ID.zebre;
     expect(baseValueOf(zebre, 'reverse')).toBeGreaterThan(baseValueOf(zebre));
   });
