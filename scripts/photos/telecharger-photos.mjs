@@ -41,7 +41,9 @@ const RECHERCHE = readJson('./recherche.json');
  * Photo choisie à la main : un nom de fichier Commons, ou { fichier, recadrage: [x, y, largeur, hauteur] } en fractions
  * de l'image, ou une image hors Commons { url, page, auteur } (Pixabay, licence Pixabay : réutilisation libre).
  * Options : "rotation" (degrés, après le recadrage) ; "fond" { url, page, auteur } = un paysage Pixabay sur lequel
- * l'animal est posé, détouré selon "detourer" : "alpha" (PNG déjà transparent), "blanc" ou "noir" (fond uni retiré).
+ * l'animal est posé, détouré selon "detourer" : "alpha" (PNG déjà transparent), "blanc" ou "noir" (fond uni retiré) ;
+ * ou "fond" { "genere": "eau" } = pleine eau dessinée par le script (bleu, rayons de soleil, particules), où l'animal
+ * nage au milieu de l'image, sans ombre au sol (cétacés connus seulement par une illustration).
  */
 const PIXABAY_LICENSE = { license: 'Licence Pixabay', licenseUrl: 'https://pixabay.com/fr/service/license-summary/' };
 const choiceOf = (id) => {
@@ -61,15 +63,50 @@ const choiceOf = (id) => {
  * Pose un animal détouré sur un paysage (image 1200 × 1600, au format des cartes) : fond légèrement flou, animal
  * entier posé au sol aux deux tiers du bas, ombre douce sous ses pattes, luminosité accordée au paysage.
  */
+/** Pleine eau dessinée (1200 × 1600) : dégradé turquoise vers le bleu profond, rayons de soleil, particules. */
+function drawnWater(W, H) {
+  let seed = 7;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const rays = Array.from({ length: 9 }, (_, k) => {
+    const x = W * (0.08 + k * 0.11 + rand() * 0.05);
+    const spread = W * (0.05 + rand() * 0.06);
+    const lean = W * (0.12 + rand() * 0.1);
+    return `<polygon points="${x - 10},0 ${x + 26},0 ${x + lean + spread},${H} ${x + lean - spread},${H}" fill="url(#ray)" opacity="${(0.35 + rand() * 0.4).toFixed(2)}"/>`;
+  }).join('');
+  const motes = Array.from({ length: 140 }, () => {
+    const y = rand() * H;
+    return `<circle cx="${(rand() * W).toFixed(0)}" cy="${y.toFixed(0)}" r="${(1 + rand() * 2.6).toFixed(1)}" fill="#fff" opacity="${(0.12 + rand() * 0.35 * (1 - y / H)).toFixed(2)}"/>`;
+  }).join('');
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
+      '<defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#c9f1f6"/><stop offset="0.14" stop-color="#6fd0e6"/><stop offset="0.45" stop-color="#1f9bcf"/>' +
+      '<stop offset="0.78" stop-color="#0e6aa6"/><stop offset="1" stop-color="#0a4a7e"/></linearGradient>' +
+      '<linearGradient id="ray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/>' +
+      '<stop offset="0.7" stop-color="#fff" stop-opacity="0.06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<radialGradient id="sun" cx="0.38" cy="0" r="0.6"><stop offset="0" stop-color="#fff" stop-opacity="0.75"/>' +
+      '<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+      '<filter id="soft"><feGaussianBlur stdDeviation="14"/></filter><filter id="mote"><feGaussianBlur stdDeviation="0.8"/></filter></defs>' +
+      `<rect width="${W}" height="${H}" fill="url(#sea)"/><rect width="${W}" height="${H * 0.5}" fill="url(#sun)"/>` +
+      `<g filter="url(#soft)">${rays}</g><g filter="url(#mote)">${motes}</g></svg>`,
+  );
+}
+
 async function composeOnLandscape(animalBuffer, fond, detourer = 'alpha') {
   const [W, H] = [1200, 1600];
-  const response = await request(fond.url);
-  if (!response) throw new Error(`décor introuvable : ${fond.url}`);
-  const landscape = await sharp(Buffer.from(await response.arrayBuffer()))
-    .rotate()
-    .resize(W, H, { fit: 'cover', position: 'centre' })
-    .blur(1.6)
-    .toBuffer();
+  const water = fond.genere === 'eau';
+  let landscape;
+  if (water) {
+    landscape = await sharp(drawnWater(W, H)).png().toBuffer();
+  } else {
+    const response = await request(fond.url);
+    if (!response) throw new Error(`décor introuvable : ${fond.url}`);
+    landscape = await sharp(Buffer.from(await response.arrayBuffer()))
+      .rotate()
+      .resize(W, H, { fit: 'cover', position: 'centre' })
+      .blur(1.6)
+      .toBuffer();
+  }
   const { channels: bgStats } = await sharp(landscape).stats();
   const bgLum = (0.3 * bgStats[0].mean + 0.59 * bgStats[1].mean + 0.11 * bgStats[2].mean) / 255;
 
@@ -152,9 +189,18 @@ async function composeOnLandscape(animalBuffer, fond, detourer = 'alpha') {
   const scale = Math.min((0.88 * W) / aw, (0.58 * H) / ah);
   const [sw, sh] = [Math.round(aw * scale), Math.round(ah * scale)];
   const left = Math.round((W - sw) / 2);
-  const top = Math.round(0.84 * H - sh);
+  // en pleine eau, l'animal nage un peu au-dessus du milieu ; sinon il se tient au sol
+  const top = water ? Math.round(0.47 * H - sh / 2) : Math.round(0.84 * H - sh);
   const brightness = Math.min(1.12, Math.max(0.88, 1 + (bgLum - lumSum / lumN) * 0.35));
   const animal = await sharp(cut).resize(sw, sh).modulate({ brightness }).png().toBuffer();
+  if (water) {
+    // un voile bleuté et les rayons par-dessus fondent l'animal dans l'eau
+    const haze = Buffer.from(`<svg width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#1f8fc4" fill-opacity="0.14"/></svg>`);
+    return sharp(landscape)
+      .composite([{ input: animal, left, top }, { input: haze }])
+      .jpeg({ quality: 92 })
+      .toBuffer();
+  }
   const shadow = Buffer.from(
     `<svg width="${W}" height="${H}"><defs><filter id="f"><feGaussianBlur stdDeviation="${Math.round(sh * 0.035) + 6}"/></filter></defs>` +
       `<ellipse cx="${W / 2}" cy="${top + sh - sh * 0.015}" rx="${sw * 0.42}" ry="${Math.max(10, sh * 0.045)}" fill="#000" fill-opacity="0.5" filter="url(#f)"/></svg>`,
@@ -474,7 +520,11 @@ async function download() {
           if (rotation) image = sharp(await image.rotate(rotation).toBuffer());
           if (fond) image = sharp(await composeOnLandscape(await image.png().toBuffer(), fond, detourer));
           await image.resize({ width: 1800, withoutEnlargement: true }).jpeg({ quality: 90 }).toFile(join(RAW_DIR, `${animal.id}.jpg`));
-          const credit = fond ? { author: `${info.author} ; décor : ${fond.auteur}`, license: `${info.license} ; décor : Licence Pixabay` } : {};
+          const credit = !fond
+            ? {}
+            : fond.genere
+              ? { author: `${info.author} ; décor dessiné pour AnimalCards`, license: info.license }
+              : { author: `${info.author} ; décor : ${fond.auteur}`, license: `${info.license} ; décor : Licence Pixabay` };
           photos[animal.id] = { file, source, ...(crop ? { crop } : {}), ...info, ...credit };
           break;
         }

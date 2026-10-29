@@ -1579,7 +1579,13 @@
     "page": "https://pixabay.com/photos/tuatara-reptile-new-zealand-nz-2190866/",
     "auteur": "Successful4"
   },
-  "vaquita": "Vaquita5 Olson NOAA.jpg",
+  "vaquita": {
+    "fichier": "Vaquita swimming through the void. (Phocoena Sinus).png",
+    "fond": {
+      "genere": "eau"
+    },
+    "detourer": "alpha"
+  },
   "vautour-fauve": "Buitre Leonado (98727731).jpeg",
   "ver-a-soie": {
     "url": "https://cdn.pixabay.com/photo/2020/07/04/20/07/silkworm-5370807_1280.jpg",
