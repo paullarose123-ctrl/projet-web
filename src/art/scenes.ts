@@ -9,7 +9,7 @@ export const SITE_SCENE: SceneDef = {
   palette: { sky: ['#0a1411', '#23402f'], sun: '#efe1b8', far: '#2b4a3a', near: '#08110d', accent: '#ffffff' },
 };
 
-/** Le même sous-bois pendant Halloween et le Jour des morts : ciel violet et grosse lune orange. */
+/** Le même sous-bois pendant les fêtes (Halloween, Jour des morts) : ciel violet et grosse lune orange. */
 export const SITE_SCENE_HALLOWEEN: SceneDef = {
   kind: 'foret',
   stars: true,
@@ -23,7 +23,7 @@ export const HERO_SCENE: SceneDef = {
   palette: { sky: ['#1a2c4e', '#f4a06a'], sun: '#ffe7bd', far: '#8a8fb0', near: '#101528', accent: '#fdf2e6' },
 };
 
-/** Accueil pendant la saison d'Halloween : les mêmes sommets sous un ciel de nuit, une grosse lune orange. */
+/** Accueil pendant les fêtes (Halloween, Jour des morts) : les mêmes sommets sous un ciel de nuit, une grosse lune orange. */
 export const HERO_SCENE_HALLOWEEN: SceneDef = {
   kind: 'montagne',
   stars: true,

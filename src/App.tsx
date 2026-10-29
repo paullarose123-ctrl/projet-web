@@ -18,7 +18,7 @@ import { PackOpening } from './overlays/PackOpening';
 import { CardDetail } from './overlays/CardDetail';
 import { Toasts } from './components/Toasts';
 import { Fireflies } from './components/Fireflies';
-import { HalloweenFlyover, HalloweenGarland, HalloweenNight, PumpkinMark, useHalloween } from './components/Halloween';
+import { CalaveraMark, PumpkinMark, SaisonFlyover, SaisonGarland, SaisonNight, useSeason } from './components/Saison';
 import { MiniPack } from './components/MiniPack';
 import { Juice } from './components/Juice';
 import { useOnline } from './store/online';
@@ -72,7 +72,7 @@ function Topbar() {
   const pseudoId = useAccount((s) => s.session?.userId);
   const syncError = useAccount((s) => s.status === 'error');
   const avatar = useGame((s) => s.avatar);
-  const halloween = useHalloween();
+  const season = useSeason();
   // demandes d'ami en attente de réponse
   const friendRequests = useAccount((s) => (s.session ? s.friendships.filter((f) => f.status === 'pending' && f.toId === s.session!.userId).length : 0));
   // et propositions d'échange reçues
@@ -85,10 +85,10 @@ function Topbar() {
     <header className="topbar">
       <button type="button" className="brand" onClick={() => setTab('boosters')} aria-label="AnimalCards, retour aux boosters">
         <Logo className="brand__logo" />
-        {/* sur téléphone, la feuille du logo devient une citrouille pendant la saison d'Halloween */}
-        {halloween ? <PumpkinMark className="brand__mark" /> : <LogoMark className="brand__mark" />}
+        {/* sur téléphone, la feuille du logo devient une citrouille pendant Halloween, une calavera pendant le Jour des morts */}
+        {season === 'halloween' ? <PumpkinMark className="brand__mark" /> : season === 'muertos' ? <CalaveraMark className="brand__mark" /> : <LogoMark className="brand__mark" />}
       </button>
-      <HalloweenGarland />
+      <SaisonGarland />
       <div className="topbar__right">
         <OnlinePlayers compact className="chip" />
         <button type="button" className="chip chip--packs" onClick={() => setTab('boosters')} title="Boosters gratuits disponibles">
@@ -197,11 +197,11 @@ export function App() {
   const tick = useGame((s) => s.tick);
   const muted = useGame((s) => s.muted);
   const musicOff = useGame((s) => s.musicOff);
-  // saison d'Halloween et du Jour des morts : couleurs et décors de fête (voir components/Halloween.tsx)
-  const halloween = useHalloween();
+  // Halloween puis le Jour des morts : couleurs et décors de fête (voir components/Saison.tsx)
+  const season = useSeason();
   useEffect(() => {
-    document.documentElement.classList.toggle('saison-halloween', halloween);
-  }, [halloween]);
+    document.documentElement.classList.toggle('saison-fete', season !== null);
+  }, [season]);
 
   useEffect(() => {
     setMuted(muted);
@@ -267,10 +267,10 @@ export function App() {
 
   return (
     <div className="app">
-      {/* fond de page : un sous-bois sous les étoiles (sous la lune orange d'Halloween en saison), fixe derrière le contenu */}
-      <Landscape className="backdrop" scene={halloween ? SITE_SCENE_HALLOWEEN : SITE_SCENE} seed="sous-bois" maxWidth={600} />
+      {/* fond de page : un sous-bois sous les étoiles (sous une lune orange pendant les fêtes), fixe derrière le contenu */}
+      <Landscape className="backdrop" scene={season ? SITE_SCENE_HALLOWEEN : SITE_SCENE} seed="sous-bois" maxWidth={600} />
       <Fireflies />
-      <HalloweenNight />
+      <SaisonNight />
       <Topbar />
       <main className="content" id="contenu">
         {/* chaque écran arrive en pivotant en 3D, du côté de l'onglet choisi */}
@@ -283,7 +283,7 @@ export function App() {
           {tab === 'profil' && <ProfileScreen />}
         </div>
       </main>
-      <HalloweenFlyover />
+      <SaisonFlyover />
       <BottomNav />
       <CardDetail />
       <PackOpening />

@@ -355,7 +355,7 @@ const panteon: Paint = (r, w, id) => {
 const WINGS =
   'M0 -0.2C1.4 -2.6 4.8 -4 6.4 -2.6C7 -1.2 5 0.4 0 0.2Z M0 0.3C2.6 0.6 4.6 2.6 3.4 4.2C2.2 4.6 0.6 2.6 0 0.3Z M0 -0.2C-1.4 -2.6 -4.8 -4 -6.4 -2.6C-7 -1.2 -5 0.4 0 0.2Z M0 0.3C-2.6 0.6 -4.6 2.6 -3.4 4.2C-2.2 4.6 -0.6 2.6 0 0.3Z';
 
-function monarch(key: number, x: number, y: number, s: number, angle: number, r: Rng): ReactNode {
+export function monarch(key: number, x: number, y: number, s: number, angle: number, r: Rng): ReactNode {
   return (
     <g key={key} transform={`translate(${f(x)} ${f(y)}) rotate(${f(angle)}) scale(${s.toFixed(2)})`}>
       <g className="mx-fly" style={timing(6 + r() * 6, r() * 10, { ['--drift' as string]: `${f(8 + r() * 14)}px` })}>

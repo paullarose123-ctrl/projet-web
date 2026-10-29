@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { circle, draw, ellipse, f, hashString, hills, mix, mulberry32, area, pine, poly, spots, type Pt } from '../art/kit';
 import { SITE_SCENE } from '../art/scenes';
-import { GARLAND_TILE, PumpkinMark, cobweb, spider } from '../components/Halloween';
+import { GARLAND_TILE, PumpkinMark, cobweb, spider } from '../components/Saison';
 import { Logo } from '../components/Logo';
 import { Calavera, Marigolds } from '../components/MexicoBackdrop';
 import { Landscape } from '../components/PackScene';
