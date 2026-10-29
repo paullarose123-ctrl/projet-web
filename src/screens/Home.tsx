@@ -17,7 +17,7 @@ import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
 import { accountsEnabled } from '../account/supabase';
 import { OnlinePlayers } from '../components/OnlinePlayers';
-import { HalloweenBanner, HalloweenHead, useHalloween } from '../components/Halloween';
+import { SaisonBanner, SaisonHead, useSeason } from '../components/Saison';
 
 // Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe) ;
 // une fois la Série 2 sortie, deux de ses cartes phares encadrent le lion : le condor de Californie et le jaguar.
@@ -219,7 +219,7 @@ function Countdown({ current, next, now }: { current: SerieDef; next: SerieDef; 
 }
 
 function FreePackHero() {
-  const halloween = useHalloween();
+  const season = useSeason();
   const freePacks = useGame((s) => s.freePacks);
   const nextFreePackAt = useGame((s) => s.nextFreePackAt);
   const openFreePack = useGame((s) => s.openFreePack);
@@ -236,8 +236,8 @@ function FreePackHero() {
 
   return (
     <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
-      <Landscape className="hero__art" scene={halloween ? HERO_SCENE_HALLOWEEN : HERO_SCENE} seed="accueil" />
-      <HalloweenHead seed="accueil" pendants={false} />
+      <Landscape className="hero__art" scene={season ? HERO_SCENE_HALLOWEEN : HERO_SCENE} seed="accueil" />
+      <SaisonHead seed="accueil" pendants={false} />
       <div className="hero__pack">
         <div className="hero__boosters">
           {choices.map((pack) => {
@@ -470,7 +470,7 @@ export function HomeScreen() {
     <div className="screen screen--home">
       <FreePackHero />
       <AccountInvite />
-      <HalloweenBanner />
+      <SaisonBanner />
       <OnlinePlayers />
       <ExpansionBanner />
       <div className="grid-2">

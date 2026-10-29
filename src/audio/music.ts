@@ -3,7 +3,8 @@ import { allTracks, type Track } from './tracks';
 
 // La radio du jeu : sept morceaux calmes de la même famille (src/audio/tracks.ts), joués l'un après l'autre
 // dans un ordre mélangé, sans jamais repasser deux fois le même avant d'avoir entendu tous les autres.
-// En saison (Halloween et Jour des morts, jusqu'au 1er novembre), la radio ne joue que ses trois morceaux de fête.
+// Pendant une fête (Halloween jusqu'au 31 octobre, puis le Jour des morts jusqu'au 7 novembre), la radio ne joue que
+// ses morceaux ; la liste est relue à chaque nouveau morceau, pour changer de fête à minuit sans recharger la page.
 // Entre deux morceaux, l'accord final résonne puis quelques secondes de calme, avec des oiseaux au loin.
 // Chaque morceau a son propre bus : on peut passer au suivant en fondu sans couper les notes déjà prévues.
 
@@ -14,7 +15,9 @@ const RING = 4;
 const GAP_MIN = 4;
 const GAP_MAX = 8;
 
-let TRACKS = allTracks();
+/** morceaux imposés par les tests ; sinon ceux du jour (voir allTracks) */
+let testTracks: Track[] | null = null;
+const currentTracks = () => testTracks ?? allTracks();
 
 interface Playing {
   track: Track;
@@ -45,8 +48,11 @@ function announce(value: string | null) {
 
 /** Le prochain morceau : la file mélangée est refaite quand elle est vide, sans répéter le dernier joué. */
 function nextInQueue(): Track {
+  const tracks = currentTracks();
+  // à minuit, les morceaux de la fête qui se termine quittent la file
+  queue = queue.filter((track) => tracks.some((t) => t.id === track.id));
   if (!queue.length) {
-    queue = [...TRACKS].sort(() => Math.random() - 0.5);
+    queue = [...tracks].sort(() => Math.random() - 0.5);
     if (queue.length > 1 && queue[0].id === lastId) queue.push(queue.shift()!);
   }
   const track = queue.shift()!;
@@ -183,11 +189,11 @@ export function onTrackChange(listener: (title: string | null) => void): () => v
 
 /** Liste des morceaux de la radio. */
 export function trackList(): Array<{ id: string; title: string }> {
-  return TRACKS.map(({ id, title: name }) => ({ id, title: name }));
+  return currentTracks().map(({ id, title: name }) => ({ id, title: name }));
 }
 
 /** Pour les tests : remplace la liste des morceaux (par exemple par des morceaux très courts). */
 export function setTracksForTesting(tracks: Track[]): void {
-  TRACKS = tracks;
+  testTracks = tracks;
   queue = [];
 }

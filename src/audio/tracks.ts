@@ -1,9 +1,9 @@
 import { air, bass, bed, bell, bird, boom, bubble, cricket, flute, kalimba, marimba, midi, piano, pluck, strings, tick, type Bus } from './engine';
-import { isHalloween } from '../engine/season';
+import { seasonAt, type Season } from '../engine/season';
 
 // Les morceaux de la radio du jeu : sept pièces calmes de la même famille, façon documentaire nature,
 // chacune avec son paysage (une clairière au matin, la pluie sur la canopée, la savane la nuit…),
-// et trois pièces de saison pour Halloween et le Jour des morts : pendant la saison, la radio ne joue qu'elles.
+// trois pièces pour Halloween et trois pour la semaine du Jour des morts : pendant une fête, la radio ne joue qu'elles.
 // Tout est composé en direct avec Web Audio : aucun fichier, aucun droit d'auteur.
 // Chaque morceau joue une grille de 8 mesures (16 pour la valse) en plusieurs passages qui changent
 // d'instruments (introduction, thème, variation, retour du thème), puis un accord final qui résonne.
@@ -18,8 +18,8 @@ export interface Track {
   bars: number;
   /** programme la mesure `i`, qui commence au temps `t0` (horloge audio) */
   bar: (ac: AudioContext, out: Bus, t0: number, i: number) => void;
-  /** morceau de saison, joué seulement pendant sa fête (voir engine/season.ts) */
-  season?: 'halloween';
+  /** morceau de saison, joué seulement pendant ses fêtes (voir engine/season.ts) */
+  seasons?: Season[];
 }
 
 /** Une note de mélodie : temps dans la mesure, note MIDI, durée en temps (pour la flûte). */
@@ -543,7 +543,7 @@ function citrouilles(): Track {
   return {
     id: 'citrouilles',
     title: 'Nuit des citrouilles',
-    season: 'halloween',
+    seasons: ['halloween'],
     bpm,
     beats: 4,
     bars,
@@ -630,7 +630,7 @@ function calaveras(): Track {
   return {
     id: 'calaveras',
     title: 'Valse des calaveras',
-    season: 'halloween',
+    seasons: ['halloween', 'muertos'],
     bpm,
     beats: 3,
     bars,
@@ -710,7 +710,7 @@ function squelettes(): Track {
   return {
     id: 'squelettes',
     title: 'Bal des squelettes',
-    season: 'halloween',
+    seasons: ['halloween'],
     bpm,
     beats: 6,
     bars,
@@ -743,8 +743,217 @@ function squelettes(): Track {
   };
 }
 
-/** Les morceaux de la radio : les sept de toujours ou, pendant la saison d'Halloween et du Jour des morts, ses trois morceaux. */
+// ───────────── Jour des morts : la seconde voix, une tierce sous la mélodie ─────────────
+
+const RE_MAJEUR = [2, 4, 6, 7, 9, 11, 1];
+const LA_MINEUR = [9, 11, 0, 2, 4, 5, 7];
+const LA_MINEUR_HARMONIQUE = [9, 11, 0, 2, 4, 5, 8];
+
+/** La phrase descendue de deux degrés dans la gamme donnée (classes de hauteur) : les tierces des violons mexicains. */
+function below(phrase: Note[], scale: number[]): Note[] {
+  return phrase.map(([b, note, length]) => {
+    let n = note;
+    for (let steps = 0; steps < 2; ) if (scale.includes((--n % 12 + 12) % 12)) steps++;
+    return [b, n, length];
+  });
+}
+
+// ───────────── Jour des morts : 11. Huapango du cempasúchil (ré majeur, 6/8 et 3/4, 186 croches/min) ─────────────
+// Le son huasteco : la jarana gratte chaque croche, le guitarrón marque la basse, et la mesure balance entre 6/8
+// (deux temps de trois croches) et 3/4 (trois temps de deux croches), la « sesquiáltera » du huapango.
+
+const HUAPANGO: Chord[] = [
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 45, c: [61, 64, 67] }, // La 7
+  { r: 45, c: [61, 64, 67] }, // La 7
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 43, c: [62, 67, 71] }, // Sol
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 45, c: [61, 64, 67] }, // La 7
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 43, c: [62, 67, 71] }, // Sol
+  { r: 43, c: [62, 67, 71] }, // Sol
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 45, c: [61, 64, 67] }, // La 7
+  { r: 45, c: [61, 64, 67] }, // La 7
+  { r: 38, c: [62, 66, 69] }, // Ré
+  { r: 38, c: [62, 66, 69] }, // Ré
+];
+// en croches : position dans la mesure (0 à 5), note, durée
+const HUAPANGO_MELODY: Note[][] = [
+  [[0, 74, 2], [2, 76, 1], [3, 78, 3]],
+  [[0, 79, 2], [2, 78, 1], [3, 76, 3]],
+  [[0, 73, 1], [1, 76, 1], [2, 79, 1], [3, 81, 3]],
+  [[0, 78, 3], [3, 74, 3]],
+  [[0, 71, 1], [1, 74, 1], [2, 79, 1], [3, 83, 2], [5, 81, 1]],
+  [[0, 81, 2], [2, 78, 1], [3, 74, 3]],
+  [[0, 76, 1], [1, 79, 1], [2, 76, 1], [3, 73, 2], [5, 76, 1]],
+  [[0, 74, 6]],
+  [[0, 79, 3], [3, 83, 3]],
+  [[0, 81, 1], [1, 79, 1], [2, 78, 1], [3, 79, 3]],
+  [[0, 78, 2], [2, 81, 1], [3, 86, 3]],
+  [[0, 85, 1], [1, 83, 1], [2, 81, 1], [3, 78, 3]],
+  [[0, 76, 2], [2, 79, 1], [3, 81, 2], [5, 79, 1]],
+  [[0, 78, 1], [1, 76, 1], [2, 73, 1], [3, 69, 3]],
+  [[0, 74, 1], [1, 78, 1], [2, 81, 1], [3, 86, 3]],
+  [[0, 74, 6]],
+];
+
+function huapango(): Track {
+  const bpm = 186;
+  const eighth = 60 / bpm;
+  const BAR = eighth * 6;
+  const bars = 50;
+  return {
+    id: 'huapango',
+    title: 'Huapango du cempasúchil',
+    seasons: ['muertos'],
+    bpm,
+    beats: 6,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (outro) {
+        if (!last) {
+          // le rasgueo final de la jarana, puis la note tenue du violon
+          for (let k = 0; k < 6; k++) [50, 57, 62, 66, 69].forEach((n, j) => pluck(ac, out, midi(n), t0 + k * 0.06 + j * 0.012, 0.09, (j - 2) * 0.15, 0.6));
+          bass(ac, out, midi(38), t0, BAR, 0.1);
+          flute(ac, out, midi(74), t0 + 0.4, BAR * 1.4, 0.04, 0.15);
+          marimbaNote(ac, out, midi(86), t0 + BAR * 0.5, 2.4, 0.08);
+        }
+        return;
+      }
+      const { r, c } = HUAPANGO[step];
+      // la sesquiáltera : 6/8 sur les mesures paires, 3/4 sur les impaires
+      const accents = step % 2 === 0 ? [0, 3] : [0, 2, 4];
+      // la jarana : un accord gratté sur chaque croche, plus fort sur les temps
+      for (let e = 0; e < 6; e++) {
+        const strong = accents.includes(e);
+        const down = e % 2 === 0;
+        const notes = down ? [r + 12, ...c] : [...c].reverse();
+        notes.forEach((n, k) => pluck(ac, out, midi(n), t0 + e * eighth + k * 0.011, strong ? 0.075 : 0.04, -0.15 + k * 0.1, strong ? 0.6 : 0.45));
+      }
+      // le guitarrón : la basse sur les temps, la quinte en réponse
+      accents.forEach((e, k) => bass(ac, out, midi(k % 2 ? r + 7 : r), t0 + e * eighth, eighth * 1.6, 0.1));
+      // le zapateado des danseurs, sur le bois de la tarima
+      for (const e of accents) tick(ac, out, t0 + e * eighth, 0.03, 1500);
+      if (step === 0) boom(ac, out, t0, 0.06, 70);
+      const phrase = HUAPANGO_MELODY[step];
+      // le violon (la flûte) en tierces au deuxième passage, la marimba aux autres
+      if (section === 0 || section === 2) play(phrase, t0, eighth, (f, t, length) => marimbaNote(ac, out, f, t, length * 1.4, 0.11));
+      if (section === 1) {
+        play(phrase, t0, eighth, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.045, 0.15));
+        play(below(phrase, RE_MAJEUR), t0, eighth, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.026, -0.2));
+      }
+      if (section === 2 && phrase[0]) bell(ac, out, midi(phrase[0][1] + 12), t0, 0.02, -0.2, 1.4);
+    },
+  };
+}
+
+// ───────────── Jour des morts : 12. Bolero de la Catrina (la mineur, 4/4, 80 bpm) : trio de guitares, maracas ─────────────
+// Le boléro des trios mexicains : la basse sur un et trois, la guitare qui gratte le rythme du boléro, les maracas,
+// et le requinto (la petite guitare aiguë) qui chante la mélodie ; une flûte et des cordes la reprennent ensuite.
+
+const BOLERO: Chord[] = [
+  { r: 45, c: [60, 64, 69] }, // La m
+  { r: 45, c: [60, 64, 69] }, // La m
+  { r: 38, c: [62, 65, 69] }, // Ré m
+  { r: 38, c: [62, 65, 69] }, // Ré m
+  { r: 40, c: [62, 64, 68] }, // Mi 7
+  { r: 40, c: [62, 64, 68] }, // Mi 7
+  { r: 45, c: [60, 64, 69] }, // La m
+  { r: 40, c: [62, 64, 68] }, // Mi 7
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 43, c: [59, 62, 65] }, // Sol 7
+  { r: 43, c: [59, 62, 65] }, // Sol 7
+  { r: 38, c: [62, 65, 69] }, // Ré m
+  { r: 45, c: [60, 64, 69] }, // La m
+  { r: 40, c: [62, 64, 68] }, // Mi 7
+  { r: 45, c: [60, 64, 69] }, // La m
+];
+const BOLERO_MELODY: Note[][] = [
+  [[0, 76, 1.5], [1.5, 74, 0.5], [2, 72, 1], [3, 71, 1]],
+  [[0, 72, 3], [3, 76, 1]],
+  [[0, 77, 1.5], [1.5, 76, 0.5], [2, 74, 1], [3, 72, 1]],
+  [[0, 74, 3], [3, 77, 1]],
+  [[0, 76, 1.5], [1.5, 74, 0.5], [2, 71, 1], [3, 68, 1]],
+  [[0, 71, 2], [2, 74, 1], [3, 76, 1]],
+  [[0, 72, 1], [1, 71, 1], [2, 69, 2]],
+  [[0, 68, 1], [1, 71, 1], [2, 74, 1], [3, 76, 1]],
+  [[0, 79, 1.5], [1.5, 77, 0.5], [2, 76, 1], [3, 74, 1]],
+  [[0, 76, 3], [3, 79, 1]],
+  [[0, 77, 1.5], [1.5, 76, 0.5], [2, 74, 1], [3, 71, 1]],
+  [[0, 74, 3], [3, 77, 1]],
+  [[0, 77, 1], [1, 76, 1], [2, 74, 1], [3, 72, 1]],
+  [[0, 72, 1], [1, 74, 1], [2, 76, 2]],
+  [[0, 74, 1.5], [1.5, 72, 0.5], [2, 71, 1], [3, 68, 1]],
+  [[0, 69, 4]],
+];
+
+/** Note de requinto : pincée claire, doublée d'un trémolo sur les notes longues. */
+function requinto(ac: AudioContext, out: Bus, freq: number, t: number, length: number, gain: number) {
+  const hits = length > 1.6 ? Math.round(length * 4) : 1;
+  for (let k = 0; k < hits; k++) pluck(ac, out, freq, t + (k * length) / hits, gain * (k ? 0.6 : 1), 0.2, 0.7);
+}
+
+function bolero(): Track {
+  const bpm = 80;
+  const beat = 60 / bpm;
+  const BAR = beat * 4;
+  const bars = 34;
+  return {
+    id: 'bolero',
+    title: 'Bolero de la Catrina',
+    seasons: ['muertos'],
+    bpm,
+    beats: 4,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (Math.random() < 0.25) cricket(ac, out, t0 + rand(0, BAR), 0.004);
+      if (outro) {
+        if (!last) {
+          [33, 45, 52, 57, 60, 64, 69, 76].forEach((n, k) => pluck(ac, out, midi(n), t0 + k * 0.1, 0.13, (k - 4) * 0.1, 0.5));
+          requinto(ac, out, midi(81), t0 + BAR * 0.5, 2.4, 0.12);
+          strings(ac, out, [57, 60, 64].map(midi), t0, BAR * 1.6, 0.024, { attack: 1, release: 3.5 });
+          bass(ac, out, midi(33), t0, BAR, 0.1);
+        }
+        return;
+      }
+      const { r, c } = BOLERO[step];
+      // la basse sur un et trois (la fondamentale, puis la quinte)
+      bass(ac, out, midi(r), t0, beat * 1.4, 0.1);
+      bass(ac, out, midi(r + 7), t0 + beat * 2, beat * 1.4, 0.08);
+      // la guitare : le rythme du boléro, accords grattés sur 1, 2 et, 3 et 4
+      for (const [b, g] of [[0, 0.07], [1.5, 0.05], [2, 0.06], [3, 0.05]] as const) {
+        c.forEach((n, k) => pluck(ac, out, midi(n), t0 + b * beat + k * 0.018, g, -0.2 + k * 0.12, 0.42));
+      }
+      // les maracas sur chaque croche, plus marquées sur les temps
+      for (let e = 0; e < 8; e++) tick(ac, out, t0 + e * (beat / 2), e % 2 ? 0.012 : 0.018, 5200);
+      // le bongo : deux coups légers en fin de mesure
+      tick(ac, out, t0 + beat * 3.5, 0.03, 900);
+      tick(ac, out, t0 + beat * 3.75, 0.02, 1200);
+      if (section === 1) strings(ac, out, c.map(midi), t0, BAR - 0.2, 0.02, { attack: 1, release: 1.6, open: 1100 });
+      const phrase = BOLERO_MELODY[step];
+      if (section === 0) play(phrase, t0, beat, (f, t, length) => requinto(ac, out, f, t, length, 0.13));
+      if (section === 1) {
+        play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.92, 0.045, 0.1));
+        // la seconde voix, une tierce plus bas (avec le sol dièse sur l'accord de mi 7)
+        play(below(phrase, c.includes(68) ? LA_MINEUR_HARMONIQUE : LA_MINEUR), t0, beat, (f, t, length) => requinto(ac, out, f, t, length, 0.06));
+      }
+    },
+  };
+}
+
+/**
+ * Les morceaux de la radio : les sept de toujours ou, pendant une fête, les siens seulement (Halloween : citrouilles,
+ * calaveras, squelettes ; Jour des morts : huapango, boléro et la valse des calaveras).
+ */
 export function allTracks(now: number = Date.now()): Track[] {
-  if (isHalloween(now)) return [citrouilles(), calaveras(), squelettes()];
+  const season = seasonAt(now);
+  if (season === 'halloween') return [citrouilles(), calaveras(), squelettes()];
+  if (season === 'muertos') return [huapango(), bolero(), calaveras()];
   return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
 }

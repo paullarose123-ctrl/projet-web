@@ -13,7 +13,7 @@ import { SportIcon } from '../components/SportIcon';
 import { Landscape } from '../components/PackScene';
 import { WorldMap } from '../components/WorldMap';
 import { SCREEN_SCENES } from '../art/scenes';
-import { HalloweenHead } from '../components/Halloween';
+import { SaisonHead } from '../components/Saison';
 
 type Sort = 'number' | 'rarity' | 'recent' | 'name';
 
@@ -375,7 +375,7 @@ export function CollectionScreen() {
     <div className="screen">
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.collection} seed="collection" />
-        <HalloweenHead seed="collection" />
+        <SaisonHead seed="collection" />
         <div>
           <p className="eyebrow">Collection</p>
           <h1>{view === 'club' ? 'Ma réserve' : view === 'album' ? 'Album' : 'Carte du monde'}</h1>
