@@ -858,8 +858,11 @@
     transform: rotate(8deg) translateY(16px);
   }
   /* cinq cartes (avec celles du Mexique) : plus serrées, en éventail plus ouvert, le lion au centre */
+  .showcase__fan--five {
+    padding: 18px 34px 30px 24px;
+  }
   .showcase__fan--five .showcase__slot + .showcase__slot {
-    margin-left: -50px;
+    margin-left: -66px;
   }
   .showcase__fan--five .showcase__slot:nth-child(1) {
     transform: rotate(-14deg) translateY(30px);
@@ -888,6 +891,26 @@
     color: var(--text-dim);
     font-size: 0.8rem;
     letter-spacing: 0.02em;
+  }
+}
+
+/* sur un écran moyen, l'éventail de cinq ne tient pas : on garde les trois du milieu (condor, lion, jaguar) */
+@media (min-width: 1100px) and (max-width: 1299px) {
+  .showcase__fan--five .showcase__slot:is(:first-child, :last-child) {
+    display: none;
+  }
+  .showcase__fan--five .showcase__slot + .showcase__slot {
+    margin-left: -34px;
+  }
+  .showcase__fan--five .showcase__slot:nth-child(2) {
+    margin-left: 0;
+    transform: rotate(-8deg) translateY(16px);
+  }
+  .showcase__fan--five .showcase__slot:nth-child(4) {
+    transform: rotate(8deg) translateY(16px);
+  }
+  .showcase__fan--five .showcase__slot:is(:hover, :focus-within) {
+    transform: rotate(0deg) translateY(-6px);
   }
 }
 
