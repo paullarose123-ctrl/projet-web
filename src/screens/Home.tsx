@@ -11,7 +11,7 @@ import { HERO_SCENE, HERO_SCENE_HALLOWEEN } from '../art/scenes';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
-import { cardsOfSerie, currentSerie, nextSerie, releasedAthletes, releasedSeries, serieDef, type SerieDef } from '../engine/series';
+import { cardsOfSerie, currentSerie, isReleased, nextSerie, releasedAthletes, releasedSeries, serieDef, type SerieDef } from '../engine/series';
 import { Balles } from '../components/Balles';
 import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
@@ -19,19 +19,29 @@ import { accountsEnabled } from '../account/supabase';
 import { OnlinePlayers } from '../components/OnlinePlayers';
 import { HalloweenBanner, HalloweenHead, useHalloween } from '../components/Halloween';
 
-// Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe).
+// Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe) ;
+// une fois la Série 2 sortie, deux de ses cartes phares encadrent le lion : le condor de Californie et le jaguar.
 const SHOWCASE: CardFace[] = [
   { athleteId: 'guepard', variant: 'prime' },
   { athleteId: 'lion', variant: 'base' },
   { athleteId: 'orang-outan', variant: 'base' },
 ];
 
+const SHOWCASE_MEXIQUE: CardFace[] = [
+  { athleteId: 'guepard', variant: 'prime' },
+  { athleteId: 'condor-de-californie', variant: 'base' },
+  { athleteId: 'lion', variant: 'base' },
+  { athleteId: 'mx-jaguar', variant: 'base' },
+  { athleteId: 'orang-outan', variant: 'base' },
+];
+
 function Showcase() {
   const openDetail = useUi((s) => s.openDetail);
+  const cards = isReleased(2) ? SHOWCASE_MEXIQUE : SHOWCASE;
   return (
     <figure className="showcase">
-      <div className="showcase__fan">
-        {SHOWCASE.map((card) => (
+      <div className={`showcase__fan${cards.length > 3 ? ' showcase__fan--five' : ''}`}>
+        {cards.map((card) => (
           <div key={card.athleteId} className="showcase__slot">
             <Card card={card} size="sm" tilt onClick={() => openDetail({ card })} />
           </div>
@@ -150,7 +160,7 @@ function ExpansionBanner() {
         </ol>
       </div>
       {/* la série du Mexique : deux de ses boosters, et devant eux un dos de carte qui garde son mystère (avant sa sortie)
-          ou l'axolotl de la série (après) */}
+          ou l'aigle royal, l'emblème du drapeau mexicain (après) */}
       <div className="expansion__teaser" aria-hidden="true">
         <div className="expansion__pack expansion__pack--left">
           <PackArtMexique />
@@ -165,7 +175,7 @@ function ExpansionBanner() {
               <span className="expansion__mystery">?</span>
             </>
           ) : (
-            <Card card={{ athleteId: 'mx-axolotl', variant: 'base' }} size="sm" />
+            <Card card={{ athleteId: 'mx-aigle-royal', variant: 'base' }} size="sm" />
           )}
         </div>
       </div>

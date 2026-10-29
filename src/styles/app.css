@@ -857,9 +857,31 @@
   .showcase__slot:nth-child(3) {
     transform: rotate(8deg) translateY(16px);
   }
-  .showcase__slot:hover,
-  .showcase__slot:focus-within {
+  /* cinq cartes (avec celles du Mexique) : plus serrées, en éventail plus ouvert, le lion au centre */
+  .showcase__fan--five .showcase__slot + .showcase__slot {
+    margin-left: -50px;
+  }
+  .showcase__fan--five .showcase__slot:nth-child(1) {
+    transform: rotate(-14deg) translateY(30px);
+  }
+  .showcase__fan--five .showcase__slot:nth-child(2) {
+    z-index: 1;
+    transform: rotate(-7deg) translateY(8px);
+  }
+  .showcase__fan--five .showcase__slot:nth-child(3) {
     z-index: 2;
+    transform: none;
+  }
+  .showcase__fan--five .showcase__slot:nth-child(4) {
+    z-index: 1;
+    transform: rotate(7deg) translateY(8px);
+  }
+  .showcase__fan--five .showcase__slot:nth-child(5) {
+    transform: rotate(14deg) translateY(30px);
+  }
+  .showcase__fan .showcase__slot:hover,
+  .showcase__fan .showcase__slot:focus-within {
+    z-index: 3;
     transform: rotate(0deg) translateY(-6px);
   }
   .showcase figcaption {

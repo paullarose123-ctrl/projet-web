@@ -5495,15 +5495,15 @@
  "vaquita": {
   "file": "vaquita.webp",
   "cutout": false,
-  "author": "Paula Olson , NOAA",
-  "license": "Public domain",
-  "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Vaquita5_Olson_NOAA.jpg",
+  "author": "좀비 브렌다 ; décor dessiné pour AnimalCards",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Vaquita_swimming_through_the_void._(Phocoena_Sinus).png",
   "brut": [
-   1800,
-   926
+   1200,
+   1600
   ],
-  "v": "519c4af7"
+  "v": "3fb47291"
  },
  "vautour-fauve": {
   "file": "vautour-fauve.webp",
