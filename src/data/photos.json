@@ -629,15 +629,15 @@
  "calmar-de-humboldt": {
   "file": "calmar-de-humboldt.webp",
   "cutout": false,
-  "author": "Steven Bodzin",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Dosidicus_gigas_113088824.jpg",
+  "author": "Chris Brown",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/202302",
   "brut": [
-   1800,
-   1350
+   720,
+   960
   ],
-  "v": "bf494416"
+  "v": "e07873d4"
  },
  "calmar-geant": {
   "file": "calmar-geant.webp",
@@ -1224,15 +1224,15 @@
  "colombe-de-socorro": {
   "file": "colombe-de-socorro.webp",
   "cutout": false,
-  "author": "Zenaida_graysoni.jpg : Magalhães derivative work: Berichard ( talk )",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
-  "page": "https://commons.wikimedia.org/wiki/File:Zenaida_graysoni_1.jpg",
+  "author": "Maryse",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/288617617",
   "brut": [
-   572,
-   664
+   1365,
+   2048
   ],
-  "v": "06f2a634"
+  "v": "e40dc106"
  },
  "condor": {
   "file": "condor.webp",
@@ -1285,15 +1285,15 @@
  "conure-de-socorro": {
   "file": "conure-de-socorro.webp",
   "cutout": false,
-  "author": "Ignacio March Mifsut",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Psittacara_brevipes_2.jpg",
+  "author": "Alberto Alcalá",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/621799727",
   "brut": [
-   1152,
-   1536
+   1800,
+   1776
   ],
-  "v": "56070c33"
+  "v": "8ab08253"
  },
  "coquette-du-guerrero": {
   "file": "coquette-du-guerrero.webp",
@@ -1392,15 +1392,15 @@
  "crapaud-du-sonora": {
   "file": "crapaud-du-sonora.webp",
   "cutout": false,
-  "author": "Holger Krisp",
-  "license": "CC BY 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Bufo-alvarius-coloradokr%C3%B6te.jpg",
+  "author": "Eric Hough",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/216404180",
   "brut": [
-   1800,
-   1200
+   1686,
+   2048
   ],
-  "v": "a68972b3"
+  "v": "ef48bec1"
  },
  "crecerelle": {
   "file": "crecerelle.webp",
@@ -1597,15 +1597,15 @@
  "dindon-ocelle": {
   "file": "dindon-ocelle.webp",
   "cutout": false,
-  "author": "Bernard DUPONT from FRANCE",
-  "license": "CC BY-SA 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Ocellated_Turkey_(Agriocharis_ocellata)_(8296433603).jpg",
+  "author": "Rich Kostecke",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/9375413",
   "brut": [
-   1800,
-   1350
+   1723,
+   2048
   ],
-  "v": "ee6de6a5"
+  "v": "aeaff19f"
  },
  "dingo": {
   "file": "dingo.webp",
@@ -1950,15 +1950,15 @@
  "geai-a-dos-violet": {
   "file": "geai-a-dos-violet.webp",
   "cutout": false,
-  "author": "francisco3_",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Young_Cyanocorax_beecheii_in_jan2019.jpg",
+  "author": "Gerardo Marrón",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/60395436",
   "brut": [
-   1800,
-   1202
+   1365,
+   2048
   ],
-  "v": "04d23f14"
+  "v": "ae0158af"
  },
  "geai-a-face-noire": {
   "file": "geai-a-face-noire.webp",
@@ -2020,15 +2020,15 @@
  "geocoucou": {
   "file": "geocoucou.webp",
   "cutout": false,
-  "author": "SearchNet Media from Tucson, Arizona, USA",
-  "license": "CC BY 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Geococcyx_californianus_-Tucson_-Arizona_-USA-8.jpg",
+  "author": "Jody Shugart",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/8844788",
   "brut": [
-   651,
-   600
+   1800,
+   1193
   ],
-  "v": "416819ab"
+  "v": "7390de3a"
  },
  "gerenuk": {
   "file": "gerenuk.webp",
@@ -2096,15 +2096,15 @@
  "granatelle-multicolore": {
   "file": "granatelle-multicolore.webp",
   "cutout": false,
-  "author": "Juan Cruzado Cortés",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Granatellus_venustus_francescae_3712465.jpg",
+  "author": "sergio1953",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/650380920",
   "brut": [
-   1800,
-   1200
+   1312,
+   1312
   ],
-  "v": "fd5580de"
+  "v": "d45a3eeb"
  },
  "grand-duc": {
   "file": "grand-duc.webp",
@@ -2433,15 +2433,15 @@
  "habitat-mx-sian-kaan": {
   "file": "habitat-mx-sian-kaan.webp",
   "cutout": false,
-  "author": "Hormiguita Viajera mir",
-  "license": "CC BY 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Mangroves,_Sian_Kaan_Biosphere_Reserve,_Yucatan_2.jpg",
+  "author": "Ken Thomas",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "page": "https://commons.wikimedia.org/wiki/File:SianKa%27anBR-27527-1.jpg",
   "brut": [
-   1800,
-   1350
+   1600,
+   1200
   ],
-  "v": "47ac9162"
+  "v": "4c639ea5"
  },
  "habitat-mx-sonora": {
   "file": "habitat-mx-sonora.webp",
@@ -2459,15 +2459,15 @@
  "habitat-mx-xochimilco": {
   "file": "habitat-mx-xochimilco.webp",
   "cutout": false,
-  "author": "Juan Carlos Fonseca Mata",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Trajinera_de_Xochimilco_-_Ciudad_de_M%C3%A9xico.jpg",
+  "author": "Nan Palmero from San Antonio, TX, USA",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Xochimilco_Trajinera_(46540575785).jpg",
   "brut": [
    1800,
-   1319
+   1201
   ],
-  "v": "e0180ffe"
+  "v": "277f76d2"
  },
  "habitat-okavango": {
   "file": "habitat-okavango.webp",
@@ -2593,15 +2593,15 @@
  "haricot-sauteur": {
   "file": "haricot-sauteur.webp",
   "cutout": false,
-  "author": "AuldAlliance at English Wikipedia",
-  "license": "Public domain",
-  "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Mexican_jumping_bean_moth_(Cydia_deshaisiana).JPG",
+  "author": "NobbiP",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Jumping_beans_12.jpg",
   "brut": [
-   1632,
-   1224
+   1200,
+   900
   ],
-  "v": "e6703588"
+  "v": "417f7681"
  },
  "harpie": {
   "file": "harpie.webp",
@@ -2884,28 +2884,28 @@
  "lapin-des-volcans": {
   "file": "lapin-des-volcans.webp",
   "cutout": false,
-  "author": "ProtoplasmaKid",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Romerolagus_diazi_2018_(cropped).jpg",
+  "author": "Aragón Jhonatan y Moran Arely",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/202360018",
   "brut": [
-   1602,
-   1209
+   1200,
+   800
   ],
-  "v": "0642edbc"
+  "v": "abb65d68"
  },
  "lapin-du-mexique": {
   "file": "lapin-du-mexique.webp",
   "cutout": false,
-  "author": "Francisco Farriols Sarabia",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Sylvilagus_cunicularius_4080938.jpg",
+  "author": "adel-fridus",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "page": "https://www.inaturalist.org/photos/10421118",
   "brut": [
    1800,
-   1396
+   1196
   ],
-  "v": "55a40d09"
+  "v": "afb588ff"
  },
  "lemming": {
   "file": "lemming.webp",
@@ -2946,15 +2946,15 @@
  "lezard-cornu-du-plateau": {
   "file": "lezard-cornu-du-plateau.webp",
   "cutout": false,
-  "author": "Sinaloa Silvestre",
-  "license": "CC0",
-  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-  "page": "https://commons.wikimedia.org/wiki/File:Phrynosoma_orbiculare_288293800.jpg",
+  "author": "Mario Castañeda",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/8390346",
   "brut": [
    1800,
    1350
   ],
-  "v": "b8c98875"
+  "v": "987c44ce"
  },
  "lezard-vert": {
   "file": "lezard-vert.webp",
@@ -3388,15 +3388,15 @@
  "molly-voile": {
   "file": "molly-voile.webp",
   "cutout": false,
-  "author": "Massysmith",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Poecilia_velifera.jpg",
+  "author": "Matteo Cassella",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "page": "https://www.inaturalist.org/photos/60110619",
   "brut": [
    1800,
-   1350
+   1726
   ],
-  "v": "c53e7998"
+  "v": "920c4834"
  },
  "moloch": {
   "file": "moloch.webp",
@@ -3538,15 +3538,15 @@
  "mx-axolotl": {
   "file": "mx-axolotl.webp",
   "cutout": false,
-  "author": "Vassil",
-  "license": "CC0",
-  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-  "page": "https://commons.wikimedia.org/wiki/File:Axolotl_Ambystoma_mexicanum_Aquarium_Li%C3%A8ge_30012016_3.jpg",
+  "author": "Ruben Undheim from Trondheim, Norway",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Ambystoma_mexicanum_(6337857516).jpg",
   "brut": [
    1800,
-   1155
+   1200
   ],
-  "v": "c9405c04"
+  "v": "d82c5ba5"
  },
  "mx-chihuahua": {
   "file": "mx-chihuahua.webp",
@@ -3616,15 +3616,15 @@
  "mx-mygale": {
   "file": "mx-mygale.webp",
   "cutout": false,
-  "author": "Luis Correa",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Brachypelma_smithi_35659434.jpg",
+  "author": "dinomariobob",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "page": "https://www.inaturalist.org/photos/519920684",
   "brut": [
-   960,
-   684
+   1536,
+   2048
   ],
-  "v": "a05bdedb"
+  "v": "2ca7cdab"
  },
  "mx-quetzal": {
   "file": "mx-quetzal.webp",
@@ -3642,15 +3642,15 @@
  "mx-raie-manta": {
   "file": "mx-raie-manta.webp",
   "cutout": false,
-  "author": "Alicia Christman",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Mobula_birostris_459064525.jpg",
+  "author": "Albert Kang",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/82117180",
   "brut": [
    1800,
    1350
   ],
-  "v": "b752d3ee"
+  "v": "8ad498d2"
  },
  "mx-requin-baleine": {
   "file": "mx-requin-baleine.webp",
@@ -4204,15 +4204,15 @@
  "phoque-moine-des-caraibes": {
   "file": "phoque-moine-des-caraibes.webp",
   "cutout": false,
-  "author": "New York Zoological Society.",
+  "author": "Unknown author Unknown author",
   "license": "Public domain",
   "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Cms-newyorkzoologicalsociety1910.jpg",
+  "page": "https://commons.wikimedia.org/wiki/File:Caribbean_monk_seals_New_York.jpg",
   "brut": [
-   950,
-   495
+   1192,
+   740
   ],
-  "v": "4df9fb95"
+  "v": "accf3477"
  },
  "phyllobate": {
   "file": "phyllobate.webp",
@@ -4637,15 +4637,15 @@
  "rat-kangourou-de-phillips": {
   "file": "rat-kangourou-de-phillips.webp",
   "cutout": false,
-  "author": "Juan Cruzado Cortés",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Dipodomys_phillipsii_perotensis_4697586.jpg",
+  "author": "Alberto González-Gallina",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/558675752",
   "brut": [
    1800,
-   1200
+   1350
   ],
-  "v": "a051aea3"
+  "v": "25146c64"
  },
  "rat-taupe-nu": {
   "file": "rat-taupe-nu.webp",
@@ -5079,15 +5079,15 @@
  "skiffia-dore": {
   "file": "skiffia-dore.webp",
   "cutout": false,
-  "author": "Mattia Nocciola",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Skiffia_francesae_Natural_History_Museum_University_of_Pisa.jpg",
+  "author": "saraalien1",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/744223468",
   "brut": [
    1800,
-   1201
+   1200
   ],
-  "v": "10b68e78"
+  "v": "cd71b033"
  },
  "souris": {
   "file": "souris.webp",
@@ -5101,15 +5101,15 @@
  "souris-des-volcans": {
   "file": "souris-des-volcans.webp",
   "cutout": false,
-  "author": "(c) Juan Cruzado Cortés, some rights reserved (CC BY-SA)",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Mexican_volcano_mouse_imported_from_iNaturalist_photo_70082694_on_18_April_2022.jpg",
+  "author": "ikanirasta",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/89442247",
   "brut": [
    1800,
-   1200
+   1350
   ],
-  "v": "8260122f"
+  "v": "bc0beab4"
  },
  "spermophile-a-queue-annelee": {
   "file": "spermophile-a-queue-annelee.webp",
@@ -5526,15 +5526,15 @@
  "ver-de-maguey": {
   "file": "ver-de-maguey.webp",
   "cutout": false,
-  "author": "MCGau",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:MGSA2018_-_Maguey_worms.jpg",
+  "author": "Leticia Soriano Flores",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/1923042",
   "brut": [
    1800,
    1350
   ],
-  "v": "95f238f2"
+  "v": "94792ed1"
  },
  "veuve-noire": {
   "file": "veuve-noire.webp",
@@ -5597,28 +5597,28 @@
  "xenotoca-a-queue-rouge": {
   "file": "xenotoca-a-queue-rouge.webp",
   "cutout": false,
-  "author": "Mattia Nocciola",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Xenotoca_eiseni_Natural_History_Museum_University_of_Pisa_male.jpg",
+  "author": "Emilio Romero",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/588632481",
   "brut": [
    1800,
-   1200
+   1350
   ],
-  "v": "c43b042e"
+  "v": "3fd5d844"
  },
  "xoloitzcuintle": {
   "file": "xoloitzcuintle.webp",
   "cutout": false,
-  "author": "Canarian",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:XoloLarge1.jpg",
+  "author": "Pets Adviser from Brooklyn, USA",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Xoloitzcuintli_-_GCH_Bayshore_Georgio_Armani_09_(16397731930).jpg",
   "brut": [
-   1800,
-   1512
+   1533,
+   2154
   ],
-  "v": "a505f2d4"
+  "v": "6af59cd9"
  },
  "yak": {
   "file": "yak.webp",

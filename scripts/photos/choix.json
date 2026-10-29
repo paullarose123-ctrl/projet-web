@@ -204,7 +204,13 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "calao": "Great Hornbill Goa.jpg",
-  "calmar-de-humboldt": "Dosidicus gigas 113088824.jpg",
+  "calmar-de-humboldt": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/202302/original.jpg",
+    "page": "https://www.inaturalist.org/photos/202302",
+    "auteur": "Chris Brown",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "calmar-geant": "Architeuthis dux 68146399.jpg",
   "cameleon": "Furcifer pardalis 004.jpg",
   "canard-des-mariannes": "Anas platyrhynchos oustaleti last male.jpg",
@@ -324,10 +330,23 @@
     "page": "https://pixabay.com/photos/colobus-ape-mantle-monkey-africa-280706/",
     "auteur": "RoDobby"
   },
+  "colombe-de-socorro": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/288617617/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/288617617",
+    "auteur": "Maryse",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "condor": "Andean condor (Vultur gryphus) male Farellones.jpg",
   "conure-a-front-brun": "Maroon-fronted Parrot (Rhynchopsitta terrisi) 02.jpg",
   "conure-de-caroline": "Conuropsis carolinensis male Ulaval.jpg",
-  "conure-de-socorro": "Psittacara brevipes 2.jpg",
+  "conure-de-socorro": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/621799727/original.jpg",
+    "page": "https://www.inaturalist.org/photos/621799727",
+    "auteur": "Alberto Alcalá",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
   "corail": {
     "url": "https://cdn.pixabay.com/photo/2018/08/24/17/33/coral-3628406_1280.jpg",
     "page": "https://pixabay.com/photos/coral-reef-sea-nature-wildlife-3628406/",
@@ -365,7 +384,13 @@
     "page": "https://pixabay.com/photos/gold-toad-toad-frog-through-62871/",
     "auteur": "WikiImages"
   },
-  "crapaud-du-sonora": "Bufo-alvarius-coloradokröte.jpg",
+  "crapaud-du-sonora": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/216404180/original.jpg",
+    "page": "https://www.inaturalist.org/photos/216404180",
+    "auteur": "Eric Hough",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "crecerelle": "Common kestrel on a tree in Kraków, 20250412 1051 3635.jpg",
   "crevette-mante": "Odontodactylus scyllarus 60094688.jpg",
   "criquet-pelerin": "Locusts - Pappliaman Malai.jpg",
@@ -418,6 +443,13 @@
   "diable-de-tasmanie": "Tassy Devil.jpg",
   "dik-dik": "Tarangire Kirk-Dikdik3.jpg",
   "dindon": "Male wild turkey (Meleagris gallopavo) strutting.jpg",
+  "dindon-ocelle": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/9375413/original.jpg",
+    "page": "https://www.inaturalist.org/photos/9375413",
+    "auteur": "Rich Kostecke",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "dingo": {
     "url": "https://images.unsplash.com/photo-1682308241632-d85496e9318f?ixlib=rb-4.1.0&w=2400&q=90&fm=jpg",
     "page": "https://unsplash.com/photos/XXRt2HPxMHg",
@@ -553,7 +585,13 @@
     "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
   },
   "gazelle": "Serengeti Thomson-Gazelle3.jpg",
-  "geai-a-dos-violet": "Young Cyanocorax beecheii in jan2019.jpg",
+  "geai-a-dos-violet": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/60395436/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/60395436",
+    "auteur": "Gerardo Marrón",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "geai-nain": "Cyanolyca nanus - Trevor Van Loon - 462903564.jpeg",
   "gecko": {
     "url": "https://cdn.pixabay.com/photo/2020/10/13/18/18/gecko-5652518_1280.jpg",
@@ -565,6 +603,13 @@
     "url": "https://cdn.pixabay.com/photo/2026/05/21/10/41/10-41-12-442_1280.jpg",
     "page": "https://pixabay.com/photos/gelada-primate-baboon-nature-10291267/",
     "auteur": "IQSPhotography"
+  },
+  "geocoucou": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/8844788/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/8844788",
+    "auteur": "Jody Shugart",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
   },
   "gerenuk": "Litocranius walleri walleri 388183522.jpg",
   "gibbon": "Hylobates lar - Kaeng Krachan WB.jpg",
@@ -593,7 +638,13 @@
     "page": "https://pixabay.com/photos/gorilla-silverback-monkey-primate-610457/",
     "auteur": "Sponchia"
   },
-  "granatelle-multicolore": "Granatellus venustus francescae 3712465.jpg",
+  "granatelle-multicolore": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/650380920/original.jpg",
+    "page": "https://www.inaturalist.org/photos/650380920",
+    "auteur": "sergio1953",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "grand-duc": "Flaco (86944).jpg",
   "grenouille-de-montezuma": "Lithobates montezumae imported from iNaturalist photo 35492423 on 4 June 2019.jpg",
   "grenouille-de-verre": "Glass frog (Centrolenidae) in Mindo (Ecuador) (21090206496).jpg",
@@ -631,11 +682,11 @@
   "habitat-mx-mer-de-cortes": "Islands and Protected Areas of the Gulf of California-113594.jpg",
   "habitat-mx-monarques": "ButterfliesChincua03.JPG",
   "habitat-mx-revillagigedo": "Declaratoria Oficial de Patrimonio Mundial del Archipiélago de Revillagigedo.jpg",
-  "habitat-mx-sian-kaan": "Mangroves, Sian Kaan Biosphere Reserve, Yucatan 2.jpg",
-  "habitat-mx-xochimilco": "Trajinera de Xochimilco - Ciudad de México.jpg",
+  "habitat-mx-sian-kaan": "SianKa'anBR-27527-1.jpg",
+  "habitat-mx-xochimilco": "Xochimilco Trajinera (46540575785).jpg",
   "habitat-sargasses": "Underwater Sargassum (oceanos2024loiacono-2059).jpg",
   "hamster": "Juvenile Female Mesocricetus auratus in Pet Store enclosure, Illinois, USA.jpg",
-  "haricot-sauteur": "Mexican jumping bean moth (Cydia deshaisiana).JPG",
+  "haricot-sauteur": "Jumping beans 12.jpg",
   "harpie": "Gavião-real - FLONA de Carajás - Luiz Fernando Matos(001).jpg",
   "heloderme": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/114066566/original.jpeg",
@@ -723,8 +774,20 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "lapin": "Oryctolagus cuniculus Rcdo.jpg",
-  "lapin-des-volcans": "Romerolagus diazi 2018 (cropped).jpg",
-  "lapin-du-mexique": "Sylvilagus cunicularius 4080938.jpg",
+  "lapin-des-volcans": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/202360018/original.jpg",
+    "page": "https://www.inaturalist.org/photos/202360018",
+    "auteur": "Aragón Jhonatan y Moran Arely",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lapin-du-mexique": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/10421118/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/10421118",
+    "auteur": "adel-fridus",
+    "licence": "CC0 1.0",
+    "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
   "lemming": "Tunturisopuli Lemmus Lemmus.jpg",
   "lemur-catta": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/302094730/original.jpeg",
@@ -741,7 +804,13 @@
     "licenceUrl": "https://unsplash.com/license"
   },
   "leopard-de-mer": "Hydrurga leptonyx on ice.jpg",
-  "lezard-cornu-du-plateau": "Phrynosoma orbiculare 288293800.jpg",
+  "lezard-cornu-du-plateau": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/8390346/original.jpg",
+    "page": "https://www.inaturalist.org/photos/8390346",
+    "auteur": "Mario Castañeda",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "lezard-vert": {
     "url": "https://cdn.pixabay.com/photo/2022/03/10/17/58/western-green-lizard-7060414_1280.jpg",
     "page": "https://pixabay.com/photos/western-green-lizard-lizard-animal-7060414/",
@@ -871,6 +940,13 @@
     "page": "https://pixabay.com/photos/sparrow-sperling-house-sparrow-bird-2404824/",
     "auteur": "Kathy_Büscher"
   },
+  "molly-voile": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/60110619/original.jpg",
+    "page": "https://www.inaturalist.org/photos/60110619",
+    "auteur": "Matteo Cassella",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
   "moloch": "Moloch defence pose - Christopher Watson.jpg",
   "monarque": "Monarch Butterfly Pink Zinnia 1800px.jpg",
   "moqueur-de-socorro": "Mimus graysoni, Socorro, Colima, Mexico 1.jpg",
@@ -898,13 +974,25 @@
     "auteur": "Pixabay"
   },
   "mx-aigle-royal": "Vic Schendel- Golden eagle (48804576076).jpg",
-  "mx-axolotl": "Axolotl Ambystoma mexicanum Aquarium Liège 30012016 3.jpg",
+  "mx-axolotl": "Ambystoma mexicanum (6337857516).jpg",
   "mx-coyote": "Mother Coyote Sitting, Watching Over Den, Photo 1 of 2 (47924154788).jpg",
   "mx-jaguar": "Jaguar (Panthera onca palustris) female Piquiri River 2.JPG",
   "mx-monarque": "Piedra Herrada - Monarch Butterfly Sanctuary - Near Valle de Bravo - Mexico - 07 (15875612243).jpg",
-  "mx-mygale": "Brachypelma smithi 35659434.jpg",
+  "mx-mygale": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/519920684/original.jpg",
+    "page": "https://www.inaturalist.org/photos/519920684",
+    "auteur": "dinomariobob",
+    "licence": "CC0 1.0",
+    "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
   "mx-quetzal": "060 Male Resplendent quetzal with a long tail in Los Quetzales National Park Photo by Giles Laurent.jpg",
-  "mx-raie-manta": "Mobula birostris 459064525.jpg",
+  "mx-raie-manta": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/82117180/original.jpg",
+    "page": "https://www.inaturalist.org/photos/82117180",
+    "auteur": "Albert Kang",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "mx-requin-baleine": "Whale Shark (Rhincodon typus) with open mouth in La Paz, Mexico.jpg",
   "mythe-behemoth": {
     "url": "https://cdn.pixabay.com/photo/2025/04/28/02/41/ai-generated-9564084_1280.png",
@@ -1237,6 +1325,7 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
+  "phoque-moine-des-caraibes": "Caribbean monk seals New York.jpg",
   "pic-alezan": "Melanerpes hypopolius 459811367.jpg",
   "pic-vert": "Жовна зелена (Picus viridis).jpg",
   "pie": "Urraca (Pica pica), Almuradiel, Ciudad Real, España, 2021-12-19, DD 04.jpg",
@@ -1336,7 +1425,13 @@
     "page": "https://pixabay.com/photos/rodent-rat-rats-nature-animal-10079153/",
     "auteur": "jimmykphotos"
   },
-  "rat-kangourou-de-phillips": "Dipodomys phillipsii perotensis 4697586.jpg",
+  "rat-kangourou-de-phillips": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/558675752/original.jpg",
+    "page": "https://www.inaturalist.org/photos/558675752",
+    "auteur": "Alberto González-Gallina",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "rat-taupe-nu": {
     "url": "https://cdn.pixabay.com/photo/2026/03/29/13/17/13-17-15-200_1280.jpg",
     "page": "https://pixabay.com/photos/mole-rat-naked-rodent-subterranean-10198428/",
@@ -1500,9 +1595,21 @@
   },
   "singe-hurleur": "Mantled howler monkey and baby (81337)2.jpg",
   "singe-hurleur-noir": "Alouatta pigra 256798434.jpg",
-  "skiffia-dore": "Skiffia francesae Natural History Museum University of Pisa.jpg",
+  "skiffia-dore": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/744223468/original.jpg",
+    "page": "https://www.inaturalist.org/photos/744223468",
+    "auteur": "saraalien1",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "souris": "Maus außer Haus.JPG",
-  "souris-des-volcans": "Mexican volcano mouse imported from iNaturalist photo 70082694 on 18 April 2022.jpg",
+  "souris-des-volcans": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/89442247/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/89442247",
+    "auteur": "ikanirasta",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "spermophile-a-queue-annelee": "Notocitellus annulatus 157981034.jpg",
   "springbok": "Antidorcas marsupialis, female (Etosha, 2012).jpg",
   "sterne-arctique": {
@@ -1586,7 +1693,13 @@
     "page": "https://pixabay.com/photos/silkworm-mulberry-silk-insect-worm-5370807/",
     "auteur": "ivabalk"
   },
-  "ver-de-maguey": "MGSA2018 - Maguey worms.jpg",
+  "ver-de-maguey": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1923042/original.JPG",
+    "page": "https://www.inaturalist.org/photos/1923042",
+    "auteur": "Leticia Soriano Flores",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "veuve-noire": "Latrodectus mactans 2.jpg",
   "vipere-aspic": {
     "url": "https://cdn.pixabay.com/photo/2021/04/22/12/22/adder-6198889_1280.jpg",
@@ -1609,8 +1722,14 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "wombat": "Common wombat (Vombatus ursinus tasmaniensis) juvenile Maria Island.jpg",
-  "xenotoca-a-queue-rouge": "Xenotoca eiseni Natural History Museum University of Pisa male.jpg",
-  "xoloitzcuintle": "XoloLarge1.jpg",
+  "xenotoca-a-queue-rouge": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/588632481/original.jpg",
+    "page": "https://www.inaturalist.org/photos/588632481",
+    "auteur": "Emilio Romero",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "xoloitzcuintle": "Xoloitzcuintli - GCH Bayshore Georgio Armani 09 (16397731930).jpg",
   "yak": "Bos grunniens at Letdar on Annapurna Circuit.jpg",
   "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg"
 }
