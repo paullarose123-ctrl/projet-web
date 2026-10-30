@@ -31,7 +31,7 @@ const SHOWCASE_MEXIQUE: CardFace[] = [
   { athleteId: 'guepard', variant: 'prime' },
   { athleteId: 'condor-de-californie', variant: 'base' },
   { athleteId: 'lion', variant: 'base' },
-  { athleteId: 'mx-jaguar', variant: 'base' },
+  { athleteId: 'mx-jaguar', variant: 'prime' },
   { athleteId: 'orang-outan', variant: 'base' },
 ];
 
