@@ -1289,11 +1289,13 @@
     linear-gradient(90deg, #8ccfa9 0 33%, #f6f4ee 33% 67%, #eb9aa3 67%);
 }
 
+/* le même voile que les Prime de la Série 1 (bandes en biais et nacre), en vert, blanc et rouge, un peu plus léger */
 .serie-2.is-prime.has-photo .card__window::after {
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 0.05em, transparent 0.12em) 0 0 / 0.6em 0.8em,
-    linear-gradient(90deg, rgba(60, 170, 110, 0.85) 0 22%, rgba(255, 255, 255, 0.5) 42% 58%, rgba(225, 70, 85, 0.85) 78%);
-  opacity: 0.35;
+    repeating-radial-gradient(ellipse at 15% 115%, rgba(255, 255, 255, 0.3) 0 0.1em, transparent 0.1em 1.1em),
+    repeating-linear-gradient(125deg, #9fd8b6 0 2.2em, #f7f4ec 2.2em 4.4em, #f2a9b1 4.4em 6.6em);
+  opacity: 0.7;
 }
 
 .serie-2.is-prime .card__holo {
