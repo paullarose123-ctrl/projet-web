@@ -7,7 +7,8 @@ import { Calavera, Glow, Marigolds, candle, monarch, timing } from './MexicoBack
 // Décors des fêtes d'automne (voir engine/season.ts) :
 // - Halloween, du 20 au 31 octobre : une guirlande de cempasúchil sous la barre du haut, des citrouilles qui luisent,
 //   des bougies, une toile d'araignée dans le coin de chaque en-tête ;
-// - le Jour des morts, du 1er au 7 novembre : plus aucune citrouille ni araignée, une ofrenda dans les coins
+// - le Jour des morts, du 1er au 7 novembre : ses propres couleurs (rose mexicain, turquoise, nuit indigo et magenta,
+//   voir app.css), du papel picado sous la barre du haut, plus aucune citrouille ni araignée, une ofrenda dans les coins
 //   (cempasúchil, bougies, calaveras, pan de muerto), des calaveras en pendeloques et des monarques dans le ciel des
 //   en-têtes : au Mexique, on dit qu'ils ramènent l'âme des défunts.
 // Rien ne gêne la lecture : tout reste dans les marges, le ciel des en-têtes et le fond. Hors saison, ces composants
@@ -116,6 +117,32 @@ function panDeMuerto(key: number, x: number, y: number, s: number): ReactNode {
   );
 }
 
+/**
+ * Guirlande de papel picado, en motif qui se répète sur toute la largeur d'un en-tête : une ficelle tendue porte des
+ * fanions de papier de soie aux couleurs du Jour des morts, découpés d'une fleur et de petits losanges, le bas en dents.
+ */
+export const PAPEL_TILE = (() => {
+  const w = 120;
+  const colors = ['#e4407b', '#f4a62a', '#2fb5a8', '#8a5cd6', '#9fd356', '#f06b3a'];
+  const hole = (cx: number, cy: number, r: number) => `M${f(cx - r)} ${f(cy)}a${r} ${r} 0 1 0 ${f(2 * r)} 0a${r} ${r} 0 1 0 ${f(-2 * r)} 0Z`;
+  const diamond = (cx: number, cy: number, r: number) => `M${f(cx)} ${f(cy - r)}L${f(cx + r)} ${f(cy)}L${f(cx)} ${f(cy + r)}L${f(cx - r)} ${f(cy)}Z`;
+  let flags = '';
+  for (let k = 0; k < 6; k++) {
+    const x = 3 + k * 20;
+    const [fw, fh] = [15, 17];
+    let d = `M${x} 3H${x + fw}V${fh - 2}`;
+    for (let z = 0; z < 6; z++) d += `L${f(x + fw - (z + 0.5) * (fw / 6))} ${z % 2 ? fh - 2 : fh}`;
+    d += `L${x} ${fh - 2}Z`;
+    // la fleur au centre, quatre losanges autour, une rangée de points au bas
+    d += hole(x + fw / 2, 9, 2.2);
+    for (const [dx, dy] of [[-4.6, -3.2], [4.6, -3.2], [-4.6, 3.2], [4.6, 3.2]]) d += diamond(x + fw / 2 + dx, 9 + dy, 1.1);
+    for (const dx of [-4.5, 0, 4.5]) d += hole(x + fw / 2 + dx, 14, 0.7);
+    flags += `<path d="${d}" fill="${colors[k]}" fill-rule="evenodd"/>`;
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 22" width="${w}" height="22"><path d="M0 3.2H${w}" stroke="#fff3dd" stroke-opacity="0.7" stroke-width="0.6"/>${flags}</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+})();
+
 // ───────────── le pied de la page : citrouilles ou ofrenda, cempasúchil et bougies ─────────────
 
 /** Les deux coins du bas de l'écran : citrouilles et bougies pour Halloween, une petite ofrenda pour le Jour des morts. */
@@ -188,10 +215,11 @@ export const SaisonFlyover = memo(function SaisonFlyover() {
 
 // ───────────── les barres du haut et du bas ─────────────
 
-/** Guirlande de cempasúchil qui pend sous la barre du haut (les deux fêtes). */
+/** Sous la barre du haut : la guirlande de cempasúchil d'Halloween, le papel picado du Jour des morts. */
 export function SaisonGarland() {
   const season = useSeason();
   if (!season) return null;
+  if (season === 'muertos') return <div className="hw-garland hw-garland--papel" aria-hidden="true" style={{ backgroundImage: PAPEL_TILE }} />;
   return <div className="hw-garland" aria-hidden="true" style={{ backgroundImage: GARLAND_TILE }} />;
 }
 
@@ -319,19 +347,21 @@ export function SaisonBanner() {
     );
   }, [id, season]);
   if (!season) return null;
+  // la lune orange d'Halloween, la lune dorée du cempasúchil pour le Jour des morts
+  const moon = season === 'muertos' ? '#ffd166' : '#ffb35c';
   return (
-    <section className="panel hw-banner" aria-labelledby="hw-title">
+    <section className={`panel hw-banner${season === 'muertos' ? ' hw-banner--muertos' : ''}`} aria-labelledby="hw-title">
       <svg className="mx-scene hw-banner__art" viewBox="0 0 100 60" aria-hidden="true">
         <defs>
           <Glow id={id} name="flame" color="#ffb347" />
           <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
           <radialGradient id={`${id}-moon`}>
-            <stop offset="0" stopColor="#ffb35c" stopOpacity={0.55} />
-            <stop offset="1" stopColor="#ffb35c" stopOpacity={0} />
+            <stop offset="0" stopColor={moon} stopOpacity={0.55} />
+            <stop offset="1" stopColor={moon} stopOpacity={0} />
           </radialGradient>
         </defs>
         <circle cx={50} cy={20} r={26} fill={`url(#${id}-moon)`} />
-        <circle cx={50} cy={20} r={10} fill="#ffb35c" />
+        <circle cx={50} cy={20} r={10} fill={moon} />
         {art}
       </svg>
       {season === 'muertos' ? (
@@ -339,9 +369,9 @@ export function SaisonBanner() {
           <p className="eyebrow">Día de Muertos · Jour des morts</p>
           <h2 id="hw-title">Le Mexique fête ses morts</h2>
           <p className="muted">
-            Jusqu’au 7 novembre, le jeu se pare de cempasúchil, de bougies et de calaveras, et la radio passe ses morceaux
-            mexicains : « Huapango du cempasúchil », « Bolero de la Catrina » et « Valse des calaveras ». La Série 2 · Mexique
-            est arrivée : ouvre son booster gratuit !
+            Jusqu’au 7 novembre, le jeu se pare de papel picado, de cempasúchil, de bougies et de calaveras, et la radio passe
+            quatre morceaux mexicains : « Huapango du cempasúchil », « Bolero de la Catrina », « Marimba de l’ofrenda » et
+            « Danzón des monarques ». La Série 2 · Mexique est arrivée : ouvre son booster gratuit !
           </p>
         </div>
       ) : (

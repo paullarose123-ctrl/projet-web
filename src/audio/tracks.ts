@@ -3,7 +3,7 @@ import { seasonAt, type Season } from '../engine/season';
 
 // Les morceaux de la radio du jeu : sept pièces calmes de la même famille, façon documentaire nature,
 // chacune avec son paysage (une clairière au matin, la pluie sur la canopée, la savane la nuit…),
-// trois pièces pour Halloween et trois pour la semaine du Jour des morts : pendant une fête, la radio ne joue qu'elles.
+// trois pièces pour Halloween et quatre mexicaines pour la semaine du Jour des morts : pendant une fête, la radio ne joue qu'elles.
 // Tout est composé en direct avec Web Audio : aucun fichier, aucun droit d'auteur.
 // Chaque morceau joue une grille de 8 mesures (16 pour la valse) en plusieurs passages qui changent
 // d'instruments (introduction, thème, variation, retour du thème), puis un accord final qui résonne.
@@ -630,7 +630,7 @@ function calaveras(): Track {
   return {
     id: 'calaveras',
     title: 'Valse des calaveras',
-    seasons: ['halloween', 'muertos'],
+    seasons: ['halloween'],
     bpm,
     beats: 3,
     bars,
@@ -746,6 +746,8 @@ function squelettes(): Track {
 // ───────────── Jour des morts : la seconde voix, une tierce sous la mélodie ─────────────
 
 const RE_MAJEUR = [2, 4, 6, 7, 9, 11, 1];
+const SOL_MAJEUR = [7, 9, 11, 0, 2, 4, 6];
+const DO_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 const LA_MINEUR = [9, 11, 0, 2, 4, 5, 7];
 const LA_MINEUR_HARMONIQUE = [9, 11, 0, 2, 4, 5, 8];
 
@@ -947,13 +949,186 @@ function bolero(): Track {
   };
 }
 
+// ───────────── Jour des morts : 13. Marimba de l'ofrenda (sol majeur, 3/4, 138 bpm) : trois marimbas ─────────────
+// Le son chiapanèque : la grande marimba du Chiapas jouée à plusieurs. La basse marque le premier temps, l'accord
+// répond sur les deux autres (« oum-pa-pa »), le soliste chante la mélodie en trémolo et le second la double à la tierce.
+
+const MARIMBA: Chord[] = [
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 43, c: [59, 65, 67] }, // Sol 7
+  { r: 43, c: [59, 65, 67] }, // Sol 7
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 43, c: [59, 62, 67] }, // Sol
+];
+const MARIMBA_MELODY: Note[][] = [
+  [[0, 74, 1], [1, 76, 0.5], [1.5, 74, 0.5], [2, 71, 1]],
+  [[0, 67, 1], [1, 71, 1], [2, 74, 1]],
+  [[0, 72, 1], [1, 74, 0.5], [1.5, 72, 0.5], [2, 69, 1]],
+  [[0, 66, 1], [1, 69, 1], [2, 72, 1]],
+  [[0, 74, 1.5], [1.5, 72, 0.5], [2, 69, 1]],
+  [[0, 72, 1], [1, 71, 1], [2, 69, 1]],
+  [[0, 71, 1], [1, 74, 1], [2, 79, 1]],
+  [[0, 79, 3]],
+  [[0, 77, 1], [1, 79, 0.5], [1.5, 77, 0.5], [2, 74, 1]],
+  [[0, 71, 1], [1, 74, 1], [2, 77, 1]],
+  [[0, 76, 1.5], [1.5, 74, 0.5], [2, 72, 1]],
+  [[0, 72, 1], [1, 76, 1], [2, 79, 1]],
+  [[0, 79, 1], [1, 78, 0.5], [1.5, 76, 0.5], [2, 74, 1]],
+  [[0, 72, 1], [1, 69, 1], [2, 66, 1]],
+  [[0, 67, 1], [1, 71, 1], [2, 74, 1]],
+  [[0, 79, 3]],
+];
+
+function marimbaOfrenda(): Track {
+  const bpm = 138;
+  const beat = 60 / bpm;
+  const BAR = beat * 3;
+  const bars = 66;
+  return {
+    id: 'marimba',
+    title: 'Marimba de l’ofrenda',
+    seasons: ['muertos'],
+    bpm,
+    beats: 3,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (outro) {
+        if (!last) {
+          [43, 55, 59, 62, 67, 71, 74, 79].forEach((n, k) => marimba(ac, out, midi(n), t0 + k * 0.07, 0.11, (k - 4) * 0.1));
+          marimbaNote(ac, out, midi(79), t0 + BAR * 0.6, 2.4, 0.1);
+          marimbaNote(ac, out, midi(71), t0 + BAR * 0.6, 2.4, 0.06);
+          bass(ac, out, midi(31), t0, BAR * 1.5, 0.09);
+        }
+        return;
+      }
+      const { r, c } = MARIMBA[step];
+      // la marimba grave : la basse au premier temps ; l'accord sur les deux autres
+      marimba(ac, out, midi(r), t0, 0.16, -0.25);
+      bass(ac, out, midi(r - 12), t0, beat * 1.1, 0.07);
+      for (const b of [1, 2]) c.forEach((n, k) => marimba(ac, out, midi(n), t0 + b * beat + k * 0.012, b === 1 ? 0.07 : 0.055, -0.05 + k * 0.1));
+      // le claquement des baguettes sur le bois du cadre, en début de phrase
+      if (step % 4 === 0) tick(ac, out, t0, 0.025, 2100);
+      const phrase = MARIMBA_MELODY[step];
+      const scale = c.includes(65) ? DO_MAJEUR : SOL_MAJEUR;
+      play(phrase, t0, beat, (f, t, length) => marimbaNote(ac, out, f, t, length, section === 0 ? 0.12 : 0.11), 12);
+      if (section >= 1) play(below(phrase, scale), t0, beat, (f, t, length) => marimbaNote(ac, out, f, t, length, 0.065), 12);
+      if (section === 2) play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.03, 0.2));
+    },
+  };
+}
+
+// ───────────── Jour des morts : 14. Danzón des monarques (fa majeur, 4/4, 100 bpm) : flûte, piano, cordes, güiro ─────────────
+// Le danzón des salles de bal de Veracruz et de Mexico : le cinquillo (cinq coups sur huit croches) au piano et au
+// timbal, le güiro qui gratte, la basse qui anticipe, et la flûte qui mène la danse, reprise par les violons.
+
+const DANZON: Chord[] = [
+  { r: 41, c: [60, 65, 69] }, // Fa
+  { r: 41, c: [60, 65, 69] }, // Fa
+  { r: 43, c: [58, 62, 67] }, // Sol m
+  { r: 36, c: [58, 64, 67] }, // Do 7
+  { r: 36, c: [58, 64, 67] }, // Do 7
+  { r: 36, c: [58, 64, 67] }, // Do 7
+  { r: 41, c: [60, 65, 69] }, // Fa
+  { r: 41, c: [60, 65, 69] }, // Fa
+  { r: 41, c: [60, 63, 69] }, // Fa 7
+  { r: 46, c: [58, 62, 65] }, // Si b
+  { r: 46, c: [58, 61, 65] }, // Si b m
+  { r: 41, c: [60, 65, 69] }, // Fa
+  { r: 38, c: [57, 62, 65] }, // Ré m
+  { r: 43, c: [58, 62, 67] }, // Sol m
+  { r: 36, c: [58, 64, 67] }, // Do 7
+  { r: 41, c: [60, 65, 69] }, // Fa
+];
+const DANZON_MELODY: Note[][] = [
+  [[0, 72, 1], [1.5, 74, 0.5], [2, 76, 1], [3, 77, 1]],
+  [[0, 81, 2], [2.5, 79, 0.5], [3, 77, 1]],
+  [[0, 79, 1], [1.5, 77, 0.5], [2, 74, 1], [3, 70, 1]],
+  [[0, 72, 3], [3, 70, 1]],
+  [[0, 76, 1], [1.5, 79, 0.5], [2, 82, 1], [3, 79, 1]],
+  [[0, 76, 1], [1, 74, 1], [2, 72, 2]],
+  [[0, 69, 1], [1.5, 72, 0.5], [2, 77, 1], [3, 81, 1]],
+  [[0, 77, 4]],
+  [[0, 84, 1], [1.5, 82, 0.5], [2, 81, 1], [3, 75, 1]],
+  [[0, 74, 2], [2, 77, 1], [3, 82, 1]],
+  [[0, 82, 1], [1.5, 80, 0.5], [2, 77, 1], [3, 73, 1]],
+  [[0, 72, 3], [3, 74, 1]],
+  [[0, 77, 1], [1.5, 76, 0.5], [2, 74, 1], [3, 69, 1]],
+  [[0, 70, 1], [1, 74, 1], [2, 79, 1], [3, 77, 1]],
+  [[0, 76, 1.5], [1.5, 74, 0.5], [2, 72, 1], [3, 70, 1]],
+  [[0, 65, 4]],
+];
+/** le cinquillo : les croches jouées sur les huit de la mesure */
+const CINQUILLO = [0, 2, 3, 5, 6];
+
+function danzon(): Track {
+  const bpm = 100;
+  const beat = 60 / bpm;
+  const eighth = beat / 2;
+  const BAR = beat * 4;
+  const bars = 50;
+  return {
+    id: 'danzon',
+    title: 'Danzón des monarques',
+    seasons: ['muertos'],
+    bpm,
+    beats: 4,
+    bars,
+    bar(ac, out, t0, i) {
+      const { section, step, outro, last } = where(i, bars, 16);
+      if (outro) {
+        if (!last) {
+          roll(ac, out, [29, 41, 53, 57, 60, 65, 69, 77], t0, 0.07, 0.1);
+          flute(ac, out, midi(77), t0 + 0.3, BAR * 1.3, 0.04, 0.15);
+          strings(ac, out, [57, 60, 65].map(midi), t0, BAR * 1.6, 0.024, { attack: 1, release: 3.5 });
+          bass(ac, out, midi(29), t0, BAR, 0.1);
+        }
+        return;
+      }
+      const { r, c } = DANZON[step];
+      // la basse : la fondamentale au premier temps, la quinte anticipée sur le « et » du troisième
+      bass(ac, out, midi(r), t0, beat * 1.4, 0.1);
+      bass(ac, out, midi(r + 7), t0 + 5 * eighth, beat * 1.2, 0.08);
+      // le piano et le timbal sur le cinquillo
+      for (const e of CINQUILLO) {
+        c.forEach((n, k) => piano(ac, out, midi(n), t0 + e * eighth + k * 0.01, e === 0 ? 0.045 : 0.032, -0.15 + k * 0.12, 1.2));
+        tick(ac, out, t0 + e * eighth, e === 0 ? 0.03 : 0.02, 1300);
+      }
+      // le güiro : un long grattement puis deux courts, à chaque temps
+      for (let b = 0; b < 4; b++) {
+        air(ac, out, t0 + b * beat, eighth * 0.9, { gain: 0.012, from: 2600, to: 4200, q: 3, attack: 0.02, pan: 0.35, send: 0.1 });
+        tick(ac, out, t0 + b * beat + eighth, 0.01, 4200);
+        tick(ac, out, t0 + b * beat + eighth * 1.5, 0.008, 4400);
+      }
+      if (section >= 1) strings(ac, out, c.map(midi), t0, BAR - 0.2, 0.02, { attack: 0.8, release: 1.4, open: 1200 });
+      const phrase = DANZON_MELODY[step];
+      if (section !== 1) play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.05, 0.15));
+      if (section === 1) {
+        play(phrase, t0, beat, (f, t, length) => strings(ac, out, [f], t, length * 0.95, 0.035, { attack: 0.08, release: 0.4, open: 2400 }));
+        play(phrase, t0, beat, (f, t) => piano(ac, out, f, t, 0.035, 0.1, 1.6), -12);
+      }
+    },
+  };
+}
+
 /**
  * Les morceaux de la radio : les sept de toujours ou, pendant une fête, les siens seulement (Halloween : citrouilles,
- * calaveras, squelettes ; Jour des morts : huapango, boléro et la valse des calaveras).
+ * calaveras, squelettes ; Jour des morts : huapango, boléro, marimba et danzón).
  */
 export function allTracks(now: number = Date.now()): Track[] {
   const season = seasonAt(now);
   if (season === 'halloween') return [citrouilles(), calaveras(), squelettes()];
-  if (season === 'muertos') return [huapango(), bolero(), calaveras()];
+  if (season === 'muertos') return [huapango(), bolero(), marimbaOfrenda(), danzon()];
   return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
 }
