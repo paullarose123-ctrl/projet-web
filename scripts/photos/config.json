@@ -2425,10 +2425,10 @@
     },
     "souris-des-volcans": {
       "corps": [
-        0.48,
-        0.44,
-        0.74,
-        0.77
+        0.29,
+        0.26,
+        0.63,
+        0.71
       ]
     },
     "spermophile-a-queue-annelee": {
@@ -2717,14 +2717,11 @@
       0.57,
       1.18
     ],
-    "mx-raie-manta": {
-      "corps": [
-        0.25,
-        0.07,
-        0.78,
-        0.74
-      ]
-    },
+    "mx-raie-manta": [
+      0.55,
+      0.42,
+      1.2
+    ],
     "skiffia-dore": {
       "corps": [
         0.27,
@@ -2783,18 +2780,21 @@
         0.8
       ]
     },
-    "xoloitzcuintle": [
-      0.5,
-      0.47,
-      1
-    ],
+    "xoloitzcuintle": {
+      "corps": [
+        0.38,
+        0.1,
+        0.66,
+        0.88
+      ]
+    },
     "habitat-mx-sian-kaan": [
       0.3,
       0.5,
       1
     ],
     "habitat-mx-xochimilco": [
-      0.25,
+      0.42,
       0.5,
       1
     ]

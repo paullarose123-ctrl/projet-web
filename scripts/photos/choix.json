@@ -683,7 +683,7 @@
   "habitat-mx-monarques": "ButterfliesChincua03.JPG",
   "habitat-mx-revillagigedo": "Declaratoria Oficial de Patrimonio Mundial del Archipiélago de Revillagigedo.jpg",
   "habitat-mx-sian-kaan": "SianKa'anBR-27527-1.jpg",
-  "habitat-mx-xochimilco": "Xochimilco Trajinera (46540575785).jpg",
+  "habitat-mx-xochimilco": "En Xochimilco.jpg",
   "habitat-sargasses": "Underwater Sargassum (oceanos2024loiacono-2059).jpg",
   "hamster": "Juvenile Female Mesocricetus auratus in Pet Store enclosure, Illinois, USA.jpg",
   "haricot-sauteur": "Jumping beans 12.jpg",
@@ -987,11 +987,11 @@
   },
   "mx-quetzal": "060 Male Resplendent quetzal with a long tail in Los Quetzales National Park Photo by Giles Laurent.jpg",
   "mx-raie-manta": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/82117180/original.jpg",
-    "page": "https://www.inaturalist.org/photos/82117180",
-    "auteur": "Albert Kang",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+    "url": "https://images.pexels.com/photos/5192605/pexels-photo-5192605.jpeg",
+    "page": "https://www.pexels.com/photo/a-manta-ray-underwater-5192605/",
+    "auteur": "Emmali",
+    "licence": "Licence Pexels",
+    "licenceUrl": "https://www.pexels.com/license/"
   },
   "mx-requin-baleine": "Whale Shark (Rhincodon typus) with open mouth in La Paz, Mexico.jpg",
   "mythe-behemoth": {
@@ -1604,9 +1604,9 @@
   },
   "souris": "Maus außer Haus.JPG",
   "souris-des-volcans": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/89442247/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/89442247",
-    "auteur": "ikanirasta",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75234980/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/75234980",
+    "auteur": "aguilargm",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -1729,7 +1729,13 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "xoloitzcuintle": "Xoloitzcuintli - GCH Bayshore Georgio Armani 09 (16397731930).jpg",
+  "xoloitzcuintle": {
+    "url": "https://images.pexels.com/photos/37157627/pexels-photo-37157627.jpeg",
+    "page": "https://www.pexels.com/photo/xoloitzcuintli-dog-running-in-natural-forest-setting-37157627/",
+    "auteur": "Lorenzo Manera",
+    "licence": "Licence Pexels",
+    "licenceUrl": "https://www.pexels.com/license/"
+  },
   "yak": "Bos grunniens at Letdar on Annapurna Circuit.jpg",
   "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg"
 }

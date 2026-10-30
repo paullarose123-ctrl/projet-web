@@ -2459,15 +2459,15 @@
  "habitat-mx-xochimilco": {
   "file": "habitat-mx-xochimilco.webp",
   "cutout": false,
-  "author": "Nan Palmero from San Antonio, TX, USA",
+  "author": "Fer Seelbach",
   "license": "CC BY 2.0",
   "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Xochimilco_Trajinera_(46540575785).jpg",
+  "page": "https://commons.wikimedia.org/wiki/File:En_Xochimilco.jpg",
   "brut": [
    1800,
-   1201
+   1350
   ],
-  "v": "277f76d2"
+  "v": "53c90eda"
  },
  "habitat-okavango": {
   "file": "habitat-okavango.webp",
@@ -3642,15 +3642,15 @@
  "mx-raie-manta": {
   "file": "mx-raie-manta.webp",
   "cutout": false,
-  "author": "Albert Kang",
-  "license": "CC BY-NC 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/82117180",
+  "author": "Emmali",
+  "license": "Licence Pexels",
+  "licenseUrl": "https://www.pexels.com/license/",
+  "page": "https://www.pexels.com/photo/a-manta-ray-underwater-5192605/",
   "brut": [
    1800,
-   1350
+   2803
   ],
-  "v": "8ad498d2"
+  "v": "903e26d2"
  },
  "mx-requin-baleine": {
   "file": "mx-requin-baleine.webp",
@@ -5101,15 +5101,15 @@
  "souris-des-volcans": {
   "file": "souris-des-volcans.webp",
   "cutout": false,
-  "author": "ikanirasta",
+  "author": "aguilargm",
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/89442247",
+  "page": "https://www.inaturalist.org/photos/75234980",
   "brut": [
    1800,
    1350
   ],
-  "v": "bc0beab4"
+  "v": "2bff86dc"
  },
  "spermophile-a-queue-annelee": {
   "file": "spermophile-a-queue-annelee.webp",
@@ -5610,15 +5610,15 @@
  "xoloitzcuintle": {
   "file": "xoloitzcuintle.webp",
   "cutout": false,
-  "author": "Pets Adviser from Brooklyn, USA",
-  "license": "CC BY 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Xoloitzcuintli_-_GCH_Bayshore_Georgio_Armani_09_(16397731930).jpg",
+  "author": "Lorenzo Manera",
+  "license": "Licence Pexels",
+  "licenseUrl": "https://www.pexels.com/license/",
+  "page": "https://www.pexels.com/photo/xoloitzcuintli-dog-running-in-natural-forest-setting-37157627/",
   "brut": [
-   1533,
-   2154
+   1800,
+   1200
   ],
-  "v": "6af59cd9"
+  "v": "a43281e3"
  },
  "yak": {
   "file": "yak.webp",
