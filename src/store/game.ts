@@ -6,7 +6,8 @@ import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE2_REMPL
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
-import { serieOf } from '../engine/series';
+import { isReleased, serieOf } from '../engine/series';
+import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
   MAX_MY_LISTINGS,
   advanceMarket,
@@ -168,6 +169,8 @@ export interface GameState {
   match: DuelState | null;
   stats: GameStats;
   claimed: string[];
+  /** objectifs du jour : compteurs de la journée et récompenses déjà récupérées (voir engine/daily.ts) */
+  daily: DailyState;
   muted: boolean;
   /** musique de fond coupée (les effets sonores restent) */
   musicOff: boolean;
@@ -211,6 +214,10 @@ export interface GameState {
   setFavorite: (slot: number, uid: string | null) => void;
   setAvatar: (athleteId: string) => void;
   claimObjective: (id: string) => void;
+  /** récupère la récompense d'un objectif du jour rempli */
+  claimDaily: (id: string) => void;
+  /** récupère le bonus des trois objectifs du jour */
+  claimDailyBonus: () => void;
   toggleMute: () => void;
   toggleMusic: () => void;
   toast: (kind: ToastKind, text: string) => void;
@@ -290,6 +297,7 @@ function initialState(now: number) {
     match: null as DuelState | null,
     stats: { packsOpened: 0, cardsSold: 0, cardsBought: 0, matchesPlayed: 0, matchesWon: 0 } as GameStats,
     claimed: [] as string[],
+    daily: emptyDaily(dayKey(now)),
     onlineDone: [] as string[],
     muted: false,
     musicOff: false,
@@ -378,6 +386,22 @@ export const useGame = create<GameState>()(
         set((s) => ({ toasts: [...s.toasts.slice(-3), toast] }));
       };
 
+      // Objectifs du jour : ajoute aux compteurs de la journée (remis à zéro à minuit) et prévient quand un objectif
+      // vient d'être rempli ; la récompense se récupère sur l'accueil.
+      const bumpDaily = (delta: Partial<DailyCounts>) => {
+        const now = Date.now();
+        const before = dailyFor(get().daily, now);
+        const counts = { ...before.counts };
+        for (const [key, value] of Object.entries(delta) as [keyof DailyCounts, number][]) counts[key] += value;
+        const after: DailyState = { ...before, counts };
+        set({ daily: after });
+        for (const objective of dailyObjectives(after.day, isReleased(2, now))) {
+          if (!isDailyDone(objective, before) && isDailyDone(objective, after)) {
+            pushToast('gold', `Objectif du jour réussi : ${objective.title}. Récupère ${formatBalles(objective.reward)} sur l’accueil`);
+          }
+        }
+      };
+
       // tirage d'un booster sans aucune espèce sortie dans les NO_DUPE_WINDOW boosters précédents
       const drawPack = (pack: PackDef): CardFace[] => {
         const recent = get().recentPacks ?? [];
@@ -411,6 +435,12 @@ export const useGame = create<GameState>()(
           opening: { packName: pack.name, tone: pack.tone, sport: pack.sport, serie: pack.serie ?? 1, cards: owned },
           stats: { ...s.stats, packsOpened: s.stats.packsOpened + 1, bestPull: best },
         }));
+        bumpDaily({
+          packs: 1,
+          newSpecies: new Set(faces.map((f) => f.athleteId).filter((id) => !state.discovered[id])).size,
+          rare: faces.filter((f) => f.variant === 'prime' || rarityOf(ATHLETES_BY_ID[f.athleteId]).order >= 2).length,
+          mexique: faces.filter((f) => serieOf(ATHLETES_BY_ID[f.athleteId]) === 2).length,
+        });
       };
 
       const applyMarketEvents = (events: MarketEvent[]) => {
@@ -521,6 +551,7 @@ export const useGame = create<GameState>()(
             team: s.team.filter((uid) => !sold.has(uid)),
           }));
           pushToast('success', `${sellable.length} carte${sellable.length > 1 ? 's' : ''} vendue${sellable.length > 1 ? 's' : ''} au comptoir pour ${formatBalles(total)}`);
+          bumpDaily({ quickSold: sellable.length });
           return total;
         },
 
@@ -694,6 +725,7 @@ export const useGame = create<GameState>()(
           }));
           pushToast(result === 'win' ? 'gold' : 'info', `${result === 'win' ? 'Victoire' : result === 'draw' ? 'Match nul' : 'Défaite'} : +${formatBalles(reward)}`);
           if (promoted) pushToast('gold', `Promotion ! Bienvenue en division ${divisionName(division)}`);
+          bumpDaily({ played: 1, won: result === 'win' ? 1 : 0 });
         },
 
         abandonMatch: () => set({ match: null }),
@@ -719,6 +751,24 @@ export const useGame = create<GameState>()(
           if (done < total) return;
           set((s) => ({ balles: s.balles + objective.reward, claimed: [...s.claimed, id] }));
           pushToast('gold', `Objectif réussi : +${formatBalles(objective.reward)}`);
+        },
+
+        claimDaily: (id) => {
+          const now = Date.now();
+          const daily = dailyFor(get().daily, now);
+          const objective = dailyObjectives(daily.day, isReleased(2, now)).find((o) => o.id === id);
+          if (!objective || daily.claimed.includes(id) || !isDailyDone(objective, daily)) return;
+          set((s) => ({ balles: s.balles + objective.reward, daily: { ...daily, claimed: [...daily.claimed, id] } }));
+          pushToast('gold', `Objectif du jour : +${formatBalles(objective.reward)}`);
+        },
+
+        claimDailyBonus: () => {
+          const now = Date.now();
+          const daily = dailyFor(get().daily, now);
+          const all = dailyObjectives(daily.day, isReleased(2, now));
+          if (daily.bonus || !all.every((o) => daily.claimed.includes(o.id))) return;
+          set((s) => ({ balles: s.balles + DAILY_BONUS, daily: { ...daily, bonus: true } }));
+          pushToast('gold', `Les trois objectifs du jour sont remplis : bonus de ${formatBalles(DAILY_BONUS)} !`);
         },
 
         toggleMute: () => set((s) => ({ muted: !s.muted })),
