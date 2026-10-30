@@ -370,7 +370,7 @@ export function SaisonBanner() {
           <h2 id="hw-title">Le Mexique fête ses morts</h2>
           <p className="muted">
             Jusqu’au 7 novembre, le jeu se pare de papel picado, de cempasúchil, de bougies et de calaveras, et la radio passe
-            quatre morceaux mexicains : « Huapango du cempasúchil », « Bolero de la Catrina », « Marimba de l’ofrenda » et
+            quatre morceaux mexicains : « Huapango du cempasúchil », « Bolero de la Catrina », « Son jarocho du Papaloapan » et
             « Danzón des monarques ». La Série 2 · Mexique est arrivée : ouvre son booster gratuit !
           </p>
         </div>
