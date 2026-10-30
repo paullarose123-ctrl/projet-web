@@ -2438,6 +2438,12 @@
   perspective: 1100px;
 }
 
+/* tant que le sachet est fermé, l'écran entier sert à le manipuler : pas de défilement ni de zoom au doigt */
+.opening--pack,
+.opening--charging {
+  touch-action: none;
+}
+
 /* ───── le sachet en volume ───── */
 .opening__pack3d {
   position: relative;
@@ -2448,6 +2454,7 @@
   background: none;
   cursor: pointer;
   transform-style: preserve-3d;
+  touch-action: none;
   animation: pack3d-enter 1.35s cubic-bezier(0.25, 0.75, 0.3, 1) both;
 }
 
@@ -2518,7 +2525,7 @@
 }
 
 .pack3d__front {
-  transform: translateZ(6px);
+  transform: translateZ(9px);
   transform-style: preserve-3d;
 }
 
@@ -2538,7 +2545,7 @@
 .pack3d__back {
   --tooth: 3px;
   --crimp: 5.3%;
-  transform: rotateY(180deg) translateZ(6px);
+  transform: rotateY(180deg) translateZ(9px);
   display: grid;
   place-content: center;
   justify-items: center;
@@ -2576,23 +2583,50 @@
   opacity: 0.7;
 }
 
-/* tranches du sachet */
+/* tranches du sachet : le plastique gonflé par les cartes, épais au milieu et pincé vers les soudures, avec un
+   reflet le long du bombé */
 .pack3d__side {
   position: absolute;
-  top: 3%;
-  bottom: 3%;
-  width: 12px;
-  background: linear-gradient(90deg, var(--pack-near, #0d1611), color-mix(in srgb, var(--pack-far, #2c4a38) 60%, var(--pack-near, #0d1611)) 50%, var(--pack-near, #0d1611));
+  top: 1.5%;
+  bottom: 1.5%;
+  width: 18px;
+  clip-path: polygon(38% 0, 62% 0, 100% 7%, 100% 93%, 62% 100%, 38% 100%, 0 93%, 0 7%);
+  background:
+    linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.28) 48%, transparent 66%),
+    linear-gradient(90deg, var(--pack-near, #0d1611), color-mix(in srgb, var(--pack-far, #2c4a38) 70%, var(--pack-near, #0d1611)) 50%, var(--pack-near, #0d1611));
 }
 
 .pack3d__side--left {
-  left: -6px;
+  left: -9px;
   transform: rotateY(-90deg);
 }
 
 .pack3d__side--right {
-  right: -6px;
+  right: -9px;
   transform: rotateY(90deg);
+}
+
+/* soudures du haut et du bas : une fine lame de plastique écrasé, vue par la tranche */
+.pack3d__side--top,
+.pack3d__side--bottom {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: auto;
+  width: auto;
+  height: 4px;
+  clip-path: none;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 1px, color-mix(in srgb, var(--pack-far, #2c4a38) 55%, var(--pack-near, #0d1611)) 1px 3px);
+}
+
+.pack3d__side--top {
+  top: -2px;
+  transform: rotateX(90deg);
+}
+
+.pack3d__side--bottom {
+  bottom: -2px;
+  transform: rotateX(-90deg);
 }
 
 /* cartes cachées dans le sachet, entre les deux faces */
@@ -2606,18 +2640,26 @@
   opacity: 0;
 }
 
-/* les trois dos de carte se superposent (la règle .card-back les mettrait sinon les uns sous les autres) */
+/* les cinq dos de carte se superposent (la règle .card-back les mettrait sinon les uns sous les autres) */
 .pack3d__cards > .card-back {
   position: absolute;
   inset: 0;
 }
 
 .pack3d__cards > :nth-child(1) {
-  transform: translateZ(-2px) rotateZ(-5deg);
+  transform: translateZ(-4px) rotateZ(-5deg);
 }
 
-.pack3d__cards > :nth-child(3) {
-  transform: translateZ(2px) rotateZ(5deg);
+.pack3d__cards > :nth-child(2) {
+  transform: translateZ(-2px) rotateZ(-2.5deg);
+}
+
+.pack3d__cards > :nth-child(4) {
+  transform: translateZ(2px) rotateZ(2.5deg);
+}
+
+.pack3d__cards > :nth-child(5) {
+  transform: translateZ(4px) rotateZ(5deg);
 }
 
 /* lumière qui jaillit de l'ouverture */
@@ -2634,6 +2676,98 @@
   filter: blur(8px);
   opacity: 0;
   pointer-events: none;
+}
+
+/* ───── déchirure au doigt ───── */
+/* la bande se décolle à mesure qu'on la tire, en pivotant autour de son bord gauche */
+.opening__pack3d.is-ripping .pack3d__strip {
+  transform: translate3d(0, calc(var(--rip) * -7%), calc(var(--rip) * 26px)) rotateX(calc(var(--rip) * -38deg)) rotateZ(calc(var(--rip) * -7deg));
+  transition: transform 0.08s linear;
+}
+
+/* la fente qui s'ouvre sous la bande : un trait de lumière dorée qui s'allonge avec le geste */
+.pack3d__slit {
+  position: absolute;
+  left: 2%;
+  top: 11.5%;
+  width: calc(var(--rip, 0) * 96%);
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 4px;
+  transform: translateZ(10px);
+  background: linear-gradient(90deg, #fff, #fff 85%, transparent);
+  box-shadow: 0 0 10px 3px var(--teaser), 0 0 30px 8px color-mix(in srgb, var(--teaser) 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.opening__pack3d.is-ripping .pack3d__slit {
+  opacity: 1;
+}
+
+.opening--tearing .pack3d__slit {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* ombre portée au sol : elle s'élargit quand le sachet descend, se resserre quand il monte */
+.opening__shadow3d {
+  position: absolute;
+  left: 50%;
+  top: calc(24px + min(250px, 60vw) * 1.5);
+  width: calc(min(250px, 60vw) * 0.95);
+  height: calc(min(250px, 60vw) * 0.16);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.25) 60%, transparent);
+  filter: blur(6px);
+  pointer-events: none;
+  opacity: 0;
+  animation:
+    shadow3d-land 0.8s 0.55s ease-out forwards,
+    shadow3d-sway 6s 1.2s ease-in-out infinite;
+}
+
+@keyframes shadow3d-land {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shadow3d-sway {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 0.86 0.8;
+  }
+}
+
+.opening--charging .opening__shadow3d {
+  animation: none;
+  opacity: 1;
+  transform: scale(1.08);
+  transition: transform 0.8s ease-in;
+}
+
+.opening--tearing .opening__shadow3d {
+  animation: shadow3d-out 1.4s ease-in forwards;
+}
+
+@keyframes shadow3d-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.5);
+  }
 }
 
 /* ───── ouverture ───── */
@@ -2711,14 +2845,19 @@
   animation: cards3d 0.8s 0.6s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
 }
 
+/* les cartes glissent hors du sachet par la fente, puis montent vers nous */
 @keyframes cards3d {
   0% {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
+  45% {
+    opacity: 1;
+    transform: translate3d(0, -40%, 10px);
+  }
   100% {
     opacity: 1;
-    transform: translate3d(0, -62%, 30px) rotateX(-8deg);
+    transform: translate3d(0, -78%, 60px) rotateX(-10deg);
   }
 }
 
@@ -3014,22 +3153,42 @@
 
 /* les cartes sortent en éventail */
 .opening--tearing .pack3d__cards > :nth-child(1) {
-  animation: fan-left 0.7s 0.85s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+  animation: fan-left 0.7s 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
 }
 
-.opening--tearing .pack3d__cards > :nth-child(3) {
-  animation: fan-right 0.7s 0.85s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+.opening--tearing .pack3d__cards > :nth-child(2) {
+  animation: fan-left-near 0.7s 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+}
+
+.opening--tearing .pack3d__cards > :nth-child(4) {
+  animation: fan-right-near 0.7s 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+}
+
+.opening--tearing .pack3d__cards > :nth-child(5) {
+  animation: fan-right 0.7s 0.95s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
 }
 
 @keyframes fan-left {
   to {
-    transform: translate3d(-34%, 6%, -2px) rotateZ(-16deg);
+    transform: translate3d(-42%, 9%, -4px) rotateZ(-20deg);
+  }
+}
+
+@keyframes fan-left-near {
+  to {
+    transform: translate3d(-21%, 2%, -2px) rotateZ(-10deg);
+  }
+}
+
+@keyframes fan-right-near {
+  to {
+    transform: translate3d(21%, 2%, 2px) rotateZ(10deg);
   }
 }
 
 @keyframes fan-right {
   to {
-    transform: translate3d(34%, 6%, 2px) rotateZ(16deg);
+    transform: translate3d(42%, 9%, 4px) rotateZ(20deg);
   }
 }
 
@@ -3070,6 +3229,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pack3d-float,
+  .opening__shadow3d,
   .opening__dust i,
   .opening__scene,
   .opening__halo,
@@ -3315,6 +3475,18 @@
 
 .stage-card .flip__front .card {
   --card-w: var(--stage-w) !important;
+}
+
+/* la première carte sort du paquet tiré du sachet : elle descend du haut de la scène vers nous */
+.stage-card.is-first {
+  animation: stage-from-pack 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes stage-from-pack {
+  from {
+    opacity: 0.4;
+    transform: translate3d(0, -42%, -260px) rotateX(18deg) scale(0.7);
+  }
 }
 
 /* elle arrive de la profondeur en pivotant, et repart de l'autre côté */
