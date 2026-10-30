@@ -7,7 +7,7 @@ import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
 import { freePackChoices } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
-import { HERO_SCENE, HERO_SCENE_HALLOWEEN } from '../art/scenes';
+import { HERO_SCENE, HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/scenes';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
@@ -236,7 +236,7 @@ function FreePackHero() {
 
   return (
     <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
-      <Landscape className="hero__art" scene={season ? HERO_SCENE_HALLOWEEN : HERO_SCENE} seed="accueil" />
+      <Landscape className="hero__art" scene={season === 'muertos' ? HERO_SCENE_MUERTOS : season ? HERO_SCENE_HALLOWEEN : HERO_SCENE} seed="accueil" />
       <SaisonHead seed="accueil" pendants={false} />
       <div className="hero__pack">
         <div className="hero__boosters">

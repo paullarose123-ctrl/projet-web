@@ -26,7 +26,7 @@ describe('Saisons d’Halloween et du Jour des morts', () => {
     const after = allTracks(new Date(2026, 10, 8).getTime());
     expect(halloween.map((t) => t.title)).toEqual(['Nuit des citrouilles', 'Valse des calaveras', 'Bal des squelettes']);
     expect(halloween.every((t) => t.seasons?.includes('halloween'))).toBe(true);
-    expect(muertos.map((t) => t.title)).toEqual(['Huapango du cempasúchil', 'Bolero de la Catrina', 'Valse des calaveras']);
+    expect(muertos.map((t) => t.title)).toEqual(['Huapango du cempasúchil', 'Bolero de la Catrina', 'Marimba de l’ofrenda', 'Danzón des monarques']);
     expect(muertos.every((t) => t.seasons?.includes('muertos'))).toBe(true);
     expect(after).toHaveLength(7);
     expect(after.some((t) => t.seasons)).toBe(false);

@@ -9,11 +9,18 @@ export const SITE_SCENE: SceneDef = {
   palette: { sky: ['#0a1411', '#23402f'], sun: '#efe1b8', far: '#2b4a3a', near: '#08110d', accent: '#ffffff' },
 };
 
-/** Le même sous-bois pendant les fêtes (Halloween, Jour des morts) : ciel violet et grosse lune orange. */
+/** Le même sous-bois pendant Halloween : ciel violet et grosse lune orange. */
 export const SITE_SCENE_HALLOWEEN: SceneDef = {
   kind: 'foret',
   stars: true,
   palette: { sky: ['#110a20', '#3a1f46'], sun: '#ffb35c', far: '#2e2142', near: '#0a0712', accent: '#ffffff' },
+};
+
+/** Le même sous-bois pendant le Jour des morts : nuit bleu marine virant au rose mexicain, collines turquoise, lune dorée. */
+export const SITE_SCENE_MUERTOS: SceneDef = {
+  kind: 'foret',
+  stars: true,
+  palette: { sky: ['#06182e', '#8a1d63'], sun: '#ffd166', far: '#17485a', near: '#05101a', accent: '#ffffff' },
 };
 
 /** Accueil (boosters gratuits) : sommets à l'aube et un aigle. */
@@ -23,11 +30,18 @@ export const HERO_SCENE: SceneDef = {
   palette: { sky: ['#1a2c4e', '#f4a06a'], sun: '#ffe7bd', far: '#8a8fb0', near: '#101528', accent: '#fdf2e6' },
 };
 
-/** Accueil pendant les fêtes (Halloween, Jour des morts) : les mêmes sommets sous un ciel de nuit, une grosse lune orange. */
+/** Accueil pendant Halloween : les mêmes sommets sous un ciel de nuit, une grosse lune orange. */
 export const HERO_SCENE_HALLOWEEN: SceneDef = {
   kind: 'montagne',
   stars: true,
   palette: { sky: ['#120a24', '#7a2f4a'], sun: '#ffa94d', far: '#4b3463', near: '#0c0716', accent: '#b9a3d6' },
+};
+
+/** Accueil pendant le Jour des morts : les mêmes sommets sous un crépuscule magenta et turquoise, une lune dorée. */
+export const HERO_SCENE_MUERTOS: SceneDef = {
+  kind: 'montagne',
+  stars: true,
+  palette: { sky: ['#08213f', '#d1347a'], sun: '#ffd166', far: '#1d5d6e', near: '#071422', accent: '#7fe0d0' },
 };
 
 /** Bannières des écrans */

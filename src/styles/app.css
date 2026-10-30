@@ -6535,11 +6535,6 @@
   filter: drop-shadow(0 0 6px rgba(255, 150, 60, 0.6));
 }
 
-.calavera-mark {
-  height: 0.96em;
-  filter: drop-shadow(0 0 6px rgba(228, 64, 123, 0.55));
-}
-
 /* l'onglet actif : la pousse passe à l'orange des bougies */
 .saison-fete .bottomnav__item.is-active::before {
   box-shadow: 0 0 14px rgba(255, 150, 60, 0.8);
@@ -6601,6 +6596,54 @@
   }
 }
 
+/* ───────────── Jour des morts (1er–7 novembre) : ses propres couleurs ─────────────
+   Pour ne pas ressembler à Halloween : le rose mexicain remplace l'orange (accent, liserés des barres), les boutons
+   principaux passent au turquoise, la nuit vire à l'indigo et au magenta, les braises deviennent des pétales dorés,
+   et le papel picado remplace la guirlande sous la barre du haut. */
+:root.saison-muertos {
+  --accent-text: #ff6fbf;
+}
+
+.saison-muertos .panel {
+  border-color: rgba(255, 111, 191, 0.24);
+}
+
+.saison-muertos .firefly {
+  background: #ffd166;
+  box-shadow: 0 0 6px 2px rgba(255, 209, 102, 0.75), 0 0 18px 6px rgba(228, 64, 123, 0.35);
+}
+
+.saison-muertos .topbar {
+  background: rgba(8, 20, 40, 0.88);
+  border-bottom-color: rgba(255, 111, 191, 0.45);
+}
+
+.saison-muertos .bottomnav {
+  background: rgba(8, 18, 36, 0.95);
+  border-top-color: rgba(255, 111, 191, 0.45);
+}
+
+.saison-muertos .bottomnav__item.is-active::before {
+  box-shadow: 0 0 14px rgba(255, 120, 190, 0.85);
+}
+
+.saison-muertos .btn--primary:not(.btn--booster-mx) {
+  --pastel: #8fe3d4;
+  --ink: #0c3b35;
+  --edge: #3fa596;
+}
+
+.hw-garland--papel {
+  top: calc(100% - 3px);
+  height: 22px;
+  background-size: auto 22px;
+}
+
+.calavera-mark {
+  height: 0.96em;
+  filter: drop-shadow(0 0 6px rgba(228, 64, 123, 0.55));
+}
+
 /* l'annonce de la saison sur l'accueil */
 .hw-banner {
   display: grid;
@@ -6630,6 +6673,14 @@
 
 .hw-banner p {
   margin: 0;
+}
+
+.hw-banner--muertos {
+  border-color: rgba(255, 120, 190, 0.4);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(228, 64, 123, 0.38), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, rgba(47, 181, 168, 0.28), transparent 60%),
+    linear-gradient(160deg, #2a0f36, #10122a);
 }
 
 @media (max-width: 520px) {
