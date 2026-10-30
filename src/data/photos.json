@@ -2776,11 +2776,15 @@
  "jaguarondi": {
   "file": "jaguarondi.webp",
   "cutout": false,
-  "author": "COMUNA LAS BALSAS",
+  "author": "gabriel_arroyo",
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/122416475",
-  "v": "00debe84"
+  "page": "https://www.inaturalist.org/photos/83401845",
+  "brut": [
+   1800,
+   1200
+  ],
+  "v": "804a6355"
  },
  "kangourou": {
   "file": "kangourou.webp",
