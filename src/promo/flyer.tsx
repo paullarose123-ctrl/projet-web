@@ -32,7 +32,7 @@ const ICONS: Record<string, ReactNode> = {
 };
 
 const FEATURES: [keyof typeof ICONS, string, string][] = [
-  ['booster', 'Un booster gratuit', 'toutes les 15 minutes'],
+  ['booster', 'Un booster gratuit', 'toutes les heures'],
   ['rare', 'Des cartes rares', 'Épiques, Légendaires et Prime'],
   ['duel', 'Des duels', 'de culture générale'],
   ['echange', 'Des échanges', 'entre joueurs'],

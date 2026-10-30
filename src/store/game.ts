@@ -22,7 +22,8 @@ import { makeUid } from '../engine/random';
 import { divisionName } from '../engine/divisions';
 import { newBadges } from '../engine/badges';
 
-export const FREE_PACK_INTERVAL = 15 * 60_000;
+/** un booster gratuit par heure */
+export const FREE_PACK_INTERVAL = 60 * 60_000;
 /** nombre de cartes de la vitrine du profil */
 export const FAVORITES_SIZE = 5;
 /**

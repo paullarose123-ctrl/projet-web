@@ -283,7 +283,7 @@ function FreePackHero() {
           )}
         </h1>
         <p className="hero__sub">
-          Un nouveau booster toutes les {FREE_PACK_INTERVAL / 60_000} minutes, jusqu’à {MAX_FREE_PACKS} en réserve
+          Un nouveau booster toutes les heures, jusqu’à {MAX_FREE_PACKS} en réserve
           {duo ? ', à ouvrir dans la série de ton choix' : ''}. Plus une espèce est célèbre, plus sa carte est rare.
         </p>
         <div className="hero__timer" aria-label={full ? 'Réserve pleine' : `Prochain booster dans ${formatDuration(nextFreePackAt - now)}`}>
