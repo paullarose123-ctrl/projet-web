@@ -63,7 +63,7 @@ function Flyer() {
         <div>
           <p className="flyer__news-tag">Nouveau</p>
           <p className="flyer__news-title">La Série 2 · Mexique vient de sortir&nbsp;!</p>
-          <p className="flyer__news-sub">116 nouvelles cartes : axolotl, jaguar, quetzal, monarque…</p>
+          <p className="flyer__news-sub">Plus de 100 nouvelles espèces : axolotl, jaguar, quetzal, monarque…</p>
         </div>
       </div>
       <ul className="flyer__features">
