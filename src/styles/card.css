@@ -295,28 +295,35 @@
   --reverse-tier: linear-gradient(90deg, #22a98f, #7c58d6);
 }
 
-/* Reverse Légendaire : lavis irisé (rose, corail, or, menthe, ciel) rehaussé de feuille d'or, liserés dorés */
+/* Reverse Légendaire : holo arc-en-ciel franc (rose, or, menthe, ciel, lilas) sur nacre, rehaussé de feuille d'or ;
+   le nom, le cadre et la pastille en or, pour ne jamais la confondre avec la Reverse Rare (pêche et terre cuite) */
 .card.is-reverse.r-legendaire {
   --foil:
-    radial-gradient(circle at 30% 40%, rgba(255, 216, 120, 0.95) 0 0.05em, transparent 0.11em) 0 0 / 0.9em 1.1em,
-    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.9) 0 0.04em, transparent 0.1em) 0 0 / 1.3em 1.5em,
-    conic-gradient(from 200deg at 40% 35%, rgba(255, 170, 200, 0.6), rgba(255, 210, 140, 0.6), rgba(170, 240, 210, 0.6), rgba(170, 210, 255, 0.6), rgba(220, 180, 255, 0.6), rgba(255, 170, 200, 0.6)),
-    linear-gradient(165deg, #ffe1ec 0%, #ffe9cf 30%, #fff3cf 50%, #e0f6ea 70%, #e6e2ff 100%);
+    radial-gradient(circle at 30% 40%, rgba(255, 214, 110, 0.98) 0 0.06em, transparent 0.12em) 0 0 / 0.9em 1.1em,
+    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.95) 0 0.045em, transparent 0.1em) 0 0 / 1.3em 1.5em,
+    radial-gradient(60% 40% at 50% 50%, rgba(255, 255, 255, 0.55), transparent 75%),
+    linear-gradient(125deg, #ff9cc6 0%, #ffd36e 18%, #a6f0b8 36%, #86d7ff 54%, #c4a0ff 72%, #ff9cc6 90%, #ffd36e 100%);
   --panel: #fffaf0;
-  --trim: #c9973c;
-  --metal: linear-gradient(180deg, #c27a2c 0%, #a2456c 50%, #6a3c96 100%);
-  --plate-ink: #6b3a5c;
-  --tier-bg: linear-gradient(90deg, #e9c46a, #fff4d6 50%, #e3b452);
-  --tier-ink: #5a3418;
-  --hill-far: #fbe6da;
-  --hill-near: #f7e3ee;
-  --reverse-wash: conic-gradient(from 160deg at 50% 50%, rgba(255, 170, 200, 0.65), rgba(255, 214, 140, 0.55), rgba(170, 240, 210, 0.55), rgba(170, 210, 255, 0.6), rgba(220, 180, 255, 0.65), rgba(255, 170, 200, 0.65));
-  --reverse-tier: linear-gradient(90deg, #c27a2c, #b0457a, #6a4bb0);
+  --trim: #c9922e;
+  --metal: linear-gradient(180deg, #d9a334 0%, #a8701c 40%, #7c4c10 66%, #b9862a 100%);
+  --metal-edge: rgba(90, 52, 10, 0.55);
+  --plate-ink: #7a4a12;
+  --tier-bg: linear-gradient(90deg, #e9b949, #fff1c4 50%, #d9a334);
+  --tier-ink: #5a3410;
+  --hill-far: #fbeedd;
+  --hill-near: #f5e6f2;
+  --reverse-wash: conic-gradient(from 160deg at 50% 50%, rgba(255, 150, 196, 0.7), rgba(255, 210, 110, 0.6), rgba(150, 240, 190, 0.6), rgba(130, 210, 255, 0.65), rgba(200, 160, 255, 0.7), rgba(255, 150, 196, 0.7));
+  --reverse-tier: linear-gradient(90deg, #d9a334, #ff7fb4, #7b8cff, #d9a334);
 }
 
-/* un filet d'or autour de la Reverse Légendaire, comme sur les Icônes */
+/* un double filet d'or autour de la Reverse Légendaire, comme sur les Icônes */
 .card.is-reverse.r-legendaire .card__body {
-  box-shadow: inset 0 0 0 0.08em rgba(201, 151, 60, 0.75), inset 0 0 0 0.2em rgba(255, 236, 190, 0.5);
+  box-shadow: inset 0 0 0 0.11em rgba(201, 146, 46, 0.95), inset 0 0 0 0.24em rgba(255, 232, 170, 0.65), inset 0 0 0 0.3em rgba(201, 146, 46, 0.5);
+}
+
+/* le nom en or : un liseré sombre au lieu du liseré blanc des autres Reverse */
+.card.is-reverse.r-legendaire .metal-text {
+  filter: drop-shadow(0 0.05em 0 rgba(255, 246, 220, 0.9));
 }
 
 /* les lavis glissent très lentement d'une teinte à l'autre */
