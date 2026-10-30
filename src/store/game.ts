@@ -170,7 +170,7 @@ export interface GameState {
   muted: boolean;
   /** musique de fond coupée (les effets sonores restent) */
   musicOff: boolean;
-  /** crédits illimités (commande de triche ?graines=illimite) */
+  /** crédits illimités : ancienne commande de triche, supprimée (une partie restée dans ce mode est remise à zéro) */
   unlimited: boolean;
   /** espèces des derniers boosters ouverts : elles ne ressortent pas avant NO_DUPE_WINDOW boosters */
   recentPacks: string[][];
@@ -212,7 +212,6 @@ export interface GameState {
   claimObjective: (id: string) => void;
   toggleMute: () => void;
   toggleMusic: () => void;
-  setUnlimited: (on: boolean) => void;
   toast: (kind: ToastKind, text: string) => void;
   dismissToast: (id: string) => void;
   resetGame: () => void;
@@ -723,11 +722,6 @@ export const useGame = create<GameState>()(
 
         toggleMute: () => set((s) => ({ muted: !s.muted })),
         toggleMusic: () => set((s) => ({ musicOff: !s.musicOff })),
-        setUnlimited: (on) => {
-          if (on === get().unlimited) return;
-          set(on ? { unlimited: true, balles: UNLIMITED_BALLES } : { unlimited: false, balles: START_BALLES });
-          pushToast(on ? 'gold' : 'info', on ? 'Crédits illimités activés' : 'Crédits illimités désactivés');
-        },
         toast: pushToast,
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
         resetGame: () => set({ ...initialState(Date.now()) }),
@@ -891,58 +885,43 @@ useGame.subscribe((state, previous) => {
 awardBadges(useGame.getState());
 
 /**
- * Commandes de triche (graines) : seulement en développement, dans la version de test (mode « single ») et dans la
- * page d'aperçu (mode « apercu », coupée des comptes et du marché en ligne). Sur le site public, les joueurs
- * échangent au marché en ligne : personne ne doit pouvoir se donner des graines.
+ * Graines offertes à la compilation : VITE_GRAINES=100000000 (page d'aperçu, version de test) fixe ce solde une seule
+ * fois par navigateur, au premier lancement ; ensuite les graines se dépensent normalement. Il n'existe aucune commande
+ * pour se donner des graines (ni dans l'adresse, ni dans la console) : sur le site public, les joueurs échangent au
+ * marché en ligne.
  */
-const CHEATS = import.meta.env.DEV || import.meta.env.MODE === 'single' || import.meta.env.MODE === 'apercu';
+const OFFERED = Number(import.meta.env.VITE_GRAINES ?? 0);
 
-// Graines illimitées : le solde est remis au plafond dès qu'une dépense le fait baisser.
-// Sur le site public, une partie restée en mode illimité (ancienne triche) repart au solde de départ.
-useGame.subscribe((state) => {
-  if (state.unlimited && !CHEATS) useGame.setState({ unlimited: false, balles: START_BALLES });
-  else if (state.unlimited && state.balles < UNLIMITED_BALLES) useGame.setState({ balles: UNLIMITED_BALLES });
-});
-
-/** Fixe le solde à un montant précis (commande de triche). */
+/** Fixe le solde à un montant précis. */
 function setSolde(amount: number) {
   const value = Math.max(0, Math.round(amount));
   useGame.setState({ unlimited: false, balles: value });
   useGame.getState().toast('gold', `Solde fixé à ${formatBalles(value)}`);
 }
 
-// Commandes de triche, dans l'adresse ou dans la console du navigateur (sauvegardées avec la partie) :
-//   ?graines=1000000000          → solde fixé à ce montant        (console : animalcards.solde(1000000000))
-//   ?graines=illimite            → crédits illimités              (console : animalcards.graines())
-//   ?graines=normal              → retour au jeu normal            (console : animalcards.graines(false))
-if (typeof window !== 'undefined' && CHEATS) {
-  const flag = new URLSearchParams(window.location.search).get('graines');
-  if (flag === 'illimite' || flag === 'illimité' || flag === 'infini') useGame.getState().setUnlimited(true);
-  else if (flag === 'normal') useGame.getState().setUnlimited(false);
-  else if (flag && /^\d+$/.test(flag)) setSolde(Number(flag));
-  (window as unknown as { animalcards: { graines: (on?: boolean) => void; solde: (amount: number) => void } }).animalcards = {
-    graines: (on = true) => useGame.getState().setUnlimited(on),
-    solde: setSolde,
-  };
+// Une partie restée en crédits illimités (l'ancienne commande de triche) repart au solde de départ, ou aux graines
+// offertes de cette version.
+const leaveUnlimited = (state: GameState) => {
+  if (state.unlimited) useGame.setState({ unlimited: false, balles: OFFERED > 0 ? OFFERED : START_BALLES });
+};
+useGame.subscribe(leaveUnlimited);
+// la sauvegarde du navigateur est relue avant cet abonnement : on vérifie aussi la partie chargée
+leaveUnlimited(useGame.getState());
 
-  // Version publiée avec des graines offertes : VITE_GRAINES=100000000 à la compilation fixe ce solde une seule
-  // fois par navigateur (au premier lancement), ensuite les graines se dépensent normalement.
-  const offered = Number(import.meta.env.VITE_GRAINES ?? 0);
-  if (offered > 0) {
-    const key = 'animalcards-graines-offertes';
-    let already: string | null = null;
+if (typeof window !== 'undefined' && OFFERED > 0) {
+  const key = 'animalcards-graines-offertes';
+  let already: string | null = null;
+  try {
+    already = window.localStorage.getItem(key);
+  } catch {
+    // stockage indisponible : on offre les graines à chaque lancement
+  }
+  if (already !== String(OFFERED)) {
+    setSolde(OFFERED);
     try {
-      already = window.localStorage.getItem(key);
+      window.localStorage.setItem(key, String(OFFERED));
     } catch {
-      // stockage indisponible : on offre les graines à chaque lancement
-    }
-    if (already !== String(offered)) {
-      setSolde(offered);
-      try {
-        window.localStorage.setItem(key, String(offered));
-      } catch {
-        // idem
-      }
+      // idem
     }
   }
 }
