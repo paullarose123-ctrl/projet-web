@@ -1091,6 +1091,55 @@
   }
 }
 
+/* objectifs du jour : en-tête avec le compte à rebours jusqu'à minuit, et le bonus des trois défis */
+.daily__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.daily__head h2 {
+  margin: 0;
+}
+
+.daily__timer {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.objective.is-claimed .objective__text {
+  opacity: 0.55;
+}
+
+.objective__reward--done {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.daily__bonus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px dashed color-mix(in srgb, var(--honey, #d9a441) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--honey, #d9a441) 8%, transparent);
+  font-weight: 700;
+}
+
+.daily__bonus.is-claimed {
+  border-style: solid;
+  color: var(--accent-text);
+}
+
 .news {
   list-style: none;
   margin: 0;

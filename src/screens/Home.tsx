@@ -18,6 +18,7 @@ import { useAccount } from '../store/account';
 import { accountsEnabled } from '../account/supabase';
 import { OnlinePlayers } from '../components/OnlinePlayers';
 import { SaisonBanner, SaisonHead, useSeason } from '../components/Saison';
+import { DAILY_BONUS, dailyFor, dailyObjectives, dailyProgress, nextMidnight } from '../engine/daily';
 
 // Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe) ;
 // une fois la Série 2 sortie, deux de ses cartes phares encadrent le lion : le condor de Californie et le jaguar.
@@ -379,6 +380,68 @@ function CollectionSummary() {
   );
 }
 
+/**
+ * Objectifs du jour : trois défis qui changent à minuit (un booster, un de collection, un de duel). Chacun rempli se
+ * récupère ici ; les trois récupérés débloquent un bonus.
+ */
+function DailyObjectives() {
+  const stored = useGame((s) => s.daily);
+  const claim = useGame((s) => s.claimDaily);
+  const claimBonus = useGame((s) => s.claimDailyBonus);
+  const now = useNow(1000);
+  const daily = dailyFor(stored, now);
+  const list = dailyObjectives(daily.day, isReleased(2, now));
+  const allClaimed = list.every((o) => daily.claimed.includes(o.id));
+  return (
+    <section className="panel daily" aria-labelledby="daily-title">
+      <div className="daily__head">
+        <h2 id="daily-title">Objectifs du jour</h2>
+        <span className="daily__timer">Nouveaux défis dans {formatDuration(nextMidnight(now) - now)}</span>
+      </div>
+      <ul className="objectives">
+        {list.map((objective) => {
+          const [done, total] = dailyProgress(objective, daily);
+          const complete = done >= total;
+          const claimed = daily.claimed.includes(objective.id);
+          return (
+            <li key={objective.id} className={`objective${complete ? ' is-complete' : ''}${claimed ? ' is-claimed' : ''}`}>
+              <div className="objective__text">
+                <span>{objective.title}</span>
+                <span className="meter meter--thin">
+                  <span className="meter__fill" style={{ width: `${(done / total) * 100}%` }} />
+                </span>
+              </div>
+              <span className="objective__progress">
+                {done}/{total}
+              </span>
+              {claimed ? (
+                <span className="objective__reward objective__reward--done">Récupéré</span>
+              ) : complete ? (
+                <button type="button" className="btn btn--gold btn--sm" onClick={() => claim(objective.id)}>
+                  Récupérer <Balles value={objective.reward} />
+                </button>
+              ) : (
+                <Balles value={objective.reward} className="objective__reward" />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <div className={`daily__bonus${daily.bonus ? ' is-claimed' : ''}`}>
+        <span>{daily.bonus ? 'Bonus du jour récupéré, à demain !' : 'Les trois objectifs réussis : bonus du jour'}</span>
+        {!daily.bonus &&
+          (allClaimed ? (
+            <button type="button" className="btn btn--gold btn--sm" onClick={claimBonus}>
+              Bonus <Balles value={DAILY_BONUS} />
+            </button>
+          ) : (
+            <Balles value={DAILY_BONUS} className="objective__reward" />
+          ))}
+      </div>
+    </section>
+  );
+}
+
 function Objectives() {
   const state = useGame();
   const claim = useGame((s) => s.claimObjective);
@@ -473,6 +536,7 @@ export function HomeScreen() {
       <SaisonBanner />
       <OnlinePlayers />
       <ExpansionBanner />
+      <DailyObjectives />
       <div className="grid-2">
         <CollectionSummary />
         <Objectives />
