@@ -58,6 +58,21 @@ export const sfx = {
     }
     air(a.ac, a.bus, a.t, 0.4, { gain: 0.05, from: 900, to: 4000, q: 0.6, attack: 0.02, send: 0.2 });
   },
+  /** un bout de déchirure, pendant qu'on arrache la bande du doigt : un petit crissement de plastique */
+  rip: () => {
+    buzz(4);
+    const a = audio();
+    if (!a) return;
+    air(a.ac, a.bus, a.t, 0.04 + Math.random() * 0.03, {
+      gain: 0.045 + Math.random() * 0.03,
+      from: 2400 + Math.random() * 2600,
+      to: 1600,
+      q: 2.5,
+      attack: 0.003,
+      pan: Math.random() * 0.4 - 0.2,
+      send: 0.1,
+    });
+  },
   /** passage rapide : un souffle qui monte */
   whoosh: () => {
     const a = audio();

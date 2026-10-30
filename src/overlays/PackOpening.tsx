@@ -157,17 +157,21 @@ const DUST = Array.from({ length: 16 }, (_, i) => ({
   size: 2 + (i % 3),
 }));
 
-/** Inclinaison 3D qui suit le pointeur : pilote --tx / --ty sur l'élément .tilt3d du conteneur. */
-function tilt3d(event: PointerEvent<HTMLElement>) {
-  // à la souris seulement : au doigt, l'inclinaison resterait figée après chaque toucher
-  if (event.pointerType !== 'mouse') return;
+/**
+ * Inclinaison 3D qui suit le pointeur : pilote --tx / --ty sur l'élément .tilt3d du conteneur. À la souris, au
+ * survol ; au doigt, seulement pendant qu'il appuie (sinon l'inclinaison resterait figée après chaque toucher).
+ * `strength` : 1 pour une carte, plus pour le sachet qu'on fait pivoter franchement entre ses doigts.
+ */
+function tilt3d(event: PointerEvent<HTMLElement>, strength = 1, around?: { left: number; top: number; width: number; height: number } | null) {
+  if (event.pointerType !== 'mouse' && event.buttons === 0) return;
   const el = event.currentTarget.querySelector<HTMLElement>('.tilt3d');
   if (!el) return;
-  const rect = event.currentTarget.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width - 0.5;
-  const y = (event.clientY - rect.top) / rect.height - 0.5;
-  el.style.setProperty('--tx', `${(-y * 18).toFixed(2)}deg`);
-  el.style.setProperty('--ty', `${(x * 26).toFixed(2)}deg`);
+  // l'inclinaison se mesure autour de l'objet tenu (le sachet), sinon du conteneur
+  const rect = around ?? event.currentTarget.getBoundingClientRect();
+  const x = Math.max(-0.5, Math.min(0.5, (event.clientX - rect.left) / rect.width - 0.5));
+  const y = Math.max(-0.5, Math.min(0.5, (event.clientY - rect.top) / rect.height - 0.5));
+  el.style.setProperty('--tx', `${(-y * 18 * strength).toFixed(2)}deg`);
+  el.style.setProperty('--ty', `${(x * 26 * strength).toFixed(2)}deg`);
   // le reflet du plastique glisse avec l'inclinaison
   el.style.setProperty('--gloss-x', `${(40 + x * 60).toFixed(1)}%`);
 }
@@ -177,6 +181,28 @@ function untilt3d(event: PointerEvent<HTMLElement>) {
   el?.style.setProperty('--tx', '0deg');
   el?.style.setProperty('--ty', '0deg');
   el?.style.removeProperty('--gloss-x');
+}
+
+/**
+ * Place du sachet à l'écran, à sa taille réelle : centré là où on le voit, mais sans ses rotations (son cadre
+ * transformé rétrécit quand il pivote, et le geste de déchirure raterait sa soudure).
+ */
+function restingRect(el: HTMLElement | null): { left: number; top: number; width: number; height: number; right: number } | null {
+  if (!el) return null;
+  const box = el.getBoundingClientRect();
+  const width = el.offsetWidth;
+  const height = el.offsetHeight;
+  const left = box.left + box.width / 2 - width / 2;
+  return { left, top: box.top + box.height / 2 - height / 2, width, height, right: left + width };
+}
+
+/** Petite vibration du téléphone (si l'appareil le permet). */
+function buzzOnce(pattern: number | number[]) {
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    // vibreur indisponible
+  }
 }
 
 /** Étiquette sous une carte révélée : Reverse, Nouvel habitat, sinon Nouveau ou Doublon (Habitats compris). */
@@ -374,6 +400,12 @@ export function PackOpening() {
   const [focus, setFocus] = useState<number | null>(null);
   const summaryStats = useRef<HTMLDivElement>(null);
   const confetti = useRef<ConfettiHandle>(null);
+  // déchirure au doigt : part de la bande déjà arrachée (0 à 1), et le geste en cours
+  const [rip, setRip] = useState(0);
+  const ripGesture = useRef<{ startX: number; from: number; last: number; moved: boolean } | null>(null);
+  // le clic qui suit un geste de déchirure ne doit pas relancer l'ouverture automatique
+  const justSwiped = useRef(false);
+  const packRef = useRef<HTMLButtonElement>(null);
 
   // nouvelle ouverture : on repart du sachet fermé
   useEffect(() => {
@@ -385,6 +417,7 @@ export function PackOpening() {
       setWalkoutIndex(null);
       setSoldDupes(false);
       setFocus(null);
+      setRip(0);
     }
   }, [opening]);
 
@@ -466,24 +499,84 @@ export function PackOpening() {
 
   if (!opening) return null;
 
+  // la bande arrachée, puis la suite : faisceau, éclats, les cartes qui sortent du sachet
+  const burstOpen = () => {
+    sfx.tear();
+    buzzOnce([18, 40, 30]);
+    setStage('tearing');
+    window.setTimeout(() => sfx.burst(), 380);
+    window.setTimeout(() => sfx.deal(), 700);
+    window.setTimeout(() => {
+      setStage('cards');
+      sfx.deal();
+    }, 1750);
+  };
+
   const tear = () => {
     if (stage !== 'pack') return;
     // 1. le sachet se charge : il tremble de plus en plus, la couture s'illumine (même lumière pour tous les boosters)
     // 2. la bande s'arrache en dents de scie, des éclats volent, un faisceau de lumière jaillit
-    // 3. les cartes montent en éventail hors du sachet, puis le sachet s'éloigne vers le bas
+    // 3. les cartes montent hors du sachet, puis le sachet retombe et s'éloigne
     const charge = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 850;
     setStage('charging');
     if (charge) sfx.drumroll(charge / 1000);
-    window.setTimeout(() => {
-      sfx.tear();
-      setStage('tearing');
-      window.setTimeout(() => sfx.burst(), 380);
-      window.setTimeout(() => sfx.deal(), 700);
-      window.setTimeout(() => {
-        setStage('cards');
-        sfx.deal();
-      }, 1600);
-    }, charge);
+    window.setTimeout(burstOpen, charge);
+  };
+
+  // Comme un vrai booster : on peut l'ouvrir en glissant le doigt (ou la souris, bouton appuyé) le long de la
+  // soudure du haut. La bande se décolle à mesure, la lumière filtre par la fente ; passé les trois quarts, ou si on
+  // lâche après la moitié, elle part d'un coup. Un simple toucher garde l'ouverture automatique.
+  // Le geste part de n'importe où sur l'écran (le sachet penche et bouge : viser exactement sa soudure serait
+  // difficile), pourvu qu'il commence dans la bande du haut du sachet, un peu débordée.
+  const onPackDown = (event: PointerEvent<HTMLDivElement>) => {
+    justSwiped.current = false;
+    const rect = restingRect(packRef.current);
+    if (stage !== 'pack' || !rect) return;
+    const inBand =
+      event.clientY > rect.top - rect.height * 0.12 &&
+      event.clientY < rect.top + rect.height * 0.3 &&
+      event.clientX > rect.left - rect.width * 0.12 &&
+      event.clientX < rect.right + rect.width * 0.12;
+    if (!inBand) return;
+    // l'écran entier reçoit déjà les mouvements : pas besoin de capturer le pointeur
+    ripGesture.current = { startX: event.clientX, from: rip, last: rip, moved: false };
+  };
+  const onPackMove = (event: PointerEvent<HTMLDivElement>) => {
+    const gesture = ripGesture.current;
+    // hors d'un geste de déchirure, le sachet s'incline sous le pointeur (et pivote sous le doigt)
+    if (!gesture || stage !== 'pack') {
+      tilt3d(event, 1.4, restingRect(packRef.current));
+      return;
+    }
+    const width = restingRect(packRef.current)?.width ?? 250;
+    const next = Math.min(1, Math.max(gesture.from, gesture.from + Math.abs(event.clientX - gesture.startX) / width));
+    if (next - gesture.last >= 0.08) {
+      sfx.rip();
+      gesture.last = next;
+    }
+    if (next > gesture.from + 0.04) gesture.moved = true;
+    setRip(next);
+    if (next >= 0.75) {
+      ripGesture.current = null;
+      justSwiped.current = true;
+      setRip(1);
+      burstOpen();
+    }
+  };
+  const onPackUp = (event: PointerEvent<HTMLDivElement>) => {
+    untilt3d(event);
+    const gesture = ripGesture.current;
+    ripGesture.current = null;
+    if (!gesture || stage !== 'pack' || !gesture.moved) return;
+    justSwiped.current = true;
+    if (rip >= 0.5) {
+      setRip(1);
+      burstOpen();
+    }
+  };
+  const onPackClick = () => {
+    if (justSwiped.current) return;
+    tear();
   };
 
   // une Reverse n'est jamais comptée comme doublon à revendre
@@ -501,7 +594,16 @@ export function PackOpening() {
 
   return (
     // le sachet s'ouvre toujours dans la même lumière dorée ; seule la force de la déchirure suit la meilleure carte
-    <div className={`opening opening--${stage} opening--t${intensity}`} style={{ ['--teaser' as string]: MYSTERY_LIGHT }}>
+    <div
+      className={`opening opening--${stage} opening--t${intensity}`}
+      style={{ ['--teaser' as string]: MYSTERY_LIGHT }}
+      // le sachet se manipule de tout l'écran : il penche sous le pointeur, et se déchire d'un geste sur sa soudure
+      onPointerDown={packStage ? onPackDown : undefined}
+      onPointerMove={packStage ? onPackMove : undefined}
+      onPointerUp={packStage ? onPackUp : undefined}
+      onPointerCancel={packStage ? onPackUp : undefined}
+      onPointerLeave={packStage ? untilt3d : undefined}
+    >
       {/* un décor tiré au hasard, en grand, derrière toute l'ouverture */}
       <div className="opening__backdrop" aria-hidden="true">
         {backdrop?.mexique && <MexicoBackdrop className="opening__scene" scene={backdrop.mexique} seed={backdrop.seed} />}
@@ -514,24 +616,27 @@ export function PackOpening() {
         ))}
       </div>
       {packStage && (
-        <div className="opening__stage" onPointerMove={tilt3d} onPointerLeave={untilt3d}>
-          {/* halo derrière le sachet, onde au sol quand il atterrit */}
+        <div className="opening__stage">
+          {/* halo derrière le sachet, onde au sol quand il atterrit, ombre portée qui suit son balancement */}
           <div className="opening__halo" aria-hidden="true" />
           <div className="opening__ring" aria-hidden="true" />
+          <div className="opening__shadow3d" aria-hidden="true" />
           <button
             type="button"
-            className="opening__pack3d"
-            onClick={tear}
+            ref={packRef}
+            className={`opening__pack3d${rip > 0 && stage === 'pack' ? ' is-ripping' : ''}`}
+            onClick={onPackClick}
             aria-label={`Ouvrir le ${opening.packName}`}
-            style={{ ['--pack-near' as string]: palette.near, ['--pack-far' as string]: palette.far }}
+            style={{ ['--pack-near' as string]: palette.near, ['--pack-far' as string]: palette.far, ['--rip' as string]: rip }}
           >
             {/* sachet en volume : face avant (corps + bande du haut qui s'arrache), face arrière, tranches */}
             <span className="pack3d-float">
               <span className="pack3d tilt3d">
+                {/* les cartes, serrées dans le sachet entre les deux faces */}
                 <span className="pack3d__cards" aria-hidden="true">
-                  <BackOf serie={serie} />
-                  <BackOf serie={serie} />
-                  <BackOf serie={serie} />
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <BackOf key={i} serie={serie} />
+                  ))}
                 </span>
                 <span className="pack3d__face pack3d__front">
                   <span className="pack3d__body" style={{ clipPath: BODY_CLIP }}>
@@ -549,6 +654,10 @@ export function PackOpening() {
                 </span>
                 <span className="pack3d__side pack3d__side--left" aria-hidden="true" />
                 <span className="pack3d__side pack3d__side--right" aria-hidden="true" />
+                <span className="pack3d__side pack3d__side--top" aria-hidden="true" />
+                <span className="pack3d__side pack3d__side--bottom" aria-hidden="true" />
+                {/* la fente qui s'ouvre sous le doigt, et la lumière qui en filtre */}
+                <span className="pack3d__slit" aria-hidden="true" />
                 <span className="pack3d__light" aria-hidden="true" />
                 {/* faisceau qui jaillit de l'ouverture et éclats de la déchirure */}
                 <span className="pack3d__beam" aria-hidden="true" />
@@ -571,7 +680,7 @@ export function PackOpening() {
             </span>
           </button>
           <div className="opening__flash" aria-hidden="true" />
-          <p className="opening__hint">{stage === 'pack' ? 'Touche le pack pour l’ouvrir' : ''}</p>
+          <p className="opening__hint">{stage === 'pack' ? 'Glisse sur le haut du pack pour le déchirer, ou touche-le' : ''}</p>
         </div>
       )}
 
@@ -589,7 +698,7 @@ export function PackOpening() {
               return (
                 <div
                   key={card.uid}
-                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}${!flipped && isSpecial(card) ? ' is-special' : ''}`}
+                  className={`stage-card${flipped ? ' is-flipped' : ''}${leaving ? ' is-leaving' : ''}${!flipped && isSpecial(card) ? ' is-special' : ''}${current === 0 && !flipped ? ' is-first' : ''}`}
                   style={{ ['--glow' as string]: glowOf(card) }}
                   onClick={advance}
                   role="button"
