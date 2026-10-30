@@ -747,7 +747,6 @@ function squelettes(): Track {
 
 const RE_MAJEUR = [2, 4, 6, 7, 9, 11, 1];
 const SOL_MAJEUR = [7, 9, 11, 0, 2, 4, 6];
-const DO_MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 const LA_MINEUR = [9, 11, 0, 2, 4, 5, 7];
 const LA_MINEUR_HARMONIQUE = [9, 11, 0, 2, 4, 5, 8];
 
@@ -949,82 +948,94 @@ function bolero(): Track {
   };
 }
 
-// ───────────── Jour des morts : 13. Marimba de l'ofrenda (sol majeur, 3/4, 138 bpm) : trois marimbas ─────────────
-// Le son chiapanèque : la grande marimba du Chiapas jouée à plusieurs. La basse marque le premier temps, l'accord
-// répond sur les deux autres (« oum-pa-pa »), le soliste chante la mélodie en trémolo et le second la double à la tierce.
+// ───────────── Jour des morts : 13. Son jarocho du Papaloapan (sol majeur, 6/8, 192 croches/min) : harpe, jarana, requinto ─────────────
+// Le son jarocho des fandangos de Veracruz : l'arpa jarocha égrène l'accord sur chaque croche (la basse en bas, les
+// arpèges au-dessus), la jarana gratte les temps, le requinto lance la mélodie, et le zapateado des danseurs résonne
+// sur la tarima. Pas de marimba : rien que des cordes pincées et des pieds.
 
-const MARIMBA: Chord[] = [
+const JAROCHO: Chord[] = [
   { r: 43, c: [59, 62, 67] }, // Sol
-  { r: 43, c: [59, 62, 67] }, // Sol
-  { r: 38, c: [60, 62, 66] }, // Ré 7
-  { r: 38, c: [60, 62, 66] }, // Ré 7
-  { r: 38, c: [60, 62, 66] }, // Ré 7
-  { r: 38, c: [60, 62, 66] }, // Ré 7
-  { r: 43, c: [59, 62, 67] }, // Sol
-  { r: 43, c: [59, 62, 67] }, // Sol
-  { r: 43, c: [59, 65, 67] }, // Sol 7
-  { r: 43, c: [59, 65, 67] }, // Sol 7
   { r: 48, c: [60, 64, 67] }, // Do
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 38, c: [60, 62, 66] }, // Ré 7
+  { r: 43, c: [59, 62, 67] }, // Sol
   { r: 48, c: [60, 64, 67] }, // Do
   { r: 43, c: [59, 62, 67] }, // Sol
   { r: 38, c: [60, 62, 66] }, // Ré 7
   { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 48, c: [60, 64, 67] }, // Do
+  { r: 43, c: [59, 62, 67] }, // Sol
+  { r: 38, c: [60, 62, 66] }, // Ré 7
   { r: 43, c: [59, 62, 67] }, // Sol
 ];
-const MARIMBA_MELODY: Note[][] = [
-  [[0, 74, 1], [1, 76, 0.5], [1.5, 74, 0.5], [2, 71, 1]],
-  [[0, 67, 1], [1, 71, 1], [2, 74, 1]],
-  [[0, 72, 1], [1, 74, 0.5], [1.5, 72, 0.5], [2, 69, 1]],
-  [[0, 66, 1], [1, 69, 1], [2, 72, 1]],
-  [[0, 74, 1.5], [1.5, 72, 0.5], [2, 69, 1]],
-  [[0, 72, 1], [1, 71, 1], [2, 69, 1]],
-  [[0, 71, 1], [1, 74, 1], [2, 79, 1]],
-  [[0, 79, 3]],
-  [[0, 77, 1], [1, 79, 0.5], [1.5, 77, 0.5], [2, 74, 1]],
-  [[0, 71, 1], [1, 74, 1], [2, 77, 1]],
-  [[0, 76, 1.5], [1.5, 74, 0.5], [2, 72, 1]],
-  [[0, 72, 1], [1, 76, 1], [2, 79, 1]],
-  [[0, 79, 1], [1, 78, 0.5], [1.5, 76, 0.5], [2, 74, 1]],
-  [[0, 72, 1], [1, 69, 1], [2, 66, 1]],
-  [[0, 67, 1], [1, 71, 1], [2, 74, 1]],
-  [[0, 79, 3]],
+// en croches : position dans la mesure (0 à 5), note, durée
+const JAROCHO_MELODY: Note[][] = [
+  [[0, 74, 1], [1, 79, 1], [2, 78, 1], [3, 79, 2], [5, 74, 1]],
+  [[0, 76, 1], [1, 79, 1], [2, 76, 1], [3, 72, 3]],
+  [[0, 74, 1], [1, 78, 1], [2, 81, 1], [3, 78, 1], [4, 76, 1], [5, 74, 1]],
+  [[0, 71, 3], [3, 67, 3]],
+  [[0, 71, 1], [1, 74, 1], [2, 79, 1], [3, 83, 2], [5, 81, 1]],
+  [[0, 79, 1], [1, 76, 1], [2, 79, 1], [3, 84, 3]],
+  [[0, 81, 1], [1, 78, 1], [2, 74, 1], [3, 72, 2], [5, 69, 1]],
+  [[0, 67, 6]],
+  [[0, 72, 2], [2, 76, 1], [3, 79, 3]],
+  [[0, 78, 1], [1, 79, 1], [2, 83, 1], [3, 79, 3]],
+  [[0, 78, 2], [2, 81, 1], [3, 84, 2], [5, 81, 1]],
+  [[0, 79, 3], [3, 74, 3]],
+  [[0, 76, 1], [1, 79, 1], [2, 84, 1], [3, 83, 1], [4, 81, 1], [5, 79, 1]],
+  [[0, 78, 1], [1, 79, 1], [2, 74, 1], [3, 71, 3]],
+  [[0, 72, 1], [1, 74, 1], [2, 78, 1], [3, 81, 2], [5, 78, 1]],
+  [[0, 79, 6]],
 ];
 
-function marimbaOfrenda(): Track {
-  const bpm = 138;
-  const beat = 60 / bpm;
-  const BAR = beat * 3;
-  const bars = 66;
+function jarocho(): Track {
+  const bpm = 192;
+  const eighth = 60 / bpm;
+  const BAR = eighth * 6;
+  const bars = 50;
   return {
-    id: 'marimba',
-    title: 'Marimba de l’ofrenda',
+    id: 'jarocho',
+    title: 'Son jarocho du Papaloapan',
     seasons: ['muertos'],
     bpm,
-    beats: 3,
+    beats: 6,
     bars,
     bar(ac, out, t0, i) {
       const { section, step, outro, last } = where(i, bars, 16);
       if (outro) {
         if (!last) {
-          [43, 55, 59, 62, 67, 71, 74, 79].forEach((n, k) => marimba(ac, out, midi(n), t0 + k * 0.07, 0.11, (k - 4) * 0.1));
-          marimbaNote(ac, out, midi(79), t0 + BAR * 0.6, 2.4, 0.1);
-          marimbaNote(ac, out, midi(71), t0 + BAR * 0.6, 2.4, 0.06);
-          bass(ac, out, midi(31), t0, BAR * 1.5, 0.09);
+          // le glissando final de la harpe, du grave à l'aigu, et l'accord tenu
+          [31, 43, 47, 50, 55, 59, 62, 67, 71, 74, 79].forEach((n, k) => pluck(ac, out, midi(n), t0 + k * 0.05, 0.11, (k - 5) * 0.08, 0.7));
+          requinto(ac, out, midi(79), t0 + BAR * 0.5, 2.4, 0.11);
+          bass(ac, out, midi(31), t0, BAR * 1.5, 0.1);
         }
         return;
       }
-      const { r, c } = MARIMBA[step];
-      // la marimba grave : la basse au premier temps ; l'accord sur les deux autres
-      marimba(ac, out, midi(r), t0, 0.16, -0.25);
-      bass(ac, out, midi(r - 12), t0, beat * 1.1, 0.07);
-      for (const b of [1, 2]) c.forEach((n, k) => marimba(ac, out, midi(n), t0 + b * beat + k * 0.012, b === 1 ? 0.07 : 0.055, -0.05 + k * 0.1));
-      // le claquement des baguettes sur le bois du cadre, en début de phrase
-      if (step % 4 === 0) tick(ac, out, t0, 0.025, 2100);
-      const phrase = MARIMBA_MELODY[step];
-      const scale = c.includes(65) ? DO_MAJEUR : SOL_MAJEUR;
-      play(phrase, t0, beat, (f, t, length) => marimbaNote(ac, out, f, t, length, section === 0 ? 0.12 : 0.11), 12);
-      if (section >= 1) play(below(phrase, scale), t0, beat, (f, t, length) => marimbaNote(ac, out, f, t, length, 0.065), 12);
-      if (section === 2) play(phrase, t0, beat, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.03, 0.2));
+      const { r, c } = JAROCHO[step];
+      // l'arpa jarocha : la basse au premier temps, puis l'arpège qui monte (mesures paires) ou descend (impaires)
+      const up = [r, c[0], c[1], c[2], c[0] + 12, c[1] + 12];
+      const notes = step % 2 === 0 ? up : [r, ...up.slice(1).reverse()];
+      notes.forEach((n, e) => pluck(ac, out, midi(n), t0 + e * eighth, e === 0 ? 0.13 : 0.07, -0.3 + e * 0.1, 0.72));
+      bass(ac, out, midi(r - 12), t0, eighth * 2.5, 0.09);
+      bass(ac, out, midi(r - 5), t0 + 3 * eighth, eighth * 2, 0.06);
+      // la jarana : des accords grattés sur les temps et leurs contretemps, en allers-retours
+      for (const e of [0, 2, 3, 5]) {
+        const voiced = e % 2 ? [...c].reverse() : c;
+        voiced.forEach((n, k) => pluck(ac, out, midi(n), t0 + e * eighth + k * 0.012, e === 0 || e === 3 ? 0.06 : 0.04, 0.2 + k * 0.08, 0.5));
+      }
+      // le zapateado sur la tarima, et la quijada (la mâchoire d'âne) qui crépite en fin de phrase
+      for (const e of [0, 1, 3, 4]) tick(ac, out, t0 + e * eighth, e % 3 === 0 ? 0.035 : 0.02, 1400);
+      if (step % 4 === 3) for (let k = 0; k < 6; k++) tick(ac, out, t0 + 5 * eighth + k * 0.02, 0.012, 3600);
+      const phrase = JAROCHO_MELODY[step];
+      if (section === 0 || section === 2) play(phrase, t0, eighth, (f, t, length) => requinto(ac, out, f, t, length * 1.6, 0.13));
+      if (section === 1) {
+        // le violon du fandango, doublé à la tierce par un second
+        play(phrase, t0, eighth, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.045, 0.15));
+        play(below(phrase, SOL_MAJEUR), t0, eighth, (f, t, length) => flute(ac, out, f, t, length * 0.9, 0.025, -0.2));
+      }
     },
   };
 }
@@ -1124,11 +1135,11 @@ function danzon(): Track {
 
 /**
  * Les morceaux de la radio : les sept de toujours ou, pendant une fête, les siens seulement (Halloween : citrouilles,
- * calaveras, squelettes ; Jour des morts : huapango, boléro, marimba et danzón).
+ * calaveras, squelettes ; Jour des morts : huapango, boléro, son jarocho et danzón).
  */
 export function allTracks(now: number = Date.now()): Track[] {
   const season = seasonAt(now);
   if (season === 'halloween') return [citrouilles(), calaveras(), squelettes()];
-  if (season === 'muertos') return [huapango(), bolero(), marimbaOfrenda(), danzon()];
+  if (season === 'muertos') return [huapango(), bolero(), jarocho(), danzon()];
   return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
 }
