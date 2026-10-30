@@ -122,7 +122,7 @@ h3 {
 }
 
 /* boutons d'ouverture des boosters : un aplat pastel de la couleur de leur sachet, texte sombre comme sur les cartes,
-   sans dégradé ni reflet ; menthe pour la Série 1, rose mexicain pour le Mexique */
+   sans dégradé ni reflet ; menthe pour la Série 1, rose mexicain franc pour la Série 2 (le Mexique) */
 .btn--primary.btn--booster,
 .btn--primary.btn--booster-mx {
   background: var(--pastel);
@@ -139,9 +139,9 @@ h3 {
 }
 
 .btn--primary.btn--booster-mx {
-  --pastel: #f8c3cf;
-  --ink: #4a1630;
-  --edge: #d98da0;
+  --pastel: #f78fb8;
+  --ink: #4a0d2a;
+  --edge: #c4557f;
 }
 
 .btn--primary.btn--booster:hover:not(:disabled),

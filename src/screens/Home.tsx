@@ -303,7 +303,7 @@ function FreePackHero() {
                 disabled={freePacks <= 0}
                 onClick={() => open(serie.number)}
               >
-                {duo ? `Ouvrir · ${serie.number === 1 ? 'Série 1' : serie.name}` : 'Ouvrir un booster'}
+                {duo ? `Ouvrir · Série ${serie.number}` : 'Ouvrir un booster'}
               </button>
             );
           })}
