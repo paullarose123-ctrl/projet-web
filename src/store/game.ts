@@ -378,6 +378,9 @@ function dropInvalidPrimes(state: GameState): GameState {
   return state;
 }
 
+// Objectifs du jour remplis pendant l'ouverture d'un booster : leur notification attend que le booster soit refermé.
+const heldDailyToasts: string[] = [];
+
 export const useGame = create<GameState>()(
   persist(
     (set, get) => {
@@ -397,7 +400,9 @@ export const useGame = create<GameState>()(
         set({ daily: after });
         for (const objective of dailyObjectives(after.day, isReleased(2, now))) {
           if (!isDailyDone(objective, before) && isDailyDone(objective, after)) {
-            pushToast('gold', `Objectif du jour réussi : ${objective.title}. Récupère ${formatBalles(objective.reward)} sur l’accueil`);
+            const text = `Objectif du jour réussi : ${objective.title}. Récupère ${formatBalles(objective.reward)} sur l’accueil`;
+            if (get().opening) heldDailyToasts.push(text);
+            else pushToast('gold', text);
           }
         }
       };
@@ -930,6 +935,7 @@ function awardBadges(state: GameState) {
 // sinon les cartes avant qu'on les ait retournées.
 useGame.subscribe((state, previous) => {
   if (state.opening) return;
+  if (previous.opening) for (const text of heldDailyToasts.splice(0)) state.toast('gold', text);
   if (state.discovered !== previous.discovered || previous.opening) awardBadges(state);
 });
 // la sauvegarde du navigateur est relue avant cet abonnement : on vérifie aussi la partie chargée

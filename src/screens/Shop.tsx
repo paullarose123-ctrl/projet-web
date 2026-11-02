@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../store/game';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { RARITIES, RARITY_ORDER } from '../engine/cards';
-import { SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, sportPack, type PackDef } from '../engine/packs';
+import { SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, serieOdds, sportPack, type PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { PackArt } from '../components/PackArt';
 import { Balles } from '../components/Balles';
@@ -19,7 +19,7 @@ function percent(value: number): string {
   return `${(value * 100).toLocaleString('fr-FR', { maximumFractionDigits: value < 0.01 ? 2 : 1 })} %`;
 }
 
-function Odds({ pack }: { pack: PackDef }) {
+function Odds({ pack, mexique }: { pack: PackDef; mexique: boolean }) {
   const total = RARITY_ORDER.reduce((sum, id) => sum + pack.odds[id], 0);
   const prime = primeOdds(pack);
   return (
@@ -57,6 +57,13 @@ function Odds({ pack }: { pack: PackDef }) {
             <b>{percent(reverseOdds(pack))}</b>
           </li>
         )}
+        {mexique && serieOdds(pack, 2) > 0 && (
+          <li className="rarity-row rarity-row--mexique">
+            <span className="rarity-dot" />
+            <span>Carte du Mexique (Série 2)</span>
+            <b>{percent(serieOdds(pack, 2))}</b>
+          </li>
+        )}
         {habitatOdds(pack) > 0 && !isIconPack(pack) && (
           <li className="rarity-row rarity-row--habitat">
             <span className="rarity-dot" />
@@ -81,6 +88,8 @@ function Odds({ pack }: { pack: PackDef }) {
 
 function PackTile({ pack }: { pack: PackDef }) {
   const balles = useGame((s) => s.balles);
+  // dès sa sortie, les cartes de la Série 2 se mêlent à celles de la Série 1 dans tous les packs
+  const mexique = isReleased(2, useNow(60_000)) && serieOdds(pack, 2) > 0;
   const buy = useGame((s) => s.buyPack);
   const affordable = balles >= pack.price;
   return (
@@ -94,8 +103,14 @@ function PackTile({ pack }: { pack: PackDef }) {
       />
       <div className="pack-tile__body">
         <h3>{pack.name}</h3>
+        {mexique && (
+          <p className="series-mix">
+            <span className="series-mix__flag" aria-hidden="true" />
+            Série 1 + Série 2 · Mexique
+          </p>
+        )}
         <p className="muted small">{pack.tagline}</p>
-        <Odds pack={pack} />
+        <Odds pack={pack} mexique={mexique} />
         <button
           type="button"
           className="btn btn--primary"

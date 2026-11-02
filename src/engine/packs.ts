@@ -200,6 +200,21 @@ export function iconPool(pack: PackDef): Athlete[] {
   return ATHLETES.filter((athlete) => isIcon(athlete) && !isHabitat(athlete) && inPack(pack, athlete));
 }
 
+/**
+ * Part des cartes d'une série dans un pack (affichée en boutique) : d'après les chances de chaque rareté et le poids
+ * des espèces de la série dans chacune. Les Icônes et les Prime garanties ne changent presque rien : on les ignore.
+ */
+export function serieOdds(pack: PackDef, serie: number): number {
+  const pool = poolFor(pack);
+  const total = RARITY_ORDER.reduce((sum, id) => sum + (pool[id].length ? pack.odds[id] : 0), 0);
+  if (!total) return 0;
+  return RARITY_ORDER.reduce((sum, id) => {
+    const all = pool[id].reduce((w, athlete) => w + dropWeight(athlete), 0);
+    const mine = pool[id].filter((athlete) => serieOf(athlete) === serie).reduce((w, athlete) => w + dropWeight(athlete), 0);
+    return all ? sum + (pack.odds[id] / total) * (mine / all) : sum;
+  }, 0);
+}
+
 /** Probabilité qu'une carte ordinaire du booster soit une Icône (affichée en boutique ; 1 pour les packs d'Icônes). */
 export function iconOdds(pack: PackDef): number {
   if (isIconPack(pack)) return 1;

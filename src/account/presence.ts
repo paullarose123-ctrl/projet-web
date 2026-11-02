@@ -1,6 +1,6 @@
 import { accountsEnabled, call } from './supabase';
 
-// Joueurs en ligne (table presence et fonction presence_ping de supabase/schema.sql).
+// Joueurs en ligne (table presence et fonction presence_ping de supabase/schema.sql), visibles des seuls administrateurs.
 // Chaque navigateur reçoit un identifiant anonyme tiré au hasard, gardé dans le navigateur : le même joueur revenu
 // dix fois dans la journée ne compte qu'une fois, qu'il ait un compte ou non. Rien d'autre n'est envoyé.
 
@@ -40,15 +40,17 @@ export function visitorId(): string {
 }
 
 /**
- * Signale que ce visiteur a le jeu ouvert (ou qu'il s'en va) et renvoie les compteurs,
- * ou null si le serveur ne répond pas (ou si la fonction n'a pas encore été ajoutée à la base).
+ * Signale que ce visiteur a le jeu ouvert (ou qu'il s'en va) et renvoie les compteurs, ou null s'il n'y a pas droit :
+ * le serveur ne les donne qu'aux comptes administrateurs (table admins de supabase/schema.sql), reconnus à leur jeton.
+ * Null aussi si le serveur ne répond pas.
  */
-export async function pingPresence(online: boolean): Promise<PresenceCounts | null> {
+export async function pingPresence(online: boolean, token?: string): Promise<PresenceCounts | null> {
   if (!accountsEnabled()) return null;
   try {
-    const counts = await call<{ online: number; today: number }>('/rest/v1/rpc/presence_ping', {
+    const counts = await call<{ online: number | null; today: number | null }>('/rest/v1/rpc/presence_ping', {
       method: 'POST',
       body: { p_visitor: visitorId(), p_online: online },
+      token,
       // le dernier signal part même si la page se ferme
       keepalive: !online,
     });
