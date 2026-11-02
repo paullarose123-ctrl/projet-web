@@ -4966,6 +4966,33 @@
   --dot: linear-gradient(180deg, #fff1bf, #e0b85a);
 }
 
+.rarity-row--mexique {
+  --dot: linear-gradient(90deg, #006847 0 34%, #ffffff 34% 66%, #ce1126 66%);
+}
+
+/* boutique : les packs mêlent les deux séries */
+.series-mix {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0 6px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(249, 168, 212, 0.55);
+  background: rgba(249, 168, 212, 0.12);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.series-mix__flag {
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #006847 0 34%, #ffffff 34% 66%, #ce1126 66%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
 /* Icône : marbre blanc et or, comme la carte */
 .rarity-row--icon,
 .rarity-row--icone {
@@ -5963,6 +5990,21 @@
   width: 56px;
   height: 56px;
   font-size: 1.6rem;
+}
+
+/* animal du Mexique : un contour aux couleurs du drapeau (vert à gauche, blanc, rouge à droite) */
+.avatar--mx {
+  padding: clamp(2px, 6%, 5px);
+  background: linear-gradient(90deg, #006847 0 33.4%, #ffffff 33.4% 66.6%, #ce1126 66.6%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.avatar--mx img {
+  border-radius: 50%;
+}
+
+.avatar--big.avatar--mx {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
 .profile-id {

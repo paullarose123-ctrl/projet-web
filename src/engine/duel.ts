@@ -1,6 +1,7 @@
 import type { Athlete, CardFace } from './types';
 import { ATHLETES_BY_ID } from '../data/athletes';
-import { releasedAthletes } from './series';
+import { releasedAthletes, serieOf } from './series';
+import { milieuCourt } from '../data/milieux';
 import { MESURES, formatLongevite, formatPoids, formatTaille } from '../data/mesures';
 import { CHIENS_DANS_LE_MONDE, POPULATIONS, formatPopulation } from '../data/populations';
 import { canBePrime, isHabitat } from './cards';
@@ -58,10 +59,37 @@ export type RecordId =
   | 'diurne'
   | 'solitaire'
   | 'oeufs'
-  | 'vole';
+  | 'vole'
+  | 'groupe'
+  | 'mer'
+  | 'foret'
+  | 'montagne'
+  | 'desert-savane'
+  | 'pres-des-humains'
+  | 'nom-long'
+  | 'nom-court'
+  | 'celebre'
+  | 'mexique'
+  | 'domestique';
 
 /** Thèmes des questions : un duel n'en pose jamais deux du même thème. */
-export type Theme = 'poids' | 'taille' | 'longevite' | 'population' | 'menaces' | 'continent' | 'classe' | 'regime' | 'rythme' | 'vie-sociale' | 'petits' | 'vol';
+export type Theme =
+  | 'poids'
+  | 'taille'
+  | 'longevite'
+  | 'population'
+  | 'menaces'
+  | 'continent'
+  | 'classe'
+  | 'regime'
+  | 'rythme'
+  | 'vie-sociale'
+  | 'petits'
+  | 'vol'
+  | 'milieu'
+  | 'nom'
+  | 'carte'
+  | 'humain';
 
 export const THEMES: Record<Theme, string> = {
   poids: 'Poids',
@@ -76,6 +104,10 @@ export const THEMES: Record<Theme, string> = {
   'vie-sociale': 'Vie sociale',
   petits: 'Naissance',
   vol: 'Vol',
+  milieu: 'Milieu de vie',
+  nom: 'Nom',
+  carte: 'La carte',
+  humain: 'Avec l’humain',
 };
 
 export interface RecordDef {
@@ -219,6 +251,32 @@ const fiche = (
     return show && e ? `${yesNo(v)} · ${show(e)}` : yesNo(v);
   },
 });
+
+
+// ───── milieu de vie (le mot du losange de la carte), nom, groupe ─────
+
+const milieuQuestion = (id: RecordId, name: string, desc: string, milieux: string[], also?: (a: Athlete) => boolean): RecordDef => ({
+  id,
+  theme: 'milieu',
+  name,
+  desc: `${desc} Le milieu est celui écrit sur la carte. Oui bat non.`,
+  best: 'max',
+  question: true,
+  value: (a) => (milieux.includes(milieuCourt(a)) || !!also?.(a) ? 1 : 0),
+  format: (v, a) => `${yesNo(v)} · ${milieuCourt(a)}`,
+});
+
+/** Lettres du nom de l'espèce (espaces, tirets et apostrophes ne comptent pas). */
+const lettres = (a: Athlete) => `${a.first}${a.last}`.replace(/[^\p{L}]/gu, '').length;
+
+/** Vit en groupe : troupeau, meute, colonie, banc… (pas en solitaire, ni seulement en couple). */
+const GROUPE = /groupe|troupeau|colonie|banc|meute|troupe|famille|harde|horde|clan|essaim|bande|grégaire|ruche|fourmilière|nuée|hordes/i;
+const premierePartie = (text: string) => text.split(/[,;.(:]/)[0].trim();
+// seule compte la première partie de la fiche (« Indépendant, mais tolère une colonie » : non)
+const enGroupe = (e: Encyclo) => {
+  const social = premierePartie(e.social);
+  return !/^solitaire/i.test(social) && !/^en couples?\b/i.test(social) && GROUPE.test(social);
+};
 
 // ───── menaces : la Liste rouge de l'UICN ─────
 
@@ -444,6 +502,64 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     best: 'max',
     question: true,
     value: (a) => (vole(a) ? 1 : 0),
+    format: yesNo,
+  },
+  // vie sociale (suite)
+  groupe: fiche('groupe', 'vie-sociale', 'Vit en groupe', 'Vit-il en groupe : troupeau, meute, colonie, banc… (un couple ne suffit pas) ?', enGroupe, (e) => premierePartie(e.social)),
+  // milieu de vie
+  mer: milieuQuestion('mer', 'Vit en mer', 'Vit-il en mer : océan, récif ou abysses ?', ['Océan', 'Récif', 'Abysses'], (a) => a.sport === 'marins' || a.sport === 'requins'),
+  foret: milieuQuestion('foret', 'Vit en forêt', 'Vit-il en forêt ou dans la jungle ?', ['Forêt', 'Jungle']),
+  montagne: milieuQuestion('montagne', 'Vit en montagne', 'Vit-il en montagne ?', ['Montagne']),
+  'desert-savane': milieuQuestion('desert-savane', 'Vit au chaud et au sec', 'Vit-il dans le désert ou la savane ?', ['Désert', 'Savane']),
+  'pres-des-humains': milieuQuestion('pres-des-humains', 'Vit près des humains', 'Vit-il en ville, à la campagne ou à la ferme ?', ['Ville', 'Campagne', 'Partout']),
+  // nom
+  'nom-long': {
+    id: 'nom-long',
+    theme: 'nom',
+    name: 'Le nom le plus long',
+    desc: 'Le nom écrit sur la carte : le plus de lettres gagne (les espaces et les tirets ne comptent pas).',
+    best: 'max',
+    value: lettres,
+    format: (v) => `${v} lettres`,
+  },
+  'nom-court': {
+    id: 'nom-court',
+    theme: 'nom',
+    name: 'Le nom le plus court',
+    desc: 'Le nom écrit sur la carte : le moins de lettres gagne (les espaces et les tirets ne comptent pas).',
+    best: 'min',
+    value: lettres,
+    format: (v) => `${v} lettres`,
+  },
+  // la carte
+  celebre: {
+    id: 'celebre',
+    theme: 'carte',
+    name: 'Le plus célèbre',
+    desc: 'La célébrité de l’espèce, de 0 à 100 : l’animal le plus connu gagne.',
+    best: 'max',
+    value: (a) => a.fame,
+    format: (v) => `${v} / 100`,
+  },
+  mexique: {
+    id: 'mexique',
+    theme: 'carte',
+    name: 'Carte du Mexique',
+    desc: 'La carte vient-elle de la Série 2 · Mexique ? Oui bat non.',
+    best: 'max',
+    question: true,
+    value: (a) => (serieOf(a) === 2 ? 1 : 0),
+    format: (v) => (v ? 'Oui · Série 2 · Mexique' : 'Non · Série 1'),
+  },
+  // avec l'humain
+  domestique: {
+    id: 'domestique',
+    theme: 'humain',
+    name: 'Animal domestique',
+    desc: 'Est-il domestique, élevé par l’humain depuis des siècles (chien, vache, poule, abeille…) ? Oui bat non.',
+    best: 'max',
+    question: true,
+    value: (a) => (a.race || statut(a) === 'DOM' ? 1 : 0),
     format: yesNo,
   },
 };

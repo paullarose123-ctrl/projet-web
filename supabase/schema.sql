@@ -296,7 +296,20 @@ alter table public.presence enable row level security;
 -- aucune règle d'accès : la table ne se lit et ne s'écrit qu'à travers presence_ping
 revoke all on public.presence from anon, authenticated;
 
--- Enregistre le signal d'un visiteur (en ligne, ou qui s'en va) et renvoie les deux compteurs :
+-- Comptes administrateurs : les seuls à qui presence_ping renvoie les compteurs (personne d'autre ne les voit).
+-- Pour s'y ajouter, dans l'éditeur SQL de Supabase (remplacer TON_PSEUDO par le pseudo du compte) :
+--   insert into public.admins (user_id)
+--   select id from auth.users where raw_user_meta_data->>'pseudo' = 'TON_PSEUDO'
+--   on conflict do nothing;
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+alter table public.admins enable row level security;
+-- aucune règle d'accès : la table ne se lit qu'à travers presence_ping
+revoke all on public.admins from anon, authenticated;
+
+-- Enregistre le signal d'un visiteur (en ligne, ou qui s'en va). Aux administrateurs seulement (connectés), renvoie
+-- les deux compteurs ; aux autres, des compteurs vides (null) :
 -- « online » : les visiteurs dont le jeu est ouvert (signal reçu il y a moins de 2 min 30, sans départ depuis) ;
 -- « today » : les visiteurs passés au moins une fois depuis minuit (heure de Paris).
 create or replace function public.presence_ping(p_visitor uuid, p_online boolean default true)
@@ -310,6 +323,9 @@ begin
   end if;
   -- ménage : on oublie les visiteurs qui ne sont pas revenus depuis deux jours
   delete from presence where last_seen < now() - interval '2 days';
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    return jsonb_build_object('online', null, 'today', null);
+  end if;
   return jsonb_build_object(
     'online', (select count(*) from presence where online and last_seen > now() - interval '150 seconds'),
     'today', (select count(*) from presence where last_seen >= midnight)

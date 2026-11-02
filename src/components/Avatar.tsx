@@ -1,7 +1,9 @@
 import { ATHLETES_BY_ID } from '../data/athletes';
+import { serieOf } from '../engine/series';
 import { usePhoto } from '../photos';
 
 // Photo de profil d'un joueur : la photo d'un animal de sa collection, dans un rond.
+// Un animal de la Série 2 (Mexique) a un contour vert, blanc et rouge, comme le drapeau.
 // Sans animal choisi (ou sans photo), l'initiale du pseudo.
 
 interface AvatarProps {
@@ -19,7 +21,7 @@ function PhotoAvatar({ athleteId, pseudo, className }: { athleteId: string; pseu
   const photo = usePhoto(ATHLETES_BY_ID[athleteId]);
   if (!photo.src) return <Initial pseudo={pseudo} className={className} />;
   return (
-    <span className={`avatar ${className}`}>
+    <span className={`avatar ${serieOf(ATHLETES_BY_ID[athleteId]) === 2 ? 'avatar--mx ' : ''}${className}`}>
       <img src={photo.src} alt="" draggable={false} />
     </span>
   );
