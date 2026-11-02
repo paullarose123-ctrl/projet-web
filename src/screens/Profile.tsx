@@ -13,6 +13,7 @@ import { photoCredit } from '../photos';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { TradeModal, TradesPanel } from './Trades';
+import { useLive } from '../store/live';
 import { FamilyBadge, SerieBadge } from '../components/FamilyBadge';
 import { familyProgress, serieBadge, serieProgress } from '../engine/badges';
 import { releasedSeries } from '../engine/series';
@@ -325,6 +326,8 @@ function Badges() {
 function FriendRow({ profile, onRemove }: { profile: PublicProfile; onRemove: () => void }) {
   const startMatch = useGame((s) => s.startMatch);
   const match = useGame((s) => s.match);
+  const challengeLive = useLive((s) => s.challenge);
+  const liveBusy = useLive((s) => s.busy);
   const setTab = useUi((s) => s.setTab);
   const [open, setOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -357,8 +360,17 @@ function FriendRow({ profile, onRemove }: { profile: PublicProfile; onRemove: ()
           <button type="button" className="btn btn--gold btn--sm" onClick={() => setTrading(true)} title="Lui proposer une de tes cartes contre une des siennes, de même rareté">
             Échanger
           </button>
-          <button type="button" className="btn btn--primary btn--sm" onClick={challenge} title="Un duel contre les animaux de sa vitrine (complétée au hasard)">
-            {match ? 'Duel en cours' : 'Défier'}
+          <button
+            type="button"
+            className="btn btn--primary btn--sm"
+            disabled={liveBusy}
+            onClick={() => void challengeLive({ id: profile.id, pseudo: profile.pseudo })}
+            title="Il reçoit une notification ; s’il accepte, vous jouez le même duel en même temps, chacun avec son équipe"
+          >
+            Duel en direct
+          </button>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={challenge} title="Un duel contre les animaux de sa vitrine (complétée au hasard), même s’il n’est pas là">
+            {match ? 'Duel en cours' : 'Contre sa vitrine'}
           </button>
           {confirmRemove ? (
             <button type="button" className="btn btn--danger btn--sm" onClick={onRemove}>
@@ -464,7 +476,7 @@ function Friends() {
       <h2>
         Mes amis <small>· {friends.length}</small>
       </h2>
-      <p className="muted small">Envoie une demande d’ami avec un pseudo. Une fois acceptée, tu vois sa photo et sa vitrine, tu peux le défier en duel et échanger des cartes avec lui.</p>
+      <p className="muted small">Envoie une demande d’ami avec un pseudo. Une fois acceptée, tu vois sa photo et sa vitrine, tu peux le défier en duel (en direct ou contre sa vitrine) et échanger des cartes avec lui.</p>
       <form className="search-player" onSubmit={add}>
         <label className="field field--grow">
           <span className="visually-hidden">Pseudo de l’ami</span>

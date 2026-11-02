@@ -291,7 +291,7 @@ function TeamBuilder() {
   );
 }
 
-function RoundResolution({ match, log, onNext }: { match: DuelState; log: DuelRound; onNext: () => void }) {
+export function RoundResolution({ match, log, onNext }: { match: DuelState; log: DuelRound; onNext: () => void }) {
   const me = match.me.cards[log.me];
   const opp = match.opp.cards[log.opp];
   useEffect(() => {

@@ -283,6 +283,177 @@ grant execute on function public.trade_decline(uuid) to authenticated;
 grant execute on function public.trade_cancel(uuid) to authenticated;
 grant execute on function public.trade_done(uuid) to authenticated;
 
+-- ───────────── Duels en direct entre amis ─────────────
+-- a_id défie son ami b_id avec son équipe de 5 et les 5 questions du duel (tirées par le jeu). b_id accepte avec
+-- son équipe (dans les 5 minutes), ou refuse ; a_id peut annuler tant que c'est en attente. Puis, à chaque manche,
+-- chacun choisit un de ses animaux : les choix sont gardés à part (live_duel_picks, illisible directement) et ne sont
+-- dévoilés qu'une fois les deux joués. Chaque joueur lit le duel avec live_duel_view, qui note aussi qu'il est là :
+-- un joueur absent depuis plus d'une minute peut être déclaré forfait par l'autre.
+create table if not exists public.live_duels (
+  id uuid primary key default gen_random_uuid(),
+  a_id uuid not null references auth.users (id) on delete cascade,
+  a_pseudo text not null,
+  b_id uuid not null references auth.users (id) on delete cascade,
+  b_pseudo text not null,
+  status text not null default 'pending' check (status in ('pending', 'active', 'done', 'declined', 'cancelled')),
+  records jsonb not null,
+  a_team jsonb not null,
+  b_team jsonb,
+  round int not null default 0,
+  forfeit uuid,
+  a_seen timestamptz not null default now(),
+  b_seen timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (a_id <> b_id)
+);
+create index if not exists live_duels_a on public.live_duels (a_id, status);
+create index if not exists live_duels_b on public.live_duels (b_id, status);
+alter table public.live_duels enable row level security;
+drop policy if exists "Voir ses duels en direct" on public.live_duels;
+create policy "Voir ses duels en direct" on public.live_duels for select using ((select auth.uid()) in (a_id, b_id));
+grant select on public.live_duels to authenticated;
+
+create table if not exists public.live_duel_picks (
+  duel_id uuid not null references public.live_duels (id) on delete cascade,
+  round int not null,
+  player uuid not null,
+  card int not null check (card between 0 and 4),
+  primary key (duel_id, round, player)
+);
+alter table public.live_duel_picks enable row level security;
+revoke all on public.live_duel_picks from anon, authenticated;
+
+create or replace function public.valid_team(t jsonb) returns boolean language sql immutable as $$
+  select jsonb_typeof(t) = 'array' and jsonb_array_length(t) = 5 and not exists (select 1 from jsonb_array_elements(t) c where not valid_card(c))
+$$;
+
+-- Le duel vu par un joueur : la ligne, les manches jouées (les deux choix) et son propre choix de la manche en cours.
+create or replace function public.live_duel_view(p_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  d public.live_duels;
+begin
+  update live_duels set a_seen = case when a_id = me then now() else a_seen end,
+                        b_seen = case when b_id = me and status <> 'pending' then now() else b_seen end
+   where id = p_id and me in (a_id, b_id)
+  returning * into d;
+  if d.id is null then raise exception 'indisponible'; end if;
+  return to_jsonb(d) || jsonb_build_object(
+    'picks', coalesce((
+      select jsonb_agg(jsonb_build_object('round', pa.round, 'a', pa.card, 'b', pb.card) order by pa.round)
+        from live_duel_picks pa join live_duel_picks pb on pb.duel_id = pa.duel_id and pb.round = pa.round and pb.player = d.b_id
+       where pa.duel_id = d.id and pa.player = d.a_id and pa.round < d.round
+    ), '[]'::jsonb),
+    'mine', (select card from live_duel_picks where duel_id = d.id and round = d.round and player = me)
+  );
+end $$;
+
+-- Défier un ami (un seul défi en attente à la fois : le précédent est annulé).
+create or replace function public.live_duel_challenge(p_to uuid, p_team jsonb, p_records jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  my_name text;
+  their_name text;
+  new_id uuid;
+begin
+  if me is null then raise exception 'non connecté'; end if;
+  if not valid_team(p_team) then raise exception 'équipe invalide'; end if;
+  if jsonb_typeof(p_records) <> 'array' or jsonb_array_length(p_records) <> 5 then raise exception 'questions invalides'; end if;
+  if not exists (
+    select 1 from friendships
+     where status = 'accepted' and ((from_id = me and to_id = p_to) or (from_id = p_to and to_id = me))
+  ) then raise exception 'pas ami'; end if;
+  update live_duels set status = 'cancelled', updated_at = now() where a_id = me and status = 'pending';
+  select pseudo into my_name from profiles where id = me;
+  select pseudo into their_name from profiles where id = p_to;
+  insert into live_duels (a_id, a_pseudo, b_id, b_pseudo, records, a_team)
+  values (me, coalesce(my_name, 'Un joueur'), p_to, coalesce(their_name, 'Un joueur'), p_records,
+          (select jsonb_agg(jsonb_build_object('athleteId', c ->> 'athleteId', 'variant', c ->> 'variant')) from jsonb_array_elements(p_team) c))
+  returning id into new_id;
+  return live_duel_view(new_id);
+end $$;
+
+create or replace function public.live_duel_accept(p_id uuid, p_team jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  found uuid;
+begin
+  if not valid_team(p_team) then raise exception 'équipe invalide'; end if;
+  update live_duels
+     set status = 'active', updated_at = now(), b_seen = now(),
+         b_team = (select jsonb_agg(jsonb_build_object('athleteId', c ->> 'athleteId', 'variant', c ->> 'variant')) from jsonb_array_elements(p_team) c)
+   where id = p_id and b_id = auth.uid() and status = 'pending' and created_at > now() - interval '5 minutes'
+  returning id into found;
+  if found is null then raise exception 'indisponible'; end if;
+  return live_duel_view(found);
+end $$;
+
+-- Refuser (l'ami défié) ou annuler (celui qui défie), tant que c'est en attente.
+create or replace function public.live_duel_decline(p_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update live_duels set status = case when a_id = auth.uid() then 'cancelled' else 'declined' end, updated_at = now()
+   where id = p_id and auth.uid() in (a_id, b_id) and status = 'pending';
+end $$;
+
+-- Jouer un animal pour la manche en cours ; quand les deux ont joué, on passe à la manche suivante.
+create or replace function public.live_duel_pick(p_id uuid, p_round int, p_card int)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  d public.live_duels;
+begin
+  select * into d from live_duels where id = p_id and me in (a_id, b_id) for update;
+  if d.id is null or d.status <> 'active' then raise exception 'indisponible'; end if;
+  if p_round <> d.round then raise exception 'manche terminée'; end if;
+  if p_card < 0 or p_card > 4 or exists (select 1 from live_duel_picks where duel_id = d.id and player = me and card = p_card) then
+    raise exception 'carte déjà jouée';
+  end if;
+  insert into live_duel_picks (duel_id, round, player, card) values (d.id, d.round, me, p_card) on conflict do nothing;
+  if (select count(*) from live_duel_picks where duel_id = d.id and round = d.round) = 2 then
+    update live_duels set round = round + 1, status = case when round + 1 >= 5 then 'done' else status end, updated_at = now()
+     where id = d.id;
+  end if;
+  return live_duel_view(d.id);
+end $$;
+
+-- Quitter un duel en cours : on perd par forfait, sauf si l'autre ne répond plus depuis plus d'une minute (c'est lui
+-- qui est forfait).
+create or replace function public.live_duel_forfeit(p_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  d public.live_duels;
+  other_seen timestamptz;
+begin
+  select * into d from live_duels where id = p_id and me in (a_id, b_id) for update;
+  if d.id is null then raise exception 'indisponible'; end if;
+  if d.status = 'active' then
+    other_seen := case when d.a_id = me then d.b_seen else d.a_seen end;
+    update live_duels
+       set status = 'done', updated_at = now(),
+           forfeit = case when other_seen < now() - interval '60 seconds' then (case when d.a_id = me then d.b_id else d.a_id end) else me end
+     where id = d.id;
+  end if;
+  return live_duel_view(d.id);
+end $$;
+
+revoke all on function public.live_duel_view(uuid) from public, anon;
+revoke all on function public.live_duel_challenge(uuid, jsonb, jsonb) from public, anon;
+revoke all on function public.live_duel_accept(uuid, jsonb) from public, anon;
+revoke all on function public.live_duel_decline(uuid) from public, anon;
+revoke all on function public.live_duel_pick(uuid, int, int) from public, anon;
+revoke all on function public.live_duel_forfeit(uuid) from public, anon;
+grant execute on function public.live_duel_view(uuid) to authenticated;
+grant execute on function public.live_duel_challenge(uuid, jsonb, jsonb) to authenticated;
+grant execute on function public.live_duel_accept(uuid, jsonb) to authenticated;
+grant execute on function public.live_duel_decline(uuid) to authenticated;
+grant execute on function public.live_duel_pick(uuid, int, int) to authenticated;
+grant execute on function public.live_duel_forfeit(uuid) to authenticated;
+
 -- Joueurs en ligne : chaque navigateur ouvert sur le jeu (avec ou sans compte) envoie un signal toutes les minutes
 -- avec un identifiant anonyme tiré au hasard, et un dernier signal quand il se ferme ou passe en arrière-plan.
 -- On n'en garde que l'heure du dernier signal : ni pseudo, ni adresse, rien qui permette de savoir qui c'est.

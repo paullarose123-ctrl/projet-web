@@ -211,6 +211,8 @@ export interface GameState {
   startMatch: (friend?: { pseudo: string; cards: CardFace[] }) => boolean;
   playMatchRound: (index: number) => void;
   finishMatch: () => void;
+  /** fin d'un duel en direct contre un ami : récompense et statistiques, une seule fois par duel */
+  finishLiveDuel: (id: string, result: 'win' | 'draw' | 'loss', opponent: string) => void;
   abandonMatch: () => void;
   toggleLock: (uid: string) => void;
   setFavorite: (slot: number, uid: string | null) => void;
@@ -706,6 +708,19 @@ export const useGame = create<GameState>()(
           const state = get();
           if (!state.match || state.match.finished) return;
           set({ match: playDuelRound(state.match, index, Math.random).state });
+        },
+
+        finishLiveDuel: (id, result, opponent) => {
+          const key = `live:${id}`;
+          if (get().onlineDone.includes(key)) return;
+          const reward = rewardFor(result, get().division);
+          set((s) => ({
+            balles: s.balles + reward,
+            onlineDone: [key, ...s.onlineDone].slice(0, 400),
+            stats: { ...s.stats, matchesPlayed: s.stats.matchesPlayed + 1, matchesWon: s.stats.matchesWon + (result === 'win' ? 1 : 0) },
+          }));
+          pushToast(result === 'win' ? 'gold' : 'info', `${result === 'win' ? 'Victoire' : result === 'draw' ? 'Match nul' : 'Défaite'} contre ${opponent} : +${formatBalles(reward)}`);
+          bumpDaily({ played: 1, won: result === 'win' ? 1 : 0 });
         },
 
         finishMatch: () => {
