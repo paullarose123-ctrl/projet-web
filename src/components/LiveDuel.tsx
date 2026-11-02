@@ -27,9 +27,20 @@ function Invite({ invite }: { invite: LiveDuel }) {
   return (
     <div className="live-invite" role="dialog" aria-labelledby="live-invite-title">
       <span className="live-invite__icon" aria-hidden="true">
-        {/* le trophée de l'onglet Duel */}
-        <svg viewBox="0 0 24 24">
-          <path d="M8,4 H16 V9 A4,4 0 0 1 8,9 Z M8,6 H5 A3,3 0 0 0 8,11 M16,6 H19 A3,3 0 0 1 16,11 M12,13 V17 M8,20 H16 M9,17 H15 V20 H9 Z" />
+        {/* deux empreintes de pattes face à face (la même patte que sur la pièce des crédits) */}
+        <svg viewBox="0 0 40 40">
+          {[
+            [12.5, 24.5, 28],
+            [27.5, 15.5, -28],
+          ].map(([x, y, angle]) => (
+            <g key={x} transform={`translate(${x} ${y}) rotate(${angle}) scale(1.22) translate(-10 -10)`}>
+              <ellipse cx={10} cy={12.2} rx={3.1} ry={2.6} />
+              <ellipse cx={6.3} cy={8.6} rx={1.25} ry={1.6} transform="rotate(-20 6.3 8.6)" />
+              <ellipse cx={8.6} cy={6.6} rx={1.25} ry={1.65} transform="rotate(-6 8.6 6.6)" />
+              <ellipse cx={11.4} cy={6.6} rx={1.25} ry={1.65} transform="rotate(6 11.4 6.6)" />
+              <ellipse cx={13.7} cy={8.6} rx={1.25} ry={1.6} transform="rotate(20 13.7 8.6)" />
+            </g>
+          ))}
         </svg>
       </span>
       <div className="live-invite__text">
