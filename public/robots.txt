@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /apercu/
+
+Sitemap: https://www.animalcards.fr/sitemap.xml
