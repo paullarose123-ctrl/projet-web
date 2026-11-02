@@ -68,7 +68,6 @@ export type RecordId =
   | 'pres-des-humains'
   | 'nom-long'
   | 'nom-court'
-  | 'celebre'
   | 'mexique'
   | 'domestique';
 
@@ -532,15 +531,6 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     format: (v) => `${v} lettres`,
   },
   // la carte
-  celebre: {
-    id: 'celebre',
-    theme: 'carte',
-    name: 'Le plus célèbre',
-    desc: 'La célébrité de l’espèce, de 0 à 100 : l’animal le plus connu gagne.',
-    best: 'max',
-    value: (a) => a.fame,
-    format: (v) => `${v} / 100`,
-  },
   mexique: {
     id: 'mexique',
     theme: 'carte',

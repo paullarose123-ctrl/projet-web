@@ -859,7 +859,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 11,
+      version: 12,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -903,6 +903,11 @@ export const useGame = create<GameState>()(
           // avant la version 2, n'importe quelle carte pouvait sortir en Prime :
           // seules les espèces vedettes gardent la leur
           state = dropInvalidPrimes(state);
+        }
+        if (version < 12 && state.match) {
+          // version 12 : la question « Le plus célèbre » est retirée des duels ; dans un duel en cours, elle devient
+          // « Le plus lourd »
+          state.match = JSON.parse(JSON.stringify(state.match).replaceAll('"celebre"', '"lourd"')) as GameState['match'];
         }
         if (version < 11) {
           // version 4 : des espèces ont été retirées du jeu. Leurs cartes disparaissent de la réserve, du marché,
