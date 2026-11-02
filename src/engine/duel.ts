@@ -66,7 +66,6 @@ export type RecordId =
   | 'montagne'
   | 'desert-savane'
   | 'pres-des-humains'
-  | 'nom-long'
   | 'mexique'
   | 'domestique';
 
@@ -85,7 +84,6 @@ export type Theme =
   | 'petits'
   | 'vol'
   | 'milieu'
-  | 'nom'
   | 'carte'
   | 'humain';
 
@@ -103,7 +101,6 @@ export const THEMES: Record<Theme, string> = {
   petits: 'Naissance',
   vol: 'Vol',
   milieu: 'Milieu de vie',
-  nom: 'Nom',
   carte: 'La carte',
   humain: 'Avec l’humain',
 };
@@ -251,7 +248,7 @@ const fiche = (
 });
 
 
-// ───── milieu de vie (le mot du losange de la carte), nom, groupe ─────
+// ───── milieu de vie (le mot du losange de la carte), groupe ─────
 
 const milieuQuestion = (id: RecordId, name: string, desc: string, milieux: string[], also?: (a: Athlete) => boolean): RecordDef => ({
   id,
@@ -263,9 +260,6 @@ const milieuQuestion = (id: RecordId, name: string, desc: string, milieux: strin
   value: (a) => (milieux.includes(milieuCourt(a)) || !!also?.(a) ? 1 : 0),
   format: (v, a) => `${yesNo(v)} · ${milieuCourt(a)}`,
 });
-
-/** Lettres du nom de l'espèce (espaces, tirets et apostrophes ne comptent pas). */
-const lettres = (a: Athlete) => `${a.first}${a.last}`.replace(/[^\p{L}]/gu, '').length;
 
 /** Vit en groupe : troupeau, meute, colonie, banc… (pas en solitaire, ni seulement en couple). */
 const GROUPE = /groupe|troupeau|colonie|banc|meute|troupe|famille|harde|horde|clan|essaim|bande|grégaire|ruche|fourmilière|nuée|hordes/i;
@@ -510,16 +504,6 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   montagne: milieuQuestion('montagne', 'Vit en montagne', 'Vit-il en montagne ?', ['Montagne']),
   'desert-savane': milieuQuestion('desert-savane', 'Vit au chaud et au sec', 'Vit-il dans le désert ou la savane ?', ['Désert', 'Savane']),
   'pres-des-humains': milieuQuestion('pres-des-humains', 'Vit près des humains', 'Vit-il en ville, à la campagne ou à la ferme ?', ['Ville', 'Campagne', 'Partout']),
-  // nom
-  'nom-long': {
-    id: 'nom-long',
-    theme: 'nom',
-    name: 'Le nom le plus long',
-    desc: 'Le nom écrit sur la carte : le plus de lettres gagne (les espaces et les tirets ne comptent pas).',
-    best: 'max',
-    value: lettres,
-    format: (v) => `${v} lettres`,
-  },
   // la carte
   mexique: {
     id: 'mexique',
