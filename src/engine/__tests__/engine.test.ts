@@ -292,8 +292,9 @@ describe('duel de records', () => {
     expect(compare('lourd', recordValue(elephant, 'lourd'), recordValue(souris, 'lourd'))).toBe('me');
     expect(compare('leger', recordValue(elephant, 'leger'), recordValue(souris, 'leger'))).toBe('opp');
     expect(compare('rare', recordValue(elephant, 'rare'), recordValue(souris, 'rare'))).toBe('me');
-    // une mesure inconnue perd la manche
-    expect(compare('vieux', null, 3)).toBe('opp');
+    // une mesure inconnue (espèce disparue mal connue) donne match nul
+    expect(compare('vieux', null, 3)).toBe('draw');
+    expect(compare('vieux', 3, null)).toBe('draw');
     expect(compare('vieux', null, null)).toBe('draw');
     expect(formatRecordValue({ athleteId: 'thylacine', variant: 'base' }, 'rare')).toBe('Éteint');
   });
@@ -342,7 +343,16 @@ describe('duel de records', () => {
     expect(compare('menace', v('tigre', 'menace'), v('lion', 'menace'))).toBe('me');
     expect(formatRecordValue(face('tigre'), 'menace')).toBe('En danger');
     expect(formatRecordValue(face('tigre'), 'plus-lourd-qu-un-humain')).toBe('Oui · 220 kg');
-    expect(formatRecordValue(face('lion'), 'carnivore')).toBe('Oui · Carnivore');
+    expect(formatRecordValue(face('lion'), 'carnivore')).toBe('Oui · Zèbres, gnous, buffles et antilopes');
+    // les petites erreurs corrigées : la limite compte, le menu compte, la haute mer et les fleuves
+    expect(v('poulpe-dumbo', 'plus-d-un-million')).toBe(1);
+    expect(v('requin-blanc', 'piscivore')).toBe(1);
+    expect(v('baleine-bleue', 'carnivore')).toBe(1);
+    expect(formatRecordValue(face('requin-blanc'), 'afrique')).toBe('Non · Haute mer');
+    expect(v('tamarin-lion', 'mer')).toBe(0);
+    expect(v('dauphin-rose', 'eau-douce')).toBe(1);
+    expect(v('dauphin-rose', 'foret')).toBe(0);
+    expect(v('lion', 'nocturne')).toBe(1);
     expect(v('loup', 'plusieurs-continents')).toBe(1);
     expect(v('kangourou', 'plusieurs-continents')).toBe(0);
   });

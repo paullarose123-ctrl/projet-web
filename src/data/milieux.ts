@@ -16,19 +16,19 @@ const RULES: Array<[string, RegExp]> = [
   ['Récif', w('récifs?|corallien|lagons?')],
   ['Abysses', w('abysses|profondeurs|profonds')],
   ['Océan', w('océans?|haute mer|mers?|antarctique|austral|australes|arctique|atlantique|béring|barents|pôle')],
-  ['Côtes', w('côtes?|plages?|rochers|estuaires?|mangroves?|lagunes?|herbiers|fonds|falaises marines')],
+  ['Côtes', w('côtes?|côtières?|plages?|rochers|estuaires?|mangroves?|lagunes?|herbiers|fonds|falaises marines')],
   ['Glaces', w('banquise|toundra|neige|enneigées')],
-  ['Montagne', w('montagnes?|andes|himalaya|himalayenne|alpes|falaises|éboulis|plateaux?|cols|collines')],
+  ['Montagne', w('montagnes?|monts?|caucase|canyons|andes|himalaya|himalayenne|alpes|falaises|éboulis|plateaux?|cols|collines')],
   ['Désert', w('désert|déserts|kalahari|gobi')],
-  ['Savane', w('savane|brousse|bush|cerrado')],
+  ['Savane', w('savane|broussailles|maghreb|brousse|bush|cerrado')],
   ['Jungle', w('jungle|tropicale|équatoriale|amazonienne|amazonie|canopée|nuages|bornéo|congo|ituri|monteverde')],
   ['Marais', w('marais|marécages|everglades|floride')],
   // le fleuve Amazone (dauphin rose, piranha) : une rivière, pas la jungle
-  ['Rivières', w('rivières|fleuves?|lacs?|étangs|mares|bassins|yangzi|gironde|amazone')],
-  ['Prairie', w('prairies?|plaines|steppe|garrigue|maquis')],
-  ['Îles', w('îles?|galápagos|kodiak|rottnest|tasmanie|maurice|sonde')],
+  ['Rivières', w('rivières?|sources?|fleuves?|lacs?|étangs|mares|bassins|yangzi|gironde|amazone')],
+  ['Prairie', w('prairies?|landes|plaines|steppe|garrigue|maquis')],
+  ['Îles', w('îles?|island|haida gwaii|galápagos|kodiak|rottnest|tasmanie|maurice|sonde')],
   ['Sous terre', w('sous terre|terriers|grottes')],
-  ['Forêt', w('forêts?|taïga|boréale|bambous|eucalyptus|pinèdes|bois|chênes|białowieża|parcs|feuilles|californie')],
+  ['Forêt', w('forêts?|boisés?|boisées?|honshū|cát tiên|appalaches|taïga|boréale|bambous|eucalyptus|pinèdes|bois|chênes|białowieża|parcs|feuilles|californie')],
 ];
 
 /** Milieu en un mot pour le losange de la carte. */
