@@ -7088,36 +7088,29 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  animation: live-ring 1.6s ease-in-out infinite;
+  background: var(--bg-3);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  animation: live-glow 1.8s ease-in-out infinite;
 }
 
 .live-invite__icon svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-@keyframes live-ring {
+@keyframes live-glow {
   0%,
   100% {
-    transform: rotate(0);
-  }
-  10%,
-  30% {
-    transform: rotate(-12deg);
-  }
-  20%,
-  40% {
-    transform: rotate(12deg);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
   }
   50% {
-    transform: rotate(0);
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent);
   }
 }
 

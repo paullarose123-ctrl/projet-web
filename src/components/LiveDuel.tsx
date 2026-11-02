@@ -27,8 +27,9 @@ function Invite({ invite }: { invite: LiveDuel }) {
   return (
     <div className="live-invite" role="dialog" aria-labelledby="live-invite-title">
       <span className="live-invite__icon" aria-hidden="true">
+        {/* le trophée de l'onglet Duel */}
         <svg viewBox="0 0 24 24">
-          <path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 6.5 21 18v3h-3L6.5 9.5M11 5l-6 6M8 8 4 4M5 3 3 5" />
+          <path d="M8,4 H16 V9 A4,4 0 0 1 8,9 Z M8,6 H5 A3,3 0 0 0 8,11 M16,6 H19 A3,3 0 0 1 16,11 M12,13 V17 M8,20 H16 M9,17 H15 V20 H9 Z" />
         </svg>
       </span>
       <div className="live-invite__text">
