@@ -10,6 +10,7 @@ import {
   profilesByIds,
   sendFriendRequest,
   loadSave,
+  loadSaveStamp,
   refresh,
   signIn,
   signOut,
@@ -26,6 +27,10 @@ import { readSave, useGame, writeSave } from './game';
 // Compte du joueur : la session Supabase (gardée dans le navigateur) et la sauvegarde automatique.
 // En invité, la partie reste dans ce navigateur. Une fois connecté, elle est envoyée au compte au plus toutes les
 // SAVE_EVERY millisecondes quand elle change, et dès que l'onglet est caché ou fermé.
+// Plusieurs appareils sur le même compte : chacun retient la date de la dernière sauvegarde qu'il a envoyée ou
+// reprise (syncedAt). Avant d'envoyer, à l'ouverture du jeu et quand il revient au premier plan, il regarde la date
+// de la sauvegarde du compte : si un autre appareil l'a changée entre-temps, il reprend cette partie (sauf si la
+// sienne a plus de progression) au lieu de l'écraser avec la sienne, restée en arrière.
 
 const SAVE_EVERY = 30_000;
 
@@ -35,6 +40,8 @@ interface AccountState {
   session: Session | null;
   status: SyncStatus;
   lastSavedAt: number | null;
+  /** date (côté serveur) de la dernière sauvegarde du compte envoyée ou reprise par cet appareil */
+  syncedAt: string | null;
   error: string | null;
   /** inscription ou connexion en cours */
   busy: boolean;
@@ -56,6 +63,58 @@ interface AccountState {
 /** dernière sauvegarde envoyée (pour ne pas renvoyer la même) */
 let lastSent: string | null = null;
 let timer: number | undefined;
+/** une seule synchronisation à la fois (vérification, reprise ou envoi) */
+let syncing: Promise<unknown> = Promise.resolve();
+const serial = <T>(task: () => Promise<T>): Promise<T> => {
+  const run = syncing.then(task, task);
+  syncing = run.catch(() => undefined);
+  return run;
+};
+
+const sameStamp = (a: string, b: string) => Date.parse(a) === Date.parse(b);
+
+/** Progression d'une sauvegarde : boosters ouverts, duels joués, cartes vendues ou achetées, cartes en réserve. */
+function progressOf(raw: string | null): number {
+  try {
+    const saved = JSON.parse(raw ?? 'null') as { state?: { stats?: Record<string, number>; collection?: unknown[] } } | null;
+    const stats = saved?.state?.stats ?? {};
+    return (stats.packsOpened ?? 0) + (stats.matchesPlayed ?? 0) + (stats.cardsSold ?? 0) + (stats.cardsBought ?? 0) + (saved?.state?.collection?.length ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Regarde si un autre appareil a changé la sauvegarde du compte depuis notre dernière synchronisation ; si oui,
+ * reprend sa partie (sauf si la nôtre a plus de progression, elle sera alors envoyée). Renvoie true si la partie
+ * a été reprise du compte.
+ */
+async function reconcile(session: Session): Promise<boolean> {
+  const stamp = await loadSaveStamp(session);
+  if (!stamp) return false;
+  const synced = useAccount.getState().syncedAt;
+  if (synced && sameStamp(stamp, synced)) return false;
+  const remote = await loadSave(session);
+  if (!remote) return false;
+  const remoteRaw = JSON.stringify(remote.data);
+  const localRaw = readSave();
+  if (progressOf(localRaw) > progressOf(remoteRaw)) return false;
+  const changed = remoteRaw !== localRaw;
+  await writeSave(remoteRaw);
+  lastSent = readSave();
+  useAccount.setState({ syncedAt: remote.updatedAt, status: 'saved', lastSavedAt: Date.now(), error: null });
+  if (changed) useGame.getState().toast('info', 'Progression mise à jour : ta partie de ton autre appareil est reprise.');
+  return true;
+}
+
+/** À l'ouverture du jeu et quand il revient au premier plan : reprend la partie d'un autre appareil s'il y en a une. */
+function checkOtherDevices(): void {
+  if (!useAccount.getState().session) return;
+  void serial(async () => {
+    const session = await freshSession();
+    if (session) await reconcile(session);
+  }).catch(() => undefined);
+}
 
 /** La session, avec un jeton encore valable au moins une minute (rafraîchi au besoin). */
 export async function freshSession(): Promise<Session | null> {
@@ -83,17 +142,26 @@ function favoriteFaces(): CardFace[] {
     .map(({ athleteId, variant }) => ({ athleteId, variant }));
 }
 
-async function upload(keepalive = false): Promise<boolean> {
-  const raw = readSave();
-  if (!raw || raw === lastSent) return true;
+function upload(keepalive = false): Promise<boolean> {
+  // onglet caché ou fermé : envoi « keepalive », sans nouvelle vérification (elle n'aurait pas le temps de finir),
+  // mais après celle qui serait en cours
+  return serial(() => send(keepalive));
+}
+
+async function send(keepalive: boolean): Promise<boolean> {
+  if (!readSave() || readSave() === lastSent) return true;
   useAccount.setState({ status: 'saving' });
   try {
     const session = await freshSession();
     if (!session) return false;
+    // un autre appareil a sauvegardé entre-temps : on reprend sa partie au lieu de l'écraser
+    if (!keepalive && (await reconcile(session))) return true;
+    const raw = readSave();
+    if (!raw) return true;
     // keepalive (envoi qui survit à la fermeture de l'onglet) est limité à 64 Ko par le navigateur
-    await storeSave(session, JSON.parse(raw), keepalive && raw.length < 60_000);
+    const stamp = await storeSave(session, JSON.parse(raw), keepalive && raw.length < 60_000);
     lastSent = raw;
-    useAccount.setState({ status: 'saved', lastSavedAt: Date.now(), error: null });
+    useAccount.setState({ status: 'saved', lastSavedAt: Date.now(), syncedAt: stamp, error: null });
     return true;
   } catch (error) {
     useAccount.setState({ status: 'error', error: error instanceof Error ? error.message : 'Sauvegarde impossible.' });
@@ -109,7 +177,7 @@ async function adopt(session: Session, fresh: boolean): Promise<void> {
     if (remote) {
       await writeSave(JSON.stringify(remote.data));
       lastSent = readSave();
-      useAccount.setState({ status: 'saved', lastSavedAt: Date.parse(remote.updatedAt) || Date.now() });
+      useAccount.setState({ status: 'saved', lastSavedAt: Date.parse(remote.updatedAt) || Date.now(), syncedAt: remote.updatedAt });
       useGame.getState().toast('success', `Bon retour ${session.pseudo} ! Ta progression est rechargée.`);
       await storeProfile(session, favoriteFaces(), useGame.getState().avatar).catch(() => undefined);
       void useAccount.getState().refreshFriends();
@@ -117,6 +185,7 @@ async function adopt(session: Session, fresh: boolean): Promise<void> {
     }
   }
   lastSent = null;
+  useAccount.setState({ syncedAt: null });
   await upload();
   await storeProfile(session, favoriteFaces(), useGame.getState().avatar).catch(() => undefined);
   void useAccount.getState().refreshFriends();
@@ -129,6 +198,7 @@ export const useAccount = create<AccountState>()(
       session: null,
       status: 'idle',
       lastSavedAt: null,
+      syncedAt: null,
       error: null,
       busy: false,
 
@@ -168,7 +238,7 @@ export const useAccount = create<AccountState>()(
         const saved = await upload();
         await signOut(session);
         lastSent = null;
-        set({ session: null, status: 'idle', lastSavedAt: null, error: null, busy: false, friendships: [], friendProfiles: {}, friendsError: null });
+        set({ session: null, status: 'idle', lastSavedAt: null, syncedAt: null, error: null, busy: false, friendships: [], friendProfiles: {}, friendsError: null });
         if (saved) {
           // la progression part avec le compte : le navigateur repart d'une partie neuve
           useGame.getState().resetGame();
@@ -243,7 +313,7 @@ export const useAccount = create<AccountState>()(
     {
       name: 'animalcards-compte',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ session: state.session, lastSavedAt: state.lastSavedAt }),
+      partialize: (state) => ({ session: state.session, lastSavedAt: state.lastSavedAt, syncedAt: state.syncedAt }),
     },
   ),
 );
@@ -251,8 +321,10 @@ export const useAccount = create<AccountState>()(
 /** Lance la sauvegarde automatique (une fois, au démarrage du jeu). */
 export function startAutoSave(): void {
   if (!accountsEnabled() || typeof window === 'undefined') return;
-  // au démarrage, la partie du navigateur est celle de la dernière session : rien à renvoyer tant qu'elle ne change pas
+  // au démarrage, la partie du navigateur est celle de la dernière session : rien à renvoyer tant qu'elle ne change pas,
+  // mais un autre appareil a peut-être joué depuis
   lastSent = readSave();
+  checkOtherDevices();
   useGame.subscribe(() => {
     if (!useAccount.getState().session || timer !== undefined) return;
     timer = window.setTimeout(() => {
@@ -278,7 +350,10 @@ export function startAutoSave(): void {
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flush();
-    else if (useAccount.getState().session) void useAccount.getState().refreshFriends();
+    else if (useAccount.getState().session) {
+      checkOtherDevices();
+      void useAccount.getState().refreshFriends();
+    }
   });
   // les demandes d'ami reçues arrivent toutes seules (pastille sur le bouton Profil)
   const pollFriends = () => {
