@@ -24,6 +24,8 @@ import { Juice } from './components/Juice';
 import { useOnline } from './store/online';
 import { useTrades } from './store/trades';
 import { startPresence } from './store/presence';
+import { startLive } from './store/live';
+import { LiveLayer } from './components/LiveDuel';
 import { OnlinePlayers } from './components/OnlinePlayers';
 import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
@@ -254,6 +256,12 @@ export function App() {
   // joueurs en ligne : un signal anonyme par minute tant que le jeu est affiché (avec ou sans compte)
   useEffect(() => startPresence(), []);
 
+  // duels en direct entre amis : invitations reçues et duel en cours (seulement avec un compte)
+  useEffect(() => {
+    if (!accountsEnabled() || !userId) return;
+    return startLive();
+  }, [userId]);
+
   // le marché et les boosters avancent en temps réel (et rattrapent le temps passé hors du jeu)
   useEffect(() => {
     tick();
@@ -291,6 +299,7 @@ export function App() {
       <CardDetail />
       <PackOpening />
       <NowPlaying />
+      <LiveLayer />
       <Toasts />
       <Juice />
     </div>
