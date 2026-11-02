@@ -6,7 +6,7 @@ import { MESURES, formatLongevite, formatPoids, formatTaille } from '../data/mes
 import { CHIENS_DANS_LE_MONDE, POPULATIONS, formatPopulation } from '../data/populations';
 import { canBePrime, isHabitat } from './cards';
 import { CONTINENTS_MULTIPLES, type Continent } from '../data/repartition';
-import { ENCYCLOPEDIE, REGIMES, RYTHMES, UICN, type Encyclo, type Uicn } from '../data/encyclopedie';
+import { ENCYCLOPEDIE, REGIMES, RYTHMES, UICN, type Encyclo, type RegimeId, type Uicn } from '../data/encyclopedie';
 import { makeUid, pick, shuffle, type Rng } from './random';
 
 // Duel de records : un jeu de culture générale sur les animaux, avec leurs vraies mesures.
@@ -261,6 +261,43 @@ const milieuQuestion = (id: RecordId, name: string, desc: string, milieux: strin
 /** Eau douce, d'après le milieu détaillé de la carte (« Fleuves », « Mares d'Amazonie », « Lac de Pátzcuaro »…). */
 const EAU_DOUCE = /(?<!\p{L})(?:rivières?|fleuves?|lacs?|étangs?|mares|marais|amazone|sources|canaux)(?!\p{L})/iu;
 
+// ───── ce qu'il mange : son régime, mais aussi son menu (le requin, carnivore, mange aussi des poissons) ─────
+
+const mots = (words: string) => new RegExp(`(?<!\\p{L})(?:${words})(?!\\p{L})`, 'iu');
+const POISSONS = mots('poissons?|saumons?|truites?|thons?|sardines?|harengs?|anchois|maquereaux?|morues?|carpes?|anguilles?|capelans?|lançons?');
+const INSECTES = mots(
+  'insectes?|fourmis|termites?|chenilles?|larves?|coléoptères?|criquets?|sauterelles?|mouches?|moustiques?|papillons?|abeilles?|guêpes?|cafards?|blattes?|grillons?|scarabées?|pucerons?|libellules?|moucherons?',
+);
+const PLANTES = mots(
+  'plantes?|herbes?|feuilles?|feuillages?|fruits?|figues?|baies|graines?|racines?|tubercules?|bulbes?|nectar|pollen|bambous?|écorces?|fleurs?|bourgeons?|pousses?|céréales?|foin|glands?|noix|noisettes?|algues?|lichens?|mousses?|cactus|nopals?|eucalyptus|légumes?|tiges?|sève|champignons?|blé|maïs|riz|trèfle',
+);
+
+/** Le début du menu, pour la réponse (« Phoques, otaries, poissons… »). */
+function menuCourt(menu: string): string {
+  const first = menu.split(';')[0].trim();
+  if (first.length <= 46) return first;
+  const cut = first.slice(0, 46);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 20)).replace(/[ ,;]+$/, '')}…`;
+}
+
+/** Mange-t-il de ceci ? Oui si c'est son régime, ou si son menu en contient (« Oui · Phoques, otaries, poissons… »). */
+const mange = (id: RecordId, name: string, desc: string, regimes: RegimeId[], words: RegExp): RecordDef => ({
+  id,
+  theme: 'regime',
+  name,
+  desc: `${desc} Il suffit que ça fasse partie de son menu. Oui bat non.`,
+  best: 'max',
+  question: true,
+  value: (a) => {
+    const e = ENCYCLOPEDIE[a.id];
+    return e ? (regimes.includes(e.regime) || words.test(e.menu) ? 1 : 0) : null;
+  },
+  format: (v, a) => {
+    const e = ENCYCLOPEDIE[a.id];
+    return e ? `${yesNo(v)} · ${menuCourt(e.menu)}` : yesNo(v);
+  },
+});
+
 /** Vit en groupe : troupeau, meute, colonie, banc… (pas en solitaire, ni seulement en couple). */
 const GROUPE = /groupe|troupeau|colonie|banc|meute|troupe|famille|harde|horde|clan|essaim|bande|grégaire|ruche|fourmilière|nuée|hordes/i;
 const premierePartie = (text: string) => text.split(/[,;.(:]/)[0].trim();
@@ -449,17 +486,16 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     (e) => e.regime === 'carnivore' || e.regime === 'piscivore' || e.regime === 'charognard',
     (e) => REGIMES[e.regime],
   ),
-  herbivore: fiche(
+  herbivore: mange(
     'herbivore',
-    'regime',
     'Mange des plantes',
-    'Est-il herbivore, mangeur de fruits ou buveur de nectar ?',
-    (e) => e.regime === 'herbivore' || e.regime === 'frugivore' || e.regime === 'nectarivore',
-    (e) => REGIMES[e.regime],
+    'Mange-t-il des plantes : herbe, feuilles, fruits, graines, baies, nectar, algues… ?',
+    ['herbivore', 'frugivore', 'nectarivore', 'omnivore'],
+    PLANTES,
   ),
   omnivore: fiche('omnivore', 'regime', 'Mange de tout', 'Est-il omnivore, à la fois mangeur de plantes et d’animaux ?', (e) => e.regime === 'omnivore', (e) => REGIMES[e.regime]),
-  insectivore: fiche('insectivore', 'regime', 'Mange des insectes', 'Se nourrit-il surtout d’insectes ?', (e) => e.regime === 'insectivore', (e) => REGIMES[e.regime]),
-  piscivore: fiche('piscivore', 'regime', 'Mange du poisson', 'Se nourrit-il surtout de poissons ?', (e) => e.regime === 'piscivore', (e) => REGIMES[e.regime]),
+  insectivore: mange('insectivore', 'Mange des insectes', 'Mange-t-il des insectes : fourmis, termites, chenilles, larves… ?', ['insectivore'], INSECTES),
+  piscivore: mange('piscivore', 'Mange du poisson', 'Mange-t-il des poissons ?', ['piscivore'], POISSONS),
   // rythme de vie
   nocturne: fiche(
     'nocturne',
