@@ -140,8 +140,8 @@ const CONTINENT: Record<string, Continent> = Object.fromEntries(
       ['afrique', 'BW CD CG CM DZ EG ET GA GH KE KM LR MA MG MU NA RW SC SD SO TZ ZA'],
       ['asie', 'BD CN ID IN IR JP KZ LK MN MY NP PH SA SY TH TW VN RU'],
       ['europe', 'BE CH DE ES FI FR GB GB-ENG GB-SCT GB-WLS GR HR IE IS IT NL NO PL RO SI SE'],
-      ['amerique', 'AR BO BR CA CL CO CR CU EC GT JM MX PE US GL'],
-      ['oceanie', 'AU FJ NZ PG'],
+      ['amerique', 'AR BO BR CA CL CO CR CU EC GT JM MX PA PE US GL'],
+      ['oceanie', 'AU FJ MP NZ PG'],
     ] as Array<[Continent, string]>
   ).flatMap(([continent, codes]) => codes.split(' ').map((code) => [code, continent])),
 );
@@ -174,12 +174,20 @@ const continentQuestion = (id: Continent, where: string): RecordDef => ({
   id,
   theme: 'continent',
   name: `Vit ${where}`,
-  desc: `L’animal vit-il ${where} (à l’état sauvage, ou élevé partout pour un animal domestique) ? Oui bat non.`,
+  desc: `L’animal vit-il ${where} (à l’état sauvage, ou élevé partout pour un animal domestique) ? Les animaux de haute mer ne vivent sur aucun continent. Oui bat non.`,
   best: 'max',
   question: true,
   value: (a) => (continentsOf(a).includes(id) ? 1 : 0),
-  format: yesNo,
+  format: (v, a) => `${yesNo(v)} · ${ouVitIl(a)}`,
 });
+
+const CONTINENT_NOMS: Record<Continent, string> = { afrique: 'Afrique', asie: 'Asie', amerique: 'Amérique', europe: 'Europe', oceanie: 'Océanie' };
+/** Où vit l'animal, pour la réponse : ses continents, ou la haute mer, ou l'Antarctique. */
+function ouVitIl(a: Athlete): string {
+  const list = continentsOf(a);
+  if (list.length) return list.map((c) => CONTINENT_NOMS[c]).join(', ');
+  return a.country === 'AQ' ? 'Antarctique' : 'Haute mer';
+}
 const classeQuestion = (id: Exclude<Classe, 'autre'>, name: string, precision = ''): RecordDef => ({
   id,
   theme: 'classe',
@@ -342,7 +350,7 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   // poids
   lourd: { id: 'lourd', theme: 'poids', name: 'Le plus lourd', desc: 'Le poids d’un adulte : le plus lourd gagne.', best: 'max', value: poids, format: (v) => formatPoids(v) },
   leger: { id: 'leger', theme: 'poids', name: 'Le plus léger', desc: 'Le poids d’un adulte : le plus léger gagne.', best: 'min', value: poids, format: (v) => formatPoids(v) },
-  'plus-lourd-qu-un-humain': seuil('plus-lourd-qu-un-humain', 'poids', 'Plus lourd qu’un humain', 'Un adulte pèse-t-il plus de 70 kg ?', poids, (v) => v > 70, (v) => formatPoids(v)),
+  'plus-lourd-qu-un-humain': seuil('plus-lourd-qu-un-humain', 'poids', 'Lourd comme un humain', 'Un adulte pèse-t-il 70 kg ou plus ?', poids, (v) => v >= 70, (v) => formatPoids(v)),
   'moins-d-un-kilo': seuil('moins-d-un-kilo', 'poids', 'Pèse moins d’un kilo', 'Un adulte pèse-t-il moins d’un kilo ?', poids, (v) => v < 1, (v) => formatPoids(v)),
   // taille
   grand: {
@@ -366,10 +374,10 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   'plus-grand-qu-un-humain': seuil(
     'plus-grand-qu-un-humain',
     'taille',
-    'Plus grand qu’un humain',
-    'Sa plus grande mesure (longueur, hauteur ou envergure) dépasse-t-elle 1,75 m ?',
+    'Grand comme un humain',
+    'Sa plus grande mesure (longueur, hauteur ou envergure) atteint-elle 1,75 m ou plus ?',
     taille,
-    (v) => v > 1.75,
+    (v) => v >= 1.75,
     (v) => formatTaille(v),
   ),
   // longévité
@@ -394,10 +402,10 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   'plus-de-20-ans': seuil(
     'plus-de-20-ans',
     'longevite',
-    'Vit plus de 20 ans',
-    'Sa longévité dans la nature dépasse-t-elle 20 ans ?',
+    'Vit 20 ans ou plus',
+    'Sa longévité dans la nature atteint-elle 20 ans ou plus ?',
     (a) => MESURES[a.id]?.[3] ?? null,
-    (v) => v > 20,
+    (v) => v >= 20,
     (v) => formatLongevite(v),
   ),
   // population
@@ -422,10 +430,10 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   'plus-d-un-million': seuil(
     'plus-d-un-million',
     'population',
-    'Plus d’un million sur Terre',
-    'Reste-t-il plus d’un million d’individus vivants ?',
+    'Un million ou plus sur Terre',
+    'Reste-t-il au moins un million d’individus vivants ?',
     population,
-    (v) => v > 1_000_000,
+    (v) => v >= 1_000_000,
     formatPop,
   ),
   // menaces
@@ -482,9 +490,9 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     'carnivore',
     'regime',
     'Est carnivore',
-    'Mange-t-il surtout d’autres animaux : viande, poissons ou charognes (les mangeurs d’insectes ne comptent pas) ?',
-    (e) => e.regime === 'carnivore' || e.regime === 'piscivore' || e.regime === 'charognard',
-    (e) => REGIMES[e.regime],
+    'Mange-t-il surtout d’autres animaux : viande, poissons, krill ou charognes (les mangeurs d’insectes ne comptent pas) ?',
+    (e) => e.regime === 'carnivore' || e.regime === 'piscivore' || e.regime === 'charognard' || (e.regime === 'filtreur' && /krill|poissons?|crustacés|copépodes/i.test(e.menu)),
+    (e) => menuCourt(e.menu),
   ),
   herbivore: mange(
     'herbivore',
@@ -501,8 +509,8 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     'nocturne',
     'rythme',
     'Actif la nuit',
-    'Est-il actif la nuit (surtout la nuit, ou de jour comme de nuit) ? L’aube et le crépuscule ne comptent pas.',
-    (e) => e.rythme === 'nuit' || e.rythme === 'jour-nuit',
+    'Est-il actif la nuit : la nuit, à l’aube et au crépuscule, ou de jour comme de nuit ?',
+    (e) => e.rythme === 'nuit' || e.rythme === 'jour-nuit' || e.rythme === 'crepuscule',
     (e) => RYTHMES[e.rythme],
   ),
   diurne: fiche(
@@ -678,11 +686,9 @@ export function recordValue(card: CardFace, record: RecordId): number | null {
   return RECORDS[record].value(ATHLETES_BY_ID[card.athleteId]);
 }
 
-/** Qui gagne entre deux valeurs : une mesure inconnue perd, deux inconnues font match nul. */
+/** Qui gagne entre deux valeurs : une mesure inconnue (espèce disparue mal connue, corail…) donne match nul. */
 export function compare(record: RecordId, mine: number | null, theirs: number | null): 'me' | 'opp' | 'draw' {
-  if (mine === null && theirs === null) return 'draw';
-  if (mine === null) return 'opp';
-  if (theirs === null) return 'me';
+  if (mine === null || theirs === null) return 'draw';
   if (mine === theirs) return 'draw';
   const better = RECORDS[record].best === 'max' ? mine > theirs : mine < theirs;
   return better ? 'me' : 'opp';
