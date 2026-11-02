@@ -9,7 +9,7 @@ import { Card } from '../components/Card';
 import { ALL_PACK_SCENES, PackArt, packScene } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
 import { CardBackMexique } from '../components/CardBackMexique';
-import { serieDef, serieOf } from '../engine/series';
+import { serieDef } from '../engine/series';
 import { Landscape, type SceneDef } from '../components/PackScene';
 import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
 import { HERO_SCENE, SCREEN_SCENES } from '../art/scenes';
@@ -213,8 +213,8 @@ function CardTag({ card }: { card: CardFace & { isNew?: boolean } }) {
 }
 
 /** Dos de la carte : celui de sa série (le Mexique pour la Série 2). */
-function BackOf({ serie }: { serie: number }) {
-  return serie === 2 ? <CardBackMexique /> : <CardBack />;
+function BackOf({ serie, mixed = false }: { serie: number; mixed?: boolean }) {
+  return serie === 2 ? <CardBackMexique /> : <CardBack label={mixed ? null : 'Série 1'} />;
 }
 
 function Walkout({ card, serie, onDone }: { card: CardFace; serie: number; onDone: () => void }) {
@@ -635,7 +635,7 @@ export function PackOpening() {
                 {/* les cartes, serrées dans le sachet entre les deux faces */}
                 <span className="pack3d__cards" aria-hidden="true">
                   {Array.from({ length: 5 }, (_, i) => (
-                    <BackOf key={i} serie={serie} />
+                    <BackOf key={i} serie={serie} mixed={opening.mixed} />
                   ))}
                 </span>
                 <span className="pack3d__face pack3d__front">
@@ -710,7 +710,8 @@ export function PackOpening() {
                     <div className="stage-card__float">
                       <div className="flip__inner">
                         <div className="flip__back">
-                          <BackOf serie={serieOf(ATHLETES_BY_ID[card.athleteId])} />
+                          {/* le dos du booster, pas celui de la carte : dans un pack qui mêle les séries, le dos ne dévoile rien */}
+                          <BackOf serie={serie} mixed={opening.mixed} />
                         </div>
                         <div className="flip__front">
                           <Card card={card} size="xl" />
@@ -737,7 +738,7 @@ export function PackOpening() {
           <div className="opening__tray" aria-hidden="true">
             {cards.map((card, i) => (
               <div key={card.uid} className={`tray-slot${i === current ? ' is-current' : ''}${i < revealed ? ' is-revealed' : ''}`}>
-                {i < revealed ? <Card card={card} size="xs" /> : <BackOf serie={serieOf(ATHLETES_BY_ID[card.athleteId])} />}
+                {i < revealed ? <Card card={card} size="xs" /> : <BackOf serie={serie} mixed={opening.mixed} />}
               </div>
             ))}
           </div>

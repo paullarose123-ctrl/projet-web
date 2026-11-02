@@ -5992,11 +5992,11 @@
   font-size: 1.6rem;
 }
 
-/* animal du Mexique : un contour aux couleurs du drapeau (vert à gauche, blanc, rouge à droite) */
+/* animal du Mexique : un fin liseré tout autour, en petits traits pastel vert, blanc et rouge */
 .avatar--mx {
-  padding: clamp(2px, 6%, 5px);
-  background: linear-gradient(90deg, #006847 0 33.4%, #ffffff 33.4% 66.6%, #ce1126 66.6%);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  padding: 2px;
+  background: repeating-conic-gradient(#a8dcbc 0 10deg, #f7f4ec 10deg 20deg, #f4b3b9 20deg 30deg);
+  box-shadow: none;
 }
 
 .avatar--mx img {
@@ -6004,7 +6004,8 @@
 }
 
 .avatar--big.avatar--mx {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 10px 24px rgba(0, 0, 0, 0.45);
+  padding: 3px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
 .profile-id {

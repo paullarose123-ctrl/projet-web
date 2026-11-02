@@ -46,7 +46,8 @@ function trace(): Art {
   return { stars, birds, peaks, ridges };
 }
 
-export function CardBack({ className = '' }: { className?: string }) {
+/** `label` : la série écrite sous le logo (aucune pour un pack de la boutique, qui mêle les séries). */
+export function CardBack({ className = '', label = 'Série 1' }: { className?: string; label?: string | null }) {
   const id = `cb${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   art ??= trace();
   const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0} width={W + 4} height={y1 - y0} fill={`url(#${id}-mist)`} opacity={opacity} />;
@@ -95,7 +96,7 @@ export function CardBack({ className = '' }: { className?: string }) {
       <div className="card-back__gloss" />
       <div className="card-back__crest">
         <Logo />
-        <small>Série 1</small>
+        {label && <small>{label}</small>}
       </div>
     </div>
   );

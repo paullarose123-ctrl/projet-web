@@ -140,6 +140,8 @@ export interface Opening {
   sport?: PackDef['sport'];
   /** série du booster (dos des cartes, dos du sachet) */
   serie?: number;
+  /** pack de la boutique qui mêle les séries : le dos des cartes ne dit pas de quelle série elles sont */
+  mixed?: boolean;
   cards: Array<CardFace & { uid: string; isNew: boolean }>;
 }
 
@@ -437,7 +439,7 @@ export const useGame = create<GameState>()(
           collection: [...s.collection, ...newCards],
           discovered,
           primesFound,
-          opening: { packName: pack.name, tone: pack.tone, sport: pack.sport, serie: pack.serie ?? 1, cards: owned },
+          opening: { packName: pack.name, tone: pack.tone, sport: pack.sport, serie: pack.serie ?? 1, mixed: !pack.serie && isReleased(2, now), cards: owned },
           stats: { ...s.stats, packsOpened: s.stats.packsOpened + 1, bestPull: best },
         }));
         bumpDaily({
