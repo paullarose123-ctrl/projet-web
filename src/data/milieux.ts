@@ -8,6 +8,8 @@ import type { Athlete } from '../engine/types';
 const w = (words: string) => new RegExp(`(?<!\\p{L})(?:${words})(?!\\p{L})`, 'u');
 
 const RULES: Array<[string, RegExp]> = [
+  // avant « Océan » : la forêt atlantique du Brésil (tamarin-lion) n'est pas l'océan Atlantique
+  ['Forêt', w('forêt atlantique')],
   ['Partout', w('partout')],
   ['Ville', w('villes?|maison|recoins|police')],
   ['Campagne', w('campagne|ferme|fermes|prés|pâturages|champs|bocage|vergers|haies|jardins|poulailler|ruches|rizières|mûriers|cage|bocal|volière|cynodromes|coteaux|talus|provence|villages|granges')],
@@ -19,9 +21,10 @@ const RULES: Array<[string, RegExp]> = [
   ['Montagne', w('montagnes?|andes|himalaya|himalayenne|alpes|falaises|éboulis|plateaux?|cols|collines')],
   ['Désert', w('désert|déserts|kalahari|gobi')],
   ['Savane', w('savane|brousse|bush|cerrado')],
-  ['Jungle', w('jungle|tropicale|équatoriale|amazonienne|amazonie|amazone|canopée|nuages|bornéo|congo|ituri|monteverde')],
+  ['Jungle', w('jungle|tropicale|équatoriale|amazonienne|amazonie|canopée|nuages|bornéo|congo|ituri|monteverde')],
   ['Marais', w('marais|marécages|everglades|floride')],
-  ['Rivières', w('rivières|fleuves?|lacs?|étangs|mares|bassins|yangzi|gironde')],
+  // le fleuve Amazone (dauphin rose, piranha) : une rivière, pas la jungle
+  ['Rivières', w('rivières|fleuves?|lacs?|étangs|mares|bassins|yangzi|gironde|amazone')],
   ['Prairie', w('prairies?|plaines|steppe|garrigue|maquis')],
   ['Îles', w('îles?|galápagos|kodiak|rottnest|tasmanie|maurice|sonde')],
   ['Sous terre', w('sous terre|terriers|grottes')],

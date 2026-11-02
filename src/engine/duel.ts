@@ -1,6 +1,6 @@
 import type { Athlete, CardFace } from './types';
 import { ATHLETES_BY_ID } from '../data/athletes';
-import { releasedAthletes, serieOf } from './series';
+import { releasedAthletes } from './series';
 import { milieuCourt } from '../data/milieux';
 import { MESURES, formatLongevite, formatPoids, formatTaille } from '../data/mesures';
 import { CHIENS_DANS_LE_MONDE, POPULATIONS, formatPopulation } from '../data/populations';
@@ -65,9 +65,9 @@ export type RecordId =
   | 'foret'
   | 'montagne'
   | 'desert-savane'
-  | 'pres-des-humains'
-  | 'mexique'
-  | 'domestique';
+  | 'eau-douce'
+  | 'cotes'
+;
 
 /** Thèmes des questions : un duel n'en pose jamais deux du même thème. */
 export type Theme =
@@ -84,8 +84,7 @@ export type Theme =
   | 'petits'
   | 'vol'
   | 'milieu'
-  | 'carte'
-  | 'humain';
+;
 
 export const THEMES: Record<Theme, string> = {
   poids: 'Poids',
@@ -101,8 +100,6 @@ export const THEMES: Record<Theme, string> = {
   petits: 'Naissance',
   vol: 'Vol',
   milieu: 'Milieu de vie',
-  carte: 'La carte',
-  humain: 'Avec l’humain',
 };
 
 export interface RecordDef {
@@ -260,6 +257,9 @@ const milieuQuestion = (id: RecordId, name: string, desc: string, milieux: strin
   value: (a) => (milieux.includes(milieuCourt(a)) || !!also?.(a) ? 1 : 0),
   format: (v, a) => `${yesNo(v)} · ${milieuCourt(a)}`,
 });
+
+/** Eau douce, d'après le milieu détaillé de la carte (« Fleuves », « Mares d'Amazonie », « Lac de Pátzcuaro »…). */
+const EAU_DOUCE = /(?<!\p{L})(?:rivières?|fleuves?|lacs?|étangs?|mares|marais|amazone|sources|canaux)(?!\p{L})/iu;
 
 /** Vit en groupe : troupeau, meute, colonie, banc… (pas en solitaire, ni seulement en couple). */
 const GROUPE = /groupe|troupeau|colonie|banc|meute|troupe|famille|harde|horde|clan|essaim|bande|grégaire|ruche|fourmilière|nuée|hordes/i;
@@ -499,33 +499,24 @@ export const RECORDS: Record<RecordId, RecordDef> = {
   // vie sociale (suite)
   groupe: fiche('groupe', 'vie-sociale', 'Vit en groupe', 'Vit-il en groupe : troupeau, meute, colonie, banc… (un couple ne suffit pas) ?', enGroupe, (e) => premierePartie(e.social)),
   // milieu de vie
-  mer: milieuQuestion('mer', 'Vit en mer', 'Vit-il en mer : océan, récif ou abysses ?', ['Océan', 'Récif', 'Abysses'], (a) => a.sport === 'marins' || a.sport === 'requins'),
+  mer: milieuQuestion('mer', 'Vit en mer', 'Vit-il en mer : océan, récif ou abysses ?', ['Océan', 'Récif', 'Abysses'], (a) =>
+    // un animal marin… sauf ceux des fleuves (dauphin rose)
+    (a.sport === 'marins' || a.sport === 'requins') && !['Rivières', 'Marais', 'Jungle'].includes(milieuCourt(a)),
+  ),
   foret: milieuQuestion('foret', 'Vit en forêt', 'Vit-il en forêt ou dans la jungle ?', ['Forêt', 'Jungle']),
   montagne: milieuQuestion('montagne', 'Vit en montagne', 'Vit-il en montagne ?', ['Montagne']),
   'desert-savane': milieuQuestion('desert-savane', 'Vit au chaud et au sec', 'Vit-il dans le désert ou la savane ?', ['Désert', 'Savane']),
-  'pres-des-humains': milieuQuestion('pres-des-humains', 'Vit près des humains', 'Vit-il en ville, à la campagne ou à la ferme ?', ['Ville', 'Campagne', 'Partout']),
-  // la carte
-  mexique: {
-    id: 'mexique',
-    theme: 'carte',
-    name: 'Carte du Mexique',
-    desc: 'La carte vient-elle de la Série 2 · Mexique ? Oui bat non.',
+  'eau-douce': {
+    id: 'eau-douce',
+    theme: 'milieu',
+    name: 'Vit en eau douce',
+    desc: 'Vit-il dans ou au bord des rivières, des fleuves, des lacs, des étangs ou des marais ? Oui bat non.',
     best: 'max',
     question: true,
-    value: (a) => (serieOf(a) === 2 ? 1 : 0),
-    format: (v) => (v ? 'Oui · Série 2 · Mexique' : 'Non · Série 1'),
+    value: (a) => (EAU_DOUCE.test(a.role) ? 1 : 0),
+    format: (v, a) => `${yesNo(v)} · ${a.role}`,
   },
-  // avec l'humain
-  domestique: {
-    id: 'domestique',
-    theme: 'humain',
-    name: 'Animal domestique',
-    desc: 'Est-il domestique, élevé par l’humain depuis des siècles (chien, vache, poule, abeille…) ? Oui bat non.',
-    best: 'max',
-    question: true,
-    value: (a) => (a.race || statut(a) === 'DOM' ? 1 : 0),
-    format: yesNo,
-  },
+  cotes: milieuQuestion('cotes', 'Vit sur les côtes', 'Vit-il sur les côtes : plages, rochers, estuaires ou mangroves ?', ['Côtes']),
 };
 
 export const RECORD_ORDER = Object.keys(RECORDS) as RecordId[];
