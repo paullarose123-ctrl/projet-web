@@ -153,14 +153,24 @@ export async function loadSave(session: Session): Promise<{ data: unknown; updat
   return rows[0] ? { data: rows[0].data, updatedAt: rows[0].updated_at } : null;
 }
 
-export async function storeSave(session: Session, data: unknown, keepalive = false): Promise<void> {
+/** Seulement la date de la sauvegarde du compte (pour savoir si un autre appareil l'a changée), ou null. */
+export async function loadSaveStamp(session: Session): Promise<string | null> {
+  const rows = await call<Array<{ updated_at: string }>>(`/rest/v1/saves?select=updated_at&user_id=eq.${session.userId}`, {
+    token: session.accessToken,
+  });
+  return rows[0]?.updated_at ?? null;
+}
+
+/** Envoie la partie ; `stamp` devient sa date côté serveur (gardée pour reconnaître notre propre sauvegarde). */
+export async function storeSave(session: Session, data: unknown, keepalive = false, stamp = new Date().toISOString()): Promise<string> {
   await call('/rest/v1/saves?on_conflict=user_id', {
     method: 'POST',
     token: session.accessToken,
     prefer: 'resolution=merge-duplicates,return=minimal',
-    body: { user_id: session.userId, data, updated_at: new Date().toISOString() },
+    body: { user_id: session.userId, data, updated_at: stamp },
     keepalive,
   });
+  return stamp;
 }
 
 export async function storeProfile(session: Session, favorites: CardFace[], avatar: string): Promise<void> {
