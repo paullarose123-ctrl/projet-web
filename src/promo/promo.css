@@ -837,3 +837,281 @@ body {
   font-size: 16px;
   color: var(--text-dim);
 }
+
+/* ───────────── pub de la sortie de la Série 2 (SortiePromo.tsx) ───────────── */
+
+/* les animations des cartes suivent le temps de la vidéo, pas l'horloge du navigateur */
+.ad .card,
+.ad .card * {
+  animation-play-state: paused !important;
+  animation-delay: var(--ad-t, 0s) !important;
+}
+
+.ad__rays {
+  top: 520px;
+}
+
+.ad__flag {
+  display: inline-flex;
+  width: 30px;
+  height: 20px;
+  margin-right: 10px;
+  vertical-align: -3px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.5px rgba(255, 248, 236, 0.8);
+}
+
+.ad__flag i {
+  flex: 1;
+}
+
+.ad__flag i:nth-child(1) {
+  background: #006847;
+}
+
+.ad__flag i:nth-child(2) {
+  background: #fff;
+}
+
+.ad__flag i:nth-child(3) {
+  background: #ce1126;
+}
+
+.ad__badge > span {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: #1d0b14;
+  border: 2px solid #ff6fbf;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  color: #fff8ec;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ad__title,
+.ad__big,
+.ad__name,
+.ad__dispo {
+  font-family: var(--font-display);
+  line-height: 1;
+  color: #fff8ec;
+  transform-origin: 50% 60%;
+}
+
+.ad__title {
+  font-size: 92px;
+  text-shadow:
+    0 6px 0 #c4213a,
+    0 12px 36px rgba(0, 0, 0, 0.7);
+}
+
+.ad__big {
+  font-size: 128px;
+  color: #ffd166;
+  text-shadow:
+    0 7px 0 #b8457a,
+    0 14px 40px rgba(0, 0, 0, 0.7);
+}
+
+.ad__kicker {
+  font-weight: 800;
+  font-size: 30px;
+  color: #fff8ec;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.85);
+}
+
+.ad__name {
+  font-size: 68px;
+  text-shadow:
+    0 5px 0 #006847,
+    0 10px 30px rgba(0, 0, 0, 0.75);
+}
+
+.ad__tag {
+  font-family: var(--font-card);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 27px;
+  color: #ffd9ec;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+}
+
+.ad__pack {
+  position: absolute;
+  left: 50%;
+  top: 600px;
+  width: 250px;
+}
+
+.ad__card {
+  width: max-content;
+}
+
+.ad__fan,
+.ad__hero {
+  position: absolute;
+  left: 50%;
+  top: 560px;
+}
+
+.ad__hero {
+  filter: drop-shadow(0 26px 34px rgba(0, 0, 0, 0.6));
+}
+
+.ad__shine-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 7%;
+  pointer-events: none;
+}
+
+.ad__shine {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  mix-blend-mode: screen;
+}
+
+.ad__wall {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  gap: 18px;
+}
+
+.ad__row {
+  display: flex;
+  gap: 16px;
+}
+
+.ad__band {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: 470px;
+  padding: 26px 40px 30px;
+  text-align: center;
+  background: linear-gradient(90deg, rgba(29, 11, 20, 0.86), rgba(29, 11, 20, 0.96) 50%, rgba(29, 11, 20, 0.86));
+  border-top: 3px solid #ff6fbf;
+  border-bottom: 3px solid #ff6fbf;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+}
+
+.ad__band-title {
+  font-family: var(--font-display);
+  font-size: 60px;
+  line-height: 1.05;
+  color: #ffd166;
+}
+
+.ad__band-sub {
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 25px;
+  color: #fff8ec;
+}
+
+.ad__feature {
+  position: absolute;
+  left: 52px;
+  right: 52px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px;
+  border-radius: 22px;
+  background: rgba(29, 11, 20, 0.88);
+  border: 2px solid rgba(255, 111, 191, 0.7);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  color: #fff8ec;
+}
+
+.ad__feature-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #8fe3d4;
+  color: #0c3b35;
+}
+
+.ad__feature-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.ad__feature b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.ad__feature small {
+  display: block;
+  font-weight: 600;
+  font-size: 20px;
+  color: #ffd9ec;
+}
+
+.ad__duo {
+  position: absolute;
+  left: 50%;
+  top: 292px;
+  width: 340px;
+  height: 240px;
+}
+
+.ad__duo-card {
+  position: absolute;
+  left: 20px;
+  top: 14px;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.55));
+}
+
+.ad__duo-pack {
+  position: absolute;
+  right: 22px;
+  top: 0;
+  width: 150px;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.55));
+}
+
+.ad__dispo {
+  font-size: 46px;
+  color: #ffd166;
+  text-shadow:
+    0 5px 0 #b8457a,
+    0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.ad__url span {
+  display: inline-block;
+  padding: 12px 30px;
+  border-radius: 999px;
+  background: #f9a8d4;
+  color: #4c0d3a;
+  border-bottom: 5px solid #d46aa8;
+  font-family: var(--font-display);
+  font-size: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ad__free {
+  font-weight: 700;
+  font-size: 24px;
+  color: #fff8ec;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
