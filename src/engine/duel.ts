@@ -67,7 +67,6 @@ export type RecordId =
   | 'desert-savane'
   | 'pres-des-humains'
   | 'nom-long'
-  | 'nom-court'
   | 'mexique'
   | 'domestique';
 
@@ -518,15 +517,6 @@ export const RECORDS: Record<RecordId, RecordDef> = {
     name: 'Le nom le plus long',
     desc: 'Le nom écrit sur la carte : le plus de lettres gagne (les espaces et les tirets ne comptent pas).',
     best: 'max',
-    value: lettres,
-    format: (v) => `${v} lettres`,
-  },
-  'nom-court': {
-    id: 'nom-court',
-    theme: 'nom',
-    name: 'Le nom le plus court',
-    desc: 'Le nom écrit sur la carte : le moins de lettres gagne (les espaces et les tirets ne comptent pas).',
-    best: 'min',
     value: lettres,
     format: (v) => `${v} lettres`,
   },
