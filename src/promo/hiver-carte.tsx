@@ -10,6 +10,33 @@ import { Card } from '../components/Card';
 // Maquette des cartes de la Série 3 (Hiver) : l'ours polaire en classique, en Reverse et en Prime (Knut), dans le
 // style de l'hiver, à côté de la même carte en Série 1 et d'une carte du Mexique (page promo/hiver-carte.html).
 
+/** Une carte de chaque rareté, dans le style de l'hiver (promo/hiver-carte.html?raretes). */
+function Raretes() {
+  const cards: [string, string][] = [
+    ['hermine', 'Commune'],
+    ['phoque-du-groenland', 'Peu commune'],
+    ['renard-polaire', 'Rare'],
+    ['harfang', 'Épique'],
+  ];
+  return (
+    <div className="hiver-planche hiver-planche--cartes">
+      <header>
+        <p className="eyebrow">Premier visuel</p>
+        <h1>Série 3 · Hiver : les raretés</h1>
+        <p>La bordure de glace change de couleur avec la rareté : givre, ciel d’hiver, glace turquoise, puis aurore violette (et l’aurore complète pour les Légendaires).</p>
+      </header>
+      <div className="hiver-planche__hero hiver-planche__hero--four">
+        {cards.map(([id, label]) => (
+          <figure key={id}>
+            <Card card={{ athleteId: id, variant: 'base' }} size="xl" serie={3} />
+            <figcaption className="hiver-planche__label">{label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Planche() {
   return (
     <div className="hiver-planche hiver-planche--cartes">
@@ -36,4 +63,4 @@ function Planche() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(<Planche />);
+createRoot(document.getElementById('root')!).render(new URLSearchParams(location.search).has('raretes') ? <Raretes /> : <Planche />);

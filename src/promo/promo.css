@@ -1264,3 +1264,14 @@ body {
 .hiver-planche--cartes .hiver-planche__hero {
   gap: 48px;
 }
+
+.hiver-planche__hero--four {
+  gap: 34px;
+}
+
+.hiver-planche__hero--four figure {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin: 0;
+}
