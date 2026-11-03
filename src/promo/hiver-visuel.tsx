@@ -28,7 +28,7 @@ function Planche() {
       <header>
         <p className="eyebrow">Premier visuel</p>
         <h1>Série 3 · Hiver</h1>
-        <p>Une nuit polaire sous l’aurore boréale : pleine lune, sommets enneigés, sapins sous la neige et un ours polaire.</p>
+        <p>Une nuit polaire sous l’aurore boréale : pleine lune, sommets enneigés et sapins sous la neige.</p>
       </header>
       <div className="hiver-planche__hero">
         {pack(<PackArtHiver />, 340, -4)}

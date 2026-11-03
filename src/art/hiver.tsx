@@ -1,8 +1,7 @@
 import { area, circle, ellipse, f, hashString, hills, mix, mountain, mulberry32, pine, poly, spots, type Rng } from './kit';
 
 // Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : une nuit polaire sous une aurore
-// boréale, la pleine lune derrière des sommets enneigés, des sapins chargés de neige et un ours polaire qui avance
-// sur une crête, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
+// boréale, la pleine lune derrière des sommets enneigés et des sapins chargés de neige, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
 // Le dessin est tracé une fois par format (sachet 120 × 172, carte 100 × 140).
 
 const SKY = ['#081a33', '#1d4f6e', '#7fc4cf'];
@@ -16,37 +15,6 @@ const AURORA = ['#7ff0c1', '#5fd4d8', '#b28cff'];
 /** Sapin enneigé : le sapin sombre, et un bonnet de neige sur sa pointe et ses premières branches. */
 function snowyPine(x: number, y: number, h: number): { tree: string; snow: string } {
   return { tree: pine(x, y, h), snow: pine(x, y - h * 0.5, h * 0.48) + pine(x, y - h * 0.18, h * 0.3) };
-}
-
-/**
- * Ours polaire de profil, tourné vers la droite, pattes à y = 0 (repère d'environ 34 × 18) : une silhouette, comme
- * les autres animaux des boosters (l'aigle du Mexique, le loup des canidés), avec un peu de neige sur le dos.
- */
-function bear(): { shape: string; snow: string } {
-  const leg = (x0: number, x1: number, top: number) =>
-    poly([
-      [x0, top],
-      [x1, top],
-      [x1 + 0.4, -0.4],
-      [x1 + 0.9, 0],
-      [x0 - 0.3, 0],
-      [x0 - 0.2, -0.5],
-    ]);
-  return {
-    shape:
-      leg(-5.6, -2.4, -7) +
-      leg(3.4, 6.6, -7) +
-      ellipse(-0.5, -8.6, 11, 5.6) + // corps
-      ellipse(-7.4, -9, 5.4, 5.2) + // croupe
-      ellipse(5.4, -10.2, 5.2, 4.6) + // épaules (la bosse de l'ours)
-      ellipse(11.6, -8.4, 4.4, 3.1) + // tête, basse
-      ellipse(15.6, -7.6, 2.5, 1.8) + // museau
-      circle(10.6, -11, 1.2) + // oreille
-      ellipse(-12.2, -10.6, 1.2, 0.9) + // queue
-      leg(-10, -6.4, -6.5) +
-      leg(6.6, 10, -6.5),
-    snow: ellipse(-2, -13.9, 7.6, 0.6) + ellipse(5.6, -14.6, 3.2, 0.5),
-  };
 }
 
 /** Flocon à six branches. */
@@ -83,12 +51,11 @@ interface WinterArt {
   drifts: string;
   flakes: string;
   dots: string;
-  bearAt: [number, number, number];
 }
 
 const cache = new Map<string, WinterArt>();
 
-function trace(w: number, h: number, seed: string, bearSpot: 'crete' | 'neige'): WinterArt {
+function trace(w: number, h: number, seed: string): WinterArt {
   const r = mulberry32(hashString(seed));
   const k = h / 172;
   const stars = ['', '', ''];
@@ -123,11 +90,7 @@ function trace(w: number, h: number, seed: string, bearSpot: 'crete' | 'neige'):
     if (i % 3 === 0) flakes += flake(x, y, (0.9 + r() * 1.2) * k * 1.4);
     else dots += circle(x, y, (0.35 + r() * 0.5) * k * 1.3);
   }
-  // l'ours polaire : sur la crête de la première rangée (booster, dont le bas porte le nom), ou dans la neige du
-  // premier plan (dos des cartes)
-  const bx = w * (bearSpot === 'crete' ? 0.58 : 0.6);
-  const bearAt: [number, number, number] = [bx, profiles[0](bx) + 0.8 * k, 1.08 * k];
-  return { stars, aurora, far, rows, drifts, flakes, dots, bearAt };
+  return { stars, aurora, far, rows, drifts, flakes, dots };
 }
 
 /** Le paysage d'hiver, à poser dans un SVG de viewBox `0 0 w h`. */
@@ -137,24 +100,21 @@ export function WinterScene({
   id,
   seed,
   moon = [0.5, 0.36],
-  bearSpot = 'neige',
 }: {
   w: number;
   h: number;
   id: string;
   seed: string;
   moon?: [number, number];
-  bearSpot?: 'crete' | 'neige';
 }) {
-  const key = `${seed}:${w}x${h}:${bearSpot}`;
+  const key = `${seed}:${w}x${h}`;
   let art = cache.get(key);
   if (!art) {
-    art = trace(w, h, seed, bearSpot);
+    art = trace(w, h, seed);
     cache.set(key, art);
   }
   const k = h / 172;
   const [mx, my] = [w * moon[0], h * moon[1]];
-  const bearShape = bear();
   const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0 * k} width={w + 4} height={(y1 - y0) * k} fill={`url(#${id}-mist)`} opacity={opacity} />;
   return (
     <>
@@ -212,11 +172,6 @@ export function WinterScene({
       ))}
       {mist(84, 114, 0.6)}
       <path d={art.rows[0].ground} fill={mix(SNOW, FAR, 0.35)} />
-      {/* l'ours polaire avance sur la crête, dans la couleur des sapins de son plan */}
-      <g transform={`translate(${f(art.bearAt[0])} ${f(art.bearAt[1])}) scale(${f(art.bearAt[2])})`}>
-        <path d={bearShape.shape} fill={tone(0.62)} />
-        <path d={bearShape.snow} fill={SNOW} opacity={0.85} />
-      </g>
       <path d={art.rows[0].pines} fill={tone(0.45)} />
       <path d={art.rows[0].pinesSnow} fill={SNOW} opacity={0.85} />
       {mist(110, 130, 0.35)}

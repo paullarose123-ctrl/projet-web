@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 import { Plastic } from './PackArt';
 
 // Booster de la Série 3 (Hiver), sur le même sachet que les autres boosters : une nuit polaire sous l'aurore
-// boréale, la pleine lune derrière les sommets, des sapins enneigés et un ours polaire sur la crête (art/hiver.tsx).
+// boréale, la pleine lune derrière les sommets, des sapins enneigés (art/hiver.tsx).
 // Premier visuel : pas encore utilisé dans le jeu.
 
 const styleFor = (name: string) => ({ '--near': HIVER_NEAR, '--ink': '#f4f9ff', '--pk-title': `${Math.min(15, 128 / Math.max(name.length, 7))}cqw` }) as CSSProperties;
@@ -15,7 +15,7 @@ export function PackArtHiver({ className = '', kicker = 'Édition spéciale', na
     <div className={`pack-art pack-art--hiver ${className}`} style={styleFor(name)}>
       <div className="pack-art__sachet">
         <svg className="pack-art__scene" viewBox="0 0 120 172" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} bearSpot="crete" />
+          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} />
           <defs>
             <linearGradient id={`${id}-shade`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor={HIVER_NEAR} stopOpacity={0} />
