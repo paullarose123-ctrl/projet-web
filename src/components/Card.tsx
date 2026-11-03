@@ -34,6 +34,8 @@ interface CardProps {
   onClick?: () => void;
   className?: string;
   style?: CSSProperties;
+  /** affiche la carte dans le style d'une autre série (maquettes des séries à venir) */
+  serie?: number;
 }
 
 function plain(text: string): string {
@@ -103,7 +105,23 @@ const MX = {
   diamond: steppedDiamond(6.5, 86, 0.5),
 };
 
-function Frame({ mexique = false }: { mexique?: boolean }) {
+// Glaçons de l'hiver (Série 3), pendus sous le haut du cadre, au-dessus de la photo.
+const ICICLES = (() => {
+  let d = '';
+  const spans: [number, number, number][] = [
+    [32, 91, 4.6],
+    [12.5, 21, 11.2],
+  ];
+  for (const [x0, x1, y] of spans) {
+    for (let x = x0, i = 0; x + 1.6 <= x1; x += 2.3 + (i % 3) * 0.5, i++) {
+      const len = [1.6, 2.6, 1.1, 2.1, 1.4][i % 5];
+      d += `M${pt(x, y - 0.2)}L${pt(x + 0.75, y + len)}L${pt(x + 1.5, y - 0.2)}Z`;
+    }
+  }
+  return d;
+})();
+
+function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: boolean }) {
   if (mexique) {
     return (
       <svg className="card__frame" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
@@ -129,6 +147,7 @@ function Frame({ mexique = false }: { mexique?: boolean }) {
       <path className="card__trim card__trim--window" d={WINDOW} />
       <rect className="card__trim card__trim--thin" x="25.5" y="117.6" width="68.7" height="9.2" rx="1.2" />
       <path className="card__trim" d={PLATE} />
+      {hiver && <path className="card__icicles" d={ICICLES} />}
       <g className="card__rail">
         <path d="M6.5 24 V36 M6.5 70 V81 M6.5 91 V105" />
         <path className="card__diamond" d="M6.5 83.2 L7.7 86 L6.5 88.8 L5.3 86 Z" />
@@ -176,6 +195,50 @@ const GRECA = (() => {
   return d;
 })();
 
+// Frise de givre des cartes de la Série 3 (Hiver) : des flocons à six branches tout autour de la carte, dans la
+// bordure, et un plus grand flocon dans chaque coin. Comme au Mexique, le cadre est réduit pour élargir la bordure.
+const GIVRE = (() => {
+  const flake = (x: number, y: number, r: number) => {
+    let d = '';
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3 - Math.PI / 2;
+      const [cx, cy] = [Math.cos(a), Math.sin(a)];
+      d += `M${pt(x, y)}L${pt(x + cx * r, y + cy * r)}`;
+      // deux petites branches en V aux deux tiers du bras
+      const [bx, by] = [x + cx * r * 0.62, y + cy * r * 0.62];
+      for (const s of [-1, 1]) {
+        const b = a + (s * Math.PI) / 4;
+        d += `M${pt(bx, by)}L${pt(bx + Math.cos(b) * r * 0.32, by + Math.sin(b) * r * 0.32)}`;
+      }
+    }
+    return d;
+  };
+  let d = '';
+  const band = 3;
+  for (const [from, to, fixed, horizontal] of [
+    [10, 90, band, true],
+    [10, 90, 140 - band, true],
+    [11, 129, band, false],
+    [11, 129, 100 - band, false],
+  ] as [number, number, number, boolean][]) {
+    const count = Math.round((to - from) / 7);
+    for (let i = 0; i <= count; i++) {
+      const u = from + ((to - from) * i) / count;
+      d += horizontal ? flake(u, fixed, i % 2 ? 0.9 : 1.15) : flake(fixed, u, i % 2 ? 0.9 : 1.15);
+    }
+  }
+  for (const [x, y] of [[3.6, 3.6], [96.4, 3.6], [96.4, 136.4], [3.6, 136.4]]) d += flake(x, y, 2.1);
+  return d;
+})();
+
+function Givre() {
+  return (
+    <svg className="card__givre" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
+      <path d={GIVRE} />
+    </svg>
+  );
+}
+
 function Greca() {
   return (
     <svg className="card__greca" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
@@ -184,7 +247,7 @@ function Greca() {
   );
 }
 
-export const Card = memo(function Card({ card, size = 'md', tilt = false, locked = false, hideFacts = false, onClick, className = '', style }: CardProps) {
+export const Card = memo(function Card({ card, size = 'md', tilt = false, locked = false, hideFacts = false, onClick, className = '', style, serie }: CardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -198,7 +261,9 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
   const width = WIDTHS[size];
   const tiny = size === 'xs';
   const compact = size === 'xs' || size === 'sm';
-  const mexique = serieOf(athlete) === 2;
+  const cardSerie = serie ?? serieOf(athlete);
+  const mexique = cardSerie === 2;
+  const hiver = cardSerie === 3;
   const photo = usePhoto(athlete);
   const showPhoto = !!photo.src && !photoFailed;
   const fullName = compact ? athlete.last : displayName(athlete);
@@ -256,6 +321,8 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
     habitat ? 'is-habitat' : '',
     // les cartes du Mexique : bordure pastel et frise aztèque, cadre à gradins, pyramide sur l'horizon
     mexique ? 'serie-2' : '',
+    // les cartes de l'hiver : bordure de givre et flocons, glaçons sous le cadre, montagnes et sapins enneigés
+    hiver ? 'serie-3' : '',
     compact ? 'is-compact' : '',
     tiny ? 'is-tiny' : '',
     locked ? 'is-locked' : '',
@@ -296,6 +363,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
       <div className="card__body">
         <div className="card__bg" />
         {mexique && <Greca />}
+        {hiver && <Givre />}
 
         {/* le cadre et tout ce qu'il porte (réduit sur les cartes du Mexique, pour élargir la bordure) */}
         <div className="card__inner">
@@ -313,7 +381,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
             </div>
           </div>
 
-          <Frame mexique={mexique} />
+          <Frame mexique={mexique} hiver={hiver} />
           <div className="card__hills" aria-hidden="true" />
 
           <div className="card__code metal-text">{athleteCode(athlete)}</div>

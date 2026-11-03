@@ -925,6 +925,24 @@ h3 {
   box-shadow: inset 0 1px 0 rgba(232, 222, 196, 0.06), 0 18px 40px rgba(3, 10, 6, 0.4);
 }
 
+/* annonce de la Série 3 · Hiver : un fond de nuit polaire, bleu, et un titre glacé */
+.expansion--hiver {
+  border-color: rgba(169, 201, 226, 0.3);
+  background:
+    radial-gradient(60% 120% at 85% 50%, rgba(127, 240, 193, 0.1), transparent 70%),
+    radial-gradient(ellipse at 30% 20%, #17334f, #081626 70%);
+}
+
+.expansion.expansion--hiver h2 {
+  background: linear-gradient(180deg, #ffffff 30%, #bfe6ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.expansion--hiver .eyebrow {
+  color: #7ff0c1;
+}
+
 /* filet de cadre, comme sur les boosters et l'affiche de l'accueil */
 .expansion::before {
   content: '';
@@ -1024,6 +1042,7 @@ h3 {
 
 .expansion__timeline {
   display: flex;
+  width: 100%;
   gap: 0;
   margin: 6px 0 0;
   padding: 0;
@@ -1035,7 +1054,10 @@ h3 {
   display: grid;
   justify-items: center;
   gap: 2px;
-  min-width: 96px;
+  /* quatre étapes tiennent sur un téléphone : chacune prend sa part de la largeur */
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 96px;
   font-size: 0.78rem;
   color: var(--text-faint);
 }

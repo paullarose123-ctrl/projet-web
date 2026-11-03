@@ -1315,6 +1315,17 @@
   z-index: 3;
 }
 
+/* booster de l'hiver : sur la neige, le nom et la mention ont besoin d'une ombre pour rester lisibles */
+.pack-art--hiver .pack-art__kicker,
+.pack-art--hiver .pack-art__name,
+.pack-art--hiver .pack-art__series {
+  text-shadow: 0 1px 3px rgba(5, 18, 32, 0.85);
+}
+
+.pack-art--hiver .pack-art__kicker {
+  opacity: 1;
+}
+
 .pack-art__name {
   left: 10%;
   right: 7%;

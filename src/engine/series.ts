@@ -16,11 +16,25 @@ export interface SerieDef {
   local?: string;
   /** jour de sortie, à minuit heure du joueur */
   release: Date;
+  /**
+   * false tant que la série n'a pas ses cartes : elle est annoncée (compte à rebours, booster, dos des cartes) mais ne
+   * sort pas, même à sa date ou dans la page d'aperçu (elle serait vide)
+   */
+  ready?: boolean;
+  /** la phrase de son annonce sur l'accueil */
+  teaser?: string;
 }
 
 export const SERIES_LIST: SerieDef[] = [
   { number: 1, name: 'Animaux du monde', release: new Date(2026, 0, 1) },
   { number: 2, name: 'Mexique', country: 'MX', local: 'México', release: new Date(2026, 10, 1) },
+  {
+    number: 3,
+    name: 'Hiver',
+    release: new Date(2026, 11, 1),
+    ready: false,
+    teaser: 'Après le Mexique, cap sur le grand froid : les animaux qui vivent dans la neige et sur la glace, de l’ours polaire au harfang des neiges.',
+  },
 ];
 
 /** Version de développement, de test ou d'aperçu : les séries à venir sont déjà ouvertes. */
@@ -42,8 +56,10 @@ export function serieDef(number: number): SerieDef {
 
 /** La série est-elle sortie ? */
 export function isReleased(number: number, now: number = Date.now()): boolean {
+  const def = serieDef(number);
+  if (def.number === number && def.ready === false) return false;
   if (EARLY) return true;
-  return now >= serieDef(number).release.getTime();
+  return now >= def.release.getTime();
 }
 
 /** Séries sorties, de la première à la plus récente. */
