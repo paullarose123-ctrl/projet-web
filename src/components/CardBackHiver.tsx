@@ -3,7 +3,7 @@ import { WinterScene } from '../art/hiver';
 import { Logo } from './Logo';
 
 // Dos des cartes de la Série 3 (Hiver), dans le langage des autres dos : une nuit polaire sous l'aurore boréale,
-// avec la pleine lune, les sommets et les sapins enneigés (art/hiver.tsx). Premier visuel : pas encore utilisé dans le jeu.
+// avec la pleine lune, les sommets et les sapins enneigés, et un renard polaire caché dans la neige (art/hiver.tsx). Premier visuel : pas encore utilisé dans le jeu.
 
 export function CardBackHiver({ className = '' }: { className?: string }) {
   const id = `cbh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;

@@ -15,16 +15,16 @@ export function PackArtHiver({ className = '', kicker = 'Édition spéciale', na
     <div className={`pack-art pack-art--hiver ${className}`} style={styleFor(name)}>
       <div className="pack-art__sachet">
         <svg className="pack-art__scene" viewBox="0 0 120 172" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} />
+          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} foxSpot="rangee" />
           <defs>
             <linearGradient id={`${id}-shade`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor={HIVER_NEAR} stopOpacity={0} />
-              <stop offset="0.55" stopColor={HIVER_NEAR} stopOpacity={0.5} />
-              <stop offset="1" stopColor={HIVER_NEAR} stopOpacity={0.9} />
+              <stop offset="0.4" stopColor={HIVER_NEAR} stopOpacity={0.62} />
+              <stop offset="1" stopColor={HIVER_NEAR} stopOpacity={0.94} />
             </linearGradient>
           </defs>
-          {/* ombre au pied de la scène, pour que le nom posé dessus se lise toujours */}
-          <rect x={-2} y={112} width={124} height={62} fill={`url(#${id}-shade)`} />
+          {/* ombre au pied de la scène, plus forte que sur les autres boosters : sur la neige, le nom blanc se perdrait */}
+          <rect x={-2} y={108} width={124} height={66} fill={`url(#${id}-shade)`} />
         </svg>
         <div className="pack-art__grain" />
         <div className="pack-art__frame" />
