@@ -1,22 +1,21 @@
-import { WOLF, area, circle, ellipse, f, hashString, hills, mix, mountain, mulberry32, pine, poly, spots, type Rng } from './kit';
+import { circle, ellipse, f, hashString, mulberry32, poly, type Rng } from './kit';
 
-// Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : une nuit polaire sous une aurore
-// boréale, la pleine lune derrière des sommets enneigés, des sapins chargés de neige et un loup qui hurle sur une
-// crête, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
+// Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : la banquise une nuit d'hiver polaire.
+// Une aurore boréale ondule au-dessus des icebergs, la lune se reflète dans la mer gelée, et un ours polaire avance
+// sur une plaque de glace pendant que la neige tombe. Volontairement loin de la vallée de sapins de la Série 1 :
+// pas de forêt ni de montagnes, l'horizon plat de l'Arctique.
 // Le dessin est tracé une fois par format (sachet 120 × 172, carte 100 × 140).
 
 const SKY = ['#081a33', '#1d4f6e', '#7fc4cf'];
 const MOON = '#f4fbff';
 const SNOW = '#f4f9ff';
-const FAR = '#a9c9e2';
+const ICE_SIDE = '#8fb8d6';
+const ICE_SHADE = '#c6dcee';
+const WATER = ['#1a5873', '#0b2a42'];
 const NEAR = '#0b2236';
-const tone = (t: number) => mix(FAR, NEAR, t);
 const AURORA = ['#7ff0c1', '#5fd4d8', '#b28cff'];
-
-/** Sapin enneigé : le sapin sombre, et un bonnet de neige sur sa pointe et ses premières branches. */
-function snowyPine(x: number, y: number, h: number): { tree: string; snow: string } {
-  return { tree: pine(x, y, h), snow: pine(x, y - h * 0.5, h * 0.48) + pine(x, y - h * 0.18, h * 0.3) };
-}
+const BEAR = '#f7f3e8';
+const BEAR_SHADE = '#c9d8e6';
 
 /** Flocon à six branches. */
 function flake(x: number, y: number, s: number): string {
@@ -44,77 +43,150 @@ function ribbon(r: Rng, w: number, y: number, thick: number, wave: number): stri
   return poly([...top, ...bottom.reverse()]);
 }
 
+/** Iceberg posé sur l'horizon : sa face éclairée et sa face à l'ombre. */
+function iceberg(r: Rng, x: number, base: number, w: number, h: number): { lit: string; shade: string } {
+  const n = 4 + Math.floor(r() * 2);
+  const top: [number, number][] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const bump = Math.sin(t * Math.PI) * (0.65 + r() * 0.35);
+    top.push([x - w / 2 + t * w, base - h * bump - (i % 2 ? r() * h * 0.15 : 0)]);
+  }
+  const peak = top.reduce((a, b) => (b[1] < a[1] ? b : a));
+  const lit = poly([[x - w / 2, base], ...top, [x + w / 2, base]]);
+  const shade = poly([peak, ...top.filter(([px]) => px > peak[0]), [x + w / 2, base], [peak[0] + w * 0.08, base]]);
+  return { lit, shade };
+}
+
+/** Plaque de glace vue de biais : son dessus, et son épaisseur bleutée. */
+function floe(r: Rng, cx: number, cy: number, w: number, h: number, thick: number): { top: string; side: string } {
+  const pts: [number, number][] = [];
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const k = 0.82 + r() * 0.22;
+    pts.push([cx + Math.cos(a) * (w / 2) * k, cy + Math.sin(a) * (h / 2) * k]);
+  }
+  return { top: poly(pts), side: poly(pts.map(([x, y]): [number, number] => [x, y + thick])) };
+}
+
+/** Ours polaire de profil, tourné vers la droite, pattes à y = 0 (repère d'environ 34 × 18). */
+function bear(): { far: string; body: string; eye: string; nose: string } {
+  const leg = (x0: number, x1: number, top: number) =>
+    poly([
+      [x0, top],
+      [x1, top],
+      [x1 + 0.4, -0.4],
+      [x1 + 0.9, 0],
+      [x0 - 0.3, 0],
+      [x0 - 0.2, -0.5],
+    ]);
+  return {
+    far: leg(-5.6, -2.4, -7) + leg(3.4, 6.6, -7),
+    body:
+      ellipse(-0.5, -8.6, 11, 5.6) + // corps
+      ellipse(-7.4, -9, 5.4, 5.2) + // croupe
+      ellipse(5.4, -10.2, 5.2, 4.6) + // épaules (la bosse de l'ours)
+      ellipse(11.6, -8.4, 4.4, 3.1) + // tête, basse
+      ellipse(15.6, -7.6, 2.5, 1.8) + // museau
+      circle(10.6, -11, 1.2) + // oreille
+      ellipse(-12.2, -10.6, 1.2, 0.9) + // queue
+      leg(-10, -6.4, -6.5) +
+      leg(6.6, 10, -6.5),
+    eye: circle(13.4, -9.2, 0.45),
+    nose: circle(18, -7.8, 0.65),
+  };
+}
+
 interface WinterArt {
   stars: string[];
   aurora: string[];
-  far: { body: string; shadow: string; snow: string }[];
-  rows: { ground: string; pines: string; pinesSnow: string }[];
-  drifts: string;
+  bergs: { lit: string; shade: string }[];
+  floes: { top: string; side: string }[];
+  bigFloe: { top: string; side: string };
+  glints: string;
   flakes: string;
   dots: string;
-  wolfAt: [number, number, number];
 }
 
 const cache = new Map<string, WinterArt>();
 
-function trace(w: number, h: number, seed: string): WinterArt {
+function trace(w: number, h: number, seed: string, horizon: number, bearY: number, moonX: number): WinterArt {
   const r = mulberry32(hashString(seed));
   const k = h / 172;
   const stars = ['', '', ''];
-  for (let i = 0; i < 30; i++) stars[i % 3] += circle(r() * w, r() * 60 * k, 0.18 + r() * 0.4);
+  for (let i = 0; i < 34; i++) stars[i % 3] += circle(r() * w, r() * (horizon - 10 * k), 0.18 + r() * 0.4);
   const aurora = [ribbon(r, w, 40 * k, 11 * k, 7 * k), ribbon(r, w, 52 * k, 8 * k, 6 * k), ribbon(r, w, 30 * k, 6 * k, 5 * k)];
-  const far = [mountain(r, w * 0.22, 66 * k, 112 * k, w * 0.4, w * 0.32), mountain(r, w * 0.74, 58 * k, 112 * k, w * 0.36, w * 0.42), mountain(r, w * 0.5, 76 * k, 114 * k, w * 0.3, w * 0.28)];
-  const profiles: ((x: number) => number)[] = [];
-  const rows = [
-    { base: 110, amp: 3, min: 8, max: 12, gap: 9 },
-    { base: 124, amp: 2.8, min: 14, max: 20, gap: 14 },
-    { base: 140, amp: 2, min: 0, max: 0, gap: 0 },
-  ].map(({ base, amp, min, max, gap }) => {
-    const profile = hills(r, base * k, amp * k);
-    profiles.push(profile);
-    const trees = min ? spots(r, profile, w, min * k, max * k, gap * k) : [];
-    const made = trees.map(([x, y, s]) => snowyPine(x, y, s));
-    return { ground: area(profile, w), pines: made.map((t) => t.tree).join(''), pinesSnow: made.map((t) => t.snow).join('') };
-  });
-  // congères bleutées sur la neige du premier plan
-  let drifts = '';
-  for (let i = 0; i < 4; i++) drifts += ellipse(w * (0.2 + i * 0.22) + (r() - 0.5) * 8 * k, (150 + r() * 14) * k, (14 + r() * 10) * k, 1.6 * k);
-  // les grands sapins du premier plan, sur les bords
-  const edgeL = snowyPine(w * 0.08, 150 * k, 46 * k);
-  const edgeR = snowyPine(w * 0.92, 152 * k, 38 * k);
-  rows[2].pines = edgeL.tree + edgeR.tree;
-  rows[2].pinesSnow = edgeL.snow + edgeR.snow;
+  const bergs = [iceberg(r, w * 0.14, horizon, w * 0.3, 15 * k), iceberg(r, w * 0.82, horizon, w * 0.38, 21 * k), iceberg(r, w * 0.52, horizon, w * 0.16, 8 * k)];
+  // plaques de glace dérivant sur la mer, plus grandes en se rapprochant
+  const floes: { top: string; side: string }[] = [];
+  for (let i = 0; i < 6; i++) {
+    const depth = (i + 1) / 7;
+    const y = horizon + 4 * k + depth * (h - horizon) * 0.75;
+    const x = (i % 2 ? 0.78 : 0.2) * w + (r() - 0.5) * w * 0.2;
+    const fw = (8 + depth * 26) * k;
+    floes.push(floe(r, x, y, fw, fw * 0.22, (0.6 + depth * 1.6) * k));
+  }
+  const bigFloe = floe(r, w * 0.5, bearY + 1.5 * k, w * 0.62, 9 * k, 3.2 * k);
+  // reflets de la lune sur l'eau, en petits traits, juste sous la lune
+  let glints = '';
+  for (let i = 0; i < 9; i++) {
+    const y = horizon + (3 + i * 2.6) * k;
+    const half = (6 - i * 0.45) * k * (0.6 + r() * 0.6);
+    const x = moonX + (r() - 0.5) * 4 * k;
+    glints += `M${f(x - half)} ${f(y)}H${f(x + half)}`;
+  }
   let flakes = '';
   let dots = '';
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 24; i++) {
     const x = r() * w;
     const y = r() * h;
     if (i % 3 === 0) flakes += flake(x, y, (0.9 + r() * 1.2) * k * 1.4);
     else dots += circle(x, y, (0.35 + r() * 0.5) * k * 1.3);
   }
-  // le loup se tient sur la crête de la première rangée, entre deux sapins
-  const wx = w * 0.62;
-  return { stars, aurora, far, rows, drifts, flakes, dots, wolfAt: [wx, profiles[0](wx) + 0.4 * k, 0.62 * k] };
+  return { stars, aurora, bergs, floes, bigFloe, glints, flakes, dots };
 }
 
-/** Le paysage d'hiver, à poser dans un SVG de viewBox `0 0 w h`. */
-export function WinterScene({ w, h, id, seed, moon = [0.5, 0.36] }: { w: number; h: number; id: string; seed: string; moon?: [number, number] }) {
-  const key = `${seed}:${w}x${h}`;
+/**
+ * La banquise d'hiver, à poser dans un SVG de viewBox `0 0 w h`. `horizon` et `bearY` sont en fraction de la
+ * hauteur : l'ours se place plus haut sur le booster (dont le bas porte le nom) que sur le dos des cartes.
+ */
+export function WinterScene({
+  w,
+  h,
+  id,
+  seed,
+  moon = [0.5, 0.36],
+  horizon = 0.56,
+  bearY = 0.7,
+}: {
+  w: number;
+  h: number;
+  id: string;
+  seed: string;
+  moon?: [number, number];
+  horizon?: number;
+  bearY?: number;
+}) {
+  const key = `${seed}:${w}x${h}:${horizon}:${bearY}:${moon[0]}`;
+  const hy = h * horizon;
+  const by = h * bearY;
   let art = cache.get(key);
   if (!art) {
-    art = trace(w, h, seed);
+    art = trace(w, h, seed, hy, by, w * moon[0]);
     cache.set(key, art);
   }
   const k = h / 172;
   const [mx, my] = [w * moon[0], h * moon[1]];
-  const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0 * k} width={w + 4} height={(y1 - y0) * k} fill={`url(#${id}-mist)`} opacity={opacity} />;
+  const b = bear();
+  const bearAt = `translate(${f(w * 0.5)} ${f(by)}) scale(${f(1.08 * k)})`;
   return (
     <>
       <defs>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={SKY[0]} />
-          <stop offset="0.5" stopColor={SKY[1]} />
-          <stop offset="0.78" stopColor={SKY[2]} />
+          <stop offset="0.65" stopColor={SKY[1]} />
+          <stop offset="1" stopColor={SKY[2]} />
         </linearGradient>
         <linearGradient id={`${id}-aurora`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor={AURORA[0]} />
@@ -126,19 +198,19 @@ export function WinterScene({ w, h, id, seed, moon = [0.5, 0.36] }: { w: number;
           <stop offset="0.35" stopColor={MOON} stopOpacity={0.18} />
           <stop offset="1" stopColor={MOON} stopOpacity={0} />
         </radialGradient>
-        <linearGradient id={`${id}-mist`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={SKY[2]} stopOpacity={0} />
-          <stop offset="1" stopColor={SNOW} stopOpacity={0.8} />
+        <linearGradient id={`${id}-water`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={WATER[0]} />
+          <stop offset="1" stopColor={WATER[1]} />
         </linearGradient>
-        <linearGradient id={`${id}-ground`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0.7" stopColor={SNOW} />
-          <stop offset="1" stopColor="#bcd5ea" />
+        <linearGradient id={`${id}-haze`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={SKY[2]} stopOpacity={0} />
+          <stop offset="1" stopColor={SKY[2]} stopOpacity={0.7} />
         </linearGradient>
         <filter id={`${id}-blur`} x="-10%" y="-50%" width="120%" height="200%">
           <feGaussianBlur stdDeviation={1.6 * k} />
         </filter>
       </defs>
-      <rect x={-2} y={-2} width={w + 4} height={h + 4} fill={`url(#${id}-sky)`} />
+      <rect x={-2} y={-2} width={w + 4} height={hy + 2} fill={`url(#${id}-sky)`} />
       {art.stars.map((d, i) => (
         <path key={i} d={d} fill="#ffffff" opacity={[0.8, 0.5, 0.3][i]} />
       ))}
@@ -148,34 +220,39 @@ export function WinterScene({ w, h, id, seed, moon = [0.5, 0.36] }: { w: number;
           <path key={i} d={d} fill={`url(#${id}-aurora)`} opacity={[0.75, 0.55, 0.45][i]} />
         ))}
       </g>
-      {/* pleine lune */}
-      <circle cx={mx} cy={my} r={48 * k} fill={`url(#${id}-glow)`} />
-      <circle cx={mx} cy={my} r={24 * k} fill="none" stroke={MOON} strokeOpacity={0.18} strokeWidth={0.5} />
-      <circle cx={mx} cy={my} r={13 * k} fill={MOON} />
-      <circle cx={mx + 3.5 * k} cy={my - 2.5 * k} r={2.4 * k} fill="#d6e6f2" opacity={0.6} />
-      <circle cx={mx - 4 * k} cy={my + 3 * k} r={1.6 * k} fill="#d6e6f2" opacity={0.5} />
-      {/* sommets enneigés */}
-      {art.far.map((m, i) => (
+      {/* lune */}
+      <circle cx={mx} cy={my} r={42 * k} fill={`url(#${id}-glow)`} />
+      <circle cx={mx} cy={my} r={21 * k} fill="none" stroke={MOON} strokeOpacity={0.16} strokeWidth={0.5} />
+      <circle cx={mx} cy={my} r={11 * k} fill={MOON} />
+      <circle cx={mx + 3 * k} cy={my - 2 * k} r={2 * k} fill="#d6e6f2" opacity={0.6} />
+      <circle cx={mx - 3.4 * k} cy={my + 2.6 * k} r={1.4 * k} fill="#d6e6f2" opacity={0.5} />
+      {/* brume au ras de l'horizon, et les icebergs */}
+      <rect x={-2} y={hy - 22 * k} width={w + 4} height={22 * k} fill={`url(#${id}-haze)`} />
+      {art.bergs.map((berg, i) => (
         <g key={i}>
-          <path d={m.body} fill={mix(FAR, SKY[1], 0.25 + i * 0.05)} />
-          <path d={m.shadow} fill={NEAR} opacity={0.22} />
-          <path d={m.snow} fill={SNOW} opacity={0.95} />
+          <path d={berg.lit} fill={i === 2 ? ICE_SHADE : SNOW} />
+          <path d={berg.shade} fill={ICE_SIDE} opacity={0.75} />
         </g>
       ))}
-      {mist(84, 114, 0.6)}
-      {/* le loup hurle à la lune sur la première crête */}
-      <path d={WOLF} fill={tone(0.75)} transform={`translate(${f(art.wolfAt[0])} ${f(art.wolfAt[1])}) scale(${f(art.wolfAt[2])})`} />
-      <path d={art.rows[0].ground} fill={mix(SNOW, FAR, 0.35)} />
-      <path d={art.rows[0].pines} fill={tone(0.45)} />
-      <path d={art.rows[0].pinesSnow} fill={SNOW} opacity={0.85} />
-      {mist(110, 130, 0.35)}
-      <path d={art.rows[1].ground} fill={mix(SNOW, FAR, 0.18)} />
-      <path d={art.rows[1].pines} fill={tone(0.7)} />
-      <path d={art.rows[1].pinesSnow} fill={SNOW} opacity={0.9} />
-      <path d={art.rows[2].ground} fill={`url(#${id}-ground)`} />
-      <path d={art.drifts} fill="#9fbfdc" opacity={0.45} />
-      <path d={art.rows[2].pines} fill={NEAR} />
-      <path d={art.rows[2].pinesSnow} fill={SNOW} opacity={0.92} />
+      {/* la mer gelée, le reflet de la lune */}
+      <rect x={-2} y={hy} width={w + 4} height={h - hy + 2} fill={`url(#${id}-water)`} />
+      <path d={art.glints} stroke={MOON} strokeOpacity={0.55} strokeWidth={0.7 * k} strokeLinecap="round" />
+      {art.floes.map((fl, i) => (
+        <g key={i}>
+          <path d={fl.side} fill={ICE_SIDE} />
+          <path d={fl.top} fill={i < 2 ? ICE_SHADE : SNOW} />
+        </g>
+      ))}
+      {/* la plaque de l'ours, son ombre, et l'ours polaire */}
+      <path d={art.bigFloe.side} fill={ICE_SIDE} />
+      <path d={art.bigFloe.top} fill={SNOW} />
+      <ellipse cx={w * 0.5 + 2 * k} cy={by + 0.8 * k} rx={17 * k} ry={1.6 * k} fill={ICE_SIDE} opacity={0.55} />
+      <g transform={bearAt}>
+        <path d={b.far} fill={BEAR_SHADE} />
+        <path d={b.body} fill={BEAR} />
+        <path d={b.eye} fill={NEAR} />
+        <path d={b.nose} fill={NEAR} />
+      </g>
       {/* la neige tombe */}
       <path d={art.dots} fill="#ffffff" opacity={0.75} />
       <path d={art.flakes} fill="none" stroke="#ffffff" strokeOpacity={0.8} strokeWidth={0.45 * k * 1.3} strokeLinecap="round" />
