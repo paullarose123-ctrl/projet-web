@@ -11,6 +11,8 @@ import { HERO_SCENE, HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/sce
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
+import { PackArtHiver } from '../components/PackArtHiver';
+import { CardBackHiver } from '../components/CardBackHiver';
 import { cardsOfSerie, currentSerie, isReleased, nextSerie, releasedAthletes, releasedSeries, serieDef, type SerieDef } from '../engine/series';
 import { Balles } from '../components/Balles';
 import { sfx } from '../audio/sfx';
@@ -119,8 +121,10 @@ function ExpansionBanner() {
     ...(next ? [{ serie: next.number, label: MONTHS[next.release.getMonth()], state: 'next' }] : []),
     { serie: (next ?? current).number + 1, label: 'bientôt', state: 'later' },
   ];
+  // la série mise en avant : la prochaine (son compte à rebours), sinon la dernière sortie
+  const hiver = (next ?? current).number === 3;
   return (
-    <section className="expansion" aria-labelledby="expansion-title">
+    <section className={`expansion${hiver ? ' expansion--hiver' : ''}`} aria-labelledby="expansion-title">
       <div className="expansion__text">
         <p className="eyebrow">Extensions</p>
         {next ? <Countdown current={current} next={next} now={now} /> : (
@@ -160,19 +164,15 @@ function ExpansionBanner() {
           ))}
         </ol>
       </div>
-      {/* la série du Mexique : deux de ses boosters, et devant eux un dos de carte qui garde son mystère (avant sa sortie)
-          ou l'aigle royal, l'emblème du drapeau mexicain (après) */}
+      {/* la série mise en avant : deux de ses boosters, et devant eux un dos de carte qui garde son mystère (avant sa
+          sortie) ou, pour le Mexique, l'aigle royal, l'emblème de son drapeau (après) */}
       <div className="expansion__teaser" aria-hidden="true">
-        <div className="expansion__pack expansion__pack--left">
-          <PackArtMexique />
-        </div>
-        <div className="expansion__pack expansion__pack--right">
-          <PackArtMexique />
-        </div>
+        <div className="expansion__pack expansion__pack--left">{hiver ? <PackArtHiver /> : <PackArtMexique />}</div>
+        <div className="expansion__pack expansion__pack--right">{hiver ? <PackArtHiver /> : <PackArtMexique />}</div>
         <div className="expansion__card">
-          {next ? (
+          {next || hiver ? (
             <>
-              <CardBackMexique />
+              {hiver ? <CardBackHiver /> : <CardBackMexique />}
               <span className="expansion__mystery">?</span>
             </>
           ) : (
@@ -194,10 +194,13 @@ function Countdown({ current, next, now }: { current: SerieDef; next: SerieDef; 
   const seconds = Math.floor((left % 60_000) / 1000);
   return (
     <>
-      <h2 id="expansion-title">La Série {next.number} arrive en {MONTHS[release.getMonth()]}</h2>
+      <h2 id="expansion-title">
+        La Série {next.number} · {next.name} arrive en {MONTHS[release.getMonth()]}
+      </h2>
       <p className="expansion__sub">
-        La <b>Série {current.number} · {current.name}</b> est disponible : {serieContents(current)}. Les prochaines séries partiront chacune à la découverte
-        d’un pays : ses espèces, ses habitats et son booster.
+        {next.teaser ? `${next.teaser} ` : ''}
+        La <b>Série {current.number} · {current.name}</b> est disponible : {serieContents(current)}.
+        {!next.teaser && ' Les prochaines séries partiront chacune à la découverte d’un pays : ses espèces, ses habitats et son booster.'}
       </p>
       <div className="expansion__countdown" aria-label={`Série ${next.number} dans ${days} jours et ${hours} heures`}>
         <span className="expansion__next">Série {next.number} · le 1er {MONTHS[release.getMonth()]}</span>

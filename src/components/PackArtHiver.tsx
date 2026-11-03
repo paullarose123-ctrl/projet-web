@@ -15,7 +15,7 @@ export function PackArtHiver({ className = '', kicker = 'Édition spéciale', na
     <div className={`pack-art pack-art--hiver ${className}`} style={styleFor(name)}>
       <div className="pack-art__sachet">
         <svg className="pack-art__scene" viewBox="0 0 120 172" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} foxSpot="rangee" />
+          <WinterScene w={120} h={172} id={id} seed="Série 3 · Hiver" moon={[0.3, 0.4]} />
           <defs>
             <linearGradient id={`${id}-shade`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor={HIVER_NEAR} stopOpacity={0} />

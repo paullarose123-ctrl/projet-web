@@ -2,7 +2,6 @@ import { area, circle, ellipse, f, hashString, hills, mix, mountain, mulberry32,
 
 // Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : une nuit polaire sous une aurore
 // boréale, la pleine lune derrière des sommets enneigés et des sapins chargés de neige, pendant que la neige tombe.
-// Caché dans la neige, un petit renard polaire : blanc sur blanc, on ne voit presque que ses yeux et sa truffe.
 // Même langage que les autres affiches : aplats, brume entre les plans.
 // Le dessin est tracé une fois par format (sachet 120 × 172, carte 100 × 140).
 
@@ -17,41 +16,6 @@ const AURORA = ['#7ff0c1', '#5fd4d8', '#b28cff'];
 /** Sapin enneigé : le sapin sombre, et un bonnet de neige sur sa pointe et ses premières branches. */
 function snowyPine(x: number, y: number, h: number): { tree: string; snow: string } {
   return { tree: pine(x, y, h), snow: pine(x, y - h * 0.5, h * 0.48) + pine(x, y - h * 0.18, h * 0.3) };
-}
-
-/** Renard polaire assis, de profil vers la gauche, la queue enroulée autour des pattes (pattes à y = 0, 12 × 12). */
-function fox(): { body: string; shade: string; eye: string; nose: string } {
-  return {
-    body:
-      ellipse(5, -1.7, 5, 2) + // queue en panache, enroulée
-      ellipse(1.6, -3.6, 3.6, 3.4) + // corps assis
-      ellipse(-0.8, -4.8, 2, 2.9) + // poitrail
-      circle(-1.6, -8.4, 2.3) + // tête
-      poly([
-        [-3.3, -9.2],
-        [-5.8, -8],
-        [-3.2, -7.1],
-      ]) + // museau
-      poly([
-        [-3, -10.1],
-        [-2.8, -12.3],
-        [-1.6, -10.6],
-      ]) + // oreilles
-      poly([
-        [-1.1, -10.6],
-        [0.1, -12.2],
-        [0.4, -9.9],
-      ]) +
-      poly([
-        [-2, -3],
-        [-0.9, -3],
-        [-0.8, 0],
-        [-2.1, 0],
-      ]), // patte avant
-    shade: ellipse(2.4, -1, 3.6, 1.1) + ellipse(6.6, -1.2, 3, 1.1) + ellipse(0.4, -10.9, 0.5, 0.9),
-    eye: circle(-2.3, -8.9, 0.36),
-    nose: circle(-5.7, -8, 0.42),
-  };
 }
 
 /** Flocon à six branches. */
@@ -86,14 +50,13 @@ interface WinterArt {
   far: { body: string; shadow: string; snow: string }[];
   rows: { ground: string; pines: string; pinesSnow: string }[];
   drifts: string;
-  foxAt: [number, number, number];
   flakes: string;
   dots: string;
 }
 
 const cache = new Map<string, WinterArt>();
 
-function trace(w: number, h: number, seed: string, foxSpot: 'rangee' | 'neige'): WinterArt {
+function trace(w: number, h: number, seed: string): WinterArt {
   const r = mulberry32(hashString(seed));
   const k = h / 172;
   const stars = ['', '', ''];
@@ -128,11 +91,7 @@ function trace(w: number, h: number, seed: string, foxSpot: 'rangee' | 'neige'):
     if (i % 3 === 0) flakes += flake(x, y, (0.9 + r() * 1.2) * k * 1.4);
     else dots += circle(x, y, (0.35 + r() * 0.5) * k * 1.3);
   }
-  // le renard : sur la neige de la deuxième rangée (booster, dont le bas porte le nom), ou au pied du grand sapin
-  // du premier plan, devant son tronc sombre (dos des cartes)
-  const fx = w * (foxSpot === 'rangee' ? 0.84 : 0.85);
-  const foxAt: [number, number, number] = foxSpot === 'rangee' ? [fx, profiles[1](fx) + 1.6 * k, 0.8 * k] : [fx, 155 * k, 1.05 * k];
-  return { stars, aurora, far, rows, drifts, foxAt, flakes, dots };
+  return { stars, aurora, far, rows, drifts, flakes, dots };
 }
 
 /** Le paysage d'hiver, à poser dans un SVG de viewBox `0 0 w h`. */
@@ -142,24 +101,21 @@ export function WinterScene({
   id,
   seed,
   moon = [0.5, 0.36],
-  foxSpot = 'neige',
 }: {
   w: number;
   h: number;
   id: string;
   seed: string;
   moon?: [number, number];
-  foxSpot?: 'rangee' | 'neige';
 }) {
-  const key = `${seed}:${w}x${h}:${foxSpot}`;
+  const key = `${seed}:${w}x${h}`;
   let art = cache.get(key);
   if (!art) {
-    art = trace(w, h, seed, foxSpot);
+    art = trace(w, h, seed);
     cache.set(key, art);
   }
   const k = h / 172;
   const [mx, my] = [w * moon[0], h * moon[1]];
-  const foxShape = fox();
   const mist = (y0: number, y1: number, opacity: number) => <rect x={-2} y={y0 * k} width={w + 4} height={(y1 - y0) * k} fill={`url(#${id}-mist)`} opacity={opacity} />;
   return (
     <>
@@ -227,14 +183,6 @@ export function WinterScene({
       <path d={art.drifts} fill="#9fbfdc" opacity={0.45} />
       <path d={art.rows[2].pines} fill={NEAR} />
       <path d={art.rows[2].pinesSnow} fill={SNOW} opacity={0.92} />
-      {/* le renard polaire, blanc sur la neige : une ombre bleutée, ses yeux et sa truffe */}
-      <g transform={`translate(${f(art.foxAt[0])} ${f(art.foxAt[1])}) scale(${f(art.foxAt[2])})`}>
-        <ellipse cx={2.5} cy={0.2} rx={7.5} ry={0.9} fill="#9fbfdc" opacity={0.45} />
-        <path d={foxShape.body} fill="#eaf2fa" />
-        <path d={foxShape.shade} fill="#bcd2e8" />
-        <path d={foxShape.eye} fill={NEAR} />
-        <path d={foxShape.nose} fill={NEAR} />
-      </g>
       {/* la neige tombe */}
       <path d={art.dots} fill="#ffffff" opacity={0.75} />
       <path d={art.flakes} fill="none" stroke="#ffffff" strokeOpacity={0.8} strokeWidth={0.45 * k * 1.3} strokeLinecap="round" />
