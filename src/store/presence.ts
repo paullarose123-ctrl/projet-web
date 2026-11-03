@@ -12,9 +12,15 @@ interface PresenceState {
   /** null tant que le serveur n'a pas répondu (le compteur reste caché) */
   online: number | null;
   today: number | null;
+  /** comptes créés : en tout, depuis minuit, sur 7 jours (null : inconnu) */
+  accounts: number | null;
+  accountsToday: number | null;
+  accountsWeek: number | null;
 }
 
-export const usePresence = create<PresenceState>()(() => ({ online: null, today: null }));
+const EMPTY: PresenceState = { online: null, today: null, accounts: null, accountsToday: null, accountsWeek: null };
+
+export const usePresence = create<PresenceState>()(() => EMPTY);
 
 /** Lance les signaux de présence ; renvoie de quoi les arrêter. */
 export function startPresence(): () => void {
@@ -37,7 +43,7 @@ export function startPresence(): () => void {
       token = undefined;
     }
     // compteurs réservés aux administrateurs : null pour tous les autres, et le compteur reste caché
-    usePresence.setState((await pingPresence(true, token)) ?? { online: null, today: null });
+    usePresence.setState({ ...EMPTY, ...((await pingPresence(true, token)) ?? {}) });
   };
 
   const onVisibility = () => {
