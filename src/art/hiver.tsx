@@ -1,7 +1,9 @@
 import { area, circle, ellipse, f, hashString, hills, mix, mountain, mulberry32, pine, poly, spots, type Rng } from './kit';
 
 // Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : une nuit polaire sous une aurore
-// boréale, la pleine lune derrière des sommets enneigés et des sapins chargés de neige, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
+// boréale en rideaux, la pleine lune derrière des sommets enneigés, un lac gelé qui reflète la lune et l'aurore, et
+// des sapins chargés de neige, pendant que la neige tombe et que le givre scintille. Même langage que les autres
+// affiches : aplats, brume entre les plans.
 // Le dessin est tracé une fois par format (sachet 120 × 172, carte 100 × 140).
 
 const SKY = ['#081a33', '#1d4f6e', '#7fc4cf'];
@@ -29,24 +31,50 @@ function flake(x: number, y: number, s: number): string {
   return d;
 }
 
-/** Ruban d'aurore : une bande ondulée qui traverse le ciel. */
-function ribbon(r: Rng, w: number, y: number, thick: number, wave: number): string {
+/** Ruban d'aurore : une bande ondulée qui traverse le ciel, et ses rayons verticaux (les « rideaux »). */
+function ribbon(r: Rng, w: number, y: number, thick: number, wave: number, k: number): { band: string; rays: string } {
   const top: [number, number][] = [];
   const bottom: [number, number][] = [];
   const phase = r() * Math.PI * 2;
+  const center = (x: number) => y + Math.sin(x / (w / 2.2) + phase) * wave + Math.sin(x / 7 + phase * 2) * 0.8;
   for (let x = -4; x <= w + 4; x += 4) {
-    const k = Math.sin(x / (w / 2.2) + phase) * wave + Math.sin(x / 7 + phase * 2) * 0.8;
     const t = thick * (0.6 + 0.4 * Math.sin(x / (w / 3) + phase));
-    top.push([x, y + k - t]);
-    bottom.push([x, y + k + t * 0.4]);
+    top.push([x, center(x) - t]);
+    bottom.push([x, center(x) + t * 0.4]);
   }
-  return poly([...top, ...bottom.reverse()]);
+  let rays = '';
+  for (let x = 0; x < w; x += (1.6 + r() * 1.8) * k) {
+    const ray = (14 + r() * 20) * k;
+    const width = (0.5 + r() * 0.7) * k;
+    const yc = center(x) + 1.5 * k;
+    rays += `M${f(x)} ${f(yc)}h${f(width)}v${f(-ray)}h${f(-width)}Z`;
+  }
+  return { band: poly([...top, ...bottom.reverse()]), rays };
+}
+
+/** Étoile qui scintille : quatre branches fines. */
+function twinkle(x: number, y: number, s: number): string {
+  const t = s * 0.22;
+  return poly([
+    [x, y - s],
+    [x + t, y - t],
+    [x + s, y],
+    [x + t, y + t],
+    [x, y + s],
+    [x - t, y + t],
+    [x - s, y],
+    [x - t, y - t],
+  ]);
 }
 
 interface WinterArt {
   stars: string[];
-  aurora: string[];
+  aurora: { band: string; rays: string; y: number }[];
+  twinkles: string;
+  distant: { body: string; shadow: string; snow: string }[];
   far: { body: string; shadow: string; snow: string }[];
+  lake: { cx: number; cy: number; rx: number; ry: number };
+  frost: string;
   rows: { ground: string; pines: string; pinesSnow: string }[];
   drifts: string;
   flakes: string;
@@ -60,7 +88,15 @@ function trace(w: number, h: number, seed: string): WinterArt {
   const k = h / 172;
   const stars = ['', '', ''];
   for (let i = 0; i < 30; i++) stars[i % 3] += circle(r() * w, r() * 60 * k, 0.18 + r() * 0.4);
-  const aurora = [ribbon(r, w, 40 * k, 11 * k, 7 * k), ribbon(r, w, 52 * k, 8 * k, 6 * k), ribbon(r, w, 30 * k, 6 * k, 5 * k)];
+  const aurora = [
+    { ...ribbon(r, w, 40 * k, 11 * k, 7 * k, k), y: 40 * k },
+    { ...ribbon(r, w, 52 * k, 8 * k, 6 * k, k), y: 52 * k },
+    { ...ribbon(r, w, 30 * k, 6 * k, 5 * k, k), y: 30 * k },
+  ];
+  let twinkles = '';
+  for (let i = 0; i < 5; i++) twinkles += twinkle(r() * w, (6 + r() * 50) * k, (1.2 + r() * 1.1) * k);
+  // une chaîne lointaine, pâle dans la brume, derrière les grands sommets
+  const distant = [mountain(r, w * 0.06, 80 * k, 112 * k, w * 0.3, w * 0.3), mountain(r, w * 0.42, 74 * k, 112 * k, w * 0.26, w * 0.3), mountain(r, w * 0.98, 78 * k, 112 * k, w * 0.3, w * 0.25)];
   const far = [mountain(r, w * 0.22, 66 * k, 112 * k, w * 0.4, w * 0.32), mountain(r, w * 0.74, 58 * k, 112 * k, w * 0.36, w * 0.42), mountain(r, w * 0.5, 76 * k, 114 * k, w * 0.3, w * 0.28)];
   const profiles: ((x: number) => number)[] = [];
   const rows = [
@@ -82,6 +118,11 @@ function trace(w: number, h: number, seed: string): WinterArt {
   const edgeR = snowyPine(w * 0.92, 152 * k, 38 * k);
   rows[2].pines = edgeL.tree + edgeR.tree;
   rows[2].pinesSnow = edgeL.snow + edgeR.snow;
+  // le lac gelé entre la première et la deuxième rangée de sapins
+  const lake = { cx: w * 0.5, cy: 117 * k, rx: w * 0.4, ry: 3.6 * k };
+  // le givre qui scintille sur la neige du premier plan
+  let frost = '';
+  for (let i = 0; i < 7; i++) frost += twinkle(w * (0.16 + r() * 0.68), (144 + r() * 24) * k, (0.7 + r() * 0.7) * k);
   let flakes = '';
   let dots = '';
   for (let i = 0; i < 22; i++) {
@@ -90,7 +131,7 @@ function trace(w: number, h: number, seed: string): WinterArt {
     if (i % 3 === 0) flakes += flake(x, y, (0.9 + r() * 1.2) * k * 1.4);
     else dots += circle(x, y, (0.35 + r() * 0.5) * k * 1.3);
   }
-  return { stars, aurora, far, rows, drifts, flakes, dots };
+  return { stars, aurora, twinkles, distant, far, lake, frost, rows, drifts, flakes, dots };
 }
 
 /** Le paysage d'hiver, à poser dans un SVG de viewBox `0 0 w h`. */
@@ -145,15 +186,37 @@ export function WinterScene({
         <filter id={`${id}-blur`} x="-10%" y="-50%" width="120%" height="200%">
           <feGaussianBlur stdDeviation={1.6 * k} />
         </filter>
+        <filter id={`${id}-soft`} x="-10%" y="-20%" width="120%" height="140%">
+          <feGaussianBlur stdDeviation={0.7 * k} />
+        </filter>
+        {art.aurora.map((a, i) => (
+          <linearGradient key={i} id={`${id}-curtain-${i}`} gradientUnits="userSpaceOnUse" x1="0" y1={a.y + 4 * k} x2="0" y2={a.y - 26 * k}>
+            <stop offset="0" stopColor={AURORA[i % 3]} stopOpacity={0.9} />
+            <stop offset="1" stopColor={AURORA[i % 3]} stopOpacity={0} />
+          </linearGradient>
+        ))}
+        <linearGradient id={`${id}-lake`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3b7f9c" />
+          <stop offset="1" stopColor="#163b58" />
+        </linearGradient>
+        <clipPath id={`${id}-lake-clip`}>
+          <ellipse cx={art.lake.cx} cy={art.lake.cy} rx={art.lake.rx} ry={art.lake.ry} />
+        </clipPath>
       </defs>
       <rect x={-2} y={-2} width={w + 4} height={h + 4} fill={`url(#${id}-sky)`} />
       {art.stars.map((d, i) => (
         <path key={i} d={d} fill="#ffffff" opacity={[0.8, 0.5, 0.3][i]} />
       ))}
-      {/* aurore boréale */}
+      <path d={art.twinkles} fill="#ffffff" opacity={0.9} />
+      {/* aurore boréale : ses rideaux de rayons, puis ses rubans */}
+      <g filter={`url(#${id}-soft)`}>
+        {art.aurora.map((a, i) => (
+          <path key={i} d={a.rays} fill={`url(#${id}-curtain-${i})`} opacity={[0.9, 0.7, 0.6][i]} />
+        ))}
+      </g>
       <g filter={`url(#${id}-blur)`}>
-        {art.aurora.map((d, i) => (
-          <path key={i} d={d} fill={`url(#${id}-aurora)`} opacity={[0.75, 0.55, 0.45][i]} />
+        {art.aurora.map((a, i) => (
+          <path key={i} d={a.band} fill={`url(#${id}-aurora)`} opacity={[0.75, 0.55, 0.45][i]} />
         ))}
       </g>
       {/* pleine lune */}
@@ -162,7 +225,13 @@ export function WinterScene({
       <circle cx={mx} cy={my} r={13 * k} fill={MOON} />
       <circle cx={mx + 3.5 * k} cy={my - 2.5 * k} r={2.4 * k} fill="#d6e6f2" opacity={0.6} />
       <circle cx={mx - 4 * k} cy={my + 3 * k} r={1.6 * k} fill="#d6e6f2" opacity={0.5} />
-      {/* sommets enneigés */}
+      {/* la chaîne lointaine, puis les grands sommets enneigés */}
+      {art.distant.map((m, i) => (
+        <g key={i} opacity={0.75}>
+          <path d={m.body} fill={mix(FAR, SKY[2], 0.45)} />
+          <path d={m.snow} fill={SNOW} opacity={0.7} />
+        </g>
+      ))}
       {art.far.map((m, i) => (
         <g key={i}>
           <path d={m.body} fill={mix(FAR, SKY[1], 0.25 + i * 0.05)} />
@@ -174,6 +243,14 @@ export function WinterScene({
       <path d={art.rows[0].ground} fill={mix(SNOW, FAR, 0.35)} />
       <path d={art.rows[0].pines} fill={tone(0.45)} />
       <path d={art.rows[0].pinesSnow} fill={SNOW} opacity={0.85} />
+      {/* le lac gelé : la lune et l'aurore s'y reflètent */}
+      <ellipse cx={art.lake.cx} cy={art.lake.cy + 0.5 * k} rx={art.lake.rx + 1.2 * k} ry={art.lake.ry + 0.9 * k} fill={SNOW} opacity={0.85} />
+      <ellipse cx={art.lake.cx} cy={art.lake.cy} rx={art.lake.rx} ry={art.lake.ry} fill={`url(#${id}-lake)`} />
+      <g clipPath={`url(#${id}-lake-clip)`}>
+        <ellipse cx={art.lake.cx + art.lake.rx * 0.3} cy={art.lake.cy - art.lake.ry * 0.2} rx={art.lake.rx * 0.6} ry={art.lake.ry * 0.5} fill={AURORA[0]} opacity={0.3} filter={`url(#${id}-blur)`} />
+        <ellipse cx={mx} cy={art.lake.cy} rx={2.6 * k} ry={art.lake.ry * 1.2} fill={MOON} opacity={0.7} filter={`url(#${id}-soft)`} />
+        <path d={`M${f(art.lake.cx - art.lake.rx)} ${f(art.lake.cy - art.lake.ry * 0.3)}h${f(art.lake.rx * 2)}`} stroke="#ffffff" strokeOpacity={0.25} strokeWidth={0.4 * k} />
+      </g>
       {mist(110, 130, 0.35)}
       <path d={art.rows[1].ground} fill={mix(SNOW, FAR, 0.18)} />
       <path d={art.rows[1].pines} fill={tone(0.7)} />
@@ -182,6 +259,7 @@ export function WinterScene({
       <path d={art.drifts} fill="#9fbfdc" opacity={0.45} />
       <path d={art.rows[2].pines} fill={NEAR} />
       <path d={art.rows[2].pinesSnow} fill={SNOW} opacity={0.92} />
+      <path d={art.frost} fill="#ffffff" opacity={0.95} />
       {/* la neige tombe */}
       <path d={art.dots} fill="#ffffff" opacity={0.75} />
       <path d={art.flakes} fill="none" stroke="#ffffff" strokeOpacity={0.8} strokeWidth={0.45 * k * 1.3} strokeLinecap="round" />
