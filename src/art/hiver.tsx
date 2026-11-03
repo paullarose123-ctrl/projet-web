@@ -1,8 +1,8 @@
 import { area, circle, ellipse, f, hashString, hills, mix, mountain, mulberry32, pine, poly, spots, type Rng } from './kit';
 
 // Paysage de la Série 3 (Hiver), pour son booster et le dos de ses cartes : une nuit polaire sous une aurore
-// boréale, la pleine lune derrière des sommets enneigés, des sapins chargés de neige et un ours polaire dans la
-// neige, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
+// boréale, la pleine lune derrière des sommets enneigés, des sapins chargés de neige et un ours polaire qui avance
+// sur une crête, pendant que la neige tombe. Même langage que les autres affiches : aplats, brume entre les plans.
 // Le dessin est tracé une fois par format (sachet 120 × 172, carte 100 × 140).
 
 const SKY = ['#081a33', '#1d4f6e', '#7fc4cf'];
@@ -18,12 +18,11 @@ function snowyPine(x: number, y: number, h: number): { tree: string; snow: strin
   return { tree: pine(x, y, h), snow: pine(x, y - h * 0.5, h * 0.48) + pine(x, y - h * 0.18, h * 0.3) };
 }
 
-const BEAR = '#fbf6ea';
-const BEAR_SHADE = '#c9d8e6';
-const BEAR_LINE = '#8fb3d1';
-
-/** Ours polaire de profil, tourné vers la droite, pattes à y = 0 (repère d'environ 34 × 18). */
-function bear(): { far: string; body: string; eye: string; nose: string } {
+/**
+ * Ours polaire de profil, tourné vers la droite, pattes à y = 0 (repère d'environ 34 × 18) : une silhouette, comme
+ * les autres animaux des boosters (l'aigle du Mexique, le loup des canidés), avec un peu de neige sur le dos.
+ */
+function bear(): { shape: string; snow: string } {
   const leg = (x0: number, x1: number, top: number) =>
     poly([
       [x0, top],
@@ -34,8 +33,9 @@ function bear(): { far: string; body: string; eye: string; nose: string } {
       [x0 - 0.2, -0.5],
     ]);
   return {
-    far: leg(-5.6, -2.4, -7) + leg(3.4, 6.6, -7),
-    body:
+    shape:
+      leg(-5.6, -2.4, -7) +
+      leg(3.4, 6.6, -7) +
       ellipse(-0.5, -8.6, 11, 5.6) + // corps
       ellipse(-7.4, -9, 5.4, 5.2) + // croupe
       ellipse(5.4, -10.2, 5.2, 4.6) + // épaules (la bosse de l'ours)
@@ -45,8 +45,7 @@ function bear(): { far: string; body: string; eye: string; nose: string } {
       ellipse(-12.2, -10.6, 1.2, 0.9) + // queue
       leg(-10, -6.4, -6.5) +
       leg(6.6, 10, -6.5),
-    eye: circle(13.4, -9.2, 0.45),
-    nose: circle(18, -7.8, 0.65),
+    snow: ellipse(-2, -13.9, 7.6, 0.6) + ellipse(5.6, -14.6, 3.2, 0.5),
   };
 }
 
@@ -126,8 +125,8 @@ function trace(w: number, h: number, seed: string, bearSpot: 'crete' | 'neige'):
   }
   // l'ours polaire : sur la crête de la première rangée (booster, dont le bas porte le nom), ou dans la neige du
   // premier plan (dos des cartes)
-  const bx = bearSpot === 'crete' ? w * 0.62 : w * 0.54;
-  const bearAt: [number, number, number] = bearSpot === 'crete' ? [bx, profiles[0](bx) + 0.6 * k, 0.88 * k] : [bx, 156 * k, 1.05 * k];
+  const bx = w * (bearSpot === 'crete' ? 0.58 : 0.6);
+  const bearAt: [number, number, number] = [bx, profiles[0](bx) + 0.8 * k, 1.08 * k];
   return { stars, aurora, far, rows, drifts, flakes, dots, bearAt };
 }
 
@@ -213,6 +212,11 @@ export function WinterScene({
       ))}
       {mist(84, 114, 0.6)}
       <path d={art.rows[0].ground} fill={mix(SNOW, FAR, 0.35)} />
+      {/* l'ours polaire avance sur la crête, dans la couleur des sapins de son plan */}
+      <g transform={`translate(${f(art.bearAt[0])} ${f(art.bearAt[1])}) scale(${f(art.bearAt[2])})`}>
+        <path d={bearShape.shape} fill={tone(0.62)} />
+        <path d={bearShape.snow} fill={SNOW} opacity={0.85} />
+      </g>
       <path d={art.rows[0].pines} fill={tone(0.45)} />
       <path d={art.rows[0].pinesSnow} fill={SNOW} opacity={0.85} />
       {mist(110, 130, 0.35)}
@@ -223,15 +227,6 @@ export function WinterScene({
       <path d={art.drifts} fill="#9fbfdc" opacity={0.45} />
       <path d={art.rows[2].pines} fill={NEAR} />
       <path d={art.rows[2].pinesSnow} fill={SNOW} opacity={0.92} />
-      {/* l'ours polaire, son ombre bleutée et un fin contour pour qu'il se détache de la neige */}
-      <g transform={`translate(${f(art.bearAt[0])} ${f(art.bearAt[1])}) scale(${f(art.bearAt[2])})`}>
-        <ellipse cx={1} cy={0.4} rx={15} ry={1.6} fill={BEAR_LINE} opacity={0.5} />
-        <path d={bearShape.far} fill={BEAR_SHADE} stroke={BEAR_LINE} strokeWidth={0.9} strokeLinejoin="round" />
-        <path d={bearShape.body} fill={BEAR_LINE} stroke={BEAR_LINE} strokeWidth={1.3} strokeLinejoin="round" />
-        <path d={bearShape.body} fill={BEAR} />
-        <path d={bearShape.eye} fill={NEAR} />
-        <path d={bearShape.nose} fill={NEAR} />
-      </g>
       {/* la neige tombe */}
       <path d={art.dots} fill="#ffffff" opacity={0.75} />
       <path d={art.flakes} fill="none" stroke="#ffffff" strokeOpacity={0.8} strokeWidth={0.45 * k * 1.3} strokeLinecap="round" />
