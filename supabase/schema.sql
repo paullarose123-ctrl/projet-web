@@ -480,7 +480,7 @@ alter table public.admins enable row level security;
 revoke all on public.admins from anon, authenticated;
 
 -- Enregistre le signal d'un visiteur (en ligne, ou qui s'en va). Aux administrateurs seulement (connectés), renvoie
--- les deux compteurs ; aux autres, des compteurs vides (null) :
+-- les compteurs (joueurs en ligne, du jour, et comptes créés) ; aux autres, des compteurs vides (null) :
 -- « online » : les visiteurs dont le jeu est ouvert (signal reçu il y a moins de 2 min 30, sans départ depuis) ;
 -- « today » : les visiteurs passés au moins une fois depuis minuit (heure de Paris).
 create or replace function public.presence_ping(p_visitor uuid, p_online boolean default true)
@@ -499,7 +499,11 @@ begin
   end if;
   return jsonb_build_object(
     'online', (select count(*) from presence where online and last_seen > now() - interval '150 seconds'),
-    'today', (select count(*) from presence where last_seen >= midnight)
+    'today', (select count(*) from presence where last_seen >= midnight),
+    -- comptes créés : en tout, depuis minuit (heure de Paris) et sur les 7 derniers jours
+    'accounts', (select count(*) from auth.users),
+    'accountsToday', (select count(*) from auth.users where created_at >= midnight),
+    'accountsWeek', (select count(*) from auth.users where created_at >= now() - interval '7 days')
   );
 end $$;
 

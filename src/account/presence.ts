@@ -9,6 +9,10 @@ export interface PresenceCounts {
   online: number;
   /** visiteurs passés au moins une fois depuis minuit (heure de Paris) */
   today: number;
+  /** comptes créés : en tout, depuis minuit, sur 7 jours (absents tant que la base n'est pas à jour) */
+  accounts?: number;
+  accountsToday?: number;
+  accountsWeek?: number;
 }
 
 const VISITOR_KEY = 'animalcards-visiteur';
@@ -47,7 +51,7 @@ export function visitorId(): string {
 export async function pingPresence(online: boolean, token?: string): Promise<PresenceCounts | null> {
   if (!accountsEnabled()) return null;
   try {
-    const counts = await call<{ online: number | null; today: number | null }>('/rest/v1/rpc/presence_ping', {
+    const counts = await call<{ online: number | null; today: number | null; accounts?: number; accountsToday?: number; accountsWeek?: number }>('/rest/v1/rpc/presence_ping', {
       method: 'POST',
       body: { p_visitor: visitorId(), p_online: online },
       token,
@@ -55,7 +59,8 @@ export async function pingPresence(online: boolean, token?: string): Promise<Pre
       keepalive: !online,
     });
     if (!counts || typeof counts.online !== 'number' || typeof counts.today !== 'number') return null;
-    return { online: counts.online, today: counts.today };
+    const accounts = typeof counts.accounts === 'number' ? { accounts: counts.accounts, accountsToday: counts.accountsToday ?? 0, accountsWeek: counts.accountsWeek ?? 0 } : {};
+    return { online: counts.online, today: counts.today, ...accounts };
   } catch {
     return null;
   }
