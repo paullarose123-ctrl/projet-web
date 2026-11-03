@@ -1334,3 +1334,125 @@
 .card.serie-2 .card__hills::after {
   --hill-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 30V23C12 21 22 24 34 22C46 20 56 24 68 22C80 20 90 23 100 21V30Z M40 22L37 15L40.6 20.5L41.2 13.5L42.4 20.4L45.6 15.2L43.6 22Z M28 23L26.4 18.6L28.6 21.6L29.2 17.4L30 21.6L32 18.8L31 23Z'/%3E%3C/svg%3E");
 }
+
+/* ─── Série 3 · Hiver (maquette) : bordure de givre semée de flocons, glaçons sous le cadre, montagnes et sapins
+   enneigés sur l'horizon de la photo ; la Prime porte un voile d'aurore boréale ─── */
+.card.serie-3 {
+  /* les flocons sont imprimés de la couleur du cadre, en léger */
+  --givre: color-mix(in srgb, var(--panel) 55%, transparent);
+  /* collines bleu glacier : le nom, écrit en clair, passe dessus */
+  --hill-far: #6f93b6;
+  --hill-near: #1f4466;
+}
+
+.card.serie-3:is(.is-reverse, .is-habitat) {
+  --givre: color-mix(in srgb, var(--trim) 80%, transparent);
+}
+
+.card.serie-3 .card__inner {
+  transform: scale(0.95);
+}
+
+.card__givre {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--givre);
+  stroke-width: 0.32;
+  stroke-linecap: round;
+}
+
+.card__icicles {
+  fill: var(--panel);
+}
+
+/* les couleurs de chaque rareté, en tons de glace */
+.card.serie-3.r-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(50% 22% at 80% 6%, rgba(255, 255, 255, 0.95), transparent 70%),
+    linear-gradient(172deg, #d9e8f2 0%, #f4f9fc 45%, #dbe7f0 100%);
+}
+
+.card.serie-3.r-peu-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(50% 20% at 20% 6%, rgba(255, 255, 255, 0.95), transparent 70%),
+    linear-gradient(172deg, #b5d5f0 0%, #d8eafb 40%, #f0f8ff 75%, #c9def2 100%);
+}
+
+.card.serie-3.r-rare:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(48% 24% at 50% 100%, rgba(255, 255, 255, 0.9), transparent 70%),
+    linear-gradient(172deg, #9fe0d0 0%, #c4efe3 40%, #e6faf4 70%, #b9e2f0 100%);
+}
+
+.card.serie-3.r-epique:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    linear-gradient(160deg, transparent 20%, rgba(170, 245, 215, 0.6) 38%, transparent 55%),
+    linear-gradient(172deg, #b7a9ec 0%, #cfc2f5 45%, #e4dcfb 75%, #c3d4f5 100%);
+  --plate-ink: #241a52;
+}
+
+/* légendaire : une aurore boréale dans la glace, du vert au violet */
+.card.serie-3.r-legendaire:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
+  --foil:
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 255, 255, 0.9), transparent 70%),
+    linear-gradient(150deg, transparent 15%, rgba(255, 255, 255, 0.45) 30%, transparent 45%),
+    linear-gradient(172deg, #9fe8cf 0%, #a6d9f0 30%, #c3b3f2 62%, #efc6e8 100%);
+}
+
+/* Prime de l'hiver : nuit polaire et aurore boréale, cadre bleu nuit, voile d'aurore sur la photo */
+.card.serie-3.is-prime {
+  --foil:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.9) 0 0.05em, transparent 0.12em) 0 0 / 1.3em 1.7em,
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.7) 0 0.05em, transparent 0.1em) 0 0 / 0.9em 1.1em,
+    linear-gradient(172deg, #0f2a44 0%, #1d4f6e 40%, #2f7f86 70%, #6fd3b4 100%);
+  --panel: #0c2238;
+  --trim: #e6f3ff;
+  --metal: linear-gradient(180deg, #ffffff 0%, #e3f3ff 55%, #c8f2e4 100%);
+  --metal-edge: #061524;
+  --plate-ink: #0c2238;
+  --tier-bg: linear-gradient(90deg, #7ff0c1, #5fd4d8 50%, #b28cff);
+  --tier-ink: #0c2238;
+  --givre: rgba(230, 243, 255, 0.75);
+}
+
+.serie-3.is-prime .card__tier i {
+  background: none;
+  color: #0c2238;
+}
+
+.serie-3.is-prime .card__scene {
+  background: linear-gradient(180deg, #0f2a44, #1d4f6e 60%, #7fc4cf);
+}
+
+.serie-3.is-prime.has-photo .card__window::after {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.6) 0 0.05em, transparent 0.12em) 0 0 / 0.6em 0.8em,
+    repeating-linear-gradient(125deg, rgba(127, 240, 193, 0.55) 0 2.4em, rgba(244, 249, 255, 0.35) 2.4em 4.4em, rgba(178, 140, 255, 0.5) 4.4em 6.8em);
+  opacity: 0.55;
+}
+
+.serie-3.is-prime .card__holo {
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(127, 240, 193, 0) 0%,
+    rgba(127, 240, 193, 0.4) 9%,
+    rgba(255, 255, 255, 0.4) 18%,
+    rgba(178, 140, 255, 0.4) 27%,
+    rgba(178, 140, 255, 0) 36%
+  );
+  background-size: 260% 260%;
+  background-position: var(--mx, 50%) var(--my, 50%);
+}
+
+/* l'horizon de la photo : des sommets enneigés et des sapins, puis une congère avec de petits sapins */
+.card.serie-3 .card__hills::before {
+  --hill-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 30V18L9 12L15 16L26 6L36 15L44 11L53 18H100V30Z M72 18L75 9L78 18Z M77 18L80.5 6.5L84 18Z M83 18L86 10.5L89 18Z M91 18L93.5 12L96 18Z'/%3E%3C/svg%3E");
+}
+
+.card.serie-3 .card__hills::after {
+  --hill-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 30V24C14 21 28 25 42 23C56 21 70 25 84 22C92 21 96 22 100 21V30Z M10 23.5L12.4 17L14.8 23.5Z M15 23.6L16.8 19.2L18.6 23.6Z M58 22.5L60.6 15.5L63.2 22.5Z'/%3E%3C/svg%3E");
+}

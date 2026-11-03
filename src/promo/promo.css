@@ -1260,3 +1260,7 @@ body {
   align-items: center;
   gap: 26px;
 }
+
+.hiver-planche--cartes .hiver-planche__hero {
+  gap: 48px;
+}
