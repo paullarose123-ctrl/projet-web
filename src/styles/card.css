@@ -660,12 +660,6 @@
   stroke-width: 0.6;
 }
 
-/* contour gravé dans l'onglet en haut à gauche */
-.card__trim--notch {
-  stroke-width: 0.35;
-  opacity: 0.85;
-}
-
 .card__rail path {
   fill: none;
   stroke: var(--trim);

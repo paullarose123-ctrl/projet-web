@@ -13,7 +13,7 @@ import { PackScene } from './PackScene';
 import { serieOf } from '../engine/series';
 
 // Carte au style « cadre de naturaliste » : palette de booster selon le palier (forêt, cimes, savane…),
-// cadre sombre avec code de l'espèce en onglet, losange avec le numéro de collection, famille écrite à la verticale,
+// cadre sombre avec un onglet en haut à gauche, losange avec le numéro de collection, famille écrite à la verticale,
 // photo dans une fenêtre, médaillon de la famille, bandeau du nom et plaque du milieu de vie.
 // 1em = largeur de la carte / 24. Le cadre est un SVG en 100 × 140 (proportions de la carte).
 
@@ -47,9 +47,7 @@ function nameSize(name: string): number {
 const PANEL =
   'M6.8 2.6 H93.2 Q96.4 2.6 96.4 5.8 V133.8 Q96.4 137 93.2 137 H6.8 Q3.6 137 3.6 133.8 V5.8 Q3.6 2.6 6.8 2.6 Z';
 const WINDOW =
-  'M9.4 14 Q9.4 11.2 12.2 11.2 H21.5 C25.8 11.2 26.4 4.6 31 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
-/** Contour gravé dans l'onglet en haut à gauche : il en suit la forme, en retrait. */
-const NOTCH = 'M8.1 5 H25.6 C22.4 5 23 9.8 19.9 9.8 H8.1 Q6.3 9.8 6.3 8 V6.8 Q6.3 5 8.1 5 Z';
+  'M9.4 14 Q9.4 11.2 12.2 11.2 H15.5 C19.8 11.2 20.4 4.6 25 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
 const PLATE = 'M20 128.2 H92.4 Q94.2 128.2 94.2 130 V133 Q94.2 134.8 92.4 134.8 H20 Z';
 
 // Cadre des cartes du Mexique : les mêmes pièces, taillées en gradins comme les pyramides (coins à degrés, onglet
@@ -81,21 +79,20 @@ function crenelLine(y1: number, y2: number): string {
 const MX = {
   panel: steppedRect(3.6, 2.6, 92.8, 134.4, 1.6),
   window:
-    'M9.4 13.8 H10.7 V12.5 H12 V11.2 H22.5 V9 H25.5 V6.8 H28.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
+    'M9.4 13.8 H10.7 V12.5 H12 V11.2 H16.5 V9 H19.5 V6.8 H22.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
   plate: 'M20 128.2 H92.6 V129.4 H94.2 V133.6 H92.6 V134.8 H20 Z',
   thin: steppedRect(4.7, 3.7, 90.6, 132.2, 1.1),
   banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
   rail: `${crenelLine(24, 36)} ${crenelLine(70, 80.4)} ${crenelLine(91.6, 105)}`,
   diamond: steppedDiamond(6.5, 86, 0.5),
-  notch: 'M6.3 6.8 H7.2 V5.9 H8.1 V5 H24.2 V7.7 H21.2 V9.9 H8.1 V9 H7.2 V8.1 H6.3 Z',
 };
 
 // Glaçons de l'hiver (Série 3), pendus sous le haut du cadre, au-dessus de la photo.
 const ICICLES = (() => {
   let d = '';
   const spans: [number, number, number][] = [
-    [32, 91, 4.6],
-    [12.5, 21, 11.2],
+    [26, 91, 4.6],
+    [12.5, 15.5, 11.2],
   ];
   for (const [x0, x1, y] of spans) {
     for (let x = x0, i = 0; x + 1.6 <= x1; x += 2.3 + (i % 3) * 0.5, i++) {
@@ -115,7 +112,6 @@ function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: 
         <path className="card__trim" d={MX.panel} />
         <path className="card__trim card__trim--thin" d={MX.thin} />
         <path className="card__trim card__trim--window" d={MX.window} />
-        <path className="card__trim card__trim--notch" d={MX.notch} />
         <path className="card__trim card__trim--thin" d={MX.banner} />
         <path className="card__trim" d={MX.plate} />
         <g className="card__rail">
@@ -131,7 +127,6 @@ function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: 
       <path className="card__trim" d={PANEL} />
       <rect className="card__trim card__trim--thin" x="4.7" y="3.7" width="90.6" height="132.2" rx="2.4" />
       <path className="card__trim card__trim--window" d={WINDOW} />
-      <path className="card__trim card__trim--notch" d={NOTCH} />
       <rect className="card__trim card__trim--thin" x="25.5" y="117.6" width="68.7" height="9.2" rx="1.2" />
       <path className="card__trim" d={PLATE} />
       {hiver && <path className="card__icicles" d={ICICLES} />}
