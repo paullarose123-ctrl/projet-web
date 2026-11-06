@@ -47,7 +47,7 @@ function nameSize(name: string): number {
 const PANEL =
   'M6.8 2.6 H93.2 Q96.4 2.6 96.4 5.8 V133.8 Q96.4 137 93.2 137 H6.8 Q3.6 137 3.6 133.8 V5.8 Q3.6 2.6 6.8 2.6 Z';
 const WINDOW =
-  'M9.4 11.4 Q9.4 8.6 12.2 8.6 H22.5 C25.8 8.6 26.6 4.6 30 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
+  'M9.4 14 Q9.4 11.2 12.2 11.2 H15.5 C19.8 11.2 20.4 4.6 25 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
 const PLATE = 'M20 128.2 H92.4 Q94.2 128.2 94.2 130 V133 Q94.2 134.8 92.4 134.8 H20 Z';
 
 // Cadre des cartes du Mexique : les mêmes pièces, taillées en gradins comme les pyramides (coins à degrés, onglet
@@ -79,7 +79,7 @@ function crenelLine(y1: number, y2: number): string {
 const MX = {
   panel: steppedRect(3.6, 2.6, 92.8, 134.4, 1.6),
   window:
-    'M9.4 11.2 H10.7 V9.9 H12 V8.6 H22.5 V7.3 H25.5 V6 H28.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
+    'M9.4 13.8 H10.7 V12.5 H12 V11.2 H16.5 V9 H19.5 V6.8 H22.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
   plate: 'M20 128.2 H92.6 V129.4 H94.2 V133.6 H92.6 V134.8 H20 Z',
   thin: steppedRect(4.7, 3.7, 90.6, 132.2, 1.1),
   banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
@@ -91,8 +91,8 @@ const MX = {
 const ICICLES = (() => {
   let d = '';
   const spans: [number, number, number][] = [
-    [31, 91, 4.6],
-    [12.5, 21.5, 8.6],
+    [26, 91, 4.6],
+    [12.5, 15.5, 11.2],
   ];
   for (const [x0, x1, y] of spans) {
     for (let x = x0, i = 0; x + 1.6 <= x1; x += 2.3 + (i % 3) * 0.5, i++) {
