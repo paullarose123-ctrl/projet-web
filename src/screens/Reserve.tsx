@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGame } from '../store/game';
 import { ATHLETES_BY_ID } from '../data/athletes';
-import { rarityOf } from '../engine/cards';
 import {
   ENCLOS,
   ENCLOS_BY_ID,
@@ -23,6 +22,7 @@ import type { OwnedCard } from '../engine/types';
 import { SCENE_H, SCENE_W, ZONE_BOX, drawScene, type SceneModel } from '../art/reserve-scene';
 import { blit, spriteForAthlete, type Sprite } from '../art/reserve-sprites';
 import { BallIcon } from '../components/Balles';
+import { Card } from '../components/Card';
 import { useNow } from '../hooks/useNow';
 import { sfx } from '../audio/sfx';
 import '../styles/reserve.css';
@@ -31,6 +31,20 @@ import '../styles/reserve.css';
 // installer ses animaux, les retirer ou agrandir l'enclos. Les règles sont dans engine/reserve.ts.
 
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
+
+/** Écran d'ordinateur (ou de tablette à l'horizontale) ? */
+function useWide(): boolean {
+  const query = '(min-width: 900px)';
+  const [wide, setWide] = useState(() => window.matchMedia?.(query).matches ?? false);
+  useEffect(() => {
+    const list = window.matchMedia?.(query);
+    if (!list) return;
+    const on = () => setWide(list.matches);
+    list.addEventListener('change', on);
+    return () => list.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
 
 function Scene({ model, onOpen }: { model: SceneModel; onOpen: (id: EnclosId) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -106,8 +120,6 @@ function name(card: OwnedCard): string {
   return `${a.first} ${a.last}`.trim();
 }
 
-const VARIANT: Record<OwnedCard['variant'], string> = { base: '', reverse: ' · Reverse', prime: ' · Prime' };
-
 function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
   const def = ENCLOS_BY_ID[id];
   const reserve = useGame((s) => s.reserve);
@@ -124,6 +136,7 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
   const gains = enclosVisitors(installed);
   const total = gains.reduce((a, b) => a + b, 0);
   const full = !!enclos && installed.length >= enclos.places;
+  const size = useWide() ? 'sm' : 'xs';
 
   // les espèces qui peuvent venir : la meilleure carte de chacune, celles déjà dans la réserve mises à part
   const candidates = useMemo(() => {
@@ -206,55 +219,39 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
             </p>
 
             {installed.length > 0 && (
-              <ul className="rsv-list">
+              <div className="rsv-cards">
                 {installed.map((card, i) => (
-                  <li key={card.uid}>
-                    <Mini sprite={spriteForAthlete(ATHLETES_BY_ID[card.athleteId])} />
-                    <span className="rsv-list__name">
-                      <b>{name(card)}</b>
-                      <small style={{ color: `var(--r-${rarityOf(ATHLETES_BY_ID[card.athleteId]).id})` }}>
-                        {rarityOf(ATHLETES_BY_ID[card.athleteId]).name}
-                        {VARIANT[card.variant]}
-                      </small>
-                    </span>
-                    <span className="rsv-list__gain">+{gains[i]}/h</span>
+                  <div key={card.uid} className="rsv-card">
+                    <Card card={card} size={size} />
+                    <span className="rsv-card__gain">+{gains[i]} visiteurs/h</span>
                     <button type="button" className="btn btn--ghost btn--sm" onClick={() => remove(card.uid)}>
                       Retirer
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
 
-            <h3 className="rsv-sheet__title">{full ? 'Enclos complet : agrandis-le pour en accueillir d’autres' : 'Installer un animal'}</h3>
+            <h3 className="rsv-sheet__title">{full ? 'Enclos complet : agrandis-le pour en accueillir d’autres' : 'Choisis une carte à installer'}</h3>
             {candidates.length === 0 ? (
               <p className="muted small">Aucune autre carte de ta collection ne peut vivre ici. Ouvre des boosters pour en trouver !</p>
             ) : (
-              <ul className="rsv-list">
-                {candidates.map((card) => (
-                  <li key={card.uid}>
-                    <Mini sprite={spriteForAthlete(ATHLETES_BY_ID[card.athleteId])} />
-                    <span className="rsv-list__name">
-                      <b>{name(card)}</b>
-                      <small style={{ color: `var(--r-${rarityOf(ATHLETES_BY_ID[card.athleteId]).id})` }}>
-                        {rarityOf(ATHLETES_BY_ID[card.athleteId]).name}
-                        {VARIANT[card.variant]}
-                      </small>
-                    </span>
-                    <span className="rsv-list__gain">+{cardVisitors(card)}/h</span>
-                    <button
-                      type="button"
-                      className="btn btn--primary btn--sm"
-                      disabled={full}
-                      onClick={() => {
-                        if (install(id, card.uid)) sfx.click();
-                      }}
-                    >
-                      Installer
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="rsv-cards">
+                {candidates.map((card) => {
+                  const add = () => {
+                    if (!full && install(id, card.uid)) sfx.click();
+                  };
+                  return (
+                    <div key={card.uid} className={`rsv-card${full ? ' is-full' : ''}`}>
+                      <Card card={card} size={size} onClick={full ? undefined : add} />
+                      <span className="rsv-card__gain">+{cardVisitors(card)} visiteurs/h</span>
+                      <button type="button" className="btn btn--primary btn--sm" disabled={full} onClick={add}>
+                        Installer
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
             <p className="muted small">Une carte installée ne peut plus être vendue ni échangée tant qu’elle est dans la réserve. Trois animaux d’une même famille dans un enclos : +20 % de visiteurs.</p>
           </>
@@ -327,6 +324,44 @@ export function ReserveScreen() {
       </header>
       {rate === 0 && <p className="rsv-hint">Touche un enclos pour y installer tes animaux. Chaque visiteur paie son ticket : 1 crédit, à récolter à la billetterie (jusqu’à {BILLETTERIE_HOURS} h de visites).</p>}
       <Scene model={model} onOpen={setSheet} />
+      <section className="rsv-panel" aria-label="Mes enclos">
+        <h2>Mes enclos</h2>
+        <ul>
+          {ENCLOS.map((e) => {
+            const st = reserve.enclos[e.id];
+            const sprites = model.animals[e.id] ?? [];
+            return (
+              <li key={e.id}>
+                <button type="button" className={st ? '' : 'is-locked'} onClick={() => setSheet(e.id)}>
+                  <span className="rsv-panel__name">
+                    <b>{e.name}</b>
+                    <small>{e.milieux.join(' · ')}</small>
+                  </span>
+                  <span className="rsv-panel__animals">
+                    {sprites.slice(0, 4).map((sprite, i) => (
+                      <Mini key={i} sprite={sprite} />
+                    ))}
+                  </span>
+                  <span className="rsv-panel__meta">
+                    {st ? (
+                      <>
+                        <b>
+                          {sprites.length}/{st.places}
+                        </b>
+                        <small>+{model.gains[e.id] ?? 0}/h</small>
+                      </>
+                    ) : (
+                      <small className="rsv-panel__price">
+                        <BallIcon /> {e.price.toLocaleString('fr-FR')}
+                      </small>
+                    )}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
       {sheet && <EnclosSheet id={sheet} onClose={() => setSheet(null)} />}
     </div>
   );
