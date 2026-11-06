@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
-import { ENCLOS, billetterie, canLiveIn, billetterieFull, cardVisitors, emptyReserve, enclosFor, enclosVisitors, levelOf, placePrice, reserveRate } from '../reserve';
+import { ENCLOS, MAX_PLACES, billetterie, canLiveIn, billetterieFull, cardVisitors, emptyReserve, enclosFor, enclosVisitors, levelOf, placePrice, reserveRate } from '../reserve';
 import type { CardFace } from '../types';
 
 const card = (athleteId: string, variant: CardFace['variant'] = 'base'): CardFace => ({ athleteId, variant });
@@ -50,7 +50,8 @@ describe('Ma Réserve', () => {
   });
 
   it('fait payer les places de plus en plus cher et monte de niveau', () => {
-    expect([3, 4, 5, 6, 7].map(placePrice)).toEqual([500, 1000, 2000, 4000, 8000]);
+    expect([3, 4].map(placePrice)).toEqual([500, 1000]);
+    expect(MAX_PLACES).toBe(5);
     expect(levelOf(0).level).toBe(1);
     expect(levelOf(600).level).toBe(2);
     expect(levelOf(10_000_000).to).toBeNull();

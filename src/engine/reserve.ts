@@ -56,7 +56,7 @@ const MARINS: string[] = ['marins', 'requins', 'poissons', 'invertebres'];
 const JOKERS = ['Partout', 'Nature'];
 
 export const START_PLACES = 3;
-export const MAX_PLACES = 8;
+export const MAX_PLACES = 5;
 export const BILLETTERIE_HOURS = 8;
 export const GROUP_SIZE = 3;
 const GROUP_BONUS = 0.2;
@@ -71,7 +71,7 @@ export const VISITORS: Record<Exclude<RarityId, 'icone'>, number> = {
   legendaire: 30,
 };
 
-/** Prix de la place suivante d'un enclos qui en a `places` (500, 1 000, 2 000, 4 000, 8 000). */
+/** Prix de la place suivante d'un enclos qui en a `places` (500, puis 1 000). */
 export function placePrice(places: number): number {
   return 500 * 2 ** (places - START_PLACES);
 }

@@ -74,7 +74,7 @@ function Scene({ model, onOpen }: { model: SceneModel; onOpen: (id: EnclosId) =>
             className={`rsv-zone${open ? '' : ' is-locked'}${x0 > SCENE_W / 2 ? ' is-right' : ''}`}
             style={{ left: pct(x0, SCENE_W), top: pct(y0, SCENE_H), width: pct(x1 - x0 + 1, SCENE_W), height: pct(y1 - y0 + 1, SCENE_H) }}
             onClick={() => {
-              sfx.click();
+              sfx.rustle();
               onOpen(e.id);
             }}
             aria-label={open ? `Enclos ${e.name}` : `${e.name}, à débloquer`}
@@ -184,7 +184,7 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
               disabled={balles < def.price}
               onClick={() => {
                 if (unlock(id)) {
-                  sfx.click();
+                  sfx.gate();
                   toast('success', `${def.name} : l’enclos est ouvert !`);
                 }
               }}
@@ -210,7 +210,10 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
                   className="btn btn--ghost btn--sm"
                   disabled={balles < placePrice(enclos.places)}
                   onClick={() => {
-                    if (buyPlace(id)) toast('success', `${def.name} : une place de plus.`);
+                    if (buyPlace(id)) {
+                      sfx.hammer();
+                      toast('info', `${def.name} : une place de plus.`);
+                    }
                   }}
                 >
                   Agrandir · <BallIcon /> {placePrice(enclos.places).toLocaleString('fr-FR')}
@@ -224,7 +227,11 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
                   <div key={card.uid} className="rsv-card">
                     <Card card={card} size={size} />
                     <span className="rsv-card__gain">+{gains[i]} visiteurs/h</span>
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => remove(card.uid)}>
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => {
+                        remove(card.uid);
+                        sfx.goodbye();
+                      }}
+                    >
                       Retirer
                     </button>
                   </div>
@@ -239,7 +246,7 @@ function EnclosSheet({ id, onClose }: { id: EnclosId; onClose: () => void }) {
               <div className="rsv-cards">
                 {candidates.map((card) => {
                   const add = () => {
-                    if (!full && install(id, card.uid)) sfx.click();
+                    if (!full && install(id, card.uid)) sfx.welcome(ATHLETES_BY_ID[card.athleteId]?.sport);
                   };
                   return (
                     <div key={card.uid} className={`rsv-card${full ? ' is-full' : ''}`}>
@@ -313,7 +320,7 @@ export function ReserveScreen() {
             onClick={() => {
               const got = collect();
               if (got > 0) {
-                sfx.click();
+                sfx.register();
                 toast('gold', `Billetterie : +${got.toLocaleString('fr-FR')} crédits`);
               }
             }}
@@ -332,7 +339,11 @@ export function ReserveScreen() {
             const sprites = model.animals[e.id] ?? [];
             return (
               <li key={e.id}>
-                <button type="button" className={st ? '' : 'is-locked'} onClick={() => setSheet(e.id)}>
+                <button type="button" className={st ? '' : 'is-locked'} onClick={() => {
+                    sfx.rustle();
+                    setSheet(e.id);
+                  }}
+                >
                   <span className="rsv-panel__name">
                     <b>{e.name}</b>
                     <small>{e.milieux.join(' · ')}</small>

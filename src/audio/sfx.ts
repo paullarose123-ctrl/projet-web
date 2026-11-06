@@ -30,6 +30,32 @@ export function buzz(pattern: number | number[]): void {
   }
 }
 
+/** Le cri d'un animal qui arrive dans la réserve, selon sa famille. */
+function call(a: { ac: AudioContext; bus: Bus }, family: string, t: number): void {
+  const r = () => Math.random() * 0.6 - 0.3;
+  if (family === 'oiseaux' || family === 'rapaces') {
+    // gazouillis
+    [93, 90, 95, 93].forEach((n, i) => bell(a.ac, a.bus, midi(n), t + i * 0.07, 0.035, r(), 0.25));
+  } else if (family === 'marins' || family === 'requins' || family === 'poissons' || family === 'invertebres') {
+    // bulles
+    [1300, 1700, 1500, 2100].forEach((f, i) => tick(a.ac, a.bus, t + i * 0.08, 0.07, f));
+  } else if (family === 'insectes') {
+    // bourdonnement
+    for (let i = 0; i < 8; i++) air(a.ac, a.bus, t + i * 0.03, 0.05, { gain: 0.03, from: 2800, to: 2600, q: 9, attack: 0.005, send: 0.1 });
+  } else if (family === 'reptiles') {
+    // sifflement
+    air(a.ac, a.bus, t, 0.4, { gain: 0.035, from: 5200, to: 3200, type: 'highpass', q: 0.7, attack: 0.05, send: 0.15 });
+  } else if (family === 'amphibiens') {
+    // coassement
+    boom(a.ac, a.bus, t, 0.1, 190);
+    boom(a.ac, a.bus, t + 0.14, 0.1, 170);
+  } else {
+    // grognement doux des mammifères
+    air(a.ac, a.bus, t, 0.42, { gain: 0.07, from: 420, to: 150, type: 'lowpass', q: 1.4, attack: 0.06, send: 0.2 });
+    boom(a.ac, a.bus, t + 0.02, 0.07, 90);
+  }
+}
+
 // Gamme de ré majeur pentatonique, comme la musique : tous les effets sonnent juste avec elle.
 const PENTA = [62, 64, 66, 69, 71, 74, 76, 78, 81, 83, 86, 88, 90, 93];
 
@@ -154,6 +180,63 @@ export const sfx = {
     if (!a) return;
     pluck(a.ac, a.bus, midi(57), a.t, 0.25, 0, 0.3);
     pluck(a.ac, a.bus, midi(53), a.t + 0.11, 0.25, 0, 0.3);
+  },
+  /** Réserve : un enclos s'ouvre, bruissement de feuilles et une note de kalimba */
+  rustle: () => {
+    buzz(8);
+    const a = audio();
+    if (!a) return;
+    for (let i = 0; i < 5; i++)
+      air(a.ac, a.bus, a.t + i * 0.045, 0.12, { gain: 0.035, from: 1800 + Math.random() * 1500, to: 900, q: 1.2, attack: 0.01, pan: Math.random() * 0.8 - 0.4, send: 0.25 });
+    kalimba(a.ac, a.bus, midi(74), a.t + 0.05, 0.12, 0);
+  },
+  /** Réserve : un animal arrive dans son enclos, petit arpège montant puis son cri */
+  welcome: (family?: string) => {
+    buzz(14);
+    const a = audio();
+    if (!a) return;
+    [69, 74, 78].forEach((n, i) => kalimba(a.ac, a.bus, midi(n), a.t + i * 0.07, 0.14, (i - 1) * 0.2));
+    if (family) call(a, family, a.t + 0.26);
+  },
+  /** Réserve : un animal quitte l'enclos, deux notes qui descendent */
+  goodbye: () => {
+    buzz(8);
+    const a = audio();
+    if (!a) return;
+    kalimba(a.ac, a.bus, midi(74), a.t, 0.12, 0.1);
+    kalimba(a.ac, a.bus, midi(66), a.t + 0.09, 0.1, -0.1);
+  },
+  /** Réserve : la billetterie, coup de tampon sur le ticket puis une cascade de pièces */
+  register: () => {
+    buzz([20, 40, 20, 40, 30]);
+    const a = audio();
+    if (!a) return;
+    tick(a.ac, a.bus, a.t, 0.12, 700);
+    boom(a.ac, a.bus, a.t, 0.12, 110);
+    for (let i = 0; i < 7; i++) bell(a.ac, a.bus, midi(PENTA[6 + (i % 6)] + 12), a.t + 0.12 + i * 0.06, 0.035, Math.random() * 0.6 - 0.3, 0.8);
+  },
+  /** Réserve : un enclos est débloqué, le portail s'ouvre en musique */
+  gate: () => {
+    buzz([40, 40, 80]);
+    const a = audio();
+    if (!a) return;
+    air(a.ac, a.bus, a.t, 0.35, { gain: 0.04, from: 600, to: 1400, q: 6, attack: 0.05, send: 0.2 });
+    strings(a.ac, a.bus, [midi(62), midi(66), midi(69), midi(74)], a.t + 0.15, 0.9, 0.04, { attack: 0.08, release: 1.6, open: 2800 });
+    [62, 66, 69, 74, 78].forEach((n, i) => pluck(a.ac, a.bus, midi(n), a.t + 0.15 + i * 0.06, 0.2, (i - 2) * 0.12, 0.6));
+    bell(a.ac, a.bus, midi(86), a.t + 0.5, 0.05, 0.2, 2.5);
+  },
+  /** Réserve : une place de plus, deux coups de marteau sur un piquet */
+  hammer: () => {
+    buzz([25, 120, 25]);
+    const a = audio();
+    if (!a) return;
+    for (const [dt, f] of [
+      [0, 520],
+      [0.17, 580],
+    ] as const) {
+      tick(a.ac, a.bus, a.t + dt, 0.14, f);
+      boom(a.ac, a.bus, a.t + dt, 0.1, 140);
+    }
   },
   /** coup marquant (point gagné en duel) */
   hit: () => {
