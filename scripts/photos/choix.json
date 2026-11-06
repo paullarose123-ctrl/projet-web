@@ -252,13 +252,7 @@
   },
   "chat-des-sables": "Sand cat (Kuwait).jpg",
   "chat-forestier": "Cat November 2010-1a.jpg",
-  "chat-rubigineux": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/302840680/original.jpg",
-    "page": "https://www.inaturalist.org/photos/302840680",
-    "auteur": "metalquip",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  },
+  "chat-rubigineux": "Rusty spotted cat 1.jpg",
   "chat-viverrin": "Close-up of fishing cat.jpg",
   "chauve-souris-des-agaves": "Leptonycteris curasoae.jpg",
   "cheval": "White horse in field.jpg",
@@ -431,16 +425,16 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "dauphin-rose": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/269014354/original.jpg",
-    "page": "https://www.inaturalist.org/photos/269014354",
-    "auteur": "leonardodalligna",
+  "dauphin-rose": "Inia geoffrensis 175141085.jpg",
+  "dendrolague": "Lumholtz's tree-kangaroo.jpg",
+  "dhole": "Dhole Stroll at Pench National Park, India.jpg",
+  "diable-de-tasmanie": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/61994115/original.jpg",
+    "page": "https://www.inaturalist.org/photos/61994115",
+    "auteur": "Brett Vercoe",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "dendrolague": "Lumholtz's tree-kangaroo.jpg",
-  "dhole": "Dhole Stroll at Pench National Park, India.jpg",
-  "diable-de-tasmanie": "Tassy Devil.jpg",
   "dik-dik": "Tarangire Kirk-Dikdik3.jpg",
   "dindon": "Male wild turkey (Meleagris gallopavo) strutting.jpg",
   "dindon-ocelle": {
@@ -776,7 +770,13 @@
     "licence": "CC0 1.0",
     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
   },
-  "lemming": "Tunturisopuli Lemmus Lemmus.jpg",
+  "lemming": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/22672833/original.jpg",
+    "page": "https://www.inaturalist.org/photos/22672833",
+    "auteur": "Gonzalo Mucientes Sandoval",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "lemur-catta": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/302094730/original.jpeg",
     "page": "https://www.inaturalist.org/photos/302094730",
@@ -819,13 +819,7 @@
     "auteur": "ambquinn"
   },
   "lion-de-l-atlas": "African Lion Panthera leo Male Pittsburgh 2800px adjusted.jpg",
-  "loir": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/203605351/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/203605351",
-    "auteur": "Michael Barth",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  },
+  "loir": "Glis glis in Valea Drăganului 2022 04.jpg",
   "loris-lent": "Coucang.jpg",
   "loup": "Front view of a resting Canis lupus ssp.jpg",
   "loup-a-criniere": {
@@ -842,7 +836,7 @@
     "licence": "Licence Unsplash",
     "licenceUrl": "https://unsplash.com/license"
   },
-  "loup-d-ethiopie": "Canis simensis.jpg",
+  "loup-d-ethiopie": "Ethiopian wolf (Canis simensis citernii) 2.jpg",
   "loup-du-japon": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/13310507/original.jpeg",
     "page": "https://www.inaturalist.org/photos/13310507",
@@ -1373,13 +1367,7 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "porc-epic": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/335793264/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/335793264",
-    "auteur": "thierry_aebischer_chinko",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  },
+  "porc-epic": "Hystrix brachyura, Malayan porcupine - Khao Yai National Park.jpg",
   "protee": "RIJETKE ŽIVOTINJE U NP UNA.jpg",
   "protele": {
     "url": "https://cdn.pixabay.com/photo/2026/05/01/17/05/17-05-38-698_1280.jpg",
@@ -1505,7 +1493,7 @@
   "rhacophore": "Rhacophorus nigropalmatus 227261158.jpg",
   "rhinoceros-blanc": "White Rhinoceros Alert 2019-07-27.jpg",
   "rhinoceros-de-java-du-vietnam": "Lesser One Horned Rhinoceros Rhinoceros Sondaicus (53549614).jpeg",
-  "rhinoceros-de-sumatra": "Sumatran Rhinoceros at Sumatran Rhino Sanctuary Lampung Indonesia 2013.JPG",
+  "rhinoceros-de-sumatra": "Sumatran rhinoceros resting.jpg",
   "rhinoceros-indien": "Indian rhinoceros (Rhinoceros unicornis) 1.jpg",
   "rhinoceros-noir": {
     "url": "https://images.unsplash.com/photo-1772290950495-63d4a55f3aec?ixlib=rb-4.1.0&w=2400&q=90&fm=jpg",
@@ -1612,11 +1600,11 @@
   },
   "tamarin-lion": "Leontopithecus rosalia 56711057.jpg",
   "tapir": {
-    "url": "https://images.unsplash.com/photo-1558369529-e3b45bd1784e?ixlib=rb-4.1.0&w=2400&q=90&fm=jpg",
-    "page": "https://unsplash.com/photos/tDKIWqedgh8",
-    "auteur": "Dušan veverkolog",
-    "licence": "Licence Unsplash",
-    "licenceUrl": "https://unsplash.com/license"
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606004152/original.jpg",
+    "page": "https://www.inaturalist.org/photos/606004152",
+    "auteur": "Ana Laura Campioto",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "tapir-de-baird": "Baird's tapir (92141).jpg",
   "tardigrade": {
@@ -1724,5 +1712,8 @@
     "licenceUrl": "https://www.pexels.com/license/"
   },
   "yak": "Bos grunniens at Letdar on Annapurna Circuit.jpg",
-  "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg"
+  "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg",
+  "limule": "Overturned horseshoe crab on Plum Island (70116).jpg",
+  "dalmatien": "Dog park photos (14293239497).jpg",
+  "caniche": "The dog, summer 2020.jpg"
 }
