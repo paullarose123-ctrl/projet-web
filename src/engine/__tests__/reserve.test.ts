@@ -24,8 +24,11 @@ describe('Ma Réserve', () => {
     // les animaux domestiques et ceux qui vivent partout avec l'homme vont à la ferme
     expect(enclosFor(ATHLETES_BY_ID['husky'])).toBe('ferme');
     expect(enclosFor(ATHLETES_BY_ID['rat'])).toBe('ferme');
-    expect(canLiveIn(ATHLETES_BY_ID['vampire'], 'nocturne')).toBe(true);
-    expect(canLiveIn(ATHLETES_BY_ID['effraie'], 'nocturne')).toBe(false);
+    // la montagne a son enclos ; les animaux qui vivent sous terre vont dans celui de leur région
+    expect(enclosFor(ATHLETES_BY_ID['panthere-des-neiges'])).toBe('montagne');
+    expect(enclosFor(ATHLETES_BY_ID['bouquetin'])).toBe('montagne');
+    expect(enclosFor(ATHLETES_BY_ID['vampire'])).toBe('jungle');
+    expect(enclosFor(ATHLETES_BY_ID['taupe'])).toBe('foret');
     expect(canLiveIn(ATHLETES_BY_ID['lion'], 'banquise')).toBe(false);
   });
 

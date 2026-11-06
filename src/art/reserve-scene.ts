@@ -44,7 +44,7 @@ const GROUND: Record<EnclosId, string[]> = {
   banquise: [SN[2], SN[3], SN[4]],
   jungle: [FO[0], FO[1], FO[2]],
   aquarium: [AQ[1], AQ[2], AQ[3]],
-  nocturne: [NI[1], NI[2], NI[3]],
+  montagne: [NI[1], NI[2], NI[3]],
 };
 
 // ——— décor ———
@@ -282,18 +282,36 @@ function decor(c: Ctx, id: EnclosId, [x0, y0, x1, y1]: Box) {
       blit(c, ROCK, x0 + 20, y1 - 7);
       blit(c, ROCK, x1 - 14, y1 - 6);
       break;
-    case 'nocturne':
-      // maison nocturne : sol de grotte sous un clair de lune, une arche de pierre
-      blit(c, DARK_ROCK, x0 + 4, y0 + 4);
-      blit(c, DARK_ROCK, x1 - 12, y0 + 6);
-      blit(c, DARK_ROCK, x0 + 24, y1 - 8);
-      for (let k = 0; k < 14; k++) px(c, x0 + 2 + Math.floor(r() * 52), y0 + 3 + Math.floor(r() * 44), k % 3 ? '#4a4378' : '#8a84c8');
-      for (let x = x0 + 18; x <= x0 + 38; x++) {
-        const t = (x - (x0 + 28)) / 10;
-        const y = y0 + 3 + Math.round(t * t * 6);
-        rect(c, x, y, 1, 2, '#5a5478');
-      }
+    case 'montagne': {
+      // la montagne de nuit : sommets enneigés sous la lune, éboulis, sapins sombres et une cascade
+      for (let k = 0; k < 12; k++) px(c, x0 + 2 + Math.floor(r() * 52), y0 + 2 + Math.floor(r() * 10), k % 3 ? '#8a84c8' : '#f4f6f0');
+      rect(c, x1 - 13, y0 + 3, 4, 4, '#f4f6f0');
+      rect(c, x1 - 14, y0 + 4, 6, 2, '#f4f6f0');
+      px(c, x1 - 12, y0 + 4, '#c9c6e8');
+      const peak = (cx: number, top: number, half: number, body: string, shade: string) => {
+        for (let y = top; y <= y0 + 22; y++) {
+          const w = Math.round(((y - top) / (y0 + 22 - top)) * half);
+          rect(c, cx - w, y, w + 1, 1, body);
+          rect(c, cx + 1, y, w, 1, shade);
+          if (y - top < 4) {
+            rect(c, cx - w, y, w + 1, 1, '#eef2ee');
+            rect(c, cx + 1, y, w, 1, '#a9bfd0');
+          }
+        }
+      };
+      peak(x0 + 14, y0 + 5, 14, '#4a4f78', '#343a5c');
+      peak(x0 + 38, y0 + 2, 17, '#545a86', '#3b4166');
+      peak(x0 + 54, y0 + 9, 10, '#4a4f78', '#343a5c');
+      // la cascade qui descend des sommets
+      for (let y = y0 + 12; y < y0 + 30; y++) px(c, x0 + 30 + (y % 3 === 0 ? 1 : 0), y, y % 2 ? '#d8f0ee' : '#86bccb');
+      rect(c, x0 + 26, y0 + 30, 10, 2, '#3f8e9c');
+      rect(c, x0 + 27, y0 + 30, 8, 1, '#86bccb');
+      for (const dx of [2, 44]) blit(c, SNOWY_PINE, x0 + dx, y0 + 14, { shadow: true });
+      blit(c, DARK_ROCK, x0 + 8, y1 - 8);
+      blit(c, DARK_ROCK, x1 - 12, y1 - 10);
+      blit(c, DARK_ROCK, x0 + 40, y0 + 30);
       break;
+    }
   }
 }
 

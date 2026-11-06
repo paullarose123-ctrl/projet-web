@@ -23,7 +23,7 @@ export function reserveEnabled(): boolean {
   return true;
 }
 
-export type EnclosId = 'foret' | 'savane' | 'ferme' | 'marais' | 'banquise' | 'jungle' | 'aquarium' | 'nocturne';
+export type EnclosId = 'foret' | 'savane' | 'ferme' | 'marais' | 'banquise' | 'jungle' | 'aquarium' | 'montagne';
 
 export interface EnclosDef {
   id: EnclosId;
@@ -36,17 +36,27 @@ export interface EnclosDef {
 
 /** Les enclos, dans l'ordre où on les débloque. */
 export const ENCLOS: EnclosDef[] = [
-  { id: 'foret', name: 'Forêt', milieux: ['Forêt', 'Montagne'], price: 0 },
+  { id: 'foret', name: 'Forêt', milieux: ['Forêt'], price: 0 },
   { id: 'savane', name: 'Savane', milieux: ['Savane', 'Prairie', 'Désert'], price: 0 },
   { id: 'ferme', name: 'Ferme', milieux: ['Campagne', 'Ville', 'Partout'], price: 1_000 },
   { id: 'marais', name: 'Marais', milieux: ['Marais', 'Rivières'], price: 1_500 },
   { id: 'banquise', name: 'Banquise', milieux: ['Glaces'], price: 2_500 },
   { id: 'jungle', name: 'Jungle', milieux: ['Jungle', 'Îles'], price: 4_000 },
   { id: 'aquarium', name: 'Aquarium', milieux: ['Océan', 'Récif', 'Abysses', 'Côtes'], price: 6_000 },
-  { id: 'nocturne', name: 'Maison nocturne', milieux: ['Sous terre'], price: 10_000 },
+  { id: 'montagne', name: 'Montagne', milieux: ['Montagne'], price: 10_000 },
 ];
 
 export const ENCLOS_BY_ID = Object.fromEntries(ENCLOS.map((e) => [e.id, e])) as Record<EnclosId, EnclosDef>;
+
+/** Les animaux qui vivent sous terre rejoignent l'enclos de leur région. */
+const SOUS_TERRE: Record<string, EnclosId> = {
+  taupe: 'foret',
+  'rat-taupe-nu': 'savane',
+  vampire: 'jungle',
+  cecilie: 'jungle',
+  protee: 'marais',
+  'tetra-aveugle': 'marais',
+};
 
 /** Familles qui vivent dans l'eau de mer. */
 const MARINS: string[] = ['marins', 'requins', 'poissons', 'invertebres'];
@@ -112,6 +122,7 @@ export function enclosFor(athlete: Athlete): EnclosId | null {
   if (athlete.habitat || rarityOf(athlete).id === 'icone') return null;
   if (athlete.sport === 'ferme') return 'ferme';
   const milieu = milieuCourt(athlete);
+  if (milieu === 'Sous terre') return SOUS_TERRE[athlete.id.replace(/^mx-/, '')] ?? 'foret';
   // sur les côtes, les oiseaux et les autres animaux de rivage vont au marais ; les animaux marins à l'aquarium
   if (milieu === 'Côtes') return MARINS.includes(athlete.sport) ? 'aquarium' : 'marais';
   return ENCLOS.find((e) => e.milieux.includes(milieu))?.id ?? null;
