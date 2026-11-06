@@ -1,54 +1,92 @@
-import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../styles/fonts.css';
 import '../styles/base.css';
 import '../styles/app.css';
 import './reserve.css';
 import { BallIcon } from '../components/Balles';
-import { drawReserve, H, LION_AT, W, ZONES } from './reserve-pixel';
+import { Landscape, type SceneDef } from '../components/PackScene';
+import { ATHLETES_BY_ID } from '../data/athletes';
+import { rarityOf } from '../engine/cards';
+import { usePhoto } from '../photos';
+import { HERO_SCENE } from '../art/scenes';
 
-// Maquette de l'écran « Ma Réserve » (page de développement promo/reserve.html) : la réserve en pixel art, et autour
-// l'interface habituelle du jeu.
+// Maquette de l'écran « Ma Réserve » (page de développement promo/reserve.html), dans le langage du jeu : chaque enclos
+// est une affiche peinte comme les boosters, et les animaux installés y sont posés en médaillons photo, cerclés de la
+// couleur de leur rareté. Les enclos à débloquer restent dans l'ombre.
 
-const at = (x: number, y: number) => ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` });
+const SCENES: Record<string, SceneDef> = {
+  savane: {
+    kind: 'savane',
+    palette: { sky: ['#3b2d55', '#f4a35c'], sun: '#fff0cf', far: '#c48c5c', near: '#24160c', accent: '#f2c46b' },
+  },
+  banquise: {
+    kind: 'aurore',
+    palette: { sky: ['#071a2e', '#1d4f6e'], sun: '#f4fbff', far: '#7fa6c6', near: '#0b2236', accent: '#7ff0c1', accent2: '#b28cff' },
+  },
+  foret: {
+    kind: 'foret',
+    palette: { sky: ['#17333a', '#c7d58a'], sun: '#fff6d8', far: '#6b8f62', near: '#0b170f', accent: '#ffffff' },
+  },
+  lagon: {
+    kind: 'marais',
+    palette: { sky: ['#1b3b5c', '#f2a7a0'], sun: '#fff0dc', far: '#6f9a8a', near: '#0c1c18', accent: '#ff9fbf' },
+  },
+};
 
-function Scene() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current!.getContext('2d')!;
-    drawReserve(c);
-  }, []);
-  const label = (zone: keyof typeof ZONES, name: string, count: number) => (
-    <span className={`rsv-zone${ZONES[zone][0] > 60 ? ' is-right' : ''}`} style={ZONES[zone][0] > 60 ? { ...at(0, ZONES[zone][1]), left: 'auto', right: `${((W - ZONES[zone][2] + 3) / W) * 100}%` } : at(ZONES[zone][0] + 3, ZONES[zone][1])}>
-      {name} <b>{count}</b>
+function Medal({ id, gain }: { id: string; gain: number }) {
+  const athlete = ATHLETES_BY_ID[id];
+  const photo = usePhoto(athlete);
+  return (
+    <span className="rsv-medal" style={{ ['--ring' as string]: `var(--r-${rarityOf(athlete).id})` }} title={athlete.first}>
+      <span className="rsv-medal__photo">{photo.src && <img src={photo.src} alt="" />}</span>
+      <i>+{gain}</i>
     </span>
   );
-  const lock = (zone: keyof typeof ZONES, name: string, price: string) => {
-    const [x0, y0, x1, y1] = ZONES[zone];
-    return (
-      <span className="rsv-lock" style={at((x0 + x1) / 2, (y0 + y1) / 2 + 3)}>
-        <b>{name}</b>
-        <span>
-          <BallIcon /> {price}
-        </span>
-      </span>
-    );
-  };
+}
+
+function Enclos({ name, scene, seed, animals, places, perHour }: { name: string; scene: SceneDef; seed: string; animals: [string, number][]; places: number; perHour: number }) {
   return (
-    <div className="rsv-scene">
-      <canvas ref={ref} width={W} height={H} />
-      {label('banquise', 'Banquise', 5)}
-      {label('foret', 'Forêt', 2)}
-      {label('savane', 'Savane', 5)}
-      {label('lagon', 'Lagon', 5)}
-      {lock('montagne', 'Montagne', '2 500')}
-      {lock('jungle', 'Jungle', '5 000')}
-      <div className="rsv-bubble" style={at(LION_AT[0] + 11, LION_AT[1] - 7)}>
-        <b>Lion</b>
-        <span>+18 visiteurs/h</span>
-        <em>✓ bon milieu</em>
+    <section className="rsv-enclos">
+      <Landscape scene={scene} seed={seed} className="rsv-enclos__art" />
+      <header>
+        <h2>{name}</h2>
+        <span className="rsv-chip">
+          {animals.length}/{places}
+        </span>
+        <span className="rsv-chip rsv-chip--gain">
+          <BallIcon /> +{perHour}/h
+        </span>
+      </header>
+      <div className="rsv-enclos__animals">
+        {animals.map(([id, gain]) => (
+          <Medal key={id} id={id} gain={gain} />
+        ))}
+        {Array.from({ length: places - animals.length }, (_, k) => (
+          <span key={k} className="rsv-medal rsv-medal--empty">
+            <span className="rsv-medal__photo">+</span>
+          </span>
+        ))}
       </div>
-    </div>
+    </section>
+  );
+}
+
+function Locked({ name, scene, seed, price, hint }: { name: string; scene: SceneDef; seed: string; price: string; hint: string }) {
+  return (
+    <section className="rsv-enclos is-locked">
+      <Landscape scene={scene} seed={seed} className="rsv-enclos__art" />
+      <div className="rsv-locked">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x={5} y={10.5} width={14} height={10} rx={2.5} />
+          <path d="M8,10.5 V8 A4,4 0 0 1 16,8 V10.5" />
+        </svg>
+        <h2>{name}</h2>
+        <p>{hint}</p>
+        <button type="button" className="rsv-unlock">
+          Débloquer <BallIcon /> {price}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -57,7 +95,7 @@ function Maquette() {
     <div className="rsv">
       <header className="rsv-head">
         <div>
-          <p className="rsv-eyebrow">Niveau 4</p>
+          <p className="rsv-eyebrow">Niveau 4 · 17 animaux</p>
           <h1>Ma Réserve</h1>
         </div>
         <span className="rsv-balance">
@@ -66,16 +104,66 @@ function Maquette() {
       </header>
       <div className="rsv-stats">
         <span>
-          <b>17</b> animaux
-        </span>
-        <span>
-          <b>214</b> visiteurs/h
+          <b>214</b> visiteurs par heure
         </span>
         <button type="button" className="rsv-collect">
           Récolter <BallIcon /> +340
         </button>
       </div>
-      <Scene />
+      <div className="rsv-list">
+        <Enclos
+          name="Savane"
+          scene={SCENES.savane}
+          seed="reserve-savane"
+          animals={[
+            ['lion', 18],
+            ['girafe', 14],
+            ['elephant', 16],
+            ['zebre', 8],
+          ]}
+          places={5}
+          perHour={56}
+        />
+        <Enclos
+          name="Banquise"
+          scene={SCENES.banquise}
+          seed="reserve-banquise"
+          animals={[
+            ['ours-polaire', 22],
+            ['manchot-empereur', 12],
+            ['renard-polaire', 10],
+            ['phoque', 6],
+            ['harfang', 14],
+          ]}
+          places={5}
+          perHour={64}
+        />
+        <Enclos
+          name="Forêt"
+          scene={SCENES.foret}
+          seed="reserve-foret"
+          animals={[
+            ['panda', 20],
+            ['renard-roux', 6],
+            ['cerf', 8],
+          ]}
+          places={5}
+          perHour={34}
+        />
+        <Locked name="Montagne" scene={HERO_SCENE} seed="reserve-montagne" price="2 500" hint="Aigles, chamois, panthère des neiges…" />
+        <Enclos
+          name="Lagon"
+          scene={SCENES.lagon}
+          seed="reserve-lagon"
+          animals={[
+            ['flamant-rose', 9],
+            ['hippopotame', 12],
+            ['crocodile-du-nil', 11],
+          ]}
+          places={5}
+          perHour={32}
+        />
+      </div>
       <div className="rsv-actions">
         <button type="button" className="rsv-btn rsv-btn--main">
           <svg viewBox="0 0 24 24">
