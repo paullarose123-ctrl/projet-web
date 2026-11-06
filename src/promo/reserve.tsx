@@ -1,94 +1,49 @@
+import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../styles/fonts.css';
 import '../styles/base.css';
 import '../styles/app.css';
 import './reserve.css';
 import { BallIcon } from '../components/Balles';
-import { ATHLETES_BY_ID } from '../data/athletes';
-import { rarityOf } from '../engine/cards';
-import { usePhoto } from '../photos';
-import { MW, ReserveMap, ZONES } from './reserve-map';
+import { drawReserve, H, LION_AT, W, ZONES } from './reserve-pixel';
 
-// Maquette de l'écran « Ma Réserve » (page de développement promo/reserve.html) : le plan du parc vu de haut, dessiné
-// dans le langage des affiches du jeu (reserve-map.tsx), et les animaux installés posés dans leurs enclos en médaillons
-// photo, cerclés de la couleur de leur rareté. Les parcelles à débloquer restent sous les nuages.
+// Maquette de l'écran « Ma Réserve » (page de développement promo/reserve.html) : la réserve en pixel art, et autour
+// l'interface habituelle du jeu.
 
-function Medal({ id, gain, x, y }: { id: string; gain: number; x: number; y: number }) {
-  const athlete = ATHLETES_BY_ID[id];
-  const photo = usePhoto(athlete);
-  return (
-    <span className="rsv-medal" style={{ left: x, top: y, ['--ring' as string]: `var(--r-${rarityOf(athlete).id})` }} title={athlete.first}>
-      <span className="rsv-medal__photo">{photo.src && <img src={photo.src} alt="" />}</span>
-      <i>+{gain}</i>
-    </span>
-  );
-}
+const at = (x: number, y: number) => ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` });
 
-const ANIMALS: [string, number, number, number][] = [
-  // banquise
-  ['ours-polaire', 22, 46, 120],
-  ['renard-polaire', 10, 90, 152],
-  ['manchot-empereur', 12, 150, 150],
-  ['phoque', 6, 134, 98],
-  ['harfang', 14, 116, 50],
-  // forêt
-  ['panda', 20, 66, 262],
-  ['renard-roux', 6, 124, 300],
-  ['cerf', 8, 70, 340],
-  // savane
-  ['lion', 18, 242, 326],
-  ['girafe', 14, 330, 254],
-  ['elephant', 16, 300, 350],
-  ['zebre', 8, 352, 304],
-  // lagon
-  ['flamant-rose', 9, 48, 462],
-  ['hippopotame', 12, 104, 468],
-  ['crocodile-du-nil', 11, 152, 468],
-];
-
-function Zone({ zone, name, count }: { zone: keyof typeof ZONES; name: string; count: number }) {
-  const [x0, y0, x1] = ZONES[zone];
-  const right = x0 > MW / 2;
-  return (
-    <span className="rsv-zone" style={right ? { right: MW - x1 + 14, top: y0 } : { left: x0 + 14, top: y0 }}>
+function Scene() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current!.getContext('2d')!;
+    drawReserve(c);
+  }, []);
+  const label = (zone: keyof typeof ZONES, name: string, count: number) => (
+    <span className={`rsv-zone${ZONES[zone][0] > 60 ? ' is-right' : ''}`} style={ZONES[zone][0] > 60 ? { ...at(0, ZONES[zone][1]), left: 'auto', right: `${((W - ZONES[zone][2] + 3) / W) * 100}%` } : at(ZONES[zone][0] + 3, ZONES[zone][1])}>
       {name} <b>{count}</b>
     </span>
   );
-}
-
-function Lock({ zone, name, price }: { zone: keyof typeof ZONES; name: string; price: string }) {
-  const [x0, y0, x1, y1] = ZONES[zone];
-  return (
-    <span className="rsv-lock" style={{ left: (x0 + x1) / 2, top: (y0 + y1) / 2 }}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x={5} y={10.5} width={14} height={10} rx={2.5} />
-        <path d="M8,10.5 V8 A4,4 0 0 1 16,8 V10.5" />
-      </svg>
-      <b>{name}</b>
-      <span>
-        <BallIcon /> {price}
+  const lock = (zone: keyof typeof ZONES, name: string, price: string) => {
+    const [x0, y0, x1, y1] = ZONES[zone];
+    return (
+      <span className="rsv-lock" style={at((x0 + x1) / 2, (y0 + y1) / 2 + 3)}>
+        <b>{name}</b>
+        <span>
+          <BallIcon /> {price}
+        </span>
       </span>
-    </span>
-  );
-}
-
-function Plan() {
+    );
+  };
   return (
-    <div className="rsv-map">
-      <ReserveMap />
-      <Zone zone="banquise" name="Banquise" count={5} />
-      <Zone zone="foret" name="Forêt" count={3} />
-      <Zone zone="savane" name="Savane" count={4} />
-      <Zone zone="lagon" name="Lagon" count={3} />
-      <Lock zone="montagne" name="Montagne" price="2 500" />
-      <Lock zone="jungle" name="Jungle" price="5 000" />
-      {ANIMALS.map(([id, gain, x, y]) => (
-        <Medal key={id} id={id} gain={gain} x={x} y={y} />
-      ))}
-      <span className="rsv-medal rsv-medal--empty" style={{ left: 134, top: 352 }}>
-        <span className="rsv-medal__photo">+</span>
-      </span>
-      <div className="rsv-bubble" style={{ left: 242, top: 300 }}>
+    <div className="rsv-scene">
+      <canvas ref={ref} width={W} height={H} />
+      {label('banquise', 'Banquise', 5)}
+      {label('foret', 'Forêt', 2)}
+      {label('savane', 'Savane', 5)}
+      {label('lagon', 'Lagon', 5)}
+      {lock('montagne', 'Montagne', '2 500')}
+      {lock('jungle', 'Jungle', '5 000')}
+      <div className="rsv-bubble" style={at(LION_AT[0] + 11, LION_AT[1] - 7)}>
         <b>Lion</b>
         <span>+18 visiteurs/h</span>
         <em>✓ bon milieu</em>
@@ -102,7 +57,7 @@ function Maquette() {
     <div className="rsv">
       <header className="rsv-head">
         <div>
-          <p className="rsv-eyebrow">Niveau 4 · 17 animaux</p>
+          <p className="rsv-eyebrow">Niveau 4</p>
           <h1>Ma Réserve</h1>
         </div>
         <span className="rsv-balance">
@@ -111,13 +66,16 @@ function Maquette() {
       </header>
       <div className="rsv-stats">
         <span>
-          <b>214</b> visiteurs par heure
+          <b>17</b> animaux
+        </span>
+        <span>
+          <b>214</b> visiteurs/h
         </span>
         <button type="button" className="rsv-collect">
           Récolter <BallIcon /> +340
         </button>
       </div>
-      <Plan />
+      <Scene />
       <div className="rsv-actions">
         <button type="button" className="rsv-btn rsv-btn--main">
           <svg viewBox="0 0 24 24">
