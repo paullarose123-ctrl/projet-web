@@ -82,10 +82,10 @@ function Picker({ initial, onConfirm, onClose }: { initial: string[]; onConfirm:
         <p className="muted small">Touche jusqu’à {TEAM_SIZE} animaux : leur numéro donne l’ordre de l’équipe. Touche-les de nouveau pour les retirer.</p>
         <label className="field">
           <span className="visually-hidden">Rechercher</span>
-          <input type="search" placeholder="Rechercher dans ta réserve" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+          <input type="search" placeholder="Rechercher dans tes cartes" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
         </label>
         {cards.length === 0 ? (
-          <p className="muted">Aucune carte disponible. Ouvre des boosters pour agrandir ta réserve.</p>
+          <p className="muted">Aucune carte disponible. Ouvre des boosters pour agrandir ta collection.</p>
         ) : (
           <div className="card-grid">
             {cards.map((card) => {
@@ -208,7 +208,7 @@ function TeamBuilder() {
             <button type="button" className="btn btn--ghost btn--sm" onClick={clearTeam} disabled={!filled.length}>
               Vider l’équipe
             </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={autoTeam} disabled={!collection.length} title="Cinq animaux de ta réserve, tirés au hasard">
+            <button type="button" className="btn btn--ghost btn--sm" onClick={autoTeam} disabled={!collection.length} title="Cinq animaux de ta collection, tirés au hasard">
               Équipe au hasard
             </button>
             <button type="button" className="btn btn--primary btn--sm" onClick={() => setPicking(true)} disabled={!collection.length}>

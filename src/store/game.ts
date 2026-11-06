@@ -506,7 +506,7 @@ export const useGame = create<GameState>()(
               break;
             case 'expired':
               returned.push(event.listing.card);
-              pushToast('info', `Personne n’a acheté ${ATHLETES_BY_ID[event.listing.card.athleteId].last} : la carte revient dans ta réserve`);
+              pushToast('info', `Personne n’a acheté ${ATHLETES_BY_ID[event.listing.card.athleteId].last} : la carte revient dans tes cartes`);
               break;
             case 'outbid':
               balles += event.refund;
@@ -518,7 +518,7 @@ export const useGame = create<GameState>()(
               bought += 1;
               discovered[card.athleteId] = (discovered[card.athleteId] ?? 0) + 1;
               if (card.variant === 'prime') primesFound[card.athleteId] = (primesFound[card.athleteId] ?? 0) + 1;
-              pushToast('gold', `Enchère remportée : ${ATHLETES_BY_ID[event.card.athleteId].last} rejoint ta réserve`);
+              pushToast('gold', `Enchère remportée : ${ATHLETES_BY_ID[event.card.athleteId].last} rejoint tes cartes`);
               break;
             }
             case 'bid-on-mine':
@@ -662,7 +662,7 @@ export const useGame = create<GameState>()(
             watchlist: s.watchlist.filter((id) => id !== listingId),
             stats: { ...s.stats, cardsBought: s.stats.cardsBought + 1 },
           }));
-          pushToast('gold', `${ATHLETES_BY_ID[card.athleteId].last} rejoint ta réserve pour ${formatBalles(listing.buyNow)}`);
+          pushToast('gold', `${ATHLETES_BY_ID[card.athleteId].last} rejoint tes cartes pour ${formatBalles(listing.buyNow)}`);
           return true;
         },
 
@@ -930,11 +930,11 @@ export const useGame = create<GameState>()(
               onlineDone: done(s),
               stats: { ...s.stats, cardsBought: s.stats.cardsBought + 1 },
             }));
-            pushToast('gold', `${athlete.last} rejoint ta réserve pour ${formatBalles(listing.price)}`);
+            pushToast('gold', `${athlete.last} rejoint tes cartes pour ${formatBalles(listing.price)}`);
             return true;
           }
           set((s) => ({ collection: [...s.collection, card], onlineDone: done(s) }));
-          pushToast('info', listing.expired ? `${athlete.last} n’a pas trouvé preneur : la carte revient dans ta réserve` : `${athlete.last} est retiré du marché et revient dans ta réserve`);
+          pushToast('info', listing.expired ? `${athlete.last} n’a pas trouvé preneur : la carte revient dans tes cartes` : `${athlete.last} est retiré du marché et revient dans tes cartes`);
           return true;
         },
       };

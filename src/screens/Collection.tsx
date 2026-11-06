@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { reservedUids } from '../engine/reserve';
 import { useGame, formatBalles } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
@@ -43,6 +44,8 @@ function normalize(text: string): string {
 function Club() {
   const collection = useGame((s) => s.collection);
   const team = useGame((s) => s.team);
+  const reserve = useGame((s) => s.reserve);
+  const reserved = useMemo(() => reservedUids(reserve), [reserve]);
   const quickSell = useGame((s) => s.quickSell);
   const openDetail = useUi((s) => s.openDetail);
   const [query, setQuery] = useState('');
@@ -86,7 +89,8 @@ function Club() {
     return list;
   }, [collection, query, sport, rarity, serie, sort, dupesOnly]);
 
-  // doublons vendables : on garde toujours l'exemplaire le plus ancien, les cartes verrouillées et celles de l'équipe
+  // doublons vendables : on garde toujours un exemplaire (celui de la réserve, sinon le plus ancien), les cartes
+  // verrouillées, celles de l'équipe et celles installées dans la réserve
   const extraCopies = useMemo(() => {
     const byKey = new Map<string, OwnedCard[]>();
     for (const card of collection) {
@@ -96,16 +100,17 @@ function Club() {
     const extras: OwnedCard[] = [];
     for (const cards of byKey.values()) {
       const sorted = cards.slice().sort((a, b) => a.obtainedAt - b.obtainedAt);
-      for (const card of sorted.slice(1)) if (!card.locked && !team.includes(card.uid)) extras.push(card);
+      const keep = sorted.find((c) => reserved.has(c.uid)) ?? sorted[0];
+      for (const card of sorted) if (card !== keep && !card.locked && !team.includes(card.uid) && !reserved.has(card.uid)) extras.push(card);
     }
     return extras;
-  }, [collection, team]);
+  }, [collection, team, reserved]);
   const extrasValue = extraCopies.reduce((sum, c) => sum + quickSellValue(ATHLETES_BY_ID[c.athleteId], c.variant), 0);
 
   if (!collection.length) {
     return (
       <div className="empty">
-        <p>Ta réserve est vide pour l’instant.</p>
+        <p>Tu n’as encore aucune carte.</p>
         <p className="muted">Ouvre un booster gratuit pour accueillir tes premiers animaux.</p>
       </div>
     );
@@ -208,6 +213,7 @@ function Club() {
               <Card card={card} size="sm" tilt onClick={() => openDetail({ card })} />
               {group.cards.length > 1 && <span className="count-badge">×{group.cards.length}</span>}
               {group.cards.some((c) => team.includes(c.uid)) && <span className="team-badge">Équipe</span>}
+              {group.cards.some((c) => reserved.has(c.uid)) && <span className="team-badge team-badge--reserve">Réserve</span>}
               {group.cards.some((c) => c.locked) && (
                 <span className="lock-badge" aria-label="Verrouillée">
                   <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -378,7 +384,7 @@ export function CollectionScreen() {
         <SaisonHead seed="collection" />
         <div>
           <p className="eyebrow">Collection</p>
-          <h1>{view === 'club' ? 'Ma réserve' : view === 'album' ? 'Album' : 'Carte du monde'}</h1>
+          <h1>{view === 'club' ? 'Mes cartes' : view === 'album' ? 'Album' : 'Carte du monde'}</h1>
           <p className="muted">
             {collection.length} carte{collection.length > 1 ? 's' : ''} · {Object.keys(discovered).length} découvertes sur {releasedAthletes().length}
           </p>
@@ -388,7 +394,7 @@ export function CollectionScreen() {
             Album
           </button>
           <button type="button" role="tab" aria-selected={view === 'club'} className={view === 'club' ? 'is-active' : ''} onClick={() => setView('club')}>
-            Ma réserve
+            Mes cartes
           </button>
           <button type="button" role="tab" aria-selected={view === 'carte'} className={view === 'carte' ? 'is-active' : ''} onClick={() => setView('carte')}>
             Carte du monde

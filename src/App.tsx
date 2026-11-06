@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { useGame, MAX_FREE_PACKS } from './store/game';
+import { useGame, MAX_FREE_PACKS, reserveRateOf } from './store/game';
 import { useUi, type Tab } from './store/ui';
 import { useNow, formatDuration } from './hooks/useNow';
 import { Balles } from './components/Balles';
@@ -13,7 +13,7 @@ import { MatchScreen } from './screens/Match';
 import { ShopScreen } from './screens/Shop';
 import { ProfileScreen } from './screens/Profile';
 import { ReserveScreen } from './screens/Reserve';
-import { reserveEnabled } from './engine/reserve';
+import { billetterieFull, reserveEnabled } from './engine/reserve';
 import { useAccount } from './store/account';
 import { Avatar } from './components/Avatar';
 import { PackOpening } from './overlays/PackOpening';
@@ -170,6 +170,11 @@ function BottomNav() {
   const freePacks = useGame((s) => s.freePacks);
   const activeSales = useGame((s) => s.market.myListings.filter((l) => l.status !== 'active').length);
   const items = NAV.filter((item) => item.id !== 'reserve' || reserveEnabled());
+  // la réserve appelle le joueur : rien d'installé alors qu'il a des cartes, ou billetterie pleine
+  const reserveAlert = useGame((s) => {
+    const rate = reserveRateOf(s);
+    return rate === 0 ? s.collection.length > 0 : billetterieFull(s.reserve, rate, Date.now());
+  });
   return (
     <nav className="bottomnav" aria-label="Navigation principale" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
       {items.map((item) => (
@@ -188,6 +193,7 @@ function BottomNav() {
           </svg>
           <span>{item.label}</span>
           {item.id === 'boosters' && freePacks > 0 && <i className="badge">{freePacks}</i>}
+          {item.id === 'reserve' && reserveAlert && <i className="badge">!</i>}
           {item.id === 'mercato' && activeSales > 0 && <i className="badge badge--good">{activeSales}</i>}
         </button>
       ))}

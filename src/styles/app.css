@@ -1657,6 +1657,12 @@
   color: #08160e;
 }
 
+.team-badge--reserve {
+  top: 18px;
+  background: var(--honey);
+  color: #2b1d06;
+}
+
 .lock-badge {
   right: 4px;
   bottom: 18px;

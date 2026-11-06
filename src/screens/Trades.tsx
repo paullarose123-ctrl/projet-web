@@ -10,6 +10,7 @@ import type { CardFace, OwnedCard } from '../engine/types';
 import type { PublicProfile } from '../account/supabase';
 import type { Trade } from '../account/trades';
 import { Card } from '../components/Card';
+import { reservedUids } from '../engine/reserve';
 import { useNow, timeAgo } from '../hooks/useNow';
 
 // Échanges entre amis : proposer une de ses cartes contre une espèce de même rareté, et répondre aux propositions.
@@ -23,6 +24,7 @@ const label = (face: CardFace) => `${ATHLETES_BY_ID[face.athleteId]?.last ?? '?'
 /** Fenêtre d'échange avec un ami : 1. la carte que je propose, 2. l'espèce que je veux en retour (même rareté). */
 export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose: () => void }) {
   const collection = useGame((s) => s.collection);
+  const reserve = useGame((s) => s.reserve);
   const discovered = useGame((s) => s.discovered);
   const propose = useTrades((s) => s.propose);
   const [offer, setOffer] = useState<OwnedCard | null>(null);
@@ -35,7 +37,7 @@ export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose
     const seen = new Set<string>();
     const q = normalize(query.trim());
     return collection
-      .filter((c) => !c.locked && ATHLETES_BY_ID[c.athleteId])
+      .filter((c) => !c.locked && !reservedUids(reserve).has(c.uid) && ATHLETES_BY_ID[c.athleteId])
       .filter((c) => {
         const key = `${c.athleteId}:${c.variant}`;
         if (seen.has(key)) return false;
@@ -114,7 +116,7 @@ export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose
             <p className="muted small">
               {offer
                 ? `Choisis une espèce ${rarity?.name.toLowerCase()} en retour : un échange se fait toujours entre cartes de même rareté. Celles de sa vitrine sont en premier.`
-                : 'Choisis la carte que tu proposes. Elle quitte ta réserve le temps que ton ami réponde, et revient s’il refuse.'}
+                : 'Choisis la carte que tu proposes. Elle quitte tes cartes le temps que ton ami réponde, et revient s’il refuse.'}
             </p>
             <label className="field">
               <span className="visually-hidden">Chercher</span>
@@ -156,6 +158,7 @@ export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose
 
 function TradeRow({ trade, me }: { trade: Trade; me: string }) {
   const collection = useGame((s) => s.collection);
+  const reserve = useGame((s) => s.reserve);
   const openDetail = useUi((s) => s.openDetail);
   const accept = useTrades((s) => s.accept);
   const decline = useTrades((s) => s.decline);
@@ -165,7 +168,7 @@ function TradeRow({ trade, me }: { trade: Trade; me: string }) {
   const received = trade.toId === me;
   const other = received ? trade.from : trade.to;
   const want: CardFace = trade.given ?? { athleteId: trade.wantId, variant: 'base' };
-  const canGive = received && !!copyToGive(collection, trade.wantId);
+  const canGive = received && !!copyToGive(collection, trade.wantId, reservedUids(reserve));
 
   let status: string;
   if (trade.status === 'pending') status = received ? `${other} te propose` : `En attente de ${other}`;

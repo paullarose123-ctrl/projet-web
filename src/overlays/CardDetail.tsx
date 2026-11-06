@@ -105,7 +105,7 @@ function OnlineSellForm({ card, onDone }: { card: OwnedCard; onDone: () => void 
         ))}
       </fieldset>
       <p className="sell-form__net">
-        À la vente, tu touches <Balles value={netAfterTax(price || 0)} /> (taxe du marché {Math.round(MARKET_TAX * 100)} %). Si personne ne l’achète, elle revient dans ta réserve.
+        À la vente, tu touches <Balles value={netAfterTax(price || 0)} /> (taxe du marché {Math.round(MARKET_TAX * 100)} %). Si personne ne l’achète, elle revient dans tes cartes.
       </p>
       {invalid && (
         <p className="error-text" role="alert">
