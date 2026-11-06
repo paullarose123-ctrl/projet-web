@@ -457,7 +457,6 @@ const CURATED: Athlete[] = [
   x('triton-crete', 'Triton crêté', 'amphibiens', 'amphibien-etrange', 'Mares', 'FR', 36, 52, 'Au printemps, le mâle arbore une crête dentelée.', L('Triturus cristatus')),
   x('protee', 'Protée anguillard', 'amphibiens', 'amphibien-etrange', 'Grottes', 'SI', 30, 56, 'Aveugle, il vit dans les grottes et peut rester des années sans manger.', L('Proteus anguinus')),
   x('rhacophore', 'Grenouille volante', 'amphibiens', 'amphibien-sauteur', 'Forêt tropicale', 'MY', 26, 56, 'Plane d’arbre en arbre grâce à ses grandes pattes palmées.', L('Rhacophorus nigropalmatus')),
-  x('pipa', 'Pipa', 'amphibiens', 'amphibien-etrange', 'Mares d’Amazonie', 'BR', 24, 50, 'Les petits se développent dans le dos de leur mère et en sortent comme par de petites fenêtres.', L('Pipa pipa')),
   x('cecilie', 'Cécilie', 'amphibiens', 'amphibien-etrange', 'Sous terre', 'CM', 22, 50, 'Un amphibien sans pattes qui ressemble à un ver géant.', L('Gymnophiona')),
 
   // ───────────────────────── INSECTES & ARAIGNÉES ─────────────────────────

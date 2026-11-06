@@ -365,7 +365,6 @@ export const MESURES: Record<string, Mesure> = {
   'triton-crete': [0.01, 0.16, 'L', 15],
   protee: [0.02, 0.3, 'L', 100],
   rhacophore: [0.04, 0.1, 'L', 5],
-  pipa: [0.2, 0.17, 'L', 8],
   cecilie: [0.1, 0.5, 'L', 10],
 
   // insectes et araignées
