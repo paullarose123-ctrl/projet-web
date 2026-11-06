@@ -16,7 +16,22 @@ function Scene() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const c = ref.current!.getContext('2d')!;
-    drawReserve(c);
+    // la réserve vit : une image par rafraîchissement ; ?t=… fige un instant (captures)
+    const fixed = new URLSearchParams(location.search).get('t');
+    const capture = window as unknown as { reserveAt?: (t: number) => void };
+    capture.reserveAt = (t) => drawReserve(c, t);
+    if (fixed !== null) {
+      drawReserve(c, Number(fixed));
+      return;
+    }
+    let frame = 0;
+    const start = performance.now();
+    const loop = (now: number) => {
+      drawReserve(c, (now - start) / 1000);
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
   }, []);
   const label = (zone: keyof typeof ZONES, name: string, count: number) => (
     <span className={`rsv-zone${ZONES[zone][0] > 60 ? ' is-right' : ''}`} style={ZONES[zone][0] > 60 ? { ...at(0, ZONES[zone][1]), left: 'auto', right: `${((W - ZONES[zone][2] + 3) / W) * 100}%` } : at(ZONES[zone][0] + 3, ZONES[zone][1])}>
