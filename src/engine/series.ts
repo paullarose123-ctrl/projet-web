@@ -40,6 +40,11 @@ export const SERIES_LIST: SerieDef[] = [
 /** Version de développement, de test ou d'aperçu : les séries à venir sont déjà ouvertes. */
 let EARLY = import.meta.env.DEV || import.meta.env.MODE === 'single' || import.meta.env.MODE === 'apercu';
 
+/** Version de développement, de test ou d'aperçu ? (les nouveautés y arrivent en premier) */
+export function earlyAccess(): boolean {
+  return EARLY;
+}
+
 /** Pour les tests : se placer comme sur le site public, où les séries sortent à leur date. */
 export function setEarlyAccessForTesting(on: boolean): void {
   EARLY = on;
