@@ -36,21 +36,6 @@ interface CardProps {
   style?: CSSProperties;
   /** affiche la carte dans le style d'une autre série (maquettes des séries à venir) */
   serie?: number;
-  /** ce que porte l'onglet en haut à gauche (maquette des choix) */
-  notch?: Notch;
-}
-
-type Notch = 'gems' | 'logo' | 'patte';
-
-/** Nombre de losanges de rareté dans l'onglet, de la commune (1) à la légendaire (5). */
-const GEMS: Record<string, number> = { commune: 1, 'peu-commune': 2, rare: 3, epique: 4, legendaire: 5 };
-
-/** L'onglet en haut à gauche de la carte : les losanges de sa rareté, ou un emblème. */
-function NotchMark({ kind, rarity }: { kind: Notch; rarity: string }) {
-  if (kind === 'logo') return <span className="card__notch-logo" />;
-  if (kind === 'patte') return <span className="card__notch-paw" />;
-  const n = GEMS[rarity];
-  return <span className={`card__gems metal-text gems-${n ?? 'icone'}`}>{n ? '◆'.repeat(n) : '✦'}</span>;
 }
 
 /** Taille du nom : le serif est plus large qu'une police condensée, on réduit pour les noms longs. */
@@ -63,6 +48,8 @@ const PANEL =
   'M6.8 2.6 H93.2 Q96.4 2.6 96.4 5.8 V133.8 Q96.4 137 93.2 137 H6.8 Q3.6 137 3.6 133.8 V5.8 Q3.6 2.6 6.8 2.6 Z';
 const WINDOW =
   'M9.4 14 Q9.4 11.2 12.2 11.2 H21.5 C25.8 11.2 26.4 4.6 31 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
+/** Contour gravé dans l'onglet en haut à gauche : il en suit la forme, en retrait. */
+const NOTCH = 'M8.1 5 H25.6 C22.4 5 23 9.8 19.9 9.8 H8.1 Q6.3 9.8 6.3 8 V6.8 Q6.3 5 8.1 5 Z';
 const PLATE = 'M20 128.2 H92.4 Q94.2 128.2 94.2 130 V133 Q94.2 134.8 92.4 134.8 H20 Z';
 
 // Cadre des cartes du Mexique : les mêmes pièces, taillées en gradins comme les pyramides (coins à degrés, onglet
@@ -100,6 +87,7 @@ const MX = {
   banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
   rail: `${crenelLine(24, 36)} ${crenelLine(70, 80.4)} ${crenelLine(91.6, 105)}`,
   diamond: steppedDiamond(6.5, 86, 0.5),
+  notch: 'M6.3 6.8 H7.2 V5.9 H8.1 V5 H24.2 V7.7 H21.2 V9.9 H8.1 V9 H7.2 V8.1 H6.3 Z',
 };
 
 // Glaçons de l'hiver (Série 3), pendus sous le haut du cadre, au-dessus de la photo.
@@ -127,6 +115,7 @@ function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: 
         <path className="card__trim" d={MX.panel} />
         <path className="card__trim card__trim--thin" d={MX.thin} />
         <path className="card__trim card__trim--window" d={MX.window} />
+        <path className="card__trim card__trim--notch" d={MX.notch} />
         <path className="card__trim card__trim--thin" d={MX.banner} />
         <path className="card__trim" d={MX.plate} />
         <g className="card__rail">
@@ -142,6 +131,7 @@ function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: 
       <path className="card__trim" d={PANEL} />
       <rect className="card__trim card__trim--thin" x="4.7" y="3.7" width="90.6" height="132.2" rx="2.4" />
       <path className="card__trim card__trim--window" d={WINDOW} />
+      <path className="card__trim card__trim--notch" d={NOTCH} />
       <rect className="card__trim card__trim--thin" x="25.5" y="117.6" width="68.7" height="9.2" rx="1.2" />
       <path className="card__trim" d={PLATE} />
       {hiver && <path className="card__icicles" d={ICICLES} />}
@@ -244,7 +234,7 @@ function Greca() {
   );
 }
 
-export const Card = memo(function Card({ card, size = 'md', tilt = false, locked = false, hideFacts = false, onClick, className = '', style, serie, notch = 'gems' }: CardProps) {
+export const Card = memo(function Card({ card, size = 'md', tilt = false, locked = false, hideFacts = false, onClick, className = '', style, serie }: CardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -380,10 +370,6 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
 
           <Frame mexique={mexique} hiver={hiver} />
           <div className="card__hills" aria-hidden="true" />
-
-          <div className="card__notch" aria-hidden="true">
-            <NotchMark kind={notch} rarity={rarity.id} />
-          </div>
 
           <div className="card__badge">
             <span className="card__tier" style={tier.length > 7 ? { fontSize: `${(0.86 * 6.6) / tier.length}em` } : undefined}>

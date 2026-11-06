@@ -6,7 +6,7 @@ import '../styles/app.css';
 import { Card } from '../components/Card';
 import type { CardFace } from '../engine/types';
 
-// Maquette (page de développement promo/encoche.html) : trois façons de remplir l'onglet en haut à gauche des cartes.
+// Maquette (page de développement promo/encoche.html) : le contour gravé dans l'onglet en haut à gauche des cartes.
 
 const CARDS: CardFace[] = [
   { athleteId: 'souris', variant: 'base' },
@@ -17,23 +17,17 @@ const CARDS: CardFace[] = [
   { athleteId: 'mx-axolotl', variant: 'prime' },
 ];
 
-const ROWS = [
-  ['A · Losanges de rareté (1 commune → 5 légendaire)', 'gems'],
-  ['B · Feuille du logo', 'logo'],
-  ['C · Empreinte de patte', 'patte'],
-] as const;
-
 createRoot(document.getElementById('root')!).render(
   <div style={{ padding: 24, display: 'grid', gap: 22, color: 'var(--text)' }}>
-    {ROWS.map(([title, notch]) => (
-      <section key={notch} style={{ display: 'grid', gap: 10 }}>
-        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 400 }}>{title}</h2>
-        <div style={{ display: 'flex', gap: 14 }}>
-          {CARDS.map((c) => (
-            <Card key={c.athleteId} card={c} size="sm" notch={notch} />
-          ))}
-        </div>
-      </section>
-    ))}
+    <div style={{ display: 'flex', gap: 14 }}>
+      {CARDS.map((c) => (
+        <Card key={c.athleteId} card={c} size="sm" />
+      ))}
+    </div>
+    <div style={{ display: 'flex', gap: 18 }}>
+      {CARDS.slice(3).map((c) => (
+        <Card key={c.athleteId} card={c} size="md" />
+      ))}
+    </div>
   </div>,
 );
