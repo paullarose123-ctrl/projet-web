@@ -703,13 +703,7 @@
     "auteur": "Wildfaces"
   },
   "hippopotame": "Hippo (Hippopotamus amphibius) head in water.jpg",
-  "hippopotame-nain": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/604021616/original.jpg",
-    "page": "https://www.inaturalist.org/photos/604021616",
-    "auteur": "leekelai",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  },
+  "hippopotame-nain": "Pygmy hippo display.jpg",
   "hirondelle": "Barn swallow in Montezuma (14460).jpg",
   "homard": "Homarus gammarus 03.JPG",
   "hyene": "Hiena manchada (Crocuta crocuta), parque nacional de Tarangire, Tanzania, 2024-05-25, DD 24.jpg",

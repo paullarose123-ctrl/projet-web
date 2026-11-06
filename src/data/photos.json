@@ -2673,11 +2673,11 @@
  "hippopotame-nain": {
   "file": "hippopotame-nain.webp",
   "cutout": false,
-  "author": "leekelai",
-  "license": "CC BY-NC 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/604021616",
-  "v": "64545027"
+  "author": "DoctorCondor",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Pygmy_hippo_display.jpg",
+  "v": "a00f281d"
  },
  "hirondelle": {
   "file": "hirondelle.webp",
