@@ -713,27 +713,11 @@
 }
 
 /* onglet : code de l'espèce */
-.card__code {
-  position: absolute;
-  left: 4.4%;
-  top: 2.5%;
-  width: 21%;
-  height: 5.6%;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-card);
-  font-weight: 700;
-  font-size: 1.95em;
-  line-height: 0.85;
-  letter-spacing: 0.04em;
-  z-index: 2;
-}
-
 /* ─── pastille de note ─── */
 .card__badge {
   position: absolute;
   left: 11.2%;
-  top: 10.2%;
+  top: 4.8%;
   width: 19.5%;
   display: grid;
   justify-items: center;
@@ -1118,10 +1102,6 @@
 
 .card.is-tiny .card__rating b {
   font-size: 2em;
-}
-
-.card.is-tiny .card__code {
-  font-size: 2.15em;
 }
 
 /* ─── album : carte pas encore obtenue ─── */
