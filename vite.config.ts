@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: mode === 'single' ? 'dist-single' : mode === 'apercu' ? 'dist/apercu' : 'dist',
     assetsInlineLimit: mode === 'single' ? 100_000_000 : 4096,
+    // l'aperçu publie aussi les maquettes de la Réserve, pour les essayer sur téléphone
+    ...(mode === 'apercu' ? { rollupOptions: { input: { index: 'index.html', reserve: 'promo/reserve.html', animaux: 'promo/reserve-sprites.html' } } } : {}),
   },
   test: {
     environment: 'node',
