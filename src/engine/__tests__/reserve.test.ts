@@ -18,11 +18,14 @@ describe('Ma Réserve', () => {
 
   it('laisse dehors les Habitats et les Icônes, et case toutes les autres espèces', () => {
     expect(enclosFor(ATHLETES_BY_ID['habitat-serengeti'])).toBeNull();
-    // chaque enclos a de quoi se remplir (au moins MAX_PLACES espèces)
-    for (const e of ENCLOS) expect(ATHLETES.filter((a) => canLiveIn(a, e.id)).length).toBeGreaterThanOrEqual(8);
-    // les animaux domestiques vont à la ferme, les animaux de nuit aussi à la maison nocturne
+    // chaque enclos a de quoi se remplir (au moins MAX_PLACES espèces), et chaque espèce n'a qu'un enclos
+    for (const e of ENCLOS) expect(ATHLETES.filter((a) => canLiveIn(a, e.id)).length).toBeGreaterThanOrEqual(MAX_PLACES);
+    for (const a of ATHLETES) expect(ENCLOS.filter((e) => canLiveIn(a, e.id)).length).toBeLessThanOrEqual(1);
+    // les animaux domestiques et ceux qui vivent partout avec l'homme vont à la ferme
     expect(enclosFor(ATHLETES_BY_ID['husky'])).toBe('ferme');
+    expect(enclosFor(ATHLETES_BY_ID['rat'])).toBe('ferme');
     expect(canLiveIn(ATHLETES_BY_ID['vampire'], 'nocturne')).toBe(true);
+    expect(canLiveIn(ATHLETES_BY_ID['effraie'], 'nocturne')).toBe(false);
     expect(canLiveIn(ATHLETES_BY_ID['lion'], 'banquise')).toBe(false);
   });
 

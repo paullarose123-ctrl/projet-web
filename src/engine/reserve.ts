@@ -1,7 +1,6 @@
 import type { Athlete, CardFace, RarityId } from './types';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { milieuCourt } from '../data/milieux';
-import { encyclopedieOf } from '../data/encyclopedie';
 import { rarityOf } from './cards';
 
 // Ma Réserve : le joueur installe ses animaux dans des enclos, un par milieu de vie, et ils attirent des visiteurs.
@@ -10,9 +9,9 @@ import { rarityOf } from './cards';
 // de niveau.
 //
 // Règles :
-// - une seule carte par espèce dans toute la réserve, et seulement dans l'enclos de son milieu (milieuCourt) ;
-//   les animaux domestiques (famille Ferme & compagnie) vont à la Ferme, les espèces qui vivent « partout » dans
-//   n'importe quel enclos, et les espèces de nuit peuvent aussi aller dans la Maison nocturne ;
+// - une seule carte par espèce dans toute la réserve, et seulement dans l'enclos de son milieu (milieuCourt), sans
+//   exception ; les animaux domestiques (famille Ferme & compagnie) et ceux qui vivent « partout » avec l'homme (rat,
+//   moineau, fourmi…) vont à la Ferme ;
 // - les Habitats (cartes de paysage) et les Icônes (espèces disparues) n'y entrent pas ;
 // - une carte installée ne peut être ni vendue, ni mise au marché, ni échangée (il faut d'abord la retirer) ;
 // - visiteurs par heure selon la rareté, +50 % pour une carte Reverse ou Prime, +20 % pour chaque animal d'une
@@ -39,7 +38,7 @@ export interface EnclosDef {
 export const ENCLOS: EnclosDef[] = [
   { id: 'foret', name: 'Forêt', milieux: ['Forêt', 'Montagne'], price: 0 },
   { id: 'savane', name: 'Savane', milieux: ['Savane', 'Prairie', 'Désert'], price: 0 },
-  { id: 'ferme', name: 'Ferme', milieux: ['Campagne', 'Ville'], price: 1_000 },
+  { id: 'ferme', name: 'Ferme', milieux: ['Campagne', 'Ville', 'Partout'], price: 1_000 },
   { id: 'marais', name: 'Marais', milieux: ['Marais', 'Rivières'], price: 1_500 },
   { id: 'banquise', name: 'Banquise', milieux: ['Glaces'], price: 2_500 },
   { id: 'jungle', name: 'Jungle', milieux: ['Jungle', 'Îles'], price: 4_000 },
@@ -52,8 +51,6 @@ export const ENCLOS_BY_ID = Object.fromEntries(ENCLOS.map((e) => [e.id, e])) as 
 /** Familles qui vivent dans l'eau de mer. */
 const MARINS: string[] = ['marins', 'requins', 'poissons', 'invertebres'];
 
-/** Milieux des espèces qui peuvent aller dans n'importe quel enclos. */
-const JOKERS = ['Partout', 'Nature'];
 
 export const START_PLACES = 3;
 export const MAX_PLACES = 5;
@@ -111,20 +108,18 @@ export function emptyReserve(now: number): ReserveState {
 }
 
 /** L'espèce peut-elle vivre dans la réserve, et dans quel enclos ? (null : nulle part) */
-export function enclosFor(athlete: Athlete): EnclosId | 'partout' | null {
+export function enclosFor(athlete: Athlete): EnclosId | null {
   if (athlete.habitat || rarityOf(athlete).id === 'icone') return null;
   if (athlete.sport === 'ferme') return 'ferme';
   const milieu = milieuCourt(athlete);
-  if (JOKERS.includes(milieu)) return 'partout';
   // sur les côtes, les oiseaux et les autres animaux de rivage vont au marais ; les animaux marins à l'aquarium
   if (milieu === 'Côtes') return MARINS.includes(athlete.sport) ? 'aquarium' : 'marais';
-  return ENCLOS.find((e) => e.milieux.includes(milieu))?.id ?? 'partout';
+  return ENCLOS.find((e) => e.milieux.includes(milieu))?.id ?? null;
 }
 
+/** L'espèce vit-elle dans le milieu de cet enclos ? (un seul enclos possible par espèce) */
 export function canLiveIn(athlete: Athlete, enclos: EnclosId): boolean {
-  const home = enclosFor(athlete);
-  if (!home) return false;
-  return home === 'partout' || home === enclos || (enclos === 'nocturne' && encyclopedieOf(athlete.id)?.rythme === 'nuit');
+  return enclosFor(athlete) === enclos;
 }
 
 /** Visiteurs par heure d'une carte seule (sans le bonus de groupe). */
