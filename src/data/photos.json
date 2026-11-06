@@ -2664,11 +2664,11 @@
  "hippopotame": {
   "file": "hippopotame.webp",
   "cutout": false,
-  "author": "Emmy Shingiro",
-  "license": "Licence Unsplash",
-  "licenseUrl": "https://unsplash.com/license",
-  "page": "https://unsplash.com/photos/Fb0k8nC_6j4",
-  "v": "4fa4c9ad"
+  "author": "Charles J. Sharp",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Hippo_(Hippopotamus_amphibius)_head_in_water.jpg",
+  "v": "908dddb1"
  },
  "hippopotame-nain": {
   "file": "hippopotame-nain.webp",
