@@ -712,12 +712,74 @@
   filter: drop-shadow(0 0.06em 0 var(--metal-edge)) drop-shadow(0 0.1em 0.12em rgba(0, 0, 0, 0.55));
 }
 
+/* onglet en haut à gauche : les losanges de rareté (ou un emblème) */
+.card__notch {
+  position: absolute;
+  left: 4.4%;
+  top: 2.5%;
+  width: 21%;
+  height: 5.6%;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+.card__gems {
+  font-size: 1.12em;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.card__gems.gems-1 {
+  font-size: 2.1em;
+}
+
+.card__gems.gems-2 {
+  font-size: 1.85em;
+}
+
+.card__gems.gems-3 {
+  font-size: 1.6em;
+}
+
+.card__gems.gems-4 {
+  font-size: 1.3em;
+}
+
+.card__gems.gems-icone {
+  font-size: 2.3em;
+}
+
+.card__notch-logo,
+.card__notch-paw {
+  display: block;
+  background: var(--metal);
+  filter: drop-shadow(0 0.06em 0 var(--metal-edge)) drop-shadow(0 0.1em 0.12em rgba(0, 0, 0, 0.55));
+}
+
+/* la feuille du logo */
+.card__notch-logo {
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 0 1.9em 0 1.9em;
+  transform: rotate(-12deg);
+}
+
+/* l'empreinte de patte */
+.card__notch-paw {
+  width: 2.4em;
+  height: 2.4em;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cellipse cx='10' cy='13.2' rx='4.2' ry='3.5'/%3E%3Cellipse cx='4.4' cy='8.4' rx='1.8' ry='2.3' transform='rotate(-20 4.4 8.4)'/%3E%3Cellipse cx='8' cy='5.4' rx='1.8' ry='2.4' transform='rotate(-6 8 5.4)'/%3E%3Cellipse cx='12' cy='5.4' rx='1.8' ry='2.4' transform='rotate(6 12 5.4)'/%3E%3Cellipse cx='15.6' cy='8.4' rx='1.8' ry='2.3' transform='rotate(20 15.6 8.4)'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cellipse cx='10' cy='13.2' rx='4.2' ry='3.5'/%3E%3Cellipse cx='4.4' cy='8.4' rx='1.8' ry='2.3' transform='rotate(-20 4.4 8.4)'/%3E%3Cellipse cx='8' cy='5.4' rx='1.8' ry='2.4' transform='rotate(-6 8 5.4)'/%3E%3Cellipse cx='12' cy='5.4' rx='1.8' ry='2.4' transform='rotate(6 12 5.4)'/%3E%3Cellipse cx='15.6' cy='8.4' rx='1.8' ry='2.3' transform='rotate(20 15.6 8.4)'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 /* onglet : code de l'espèce */
 /* ─── pastille de note ─── */
 .card__badge {
   position: absolute;
   left: 11.2%;
-  top: 4.8%;
+  top: 10.2%;
   width: 19.5%;
   display: grid;
   justify-items: center;
