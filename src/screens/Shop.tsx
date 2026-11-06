@@ -104,10 +104,7 @@ function PackTile({ pack }: { pack: PackDef }) {
       <div className="pack-tile__body">
         <h3>{pack.name}</h3>
         {mexique && (
-          <p className="series-mix">
-            <span className="series-mix__flag" aria-hidden="true" />
-            Série 1 + Série 2 · Mexique
-          </p>
+          <p className="series-mix">Toutes les séries</p>
         )}
         <p className="muted small">{pack.tagline}</p>
         <Odds pack={pack} mexique={mexique} />

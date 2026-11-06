@@ -942,7 +942,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 16,
+      version: 17,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1031,6 +1031,16 @@ export const useGame = create<GameState>()(
         }
         // version 16 : Ma Réserve (forêt et savane ouvertes, rien d'installé)
         if (version < 16 || !state.reserve) state.reserve = emptyReserve(Date.now());
+        // version 17 : 5 places au plus par enclos (8 avant) ; les places en trop sont remboursées et les derniers
+        // animaux installés en trop retournent dans la collection
+        if (version < 17) {
+          for (const enclos of Object.values(state.reserve.enclos)) {
+            if (!enclos || enclos.places <= MAX_PLACES) continue;
+            for (let p = MAX_PLACES; p < enclos.places; p++) state.balles += placePrice(p);
+            enclos.places = MAX_PLACES;
+            enclos.uids = enclos.uids.slice(0, MAX_PLACES);
+          }
+        }
         return state;
       },
       partialize: (state) => {
