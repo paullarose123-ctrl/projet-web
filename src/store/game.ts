@@ -942,7 +942,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 17,
+      version: 18,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1039,6 +1039,18 @@ export const useGame = create<GameState>()(
             for (let p = MAX_PLACES; p < enclos.places; p++) state.balles += placePrice(p);
             enclos.places = MAX_PLACES;
             enclos.uids = enclos.uids.slice(0, MAX_PLACES);
+          }
+        }
+        // version 18 : chaque enclos n'accueille plus que les animaux de ses milieux (fin des espèces « partout » dans
+        // tous les enclos et des animaux de nuit dans la Maison nocturne) : les autres retournent dans la collection
+        if (version < 18) {
+          const byUid = new Map(state.collection.map((card) => [card.uid, card]));
+          for (const [id, enclos] of Object.entries(state.reserve.enclos)) {
+            if (!enclos) continue;
+            enclos.uids = enclos.uids.filter((uid) => {
+              const athlete = ATHLETES_BY_ID[byUid.get(uid)?.athleteId ?? ''];
+              return !!athlete && canLiveIn(athlete, id as EnclosId);
+            });
           }
         }
         return state;
