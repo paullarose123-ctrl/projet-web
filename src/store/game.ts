@@ -22,6 +22,19 @@ import { TEAM_SIZE, autoTeamFrom, canDuel, createDuel, duelResult, playDuelRound
 import { makeUid } from '../engine/random';
 import { divisionName } from '../engine/divisions';
 import { newBadges } from '../engine/badges';
+import {
+  ENCLOS_BY_ID,
+  MAX_PLACES,
+  START_PLACES,
+  billetterie,
+  canLiveIn,
+  emptyReserve,
+  placePrice,
+  reserveRate,
+  reservedUids,
+  type EnclosId,
+  type ReserveState,
+} from '../engine/reserve';
 
 /** un booster gratuit par heure */
 export const FREE_PACK_INTERVAL = 60 * 60_000;
@@ -186,6 +199,8 @@ export interface GameState {
   avatar: string;
   /** badges de collection : famille complétée → date d'obtention (gardés même si la famille s'agrandit) */
   badges: Record<string, number>;
+  /** Ma Réserve : enclos, animaux installés et billetterie (voir engine/reserve.ts) */
+  reserve: ReserveState;
   opening: Opening | null;
   toasts: Toast[];
 
@@ -215,6 +230,14 @@ export interface GameState {
   finishLiveDuel: (id: string, result: 'win' | 'draw' | 'loss', opponent: string) => void;
   abandonMatch: () => void;
   toggleLock: (uid: string) => void;
+  /** installe une carte dans un enclos de la réserve (une par espèce, dans son milieu, s'il reste une place) */
+  reserveInstall: (enclos: EnclosId, uid: string) => boolean;
+  /** retire une carte de la réserve (elle redevient vendable et échangeable) */
+  reserveRemove: (uid: string) => void;
+  /** récolte la billetterie : les crédits des visiteurs ; renvoie le montant */
+  reserveCollect: (now?: number) => number;
+  reserveUnlock: (enclos: EnclosId) => boolean;
+  reserveBuyPlace: (enclos: EnclosId) => boolean;
   setFavorite: (slot: number, uid: string | null) => void;
   setAvatar: (athleteId: string) => void;
   claimObjective: (id: string) => void;
@@ -310,9 +333,21 @@ function initialState(now: number) {
     favorites: [] as string[],
     avatar: '',
     badges: {} as Record<string, number>,
+    reserve: emptyReserve(now),
     opening: null as Opening | null,
     toasts: [] as Toast[],
   };
+}
+
+/** Visiteurs par heure de la réserve, d'après les cartes encore dans la collection. */
+export function reserveRateOf(state: Pick<GameState, 'reserve' | 'collection'>): number {
+  const byUid = new Map(state.collection.map((c) => [c.uid, c]));
+  return reserveRate(state.reserve, (uid) => byUid.get(uid));
+}
+
+/** La billetterie compte ce qui est dû au rythme actuel, avant que ce rythme change. */
+function bankReserve(state: Pick<GameState, 'reserve' | 'collection'>, now: number): ReserveState {
+  return { ...state.reserve, pending: billetterie(state.reserve, reserveRateOf(state), now), since: now };
 }
 
 function uniqueCount(state: Pick<GameState, 'discovered'>): number {
@@ -550,7 +585,8 @@ export const useGame = create<GameState>()(
         quickSell: (uids) => {
           const state = get();
           const set_ = new Set(uids);
-          const sellable = state.collection.filter((c) => set_.has(c.uid) && !c.locked);
+          const reserved = reservedUids(state.reserve);
+          const sellable = state.collection.filter((c) => set_.has(c.uid) && !c.locked && !reserved.has(c.uid));
           const total = sellable.reduce((sum, c) => sum + quickSellValue(ATHLETES_BY_ID[c.athleteId], c.variant), 0);
           if (!sellable.length) return 0;
           const sold = new Set(sellable.map((c) => c.uid));
@@ -567,7 +603,7 @@ export const useGame = create<GameState>()(
         listCard: (uid, startPrice, buyNow, durationMin) => {
           const state = get();
           const card = state.collection.find((c) => c.uid === uid);
-          if (!card || card.locked) return false;
+          if (!card || card.locked || reservedUids(get().reserve).has(uid)) return false;
           const active = state.market.myListings.filter((l) => l.status === 'active').length;
           if (active >= MAX_MY_LISTINGS) {
             pushToast('error', `Tu as déjà ${MAX_MY_LISTINGS} cartes en vente. Attends qu’une vente se termine.`);
@@ -754,6 +790,53 @@ export const useGame = create<GameState>()(
 
         toggleLock: (uid) => set((s) => ({ collection: s.collection.map((c) => (c.uid === uid ? { ...c, locked: !c.locked } : c)) })),
 
+        reserveInstall: (enclosId, uid) => {
+          const s = get();
+          const enclos = s.reserve.enclos[enclosId];
+          const card = s.collection.find((c) => c.uid === uid);
+          const athlete = card && ATHLETES_BY_ID[card.athleteId];
+          if (!enclos || !card || !athlete || enclos.uids.length >= enclos.places || !canLiveIn(athlete, enclosId)) return false;
+          const byUid = new Map(s.collection.map((c) => [c.uid, c]));
+          // une seule carte par espèce dans toute la réserve
+          for (const other of reservedUids(s.reserve)) if (other === uid || byUid.get(other)?.athleteId === card.athleteId) return false;
+          const reserve = bankReserve(s, Date.now());
+          set({ reserve: { ...reserve, enclos: { ...reserve.enclos, [enclosId]: { ...enclos, uids: [...enclos.uids, uid] } } } });
+          return true;
+        },
+
+        reserveRemove: (uid) => {
+          const s = get();
+          if (!reservedUids(s.reserve).has(uid)) return;
+          const reserve = bankReserve(s, Date.now());
+          const enclos = Object.fromEntries(Object.entries(reserve.enclos).map(([id, e]) => [id, { ...e!, uids: e!.uids.filter((u) => u !== uid) }]));
+          set({ reserve: { ...reserve, enclos } });
+        },
+
+        reserveCollect: (now = Date.now()) => {
+          const s = get();
+          const amount = billetterie(s.reserve, reserveRateOf(s), now);
+          set({ balles: s.balles + amount, reserve: { ...s.reserve, pending: 0, since: now, visitors: s.reserve.visitors + amount } });
+          return amount;
+        },
+
+        reserveUnlock: (enclosId) => {
+          const s = get();
+          const def = ENCLOS_BY_ID[enclosId];
+          if (!def || s.reserve.enclos[enclosId] || s.balles < def.price) return false;
+          set({ balles: s.balles - def.price, reserve: { ...s.reserve, enclos: { ...s.reserve.enclos, [enclosId]: { places: START_PLACES, uids: [] } } } });
+          return true;
+        },
+
+        reserveBuyPlace: (enclosId) => {
+          const s = get();
+          const enclos = s.reserve.enclos[enclosId];
+          if (!enclos || enclos.places >= MAX_PLACES) return false;
+          const price = placePrice(enclos.places);
+          if (s.balles < price) return false;
+          set({ balles: s.balles - price, reserve: { ...s.reserve, enclos: { ...s.reserve.enclos, [enclosId]: { ...enclos, places: enclos.places + 1 } } } });
+          return true;
+        },
+
         setAvatar: (athleteId) => set({ avatar: athleteId }),
 
         setFavorite: (slot, uid) =>
@@ -801,7 +884,7 @@ export const useGame = create<GameState>()(
 
         escrowCard: (uid) => {
           const card = get().collection.find((c) => c.uid === uid);
-          if (!card || card.locked) return null;
+          if (!card || card.locked || reservedUids(get().reserve).has(uid)) return null;
           set((s) => ({
             collection: s.collection.filter((c) => c.uid !== uid),
             team: s.team.map((t) => (t === uid ? '' : t)),
@@ -859,7 +942,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 15,
+      version: 16,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -946,6 +1029,8 @@ export const useGame = create<GameState>()(
           if (state.stats.bestPull && !known(state.stats.bestPull.athleteId)) state.stats = { ...state.stats, bestPull: undefined };
           if (version < 4 || gone.length) state.match = null;
         }
+        // version 16 : Ma Réserve (forêt et savane ouvertes, rien d'installé)
+        if (version < 16 || !state.reserve) state.reserve = emptyReserve(Date.now());
         return state;
       },
       partialize: (state) => {
