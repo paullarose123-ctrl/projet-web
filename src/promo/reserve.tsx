@@ -55,7 +55,7 @@ function Scene() {
       {label('banquise', 'Banquise', 5)}
       {label('foret', 'Forêt', 2)}
       {label('savane', 'Savane', 5)}
-      {label('lagon', 'Lagon', 5)}
+      {label('lagon', 'Marais', 5)}
       {lock('montagne', 'Montagne', '2 500')}
       {lock('jungle', 'Jungle', '5 000')}
       <div className="rsv-bubble" style={at(LION_AT[0] + 11, LION_AT[1] - 7)}>
@@ -117,7 +117,7 @@ function Maquette() {
         {[
           ['Boosters', 'M7,3 H17 L18,5 V19 L17,21 H7 L6,19 V5 Z M9,9 H15 M9,13 H15'],
           ['Collection', 'M8,4 H18 A1,1 0 0 1 19,5 V17 M5,7 H15 A1,1 0 0 1 16,8 V20 A1,1 0 0 1 15,21 H5 A1,1 0 0 1 4,20 V8 A1,1 0 0 1 5,7 Z'],
-          ['Réserve', 'M12,3 C 7,7 6,11 9,13 C 6,14 6,17 12,17 C 18,17 18,14 15,13 C 18,11 17,7 12,3 Z M12,17 V21'],
+          ['Réserve', 'M4.5,21 V10.5 M19.5,21 V10.5 M2.5,11 Q12,1.5 21.5,11'],
           ['Marché', 'M4,8 H18 M14,4 L18,8 L14,12 M20,16 H6 M10,12 L6,16 L10,20'],
           ['Duel', 'M8,4 H16 V9 A4,4 0 0 1 8,9 Z M8,6 H5 A3,3 0 0 0 8,11 M16,6 H19 A3,3 0 0 1 16,11 M12,13 V17 M8,20 H16 M9,17 H15 V20 H9 Z'],
           ['Boutique', 'M5,8 H19 L18,20 H6 Z M9,8 V6 A3,3 0 0 1 15,6 V8'],
@@ -125,6 +125,16 @@ function Maquette() {
           <span key={label} className={label === 'Réserve' ? 'is-active' : ''}>
             <svg viewBox="0 0 24 24">
               <path d={d} />
+              {label === 'Réserve' && (
+                // l'entrée de la réserve : une arche, et une empreinte de patte dessous
+                <g fill="currentColor" stroke="none">
+                  <ellipse cx={12} cy={17.6} rx={2.7} ry={2.2} />
+                  <circle cx={8.7} cy={14.3} r={1.15} />
+                  <circle cx={10.9} cy={12.7} r={1.15} />
+                  <circle cx={13.1} cy={12.7} r={1.15} />
+                  <circle cx={15.3} cy={14.3} r={1.15} />
+                </g>
+              )}
             </svg>
             {label}
           </span>
