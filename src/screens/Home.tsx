@@ -7,7 +7,7 @@ import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
 import { freePackChoices } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
-import { HERO_SCENE, HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/scenes';
+import { HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/scenes';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
@@ -240,7 +240,7 @@ function FreePackHero() {
 
   return (
     <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
-      <Landscape className="hero__art" scene={season === 'muertos' ? HERO_SCENE_MUERTOS : season ? HERO_SCENE_HALLOWEEN : HERO_SCENE} seed="accueil" />
+      <Landscape className="hero__art" scene={season === 'halloween' ? HERO_SCENE_HALLOWEEN : HERO_SCENE_MUERTOS} seed="accueil" />
       <SaisonHead seed="accueil" pendants={false} />
       <div className="hero__pack">
         <div className="hero__boosters">
@@ -287,14 +287,14 @@ function FreePackHero() {
           )}
         </h1>
         <p className="hero__sub">
-          Un nouveau booster toutes les heures, jusqu’à {MAX_FREE_PACKS} en réserve
+          Un nouveau booster toutes les heures, jusqu’à {MAX_FREE_PACKS} d’avance
           {duo ? ', à ouvrir dans la série de ton choix' : ''}. Plus une espèce est célèbre, plus sa carte est rare.
         </p>
-        <div className="hero__timer" aria-label={full ? 'Réserve pleine' : `Prochain booster dans ${formatDuration(nextFreePackAt - now)}`}>
+        <div className="hero__timer" aria-label={full ? 'Boosters au maximum' : `Prochain booster dans ${formatDuration(nextFreePackAt - now)}`}>
           <div className="meter">
             <div className="meter__fill" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
-          <span>{full ? 'Réserve pleine : ouvre un booster pour relancer le compteur' : `+1 dans ${formatDuration(nextFreePackAt - now)}`}</span>
+          <span>{full ? `Tu as tes ${MAX_FREE_PACKS} boosters : ouvre-en un pour relancer le compteur` : `+1 dans ${formatDuration(nextFreePackAt - now)}`}</span>
         </div>
         <div className="hero__actions">
           {choices.map((pack) => {
