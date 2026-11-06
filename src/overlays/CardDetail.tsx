@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { reservedUids } from '../engine/reserve';
 import { useGame, formatBalles } from '../store/game';
 import { useUi } from '../store/ui';
 import { useNow, formatDuration } from '../hooks/useNow';
@@ -298,6 +299,7 @@ export function CardDetail() {
   const close = useUi((s) => s.closeDetail);
   const searchMarketFor = useUi((s) => s.searchMarketFor);
   const collection = useGame((s) => s.collection);
+  const reserve = useGame((s) => s.reserve);
   const discovered = useGame((s) => s.discovered);
   const news = useGame((s) => s.market.news);
   const toggleLock = useGame((s) => s.toggleLock);
@@ -335,6 +337,7 @@ export function CardDetail() {
   const vitesse = habitat ? undefined : encyclopedieOf(athlete.id)?.vitesse;
   const owned = 'uid' in detail.card && !detail.listingId ? collection.find((c) => c.uid === (detail.card as OwnedCard).uid) : undefined;
   const copies = collection.filter((c) => c.athleteId === face.athleteId && c.variant === face.variant);
+  const inReserve = !!owned && reservedUids(reserve).has(owned.uid);
   const price = marketPrice(face, now, news);
   const history = priceHistory(face, now, news);
   const change = Math.round(((history[history.length - 1].price - history[0].price) / history[0].price) * 100);
@@ -483,11 +486,11 @@ export function CardDetail() {
                 Tu possèdes {copies.length} exemplaire{copies.length > 1 ? 's' : ''} de cette carte.
               </p>
               <div className="btn-row">
-                <button type="button" className="btn btn--primary" onClick={() => setSelling(true)} disabled={owned.locked}>
+                <button type="button" className="btn btn--primary" onClick={() => setSelling(true)} disabled={owned.locked || inReserve}>
                   Mettre en vente
                 </button>
                 {!confirmQuick ? (
-                  <button type="button" className="btn btn--ghost" onClick={() => setConfirmQuick(true)} disabled={owned.locked}>
+                  <button type="button" className="btn btn--ghost" onClick={() => setConfirmQuick(true)} disabled={owned.locked || inReserve}>
                     Vente rapide
                   </button>
                 ) : (
@@ -521,6 +524,7 @@ export function CardDetail() {
                 )}
               </div>
               {owned.locked && <p className="muted small">Carte verrouillée : elle ne peut pas être vendue par erreur.</p>}
+              {inReserve && <p className="muted small">Cette carte vit dans ta réserve : retire-la de son enclos pour la vendre ou l’échanger.</p>}
             </div>
           )}
           {owned && selling && <SellPanel card={owned} onDone={() => setSelling(false)} />}

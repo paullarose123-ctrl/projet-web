@@ -12,6 +12,8 @@ import { MarketScreen } from './screens/Market';
 import { MatchScreen } from './screens/Match';
 import { ShopScreen } from './screens/Shop';
 import { ProfileScreen } from './screens/Profile';
+import { ReserveScreen } from './screens/Reserve';
+import { reserveEnabled } from './engine/reserve';
 import { useAccount } from './store/account';
 import { Avatar } from './components/Avatar';
 import { PackOpening } from './overlays/PackOpening';
@@ -42,6 +44,12 @@ const NAV: Array<{ id: Tab; label: string; icon: ReactNode }> = [
     id: 'collection',
     label: 'Collection',
     icon: <path d="M8,4 H18 A1,1 0 0 1 19,5 V17 M5,7 H15 A1,1 0 0 1 16,8 V20 A1,1 0 0 1 15,21 H5 A1,1 0 0 1 4,20 V8 A1,1 0 0 1 5,7 Z" />,
+  },
+  {
+    id: 'reserve',
+    label: 'Réserve',
+    // le panneau en bois à l'entrée d'une réserve
+    icon: <path d="M12,21 V3.5 M5,6 H16.5 L19,8.5 L16.5,11 H5 Z M19,13.5 H8 L5.5,16 L8,18.5 H19 Z" />,
   },
   {
     id: 'mercato',
@@ -161,9 +169,10 @@ function BottomNav() {
   const setTab = useUi((s) => s.setTab);
   const freePacks = useGame((s) => s.freePacks);
   const activeSales = useGame((s) => s.market.myListings.filter((l) => l.status !== 'active').length);
+  const items = NAV.filter((item) => item.id !== 'reserve' || reserveEnabled());
   return (
-    <nav className="bottomnav" aria-label="Navigation principale">
-      {NAV.map((item) => (
+    <nav className="bottomnav" aria-label="Navigation principale" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+      {items.map((item) => (
         <button
           key={item.id}
           type="button"
@@ -187,7 +196,7 @@ function BottomNav() {
 }
 
 /** ordre des écrans de gauche à droite, pour faire pivoter la transition dans le bon sens */
-const ORDER: Tab[] = ['boosters', 'collection', 'mercato', 'matchs', 'boutique', 'profil'];
+const ORDER: Tab[] = ['boosters', 'collection', 'reserve', 'mercato', 'matchs', 'boutique', 'profil'];
 
 export function App() {
   const tab = useUi((s) => s.tab);
@@ -288,6 +297,7 @@ export function App() {
         <div key={tab} className={`view view--${direction}`}>
           {tab === 'boosters' && <HomeScreen />}
           {tab === 'collection' && <CollectionScreen />}
+          {tab === 'reserve' && reserveEnabled() && <ReserveScreen />}
           {tab === 'mercato' && <MarketScreen />}
           {tab === 'matchs' && <MatchScreen />}
           {tab === 'boutique' && <ShopScreen />}

@@ -21,6 +21,7 @@ interface GoatCounter {
 const SCREENS: Record<Tab, string> = {
   boosters: 'Accueil',
   collection: 'Collection',
+  reserve: 'Réserve',
   mercato: 'Marché',
   matchs: 'Duel',
   boutique: 'Boutique',

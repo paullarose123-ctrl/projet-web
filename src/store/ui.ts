@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { CardFace, OwnedCard, RarityId, SportId } from '../engine/types';
+import { reserveEnabled } from '../engine/reserve';
 
-export type Tab = 'boosters' | 'collection' | 'mercato' | 'matchs' | 'boutique' | 'profil';
+export type Tab = 'boosters' | 'collection' | 'reserve' | 'mercato' | 'matchs' | 'boutique' | 'profil';
 
 export interface DetailTarget {
   card: CardFace | OwnedCard;
@@ -34,11 +35,12 @@ interface UiState {
   searchMarketFor: (athleteName: string) => void;
 }
 
-const TABS: Tab[] = ['boosters', 'collection', 'mercato', 'matchs', 'boutique', 'profil'];
+const TABS: Tab[] = ['boosters', 'collection', 'reserve', 'mercato', 'matchs', 'boutique', 'profil'];
 
 function tabFromHash(): Tab {
   try {
     const hash = window.location.hash.replace('#', '') as Tab;
+    if (hash === 'reserve' && !reserveEnabled()) return 'boosters';
     return TABS.includes(hash) ? hash : 'boosters';
   } catch {
     return 'boosters';
