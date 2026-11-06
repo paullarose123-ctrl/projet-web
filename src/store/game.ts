@@ -942,7 +942,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 18,
+      version: 19,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1040,6 +1040,14 @@ export const useGame = create<GameState>()(
             enclos.places = MAX_PLACES;
             enclos.uids = enclos.uids.slice(0, MAX_PLACES);
           }
+        }
+        // version 19 : la Maison nocturne devient l'enclos de la Montagne (même place, mêmes places achetées) ; les
+        // animaux qui vivaient sous terre retournent dans la collection, à réinstaller dans l'enclos de leur région
+        if (version < 19) {
+          const enclos = state.reserve.enclos as Record<string, { places: number; uids: string[] } | undefined>;
+          const old = enclos.nocturne;
+          delete enclos.nocturne;
+          if (old && !enclos.montagne) enclos.montagne = { places: old.places, uids: [] };
         }
         // version 18 : chaque enclos n'accueille plus que les animaux de ses milieux (fin des espèces « partout » dans
         // tous les enclos et des animaux de nuit dans la Maison nocturne) : les autres retournent dans la collection
