@@ -32,7 +32,7 @@ import { OnlinePlayers } from './components/OnlinePlayers';
 import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
 import { Landscape } from './components/PackScene';
-import { SITE_SCENE, SITE_SCENE_HALLOWEEN, SITE_SCENE_MUERTOS } from './art/scenes';
+import { SITE_SCENE_HALLOWEEN, SITE_SCENE_MUERTOS } from './art/scenes';
 
 const NAV: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   {
@@ -214,13 +214,14 @@ export function App() {
   const tick = useGame((s) => s.tick);
   const muted = useGame((s) => s.muted);
   const musicOff = useGame((s) => s.musicOff);
-  // Halloween puis le Jour des morts : couleurs et décors de fête (voir components/Saison.tsx)
+  // couleurs du jeu : celles du Jour des morts (rose, turquoise, nuit indigo), sauf à Halloween qui a les siennes
+  // (orange) et ses décors de fête (voir components/Saison.tsx)
   const season = useSeason();
   useEffect(() => {
     const root = document.documentElement.classList;
-    root.toggle('saison-fete', season !== null);
+    root.toggle('saison-fete', true);
     root.toggle('saison-halloween', season === 'halloween');
-    root.toggle('saison-muertos', season === 'muertos');
+    root.toggle('saison-muertos', season !== 'halloween');
   }, [season]);
 
   useEffect(() => {
@@ -294,7 +295,7 @@ export function App() {
   return (
     <div className="app">
       {/* fond de page : un sous-bois sous les étoiles (sous la lune de chaque fête en saison), fixe derrière le contenu */}
-      <Landscape className="backdrop" scene={season === 'muertos' ? SITE_SCENE_MUERTOS : season ? SITE_SCENE_HALLOWEEN : SITE_SCENE} seed="sous-bois" maxWidth={600} />
+      <Landscape className="backdrop" scene={season === 'halloween' ? SITE_SCENE_HALLOWEEN : SITE_SCENE_MUERTOS} seed="sous-bois" maxWidth={600} />
       <Fireflies />
       <SaisonNight />
       <Topbar />
