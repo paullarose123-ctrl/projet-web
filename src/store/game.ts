@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { CardFace, OwnedCard } from '../engine/types';
 import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
-import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE2_REMPLACEES } from '../data/remplacements';
+import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE1_RETIREES, SERIE2_REMPLACEES } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
@@ -942,7 +942,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 19,
+      version: 20,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -955,6 +955,7 @@ export const useGame = create<GameState>()(
           ...(version < 8 ? PREHISTOIRE_REMPLACEE : {}),
           ...(version < 9 ? ICONES_RETIREES : {}),
           ...(version < 11 ? SERIE2_REMPLACEES : {}),
+          ...(version < 20 ? SERIE1_RETIREES : {}),
         };
         if (Object.keys(replacements).length) {
           let text = JSON.stringify(state);

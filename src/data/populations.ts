@@ -350,7 +350,6 @@ export const POPULATIONS: Record<string, number> = {
   'triton-crete': 10_000_000,
   protee: 100_000,
   rhacophore: 1_000_000,
-  pipa: 1_000_000,
   cecilie: 1_000_000,
 
   // insectes et araignées

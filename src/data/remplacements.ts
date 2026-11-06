@@ -74,6 +74,14 @@ export const PREHISTOIRE_REMPLACEE: Record<string, string> = {
 };
 
 /**
+ * Espèces retirées de la Série 1 en novembre 2026 → espèce de la même famille, de même rareté et du même milieu
+ * (sauvegardes < v20) : le pipa devient la grenouille volante.
+ */
+export const SERIE1_RETIREES: Record<string, string> = {
+  pipa: 'rhacophore',
+};
+
+/**
  * Espèces de la Série 2 (Mexique) remplacées avant sa sortie, faute de vraie photo libre → espèce de la même famille
  * et, pour l'Icône, Icône (sauvegardes < v11 de la page d'aperçu : la série n'était pas sortie sur le site public).
  */
@@ -90,5 +98,6 @@ const REVENUS = new Set(['phoque-moine-des-caraibes']);
 export function currentAthleteId(id: string): string {
   const next = PREHISTOIRE_REMPLACEE[id] ?? (REVENUS.has(id) ? undefined : ICONES_REMPLACEES[id]) ?? id;
   const icon = ICONES_RETIREES[next] ?? next;
-  return SERIE2_REMPLACEES[icon] ?? icon;
+  const serie2 = SERIE2_REMPLACEES[icon] ?? icon;
+  return SERIE1_RETIREES[serie2] ?? serie2;
 }
