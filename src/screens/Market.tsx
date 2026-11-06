@@ -128,7 +128,7 @@ function OnlineSection({ filters, now }: { filters: MarketFilters; now: number }
       {!loaded ? (
         <p className="muted">Chargement des annonces…</p>
       ) : results.length === 0 ? (
-        <p className="muted">{active.length ? 'Aucune annonce de joueur ne correspond à ta recherche.' : 'Aucun joueur ne vend de carte pour l’instant. Sois le premier : ouvre une carte de ta réserve et choisis « Mettre en vente ».'}</p>
+        <p className="muted">{active.length ? 'Aucune annonce de joueur ne correspond à ta recherche.' : 'Aucun joueur ne vend de carte pour l’instant. Sois le premier : ouvre une de tes cartes et choisis « Mettre en vente ».'}</p>
       ) : (
         <ul className="listings">
           {results.slice(0, 60).map((listing) => (
@@ -370,7 +370,7 @@ function MyListingRow({ listing, now }: { listing: MyListing; now: number }) {
             Vendue à {listing.buyer} · +<Balles value={netAfterTax(listing.soldPrice ?? 0)} />
           </span>
         )}
-        {listing.status === 'expired' && <span className="status">Invendue, revenue dans ta réserve</span>}
+        {listing.status === 'expired' && <span className="status">Invendue, revenue dans tes cartes</span>}
       </div>
       <div className="listing__actions">
         {listing.status === 'active' && listing.currentBid === null && (
@@ -397,7 +397,7 @@ function OnlineMine({ now }: { now: number }) {
         <span className="live-dot" aria-hidden="true" /> En vente aux joueurs <small>{active.length}/15</small>
       </h2>
       {active.length === 0 ? (
-        <p className="muted">Aucune carte en vente en ligne. Ouvre une carte de ta réserve et choisis « Aux joueurs ».</p>
+        <p className="muted">Aucune carte en vente en ligne. Ouvre une de tes cartes et choisis « Aux joueurs ».</p>
       ) : (
         <ul className="listings">
           {active.map((listing) => (
@@ -457,7 +457,7 @@ function MineTab() {
       {myListings.length === 0 ? (
         <div className="empty">
           <p>Tu n’as aucune carte en vente.</p>
-          <p className="muted">Ouvre une carte de ta réserve et choisis « Mettre en vente ». Les collectionneurs IA achètent en quelques minutes si le prix est juste.</p>
+          <p className="muted">Ouvre une de tes cartes et choisis « Mettre en vente ». Les collectionneurs IA achètent en quelques minutes si le prix est juste.</p>
           <button type="button" className="btn btn--primary" onClick={() => setTab('collection')}>
             Aller à ma réserve
           </button>

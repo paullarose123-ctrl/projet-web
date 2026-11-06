@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AccountError } from '../account/supabase';
 import { acceptTrade, cancelTrade, declineTrade, fetchTrades, proposeTrade, tradeDone, type Trade } from '../account/trades';
+import { reservedUids } from '../engine/reserve';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { rarityOf } from '../engine/cards';
 import type { CardFace, OwnedCard } from '../engine/types';
@@ -20,10 +21,11 @@ export function sameRarity(a: string, b: string): boolean {
 }
 
 /** L'exemplaire que je donnerais pour une espèce demandée : non verrouillé, de préférence le plus simple. */
-export function copyToGive(collection: OwnedCard[], athleteId: string): OwnedCard | undefined {
+export function copyToGive(collection: OwnedCard[], athleteId: string, reserved: Set<string> = new Set()): OwnedCard | undefined {
   const rank = { base: 0, reverse: 1, prime: 2 } as const;
+  // jamais une carte verrouillée ni une carte installée dans la réserve
   return collection
-    .filter((c) => c.athleteId === athleteId && !c.locked)
+    .filter((c) => c.athleteId === athleteId && !c.locked && !reserved.has(c.uid))
     .sort((a, b) => rank[a.variant] - rank[b.variant])[0];
 }
 
@@ -52,11 +54,11 @@ async function settle(trades: Trade[]): Promise<void> {
   for (const t of trades) {
     try {
       if (t.fromId === me && !t.fromDone && t.status !== 'pending') {
-        if (t.status === 'accepted' && t.given) game.receiveOnce(`trade-in:${t.id}`, t.given, `${t.to} a accepté l’échange : ${name(t.given.athleteId)} rejoint ta réserve`);
-        else game.receiveOnce(`trade-back:${t.id}`, t.offer, `${name(t.offer.athleteId)} revient dans ta réserve (échange ${t.status === 'declined' ? 'refusé' : 'annulé'})`);
+        if (t.status === 'accepted' && t.given) game.receiveOnce(`trade-in:${t.id}`, t.given, `${t.to} a accepté l’échange : ${name(t.given.athleteId)} rejoint tes cartes`);
+        else game.receiveOnce(`trade-back:${t.id}`, t.offer, `${name(t.offer.athleteId)} revient dans tes cartes (échange ${t.status === 'declined' ? 'refusé' : 'annulé'})`);
         await tradeDone(session, t.id);
       } else if (t.toId === me && !t.toDone && t.status === 'accepted') {
-        game.receiveOnce(`trade-in:${t.id}`, t.offer, `${name(t.offer.athleteId)} rejoint ta réserve`);
+        game.receiveOnce(`trade-in:${t.id}`, t.offer, `${name(t.offer.athleteId)} rejoint tes cartes`);
         await tradeDone(session, t.id);
       }
     } catch {
@@ -106,7 +108,7 @@ export const useTrades = create<TradesState>()((set, get) => ({
     // la carte proposée quitte la réserve le temps de l'échange
     const card = game.escrowCard(uid);
     if (!card) {
-      game.toast('error', 'Cette carte ne peut pas être échangée (elle est peut-être verrouillée).');
+      game.toast('error', 'Cette carte ne peut pas être échangée (elle est verrouillée ou dans ta réserve).');
       return false;
     }
     try {
@@ -126,9 +128,9 @@ export const useTrades = create<TradesState>()((set, get) => ({
     const game = useGame.getState();
     const session = await freshSession().catch(() => null);
     if (!session) return false;
-    const mine = copyToGive(game.collection, trade.wantId);
+    const mine = copyToGive(game.collection, trade.wantId, reservedUids(game.reserve));
     if (!mine) {
-      game.toast('error', `Tu n’as pas de ${name(trade.wantId)} à donner (ou il est verrouillé).`);
+      game.toast('error', `Tu n’as pas de ${name(trade.wantId)} à donner (ou il est verrouillé, ou dans ta réserve).`);
       return false;
     }
     const given = game.escrowCard(mine.uid);
@@ -136,7 +138,7 @@ export const useTrades = create<TradesState>()((set, get) => ({
     set({ pending: trade.id });
     try {
       const done = await acceptTrade(session, trade.id, given);
-      useGame.getState().receiveOnce(`trade-in:${done.id}`, done.offer, `Échange conclu avec ${done.from} : ${name(done.offer.athleteId)} rejoint ta réserve`);
+      useGame.getState().receiveOnce(`trade-in:${done.id}`, done.offer, `Échange conclu avec ${done.from} : ${name(done.offer.athleteId)} rejoint tes cartes`);
       await tradeDone(session, done.id).catch(() => undefined);
       set((s) => ({ trades: s.trades.map((t) => (t.id === done.id ? { ...done, toDone: true } : t)) }));
       void useAccount.getState().saveNow();
@@ -173,7 +175,7 @@ export const useTrades = create<TradesState>()((set, get) => ({
     set({ pending: trade.id });
     try {
       const done = await cancelTrade(session, trade.id);
-      useGame.getState().receiveOnce(`trade-back:${done.id}`, done.offer, `${name(done.offer.athleteId)} revient dans ta réserve`);
+      useGame.getState().receiveOnce(`trade-back:${done.id}`, done.offer, `${name(done.offer.athleteId)} revient dans tes cartes`);
       await tradeDone(session, done.id).catch(() => undefined);
       set((s) => ({ trades: s.trades.map((t) => (t.id === done.id ? { ...done, fromDone: true } : t)) }));
       void useAccount.getState().saveNow();

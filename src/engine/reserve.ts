@@ -3,7 +3,6 @@ import { ATHLETES_BY_ID } from '../data/athletes';
 import { milieuCourt } from '../data/milieux';
 import { encyclopedieOf } from '../data/encyclopedie';
 import { rarityOf } from './cards';
-import { earlyAccess } from './series';
 
 // Ma Réserve : le joueur installe ses animaux dans des enclos, un par milieu de vie, et ils attirent des visiteurs.
 // Chaque visiteur paie son ticket (1 crédit) à la billetterie, qui se remplit même hors connexion jusqu'à
@@ -20,9 +19,9 @@ import { earlyAccess } from './series';
 //   famille représentée par au moins GROUP_SIZE animaux dans le même enclos ;
 // - chaque enclos ouvre avec START_PLACES places, qu'on agrandit en payant jusqu'à MAX_PLACES.
 
-/** La Réserve n'est encore ouverte que dans l'aperçu (et en développement). */
+/** La Réserve est ouverte à tous (ce drapeau permet de la refermer, ou de la réserver à l'aperçu). */
 export function reserveEnabled(): boolean {
-  return earlyAccess();
+  return true;
 }
 
 export type EnclosId = 'foret' | 'savane' | 'ferme' | 'marais' | 'banquise' | 'jungle' | 'aquarium' | 'nocturne';
