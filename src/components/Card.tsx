@@ -1,5 +1,5 @@
 import { memo, useCallback, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
-import type { Athlete, CardFace, OwnedCard } from '../engine/types';
+import type { CardFace, OwnedCard } from '../engine/types';
 import { collectionNumber, displayName, extinctionLabel, getAthlete, isIcon, rarityOf } from '../engine/cards';
 import { SPORTS } from '../data/sports';
 import { mesuresOf, type MesuresAffichees } from '../data/mesures';
@@ -38,24 +38,6 @@ interface CardProps {
   serie?: number;
 }
 
-function plain(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toUpperCase()
-    .replace(/[^A-Z\s-]/g, '');
-}
-
-// Mots qui ne disent pas de quel animal il s'agit : « Grand requin blanc » donne REQ, « Petite roussette » ROU.
-const SKIPPED = new Set(['GRAND', 'GRANDE', 'PETIT', 'PETITE', 'LE', 'LA', 'LES', 'DE', 'DU', 'DES', 'D', 'L']);
-
-/** Code en 3 lettres de l'onglet : « LIO » pour le lion, « REQ » pour le grand requin blanc. */
-export function athleteCode(athlete: Athlete): string {
-  const parts = plain(`${athlete.first} ${athlete.last}`).split(/[\s’'-]+/).filter(Boolean);
-  const main = parts.find((part) => part.length >= 3 && !SKIPPED.has(part)) ?? parts[0] ?? '';
-  return main.slice(0, 3);
-}
-
 /** Taille du nom : le serif est plus large qu'une police condensée, on réduit pour les noms longs. */
 function nameSize(name: string): number {
   return Math.min(1.9, 20.5 / Math.max(name.length, 1));
@@ -64,8 +46,8 @@ function nameSize(name: string): number {
 /** Cadre sombre percé de deux fenêtres (photo et plaque du poste). */
 const PANEL =
   'M6.8 2.6 H93.2 Q96.4 2.6 96.4 5.8 V133.8 Q96.4 137 93.2 137 H6.8 Q3.6 137 3.6 133.8 V5.8 Q3.6 2.6 6.8 2.6 Z';
-const WINDOW =
-  'M9.4 14 Q9.4 11.2 12.2 11.2 H21.5 C25.8 11.2 26.4 4.6 31 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
+// la fenêtre de la photo monte jusqu'en haut à gauche (il n'y a plus d'onglet pour un code en 3 lettres)
+const WINDOW = 'M9.4 7.2 Q9.4 4.6 12 4.6 H91.6 Q94.2 4.6 94.2 7.2 V113.4 Q94.2 116 91.6 116 H12 Q9.4 116 9.4 113.4 Z';
 const PLATE = 'M20 128.2 H92.4 Q94.2 128.2 94.2 130 V133 Q94.2 134.8 92.4 134.8 H20 Z';
 
 // Cadre des cartes du Mexique : les mêmes pièces, taillées en gradins comme les pyramides (coins à degrés, onglet
@@ -97,7 +79,7 @@ function crenelLine(y1: number, y2: number): string {
 const MX = {
   panel: steppedRect(3.6, 2.6, 92.8, 134.4, 1.6),
   window:
-    'M9.4 13.8 H10.7 V12.5 H12 V11.2 H22.5 V9 H25.5 V6.8 H28.5 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
+    'M9.4 7.2 H10.7 V5.9 H12 V4.6 H91.6 V5.9 H92.9 V7.2 H94.2 V113.4 H92.9 V114.7 H91.6 V116 H12 V114.7 H10.7 V113.4 H9.4 Z',
   plate: 'M20 128.2 H92.6 V129.4 H94.2 V133.6 H92.6 V134.8 H20 Z',
   thin: steppedRect(4.7, 3.7, 90.6, 132.2, 1.1),
   banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
@@ -383,8 +365,6 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
 
           <Frame mexique={mexique} hiver={hiver} />
           <div className="card__hills" aria-hidden="true" />
-
-          <div className="card__code metal-text">{athleteCode(athlete)}</div>
 
           <div className="card__badge">
             <span className="card__tier" style={tier.length > 7 ? { fontSize: `${(0.86 * 6.6) / tier.length}em` } : undefined}>
