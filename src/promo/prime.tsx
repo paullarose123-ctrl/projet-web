@@ -3,18 +3,13 @@ import '../styles/fonts.css';
 import '../styles/base.css';
 import '../styles/card.css';
 import '../styles/app.css';
-import './prime.css';
 import { Card } from '../components/Card';
 import type { CardFace } from '../engine/types';
 
 // Maquette (page de développement promo/prime.html) : les Prime de la Série 1.
 
 const IDS = ['lion', 'panda', 'orque', 'gorille', 'husky', 'chat'];
-const ROWS: [string, string][] = [
-  ['Aujourd’hui', ''],
-  ['E · Feuille holographique gravée de fines lignes', 'pr-e'],
-  ['F · Feuille holographique gravée de petits losanges', 'pr-f'],
-];
+const ROWS: [string, string][] = [['Version finale', '']];
 
 createRoot(document.getElementById('root')!).render(
   <div style={{ padding: 24, display: 'grid', gap: 22, color: 'var(--text)' }}>
