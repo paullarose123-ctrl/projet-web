@@ -252,7 +252,6 @@
   --reverse-tier: linear-gradient(90deg, #cf5f97, #8a5cc4, #4c96bd);
   /* double filet autour de la carte, et étoiles qui scintillent sur le cadre (nacre blanche et rose) */
   --filet: rgba(179, 131, 201, 0.75);
-  --filet-2: rgba(255, 255, 255, 0.7);
   --star-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23fffdf8'/%3E%3C/svg%3E");
   --star-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23ffd2ea'/%3E%3C/svg%3E");
   /* trou de la fenêtre de la photo, pour que les reflets ne passent que sur le cadre */
@@ -264,7 +263,6 @@
 /* Reverse Rare : savane au couchant, en lavis pêche, abricot et corail, liserés terre cuite */
 .card.is-reverse.r-rare {
   --foil:
-    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.95) 0 0.04em, transparent 0.1em) 0 0 / 0.8em 1em,
     radial-gradient(50% 34% at 12% 8%, rgba(255, 140, 110, 0.95), transparent 72%),
     radial-gradient(44% 30% at 92% 18%, rgba(255, 196, 100, 0.95), transparent 72%),
     radial-gradient(48% 32% at 86% 82%, rgba(255, 120, 110, 0.9), transparent 72%),
@@ -281,16 +279,13 @@
   --reverse-wash: linear-gradient(140deg, rgba(255, 168, 140, 0.7), rgba(255, 222, 150, 0.45) 40%, rgba(255, 196, 168, 0.5) 70%, rgba(255, 150, 140, 0.7));
   --reverse-tier: linear-gradient(90deg, #e2703c, #c4455e);
   --filet: rgba(217, 130, 90, 0.8);
-  --filet-2: rgba(255, 236, 214, 0.75);
   --star-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23fffaf0'/%3E%3C/svg%3E");
   --star-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23ffb98a'/%3E%3C/svg%3E");
 }
 
-/* Reverse Épique : aurore en lavis lavande, menthe et ciel, semée d'étoiles, liserés violets */
+/* Reverse Épique : aurore en lavis lavande, menthe et ciel, liserés violets */
 .card.is-reverse.r-epique {
   --foil:
-    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 0.04em, transparent 0.09em) 0 0 / 1.1em 0.9em,
-    radial-gradient(circle at 70% 30%, rgba(170, 150, 255, 0.8) 0 0.035em, transparent 0.08em) 0 0 / 1.5em 1.3em,
     linear-gradient(160deg, transparent 18%, rgba(110, 226, 186, 0.8) 36%, transparent 56%),
     linear-gradient(200deg, transparent 38%, rgba(176, 130, 255, 0.8) 58%, transparent 80%),
     linear-gradient(170deg, #d6ccff 0%, #c8eee4 35%, #dcdfff 62%, #d0bcff 100%);
@@ -305,7 +300,6 @@
   --reverse-wash: linear-gradient(140deg, rgba(170, 240, 214, 0.7), rgba(196, 186, 255, 0.5) 40%, rgba(160, 214, 255, 0.55) 70%, rgba(214, 170, 255, 0.7));
   --reverse-tier: linear-gradient(90deg, #22a98f, #7c58d6);
   --filet: rgba(138, 116, 216, 0.8);
-  --filet-2: rgba(226, 246, 241, 0.8);
   --star-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23ffffff'/%3E%3C/svg%3E");
   --star-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23c9bcff'/%3E%3C/svg%3E");
 }
@@ -315,8 +309,6 @@
    absents de la Reverse Rare (pêche et terre cuite), l'en distinguent au premier coup d'œil. */
 .card.is-reverse.r-legendaire {
   --foil:
-    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.95) 0 0.045em, transparent 0.1em) 0 0 / 0.8em 1em,
-    radial-gradient(circle at 70% 20%, rgba(255, 226, 120, 0.95) 0 0.05em, transparent 0.11em) 0 0 / 1.3em 1.5em,
     radial-gradient(60% 26% at 50% 100%, rgba(255, 214, 90, 1), transparent 75%),
     radial-gradient(55% 34% at 8% 6%, rgba(150, 100, 235, 0.95), transparent 72%),
     radial-gradient(50% 30% at 94% 22%, rgba(240, 100, 180, 0.95), transparent 72%),
@@ -336,7 +328,6 @@
   --reverse-wash: linear-gradient(170deg, rgba(170, 120, 245, 0.55), rgba(240, 120, 190, 0.3) 40%, rgba(255, 150, 110, 0.35) 70%, rgba(255, 200, 90, 0.6));
   --reverse-tier: linear-gradient(90deg, #6a2fb0, #d0306e, #ee7a20);
   --filet: rgba(168, 50, 122, 0.8);
-  --filet-2: rgba(255, 220, 140, 0.7);
   --star-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23fffdf4'/%3E%3C/svg%3E");
   --star-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23ffd36b'/%3E%3C/svg%3E");
 }
@@ -352,7 +343,7 @@
 
 /* le médaillon rayonne comme un soleil couchant ; médaillon et drapeau cerclés d'or */
 .card.is-reverse.r-legendaire .card__medal {
-  box-shadow: 0 0 0 0.12em var(--gold), 0 0 0.9em 0.15em rgba(255, 186, 80, 0.85), 0 0.2em 0.4em rgba(120, 40, 60, 0.35);
+  box-shadow: 0 0 0 0.12em var(--gold), 0 0 0.6em rgba(255, 186, 80, 0.7), 0 0.2em 0.4em rgba(120, 40, 60, 0.3);
 }
 
 .card.is-reverse.r-legendaire .card__medal span {
@@ -382,13 +373,13 @@
   }
 }
 
-/* le cadre crème laisse transparaître le lavis ; un double filet fait le tour de la carte */
+/* le cadre crème laisse transparaître le lavis ; un filet fin fait le tour de la carte */
 .is-reverse .card__panel {
   fill-opacity: 0.5;
 }
 
 .card.is-reverse .card__body {
-  box-shadow: inset 0 0 0 0.1em var(--filet), inset 0 0 0 0.24em var(--filet-2);
+  box-shadow: inset 0 0 0 0.08em var(--filet);
 }
 
 /* les cartes du Mexique et de l'hiver ont un cadre réduit à 95 % : la fenêtre de la photo est plus petite */
@@ -396,7 +387,7 @@
   --window-hole: 58.8% 23.1% / 80.56% 75.62%;
 }
 
-/* étoiles posées sur le cadre (jamais sur la photo), en deux groupes qui scintillent à contretemps */
+/* trois étoiles posées sur le cadre (jamais sur la photo), qui scintillent à contretemps */
 .is-reverse .card__body::before,
 .is-reverse .card__body::after {
   content: '';
@@ -410,22 +401,12 @@
 
 .is-reverse .card__body::before {
   background:
-    var(--star-b) 3.2% 21% / 2.2em 2.2em no-repeat,
-    var(--star-a) 4.6% 62% / 1.4em 1.4em no-repeat,
-    var(--star-b) 42% 0.9% / 1.6em 1.6em no-repeat,
-    var(--star-a) 98.6% 34% / 1.5em 1.5em no-repeat,
-    var(--star-b) 98.4% 74% / 2em 2em no-repeat,
-    var(--star-a) 58% 99.3% / 1.6em 1.6em no-repeat;
+    var(--star-b) 3.4% 20% / 2em 2em no-repeat,
+    var(--star-a) 98.6% 70% / 1.5em 1.5em no-repeat;
 }
 
 .is-reverse .card__body::after {
-  background:
-    var(--star-a) 2.8% 40% / 1.6em 1.6em no-repeat,
-    var(--star-b) 3.6% 77% / 1.9em 1.9em no-repeat,
-    var(--star-a) 73% 1% / 1.4em 1.4em no-repeat,
-    var(--star-b) 98.8% 14% / 1.7em 1.7em no-repeat,
-    var(--star-a) 98.6% 54% / 1.4em 1.4em no-repeat,
-    var(--star-b) 90% 99.2% / 2em 2em no-repeat;
+  background: var(--star-b) 74% 0.8% / 1.6em 1.6em no-repeat;
   animation-delay: -1.3s;
 }
 

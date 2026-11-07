@@ -8,7 +8,7 @@ import type { CardFace } from '../engine/types';
 
 // Maquette (page de développement promo/legende.html) : les Reverse légendaires, à côté des autres raretés.
 
-const IDS = ['souris', 'lynx-roux', 'ocelot', 'loup', 'lion', 'mx-axolotl'];
+const IDS = ['ocelot', 'renard-roux', 'loup', 'jaguar', 'lion', 'mx-axolotl'];
 
 createRoot(document.getElementById('root')!).render(
   <div style={{ padding: 24, display: 'grid', gap: 22, color: 'var(--text)' }}>
