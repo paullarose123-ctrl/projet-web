@@ -19,6 +19,7 @@ import {
   canExplore,
   canLiveIn,
   cardVisitors,
+  enclosFor,
   enclosVisitors,
   expeditionCredits,
   expeditionEnd,
@@ -34,7 +35,9 @@ import {
 import { dayKey } from '../engine/daily';
 import type { PackDef } from '../engine/packs';
 import { PackArt } from '../components/PackArt';
-import type { PublicProfile } from '../account/supabase';
+import { accountsEnabled, type PublicProfile } from '../account/supabase';
+import { Avatar } from '../components/Avatar';
+import { useUi } from '../store/ui';
 import { claimGifts, giftVisitors, giftedToday } from '../account/reserve';
 import { freshSession, useAccount } from '../store/account';
 import type { OwnedCard } from '../engine/types';
@@ -439,11 +442,20 @@ function ExpeditionSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Le chemin d'une expédition, animé : l'animal avance vers l'arrivée, ou attend à côté de son coffre. */
-function Trail({ sprite, kind, start, end, back, loop = false, className = '' }: { sprite: Sprite; kind: ExpeditionDef['id']; start: number; end: number; back: boolean; loop?: boolean; className?: string }) {
+/** Le milieu où part un animal en expédition : celui de son enclos (la forêt s'il n'en a pas). */
+const envOf = (athleteId: string): EnclosId => {
+  const athlete = ATHLETES_BY_ID[athleteId];
+  return (athlete && enclosFor(athlete)) || 'foret';
+};
+
+/**
+ * Le chemin d'une expédition, animé, dans le paysage du milieu de l'animal : il avance vers l'arrivée, ou attend à
+ * côté de son coffre.
+ */
+function Trail({ sprite, env, start, end, back, loop = false, className = '' }: { sprite: Sprite; env: EnclosId; start: number; end: number; back: boolean; loop?: boolean; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const latest = useRef({ sprite, kind, start, end, back, loop });
-  latest.current = { sprite, kind, start, end, back, loop };
+  const latest = useRef({ sprite, env, start, end, back, loop });
+  latest.current = { sprite, env, start, end, back, loop };
   useEffect(() => {
     const c = ref.current!.getContext('2d')!;
     let frame = 0;
@@ -452,7 +464,7 @@ function Trail({ sprite, kind, start, end, back, loop = false, className = '' }:
       const v = latest.current;
       const span = v.end - v.start;
       const done = Date.now() - v.start;
-      drawTrail(c, (now - t0) / 1000, v.sprite, v.kind, v.loop ? (done % span) / span : done / span, v.back);
+      drawTrail(c, (now - t0) / 1000, v.sprite, v.env, v.loop ? (done % span) / span : done / span, v.back);
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
@@ -498,7 +510,7 @@ function ExpeditionReturn({ card, kind, credits, found, pack, onClose }: { card:
       <div className="rsv-return" role="dialog" aria-label="Retour d’expédition" onClick={(e) => e.stopPropagation()}>
         <p className="eyebrow">{EXPEDITIONS_BY_ID[kind].name}</p>
         <h2>{name(card)} est de retour !</h2>
-        <Trail sprite={spriteForAthlete(ATHLETES_BY_ID[card.athleteId])} kind={kind} start={now} end={now + 1} back className="rsv-trail--big" />
+        <Trail sprite={spriteForAthlete(ATHLETES_BY_ID[card.athleteId])} env={envOf(card.athleteId)} start={now} end={now + 1} back className="rsv-trail--big" />
         <p className="rsv-return__credits">
           <BallIcon /> +{shown.toLocaleString('fr-FR')} crédits
         </p>
@@ -577,14 +589,13 @@ function ExpeditionCta({ free, onGo }: { free: number; onGo: () => void }) {
   }, []);
   const [t0] = useState(() => Date.now());
   const pick = ready[step % Math.max(1, ready.length)];
-  const kind = EXPEDITIONS[step % EXPEDITIONS.length].id;
   const sprite = useMemo(() => (pick ? spriteForAthlete(ATHLETES_BY_ID[pick.athleteId]) : null), [pick]);
   const disabled = !pick || free <= 0;
   return (
     <button type="button" className="rsv-go" disabled={disabled} onClick={onGo}>
       {sprite && (
         <span className="rsv-go__scene">
-          <Trail sprite={sprite} kind={kind} start={t0} end={t0 + 4500} back={false} loop />
+          <Trail sprite={sprite} env={envOf(pick.athleteId)} start={t0} end={t0 + 4500} back={false} loop />
         </span>
       )}
       <span className="rsv-go__body">
@@ -666,7 +677,7 @@ function ExpeditionsPanel({ now }: { now: number }) {
           const back = left <= 0;
           return (
             <li key={trip.uid} className={`rsv-expedition${back ? ' is-back' : ''}`}>
-              {athlete && <Trail sprite={spriteForAthlete(athlete)} kind={trip.kind} start={trip.start} end={finish} back={back} />}
+              {athlete && <Trail sprite={spriteForAthlete(athlete)} env={envOf(athlete.id)} start={trip.start} end={finish} back={back} />}
               <div className="rsv-expedition__info">
                 <span className="rsv-panel__name">
                   <b>{card ? name(card) : 'Animal'}</b>
@@ -712,6 +723,68 @@ function ExpeditionsPanel({ now }: { now: number }) {
       <p className="muted small">Un animal revient avec des crédits, selon sa rareté et la durée, et parfois avec une nouvelle carte ou un pack de la boutique.</p>
       {picking && <ExpeditionSheet onClose={() => setPicking(false)} />}
       {result && <ExpeditionReturn {...result} onClose={() => setResult(null)} />}
+    </section>
+  );
+}
+
+/** Les réserves des amis : leur niveau, et un bouton pour aller les visiter (et leur envoyer des visiteurs). */
+function FriendsPanel() {
+  const session = useAccount((s) => s.session);
+  const friendships = useAccount((s) => s.friendships);
+  const profiles = useAccount((s) => s.friendProfiles);
+  const refreshFriends = useAccount((s) => s.refreshFriends);
+  const setTab = useUi((s) => s.setTab);
+  const [visiting, setVisiting] = useState<PublicProfile | null>(null);
+  useEffect(() => {
+    if (session && accountsEnabled()) void refreshFriends();
+  }, [session, refreshFriends]);
+  if (!accountsEnabled()) return null;
+  const me = session?.userId;
+  const friends = friendships
+    .filter((f) => f.status === 'accepted')
+    .map((f) => profiles[f.fromId === me ? f.toId : f.fromId])
+    .filter((p): p is PublicProfile => !!p)
+    .sort((a, b) => (b.reserve?.level ?? 0) - (a.reserve?.level ?? 0) || a.pseudo.localeCompare(b.pseudo, 'fr'));
+  return (
+    <section className="rsv-panel rsv-friends" aria-label="Réserves de mes amis">
+      <h2>Réserves de mes amis</h2>
+      {!session ? (
+        <p className="muted small">Crée un compte pour visiter les réserves de tes amis et leur envoyer des visiteurs.</p>
+      ) : friends.length === 0 ? (
+        <p className="muted small">
+          Ajoute des amis pour visiter leur réserve et leur envoyer {GIFT_VISITORS} visiteurs par jour.{' '}
+          <button type="button" className="link-btn" onClick={() => setTab('profil')}>
+            Ajouter des amis
+          </button>
+        </p>
+      ) : (
+        <ul>
+          {friends.map((p) => {
+            const count = Object.values(p.reserve?.enclos ?? {}).reduce((n, ids) => n + (ids?.length ?? 0), 0);
+            return (
+              <li key={p.id} className="rsv-friend">
+                <Avatar athleteId={p.avatar} pseudo={p.pseudo} className="avatar--player" />
+                <span className="rsv-panel__name">
+                  <b>{p.pseudo}</b>
+                  <small>{p.reserve ? `Niveau ${p.reserve.level} · ${count} animau${count > 1 ? 'x' : ''} · ${p.reserve.rate} visiteurs/h` : 'Pas encore de réserve ouverte'}</small>
+                </span>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
+                  disabled={!p.reserve}
+                  onClick={() => {
+                    sfx.rustle();
+                    setVisiting(p);
+                  }}
+                >
+                  Visiter
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {visiting && <FriendReserveSheet profile={visiting} onClose={() => setVisiting(null)} />}
     </section>
   );
 }
@@ -948,6 +1021,7 @@ export function ReserveScreen() {
       </section>
       <RequestsPanel now={now} />
       <ExpeditionsPanel now={now} />
+      <FriendsPanel />
       </div>
       {sheet && <EnclosSheet id={sheet} onClose={() => setSheet(null)} />}
     </div>
