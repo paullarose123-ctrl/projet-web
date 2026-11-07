@@ -83,7 +83,8 @@ const MX = {
   plate: 'M20 128.2 H92.6 V129.4 H94.2 V133.6 H92.6 V134.8 H20 Z',
   thin: steppedRect(4.7, 3.7, 90.6, 132.2, 1.1),
   banner: steppedRect(25.5, 117.6, 68.7, 9.2, 0.7),
-  rail: `${crenelLine(24, 36)} ${crenelLine(70, 80.4)} ${crenelLine(91.6, 105)}`,
+  // le haut du rail (de part et d'autre du nom de la famille) est tracé par .card__sport, à la longueur du nom
+  rail: crenelLine(91.6, 105),
   diamond: steppedDiamond(6.5, 86, 0.5),
 };
 
@@ -131,7 +132,8 @@ function Frame({ mexique = false, hiver = false }: { mexique?: boolean; hiver?: 
       <path className="card__trim" d={PLATE} />
       {hiver && <path className="card__icicles" d={ICICLES} />}
       <g className="card__rail">
-        <path d="M6.5 24 V36 M6.5 70 V81 M6.5 91 V105" />
+        {/* le haut du rail, de part et d'autre du nom de la famille, est tracé par .card__sport */}
+        <path d="M6.5 91 V105" />
         <path className="card__diamond" d="M6.5 83.2 L7.7 86 L6.5 88.8 L5.3 86 Z" />
       </g>
     </svg>
@@ -378,11 +380,10 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
           {/* en duel, le drapeau donnerait la réponse aux questions de continent */}
           {!tiny && !hideFacts && <Flag code={athlete.country} className="card__flag" />}
 
-          {!tiny && (
-            <div className="card__sport" aria-hidden="true" style={{ fontSize: `${sport.name.length > 12 ? 0.62 : 0.8}em` }}>
-              {sport.name}
-            </div>
-          )}
+          {/* le nom de la famille sur le rail de gauche, entre deux traits qui s'arrêtent avant ses lettres */}
+          <div className={`card__sport${sport.name.length > 14 ? ' is-long' : ''}`} aria-hidden="true" style={{ fontSize: `${sport.name.length > 12 ? 0.62 : 0.8}em` }}>
+            {!tiny && <span>{sport.name}</span>}
+          </div>
 
           <div className="card__medal" title={sport.name}>
             <span>
