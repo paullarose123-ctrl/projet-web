@@ -250,7 +250,7 @@
   /* lavis posé sur la photo, et dégradé du mot « Reverse » */
   --reverse-wash: linear-gradient(140deg, rgba(255, 184, 216, 0.75), rgba(255, 232, 186, 0.45) 35%, rgba(186, 240, 218, 0.5) 65%, rgba(204, 196, 255, 0.75));
   --reverse-tier: linear-gradient(90deg, #cf5f97, #8a5cc4, #4c96bd);
-  /* filet autour de la carte, et reflet de lumière qui balaie le cadre */
+  /* filet autour de la carte */
   --filet: rgba(179, 131, 201, 0.75);
   /* trou de la fenêtre de la photo, pour que les reflets ne passent que sur le cadre */
   --window-hole: 61.8% 16.2% / 84.8% 79.6%;
@@ -322,7 +322,6 @@
   --reverse-wash: linear-gradient(170deg, rgba(170, 120, 245, 0.55), rgba(240, 120, 190, 0.3) 40%, rgba(255, 150, 110, 0.35) 70%, rgba(255, 200, 90, 0.6));
   --reverse-tier: linear-gradient(90deg, #6a2fb0, #d0306e, #ee7a20);
   --filet: rgba(168, 50, 122, 0.8);
-  --sheen: rgba(255, 232, 160, 0.85);
 }
 
 /* tous les filets du cadre en or, la fenêtre de la photo cerclée d'un trait plus épais */
@@ -378,53 +377,6 @@
 /* les cartes du Mexique et de l'hiver ont un cadre réduit à 95 % : la fenêtre de la photo est plus petite */
 .card.is-reverse:is(.serie-2, .serie-3) {
   --window-hole: 58.8% 23.1% / 80.56% 75.62%;
-}
-
-/* côté brillant : le cadre luit doucement sur ses bords, et un trait de lumière le balaie régulièrement, comme
-   sur une carte vernie qu'on incline (la photo reste nette, la lumière ne passe que sur le cadre) */
-.is-reverse .card__body::before,
-.is-reverse .card__body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 7;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-.is-reverse .card__body::before {
-  background:
-    radial-gradient(60% 22% at 18% 0%, rgba(255, 255, 255, 0.75), transparent 70%),
-    radial-gradient(50% 18% at 88% 100%, rgba(255, 255, 255, 0.55), transparent 70%);
-  box-shadow: inset 0 0 0.9em rgba(255, 255, 255, 0.7);
-  mix-blend-mode: screen;
-  opacity: 0.85;
-}
-
-.is-reverse .card__body::after {
-  background: linear-gradient(110deg, transparent 40%, var(--sheen, rgba(255, 255, 255, 0.85)) 50%, transparent 60%) 0 0 / 250% 100% no-repeat;
-  mix-blend-mode: screen;
-  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  animation: reverse-sheen 5s ease-in-out infinite;
-}
-
-@keyframes reverse-sheen {
-  0% {
-    background-position: 100% 0;
-  }
-  55%,
-  100% {
-    background-position: 0% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .is-reverse .card__body::after {
-    animation: none;
-    opacity: 0;
-  }
 }
 
 /* textes prune sur crème : un liseré blanc au lieu de l'ombre noire des métaux */
