@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
-import { FREE_PACK, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, sportPack, type PackDef } from '../packs';
+import { FREE_PACK, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, serieOdds, sportPack, type PackDef } from '../packs';
 import { cardsOfSerie, releasedAthletes, serieOf, setEarlyAccessForTesting } from '../series';
 import { createMarket } from '../market';
 import { rarityOf } from '../cards';
@@ -60,6 +60,17 @@ describe('Série 2 · Mexique', () => {
     expect(seriesFrom(FREE_PACK, rng)).toEqual([1]);
     expect(seriesFrom(FREE_PACK_MEXIQUE, rng)).toEqual([2]);
     for (const pack of PAID) expect(seriesFrom(pack, rng), pack.id).toEqual([1, 2]);
+  });
+
+  it('le Pack Icônes donne aussi les Icônes du Mexique dès sa sortie, et la boutique l’affiche', () => {
+    const icones = SHOP_PACKS.find((pack) => pack.id === 'icones')!;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(OCT_31);
+    expect(serieOdds(icones, 2)).toBe(0);
+    vi.setSystemTime(NOV_1);
+    expect(serieOdds(icones, 2)).toBeGreaterThan(0.1);
+    expect(serieOdds(icones, 2)).toBeLessThan(1);
+    expect(seriesFrom(icones, mulberry32(5))).toEqual([1, 2]);
   });
 
   it('sort le 1er novembre : boosters gratuits, marché et cartes disponibles changent à minuit', () => {
