@@ -445,6 +445,58 @@
   animation-duration: 6s;
 }
 
+/* côté brillant de la Reverse Légendaire : des reflets or, rose et lilas glissent sur le cadre et la bordure, semés
+   d'un grain pailleté d'or qui scintille (jamais sur la photo) */
+.card.is-reverse.r-legendaire .card__body::before,
+.card.is-reverse.r-legendaire .card__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+}
+
+.card.is-reverse.r-legendaire .card__body::before {
+  background: repeating-linear-gradient(
+      115deg,
+      rgba(255, 230, 150, 0) 0%,
+      rgba(255, 236, 160, 0.95) 7%,
+      rgba(255, 160, 200, 0.85) 13%,
+      rgba(196, 160, 255, 0.85) 19%,
+      rgba(255, 230, 150, 0) 26%
+    )
+    0 0 / 220% 220%;
+  mix-blend-mode: color-dodge;
+  opacity: 0.6;
+  animation: holo-drift 6s linear infinite alternate;
+}
+
+.card.is-reverse.r-legendaire .card__body::after {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
+    radial-gradient(circle at 70% 60%, rgba(255, 226, 140, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  animation: reverse-glint 3s ease-in-out infinite alternate;
+}
+
+@keyframes reverse-glint {
+  to {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.is-reverse.r-legendaire .card__body::before,
+  .card.is-reverse.r-legendaire .card__body::after {
+    animation: none;
+  }
+}
+
 /* les lavis glissent très lentement d'une teinte à l'autre */
 .is-reverse .card__bg {
   animation: reverse-shimmer 10s ease-in-out infinite alternate;

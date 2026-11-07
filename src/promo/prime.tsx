@@ -3,7 +3,6 @@ import '../styles/fonts.css';
 import '../styles/base.css';
 import '../styles/card.css';
 import '../styles/app.css';
-import './prime.css';
 import { Card } from '../components/Card';
 import type { CardFace, Variant } from '../engine/types';
 
@@ -12,9 +11,7 @@ import type { CardFace, Variant } from '../engine/types';
 const IDS = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
 const ROWS: [string, Variant, string][] = [
   ['Légendaire normale', 'base', ''],
-  ['Reverse légendaire aujourd’hui', 'reverse', ''],
-  ['M1 · Le coucher de soleil de la Légendaire en lavis, prune et or, avec des reflets qui glissent sur le cadre', 'reverse', 'rl-m1'],
-  ['M2 · Pareil, avec en plus un grain pailleté d’or', 'reverse', 'rl-m2'],
+  ['Reverse légendaire, avec le côté brillant', 'reverse', ''],
 ];
 
 createRoot(document.getElementById('root')!).render(
