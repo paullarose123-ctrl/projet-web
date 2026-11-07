@@ -1,0 +1,51 @@
+/* Maquette : deux pistes pour les Prime de la Série 1 (classes pr-a, pr-b posées sur la carte). */
+
+/* commun : trou de la fenêtre de la photo pour les reflets ; mot « PRIME » lisible sur une pastille indigo */
+.card.is-prime:is(.pr-a, .pr-b) {
+  --window-hole: 61.8% 16.2% / 84.8% 79.6%;
+  --tier-bg: linear-gradient(90deg, #2b2c72, #3b3d97);
+  --foil:
+    radial-gradient(50% 20% at 50% 96%, rgba(255, 250, 238, 0.9), transparent 70%),
+    radial-gradient(48% 30% at 8% 6%, rgba(255, 168, 210, 0.9), transparent 72%),
+    radial-gradient(44% 28% at 94% 30%, rgba(176, 190, 255, 0.9), transparent 72%),
+    radial-gradient(46% 30% at 90% 88%, rgba(255, 214, 170, 0.9), transparent 72%),
+    linear-gradient(172deg, #f2a7cf 0%, #f7c3d6 38%, #ffe4c2 70%, #c9cff5 100%);
+}
+
+.card.is-prime:is(.pr-a, .pr-b) .card__tier i {
+  background: linear-gradient(90deg, #ffb8d8, #ffe6a0, #b0f0da, #c0d0ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* la photo reste nette : plus de bandes ni de points, seulement un voile de nacre rose et pervenche dans les coins */
+.card.is-prime:is(.pr-a, .pr-b).has-photo .card__window::after {
+  background:
+    radial-gradient(120% 70% at 0% 0%, rgba(255, 196, 228, 0.6), transparent 50%),
+    radial-gradient(120% 70% at 100% 100%, rgba(186, 198, 255, 0.6), transparent 50%);
+  mix-blend-mode: soft-light;
+  opacity: 1;
+  box-shadow: inset 0 0 0 0.1em rgba(255, 236, 248, 0.55), inset 0 0 1.4em rgba(255, 196, 232, 0.4);
+}
+
+/* le reflet irisé glisse sur le cadre, plus sur la photo */
+.card.is-prime:is(.pr-a, .pr-b) .card__holo {
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+}
+
+/* B : en plus, un cadre de nacre irisée (l'indigo laisse deviner les couleurs de la bordure) et une fenêtre cerclée de blanc nacré */
+.card.is-prime.pr-b .card__panel {
+  fill-opacity: 0.86;
+}
+
+.card.is-prime.pr-b .card__holo {
+  opacity: 0.55;
+  mix-blend-mode: color-dodge;
+}
+
+.card.is-prime.pr-b .card__trim--window {
+  stroke: #fff2fa;
+}
