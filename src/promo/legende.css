@@ -118,3 +118,99 @@
 .card.is-reverse.r-legendaire.rl-b {
   --reverse-wash: linear-gradient(140deg, rgba(255, 190, 220, 0.35), transparent 40%, transparent 65%, rgba(200, 186, 255, 0.4));
 }
+
+/* ─── A2 : l'aquarelle de feu, rehaussée d'or et d'étoiles qui scintillent ─── */
+.card.is-reverse.r-legendaire.rl-a2 {
+  --star-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23ffd36b'/%3E%3C/svg%3E");
+  --star-white: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.8 7 13 9.2 20 10C13 10.8 10.8 13 10 20C9.2 13 7 10.8 0 10C7 9.2 9.2 7 10 0Z' fill='%23fffdf4'/%3E%3C/svg%3E");
+}
+
+/* tous les filets du cadre en or ; la fenêtre de la photo cerclée d'un trait plus épais */
+.card.is-reverse.r-legendaire.rl-a2 .card__frame .card__trim {
+  stroke: #e2a336;
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__trim--window {
+  stroke-width: 0.8;
+}
+
+/* le losange du numéro et le médaillon en or, le médaillon rayonne comme un soleil couchant */
+.card.is-reverse.r-legendaire.rl-a2 .card__rating,
+.card.is-reverse.r-legendaire.rl-a2 .card__rating::after {
+  background: linear-gradient(180deg, #ffe08a, #e2a03a 55%, #b8702a);
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__medal {
+  box-shadow: 0 0 0 0.12em #e7ac3c, 0 0 0.9em 0.15em rgba(255, 186, 80, 0.85), 0 0.2em 0.4em rgba(120, 40, 60, 0.35);
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__medal span {
+  box-shadow: inset 0 0 0 0.12em #e7ac3c, inset 0 0 0 0.3em #fffaf5, inset 0 0 0 0.36em var(--trim);
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__flag {
+  box-shadow: 0 0.1em 0.3em rgba(120, 40, 60, 0.35), 0 0 0 0.1em #e7ac3c;
+}
+
+/* étoiles posées sur le cadre (jamais sur la photo), en deux groupes qui scintillent à contretemps */
+.card.is-reverse.r-legendaire.rl-a2 .card__body::before,
+.card.is-reverse.r-legendaire.rl-a2 .card__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.15em rgba(255, 255, 255, 0.95)) drop-shadow(0 0 0.35em rgba(255, 190, 90, 0.8));
+  animation: rl-twinkle 2.6s ease-in-out infinite alternate;
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__body::before {
+  background:
+    var(--star-gold) 3.2% 21% / 2.2em 2.2em no-repeat,
+    var(--star-white) 4.6% 62% / 1.4em 1.4em no-repeat,
+    var(--star-gold) 42% 0.9% / 1.6em 1.6em no-repeat,
+    var(--star-white) 98.6% 34% / 1.5em 1.5em no-repeat,
+    var(--star-gold) 98.4% 74% / 2em 2em no-repeat,
+    var(--star-white) 58% 99.3% / 1.6em 1.6em no-repeat;
+}
+
+.card.is-reverse.r-legendaire.rl-a2 .card__body::after {
+  background:
+    var(--star-white) 2.8% 40% / 1.6em 1.6em no-repeat,
+    var(--star-gold) 3.6% 77% / 1.9em 1.9em no-repeat,
+    var(--star-white) 73% 1% / 1.4em 1.4em no-repeat,
+    var(--star-gold) 98.8% 14% / 1.7em 1.7em no-repeat,
+    var(--star-white) 98.6% 54% / 1.4em 1.4em no-repeat,
+    var(--star-gold) 90% 99.2% / 2em 2em no-repeat;
+  animation-delay: -1.3s;
+}
+
+@keyframes rl-twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* un reflet doré passe lentement sur le cadre */
+.card.is-reverse.r-legendaire.rl-a2 .card__holo {
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 236, 170, 0.95) 48%, rgba(255, 180, 120, 0.7) 52%, transparent 65%);
+  background-size: 300% 300%;
+  animation: holo-drift 6s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) 61.8% 16.2% / 84.8% 79.6% no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) 61.8% 16.2% / 84.8% 79.6% no-repeat;
+}
+
+/* ─── A3 : en plus, les rayons du soleil couchant dans le cadre ─── */
+.card.is-reverse.r-legendaire.rl-a3 .card__bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 100%, rgba(255, 246, 214, 0.75) 0deg 3deg, transparent 3deg 10deg);
+  mix-blend-mode: overlay;
+}

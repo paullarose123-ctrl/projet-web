@@ -12,10 +12,9 @@ import type { CardFace } from '../engine/types';
 const IDS = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
 
 const ROWS: [string, string][] = [
-  ['Aujourd’hui', ''],
-  ['A · Aquarelle de feu', 'rl-a'],
-  ['B · Nacre arc-en-ciel', 'rl-b'],
-  ['C · Feuille d’or', 'rl-c'],
+    ['A · Aquarelle de feu (la première version)', 'rl-a'],
+  ['A2 · Rehaussée d’or, avec des étoiles qui scintillent', 'rl-a rl-a2'],
+  ['A3 · Pareil, avec les rayons du soleil couchant', 'rl-a rl-a2 rl-a3'],
 ];
 
 createRoot(document.getElementById('root')!).render(
