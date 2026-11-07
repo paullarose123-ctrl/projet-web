@@ -103,7 +103,7 @@ export const SHOP_PACKS: PackDef[] = [
   {
     id: 'icones',
     name: 'Pack Icônes',
-    tagline: '1 seule carte, une Icône garantie : une espèce disparue depuis 1800 (lion de l’Atlas, thylacine, loup du Japon…)',
+    tagline: '1 seule carte, une Icône garantie : une espèce disparue depuis 1800, de toutes les séries (lion de l’Atlas, thylacine, grizzli du Mexique…)',
     price: 600_000,
     size: 1,
     // aucune carte des paliers ordinaires : l'unique carte est tirée parmi les Icônes (voir drawIcon)
@@ -205,6 +205,13 @@ export function iconPool(pack: PackDef): Athlete[] {
  * des espèces de la série dans chacune. Les Icônes et les Prime garanties ne changent presque rien : on les ignore.
  */
 export function serieOdds(pack: PackDef, serie: number): number {
+  // un pack d'Icônes tire sa carte parmi les Icônes de toutes les séries sorties
+  if (isIconPack(pack)) {
+    const icons = iconPool(pack);
+    const all = icons.reduce((w, athlete) => w + iconWeight(athlete), 0);
+    const mine = icons.filter((athlete) => serieOf(athlete) === serie).reduce((w, athlete) => w + iconWeight(athlete), 0);
+    return all ? mine / all : 0;
+  }
   const pool = poolFor(pack);
   const total = RARITY_ORDER.reduce((sum, id) => sum + (pool[id].length ? pack.odds[id] : 0), 0);
   if (!total) return 0;
