@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useGame } from '../store/game';
+import { packById, useGame } from '../store/game';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import {
   ENCLOS,
@@ -34,6 +34,8 @@ import {
   type ExpeditionDef,
 } from '../engine/reserve';
 import { dayKey } from '../engine/daily';
+import type { PackDef } from '../engine/packs';
+import { PackArt } from '../components/PackArt';
 import type { PublicProfile } from '../account/supabase';
 import { claimGifts, giftVisitors, giftedToday } from '../account/reserve';
 import { freshSession, useAccount } from '../store/account';
@@ -399,7 +401,11 @@ function ExpeditionSheet({ onClose }: { onClose: () => void }) {
             <button key={e.id} type="button" role="radio" aria-checked={kind === e.id} className={`rsv-trip${kind === e.id ? ' is-on' : ''}`} onClick={() => setKind(e.id)}>
               <b>{e.name}</b>
               <small>
-                {e.hours} h{e.cardChance ? ` · ${Math.round(e.cardChance * 100)} % de chances de trouver une carte` : ' · des crédits'}
+                {e.hours} h · des crédits
+                {e.cardChance > 0 && `, ${Math.round(e.cardChance * 100)} % de chances de trouver une carte`}
+                {`, ${Math.round(e.packChance * 100)} % de rapporter un pack (${Object.keys(e.packs)
+                  .map((id) => packById(id)?.name.replace(/^Pack /, ''))
+                  .join(', ')})`}
               </small>
             </button>
           ))}
@@ -456,7 +462,9 @@ function Trail({ sprite, kind, start, end, back, className = '' }: { sprite: Spr
 }
 
 /** Retour d'expédition : l'animal saute de joie, les crédits défilent, et la carte trouvée se retourne. */
-function ExpeditionReturn({ card, kind, credits, found, onClose }: { card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null; onClose: () => void }) {
+function ExpeditionReturn({ card, kind, credits, found, pack, onClose }: { card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null; pack: string | null; onClose: () => void }) {
+  const openGift = useGame((s) => s.reserveOpenGiftPack);
+  const packDef = pack ? packById(pack) : undefined;
   const [shown, setShown] = useState(0);
   const [reveal, setReveal] = useState(false);
   const size = useWide() ? 'sm' : 'xs';
@@ -505,9 +513,35 @@ function ExpeditionReturn({ card, kind, credits, found, onClose }: { card: Owned
             </div>
           </div>
         )}
-        <button type="button" className="btn btn--gold" onClick={onClose}>
-          Super !
-        </button>
+        {packDef && (
+          <div className="rsv-return__pack">
+            <p className="small">Il rapporte aussi un pack de la boutique :</p>
+            <div className="rsv-return__pack-art">
+              <PackArt tone={packDef.tone} name={packDef.name} sport={packDef.sport} size={packDef.size} />
+            </div>
+          </div>
+        )}
+        {packDef ? (
+          <div className="rsv-return__actions">
+            <button
+              type="button"
+              className="btn btn--gold"
+              onClick={() => {
+                onClose();
+                openGift(packDef.id);
+              }}
+            >
+              Ouvrir le {packDef.name}
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+              Plus tard
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="btn btn--gold" onClick={onClose}>
+            Super !
+          </button>
+        )}
       </div>
     </div>,
     document.body,
@@ -519,13 +553,39 @@ function ExpeditionsPanel({ now }: { now: number }) {
   const reserve = useGame((s) => s.reserve);
   const collection = useGame((s) => s.collection);
   const end = useGame((s) => s.reserveEndExpedition);
+  const openGift = useGame((s) => s.reserveOpenGiftPack);
   const [picking, setPicking] = useState(false);
-  const [result, setResult] = useState<{ card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null } | null>(null);
+  const [result, setResult] = useState<{ card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null; pack: string | null } | null>(null);
+  const gifts = (reserve.giftPacks ?? []).map(packById).filter((p): p is PackDef => !!p);
   const trips = reserve.expeditions ?? [];
   const byUid = useMemo(() => new Map(collection.map((c) => [c.uid, c])), [collection]);
   return (
     <section className="rsv-panel rsv-expeditions" aria-label="Expéditions">
       <h2>Expéditions</h2>
+      {gifts.length > 0 && (
+        <ul className="rsv-gifts">
+          {gifts.map((p, i) => (
+            <li key={`${p.id}-${i}`} className="rsv-giftpack">
+              <span className="rsv-giftpack__art">
+                <PackArt tone={p.tone} name={p.name} sport={p.sport} size={p.size} />
+              </span>
+              <span className="rsv-panel__name">
+                <b>{p.name}</b>
+                <small>Rapporté d’expédition</small>
+              </span>
+              <button
+                type="button"
+                className="btn btn--gold btn--sm"
+                onClick={() => {
+                  if (openGift(p.id)) sfx.register();
+                }}
+              >
+                Ouvrir
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <ul>
         {trips.map((trip) => {
           const card = byUid.get(trip.uid);
@@ -551,7 +611,7 @@ function ExpeditionsPanel({ now }: { now: number }) {
                       const got = end(trip.uid);
                       if (got && card) {
                         sfx.register();
-                        setResult({ card, kind: trip.kind, credits: got.credits, found: got.card });
+                        setResult({ card, kind: trip.kind, credits: got.credits, found: got.card, pack: got.pack });
                       }
                     }}
                   >
@@ -581,7 +641,7 @@ function ExpeditionsPanel({ now }: { now: number }) {
           </li>
         )}
       </ul>
-      <p className="muted small">Un animal revient avec des crédits, selon sa rareté et la durée, et parfois avec une nouvelle carte.</p>
+      <p className="muted small">Un animal revient avec des crédits, selon sa rareté et la durée, et parfois avec une nouvelle carte ou un pack de la boutique.</p>
       {picking && <ExpeditionSheet onClose={() => setPicking(false)} />}
       {result && <ExpeditionReturn {...result} onClose={() => setResult(null)} />}
     </section>

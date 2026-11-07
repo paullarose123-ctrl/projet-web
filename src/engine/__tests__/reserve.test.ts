@@ -24,7 +24,11 @@ import {
   requestProgress,
   reserveRate,
   reserveSnapshot,
+  rollExpeditionPack,
+  EXPEDITIONS,
 } from '../reserve';
+import { SHOP_PACKS } from '../packs';
+import { mulberry32 } from '../random';
 import type { CardFace, OwnedCard } from '../types';
 
 const card = (athleteId: string, variant: CardFace['variant'] = 'base'): CardFace => ({ athleteId, variant });
@@ -133,6 +137,21 @@ describe('Ma Réserve', () => {
     expect(expeditionCredits(card('lion'), 'grande')).toBeGreaterThan(expeditionCredits(card('lion'), 'balade'));
     const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a'] } }, expeditions: [{ uid: 'b', kind: 'balade' as const, start: 0 }] };
     expect([...busyUids(state)].sort()).toEqual(['a', 'b']);
+  });
+
+  it('rapporte parfois un pack de la boutique, plus souvent et plus gros au bout d’une longue expédition', () => {
+    const shop = new Set(SHOP_PACKS.map((p) => p.id));
+    for (const e of EXPEDITIONS) for (const id of Object.keys(e.packs)) expect(shop.has(id), id).toBe(true);
+    const rate = (kind: 'balade' | 'grande') => {
+      const rng = mulberry32(9);
+      let n = 0;
+      for (let i = 0; i < 4000; i++) if (rollExpeditionPack(kind, rng)) n++;
+      return n / 4000;
+    };
+    expect(rate('balade')).toBeCloseTo(0.1, 1);
+    expect(rate('grande')).toBeCloseTo(0.4, 1);
+    expect(rollExpeditionPack('grande', () => 0.99)).toBeNull();
+    expect(rollExpeditionPack('balade', () => 0)).toBe('decouverte');
   });
 
   it('montre aux amis les espèces de chaque enclos', () => {

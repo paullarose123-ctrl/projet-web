@@ -595,6 +595,59 @@
   transform: scaleX(1);
 }
 
+/* packs rapportés d'expédition */
+.rsv-return__pack {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.rsv-return__pack p {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.rsv-return__pack-art {
+  width: 110px;
+  animation: rsv-pack-in 0.6s 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+@keyframes rsv-pack-in {
+  from {
+    transform: translateY(18px) scale(0.6) rotate(-8deg);
+    opacity: 0;
+  }
+}
+
+.rsv-return__actions {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.rsv-gifts {
+  margin-bottom: 6px !important;
+}
+
+.rsv-giftpack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 211, 107, 0.6);
+  background: var(--bg-3);
+}
+
+.rsv-giftpack .rsv-panel__name {
+  flex: 1;
+}
+
+.rsv-giftpack__art {
+  flex: none;
+  width: 34px;
+}
+
 .rsv-decor {
   display: flex;
   align-items: center;
