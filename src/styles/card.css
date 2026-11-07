@@ -311,7 +311,7 @@
 }
 
 /* Reverse Légendaire : le coucher de soleil en lavis vifs (lavande, rose, corail, soleil), rehaussé d'or : filets
-   du cadre dorés, étoiles d'or, médaillon qui rayonne et rayons du soleil couchant dans le cadre. Le violet et le rose,
+   du cadre dorés, étoiles d'or et médaillon qui rayonne comme un soleil couchant. Le violet et le rose,
    absents de la Reverse Rare (pêche et terre cuite), l'en distinguent au premier coup d'œil. */
 .card.is-reverse.r-legendaire {
   --foil:
@@ -361,15 +361,6 @@
 
 .card.is-reverse.r-legendaire .card__flag {
   box-shadow: 0 0.1em 0.3em rgba(120, 40, 60, 0.35), 0 0 0 0.1em var(--gold);
-}
-
-/* les rayons du soleil couchant, qui partent du bas de la carte */
-.card.is-reverse.r-legendaire .card__bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-conic-gradient(from 0deg at 50% 100%, rgba(255, 246, 214, 0.75) 0deg 3deg, transparent 3deg 10deg);
-  mix-blend-mode: overlay;
 }
 
 /* un reflet doré passe lentement sur le cadre */
