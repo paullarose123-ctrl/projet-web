@@ -12,8 +12,8 @@ import type { CardFace } from '../engine/types';
 const IDS = ['lion', 'panda', 'orque', 'gorille', 'husky', 'chat'];
 const ROWS: [string, string][] = [
   ['Aujourd’hui', ''],
-  ['A · Photo nette, nacre dans les coins, reflet sur le cadre', 'pr-a'],
-  ['B · Pareil, avec un cadre de nacre irisée', 'pr-b'],
+  ['E · Feuille holographique gravée de fines lignes', 'pr-e'],
+  ['F · Feuille holographique gravée de petits losanges', 'pr-f'],
 ];
 
 createRoot(document.getElementById('root')!).render(
