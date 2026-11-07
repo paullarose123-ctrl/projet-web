@@ -404,6 +404,16 @@
   pointer-events: none;
 }
 
+/* chaque couche peint elle-même dans les coins arrondis de la carte : quand une couche est animée, masquée ou
+   fondue, Safari la dessine à part et ne la rogne plus aux coins du corps de la carte (coins carrés) */
+.card__bg,
+.card__bg::after,
+.card__inner,
+.card__holo,
+.card__shine {
+  border-radius: inherit;
+}
+
 .card__bg {
   background: var(--foil);
 }
@@ -851,25 +861,55 @@
   z-index: 2;
 }
 
-/* ─── famille à la verticale (rail gauche) ─── */
+/* ─── famille à la verticale (rail gauche) ───
+   Le rail court de 24 à 81 (sur 140) ; le nom est au milieu, et les deux traits du rail s'arrêtent avant ses
+   lettres, quelle que soit sa longueur. */
 .card__sport {
+  --ls: 0.3em;
   position: absolute;
   left: 6.5%;
-  top: 27.5%;
-  height: 21%;
+  top: 17.14%;
+  height: 40.71%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: calc(var(--w) * 0.025);
   writing-mode: vertical-rl;
   font-family: var(--font-body);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: 0.3em;
+  letter-spacing: var(--ls);
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--trim);
   z-index: 2;
+}
+
+/* les noms longs (Insectes & araignées…) se resserrent un peu */
+.card__sport.is-long {
+  --ls: 0.2em;
+}
+
+/* l'espacement des lettres ne s'ajoute pas après la dernière */
+.card__sport span {
+  margin-inline-end: calc(-1 * var(--ls));
+}
+
+.card__sport::before,
+.card__sport::after {
+  content: '';
+  flex: 1 1 0;
+  width: calc(var(--w) * 0.003);
+  background: currentColor;
+  opacity: 0.8;
+}
+
+/* cartes du Mexique : les traits du rail en créneaux, comme le reste de leur cadre */
+.card.serie-2 .card__sport::before,
+.card.serie-2 .card__sport::after {
+  width: calc(var(--w) * 0.014);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1.4 2.4' preserveAspectRatio='none'%3E%3Cpath d='M1.25 0H.15V1.2H1.25V2.4H.15' fill='none' stroke='%23000' stroke-width='.3'/%3E%3C/svg%3E") 0 0 / 100% calc(var(--w) * 0.024) repeat-y;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1.4 2.4' preserveAspectRatio='none'%3E%3Cpath d='M1.25 0H.15V1.2H1.25V2.4H.15' fill='none' stroke='%23000' stroke-width='.3'/%3E%3C/svg%3E") 0 0 / 100% calc(var(--w) * 0.024) repeat-y;
 }
 
 /* ─── médaillon de la famille ─── */
