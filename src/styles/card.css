@@ -226,6 +226,65 @@
   --hill-near: #34357f;
 }
 
+/* Prime de la Série 1 : la bordure devient une nacre irisée qui passe lentement par toutes les couleurs pastel ;
+   le cadre indigo la laisse deviner, la fenêtre de la photo est cerclée de blanc, le médaillon de nacre, et le
+   reflet holographique glisse sur le cadre (la photo garde son voile de bandes pastel) */
+.card.is-prime:not(.serie-2, .serie-3) {
+  --foil:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.85) 0 0.05em, transparent 0.12em) 0 0 / 1.3em 1.7em,
+    radial-gradient(50% 20% at 50% 96%, rgba(255, 250, 238, 0.9), transparent 70%),
+    conic-gradient(from 200deg at 40% 45%, #f5a8d0, #ffd6b0, #fff1b0, #b8f0d8, #b4d4ff, #d4b8ff, #f5a8d0);
+  --panel: #262a78;
+  --trim: #ffe6f4;
+  --tier-bg: linear-gradient(90deg, #2b2c72, #3b3d97);
+  --window-hole: 61.8% 16.2% / 84.8% 79.6%;
+}
+
+.card.is-prime:not(.serie-2, .serie-3) .card__bg {
+  animation: prime-nacre 14s linear infinite;
+}
+
+@keyframes prime-nacre {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.card.is-prime:not(.serie-2, .serie-3) .card__panel {
+  fill-opacity: 0.8;
+}
+
+.card.is-prime:not(.serie-2, .serie-3) .card__trim--window {
+  stroke: #ffffff;
+  stroke-width: 0.7;
+}
+
+.card.is-prime:not(.serie-2, .serie-3) .card__medal {
+  box-shadow: 0 0 0 0.12em #ffffff, 0 0 0.6em rgba(255, 190, 235, 0.7), 0 0.2em 0.4em rgba(0, 0, 0, 0.4);
+}
+
+/* le mot « Prime » en couleurs vives sur une pastille indigo */
+.card.is-prime:not(.serie-2, .serie-3) .card__tier i {
+  background: linear-gradient(90deg, #ffb8d8, #ffe6a0, #b0f0da, #c0d0ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card.is-prime:not(.serie-2, .serie-3) .card__holo {
+  opacity: 0.5;
+  mix-blend-mode: color-dodge;
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.is-prime .card__bg {
+    animation: none;
+  }
+}
+
 /* Reverse : aquarelle pastel. Lavis rose, pêche, beurre, menthe, ciel et lilas fondus sur un papier crème,
    semés de paillettes nacrées ; bandeaux crème, textes et liserés prune et orchidée. */
 .card.is-reverse {
