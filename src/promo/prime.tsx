@@ -11,12 +11,13 @@ import type { CardFace, Variant } from '../engine/types';
 
 const IDS = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
 const ROWS: [string, Variant, string][] = [
-  ['Légendaire normale', 'base', ''],
-  ['Reverse aujourd’hui', 'reverse', ''],
-  ['1 · Bas corail et orange', 'reverse', 'y-1'],
-  ['2 · Bas rose corail', 'reverse', 'y-2'],
+  ['Rare', 'reverse', ''],
+  ['Épique', 'reverse', ''],
+  ['Légendaire', 'reverse', ''],
+  ['Légendaire (Mexique)', 'reverse', ''],
 ];
 
+const ID_BY_ROW: Record<string, string> = { Rare: 'ocelot', 'Épique': 'loup', 'Légendaire': 'lion', 'Légendaire (Mexique)': 'mx-axolotl' };
 const params = new URLSearchParams(location.search);
 const id = params.get('id') ?? 'lion';
 
@@ -26,7 +27,7 @@ createRoot(document.getElementById('root')!).render(
       {ROWS.map(([title, variant, cls]) => (
         <section key={title} style={{ display: 'grid', gap: 8, justifyItems: 'center' }}>
           <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 20 }}>{title}</h2>
-          <Card card={{ athleteId: id, variant } as CardFace} size="md" className={cls} />
+          <Card card={{ athleteId: ID_BY_ROW[title] ?? id, variant } as CardFace} size="md" className={cls} />
         </section>
       ))}
     </div>
