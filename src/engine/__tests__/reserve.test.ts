@@ -13,7 +13,6 @@ import {
   billetterieFull,
   cardVisitors,
   dailyRequests,
-  decorBonus,
   emptyReserve,
   enclosFor,
   enclosVisitors,
@@ -103,15 +102,10 @@ describe('Ma Réserve', () => {
     expect(levelRewardsDue(3, LEVELS[2] + 10).credits).toBe(0);
   });
 
-  it('agrandit la billetterie et ajoute le bonus des décors', () => {
+  it('agrandit la billetterie', () => {
     const state = emptyReserve(0);
     expect(billetterieHours(state)).toBe(8);
     expect(billetterie({ ...state, caisse: 2 }, 100, 30 * HOUR)).toBe(2400);
-    const lion = card('lion');
-    const pens = { ...state, enclos: { savane: { places: 3, uids: ['a'] } } };
-    const decorated = { ...pens, decor: ['fontaine', 'statue'] };
-    expect(decorBonus(decorated)).toBeCloseTo(0.15);
-    expect(reserveRate(decorated, () => lion)).toBe(Math.round(cardVisitors(lion) * 1.15));
   });
 
   it('tire chaque jour des demandes que le joueur peut remplir', () => {
@@ -155,10 +149,9 @@ describe('Ma Réserve', () => {
   });
 
   it('montre aux amis les espèces de chaque enclos', () => {
-    const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a', 'x'] }, foret: { places: 3, uids: [] } }, decor: ['fontaine'] };
+    const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a', 'x'] }, foret: { places: 3, uids: [] } } };
     const snap = reserveSnapshot(state, (uid) => (uid === 'a' ? card('lion') : undefined));
     expect(snap.enclos).toEqual({ savane: ['lion'], foret: [] });
-    expect(snap.decor).toEqual(['fontaine']);
     expect(snap.level).toBe(1);
   });
 });

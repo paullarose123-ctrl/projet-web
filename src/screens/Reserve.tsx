@@ -7,7 +7,6 @@ import {
   ENCLOS_BY_ID,
   MAX_PLACES,
   BILLETTERIE_STEPS,
-  DECORS,
   EXPEDITIONS,
   GIFT_VISITORS,
   EXPEDITIONS_BY_ID,
@@ -20,7 +19,6 @@ import {
   canExplore,
   canLiveIn,
   cardVisitors,
-  decorBonus,
   enclosVisitors,
   expeditionCredits,
   expeditionEnd,
@@ -442,17 +440,19 @@ function ExpeditionSheet({ onClose }: { onClose: () => void }) {
 }
 
 /** Le chemin d'une expédition, animé : l'animal avance vers l'arrivée, ou attend à côté de son coffre. */
-function Trail({ sprite, kind, start, end, back, className = '' }: { sprite: Sprite; kind: ExpeditionDef['id']; start: number; end: number; back: boolean; className?: string }) {
+function Trail({ sprite, kind, start, end, back, loop = false, className = '' }: { sprite: Sprite; kind: ExpeditionDef['id']; start: number; end: number; back: boolean; loop?: boolean; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const latest = useRef({ sprite, kind, start, end, back });
-  latest.current = { sprite, kind, start, end, back };
+  const latest = useRef({ sprite, kind, start, end, back, loop });
+  latest.current = { sprite, kind, start, end, back, loop };
   useEffect(() => {
     const c = ref.current!.getContext('2d')!;
     let frame = 0;
     const t0 = performance.now();
     const loop = (now: number) => {
       const v = latest.current;
-      drawTrail(c, (now - t0) / 1000, v.sprite, v.kind, (Date.now() - v.start) / (v.end - v.start), v.back);
+      const span = v.end - v.start;
+      const done = Date.now() - v.start;
+      drawTrail(c, (now - t0) / 1000, v.sprite, v.kind, v.loop ? (done % span) / span : done / span, v.back);
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
@@ -548,6 +548,77 @@ function ExpeditionReturn({ card, kind, credits, found, pack, onClose }: { card:
   );
 }
 
+const LOOT_ICONS = {
+  // une carte, en biais
+  card: 'M7 4.5 L15.5 3 L18 17.5 L9.5 19 Z M9.2 7.4 L14.6 6.5 M10.4 14.6 L15.8 13.7',
+  // un sachet de pack, aux bords dentelés
+  pack: 'M5 4 L7 5 L9 4 L11 5 L13 4 L15 5 L17 4 L19 5 V19 L17 20 L15 19 L13 20 L11 19 L9 20 L7 19 L5 20 Z M8 9.5 H16',
+};
+
+/** Le grand bouton pour envoyer un animal en expédition : un aperçu animé du voyage et ce qu'on peut y gagner. */
+function ExpeditionCta({ free, onGo }: { free: number; onGo: () => void }) {
+  const reserve = useGame((s) => s.reserve);
+  const collection = useGame((s) => s.collection);
+  const [step, setStep] = useState(0);
+  // les meilleurs animaux disponibles, et le paysage, changent toutes les quelques secondes
+  const ready = useMemo(() => {
+    const busy = busyUids(reserve);
+    const best = new Map<string, OwnedCard>();
+    for (const card of collection) {
+      if (busy.has(card.uid) || !canExplore(ATHLETES_BY_ID[card.athleteId])) continue;
+      const current = best.get(card.athleteId);
+      if (!current || cardVisitors(card) > cardVisitors(current)) best.set(card.athleteId, card);
+    }
+    return [...best.values()].sort((a, b) => cardVisitors(b) - cardVisitors(a)).slice(0, 4);
+  }, [collection, reserve]);
+  useEffect(() => {
+    const id = window.setInterval(() => setStep((n) => n + 1), 4500);
+    return () => window.clearInterval(id);
+  }, []);
+  const [t0] = useState(() => Date.now());
+  const pick = ready[step % Math.max(1, ready.length)];
+  const kind = EXPEDITIONS[step % EXPEDITIONS.length].id;
+  const sprite = useMemo(() => (pick ? spriteForAthlete(ATHLETES_BY_ID[pick.athleteId]) : null), [pick]);
+  const disabled = !pick || free <= 0;
+  return (
+    <button type="button" className="rsv-go" disabled={disabled} onClick={onGo}>
+      {sprite && (
+        <span className="rsv-go__scene">
+          <Trail sprite={sprite} kind={kind} start={t0} end={t0 + 4500} back={false} loop />
+        </span>
+      )}
+      <span className="rsv-go__body">
+        <span className="rsv-go__text">
+          <b>Partir en expédition</b>
+          <small>
+            {disabled
+              ? 'Tous tes animaux sont dans un enclos ou déjà en route.'
+              : `${pick ? name(pick) : 'Un animal'} n’attend que toi · ${free} place${free > 1 ? 's' : ''} libre${free > 1 ? 's' : ''}`}
+          </small>
+        </span>
+        <span className="rsv-go__loot">
+          <span className="rsv-go__chip">
+            <BallIcon /> Crédits
+          </span>
+          <span className="rsv-go__chip">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d={LOOT_ICONS.card} />
+            </svg>
+            Cartes
+          </span>
+          <span className="rsv-go__chip is-gold">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d={LOOT_ICONS.pack} />
+            </svg>
+            Packs
+          </span>
+        </span>
+      </span>
+      {!disabled && <span className="rsv-go__cta">C’est parti !</span>}
+    </button>
+  );
+}
+
 /** Les animaux partis en expédition, chacun sur son chemin animé, et les places libres. */
 function ExpeditionsPanel({ now }: { now: number }) {
   const reserve = useGame((s) => s.reserve);
@@ -628,70 +699,19 @@ function ExpeditionsPanel({ now }: { now: number }) {
         })}
         {trips.length < MAX_EXPEDITIONS && (
           <li>
-            <button
-              type="button"
-              className="rsv-expedition__new"
-              onClick={() => {
+            <ExpeditionCta
+              free={MAX_EXPEDITIONS - trips.length}
+              onGo={() => {
                 sfx.rustle();
                 setPicking(true);
               }}
-            >
-              + Envoyer un animal en expédition
-            </button>
+            />
           </li>
         )}
       </ul>
       <p className="muted small">Un animal revient avec des crédits, selon sa rareté et la durée, et parfois avec une nouvelle carte ou un pack de la boutique.</p>
       {picking && <ExpeditionSheet onClose={() => setPicking(false)} />}
       {result && <ExpeditionReturn {...result} onClose={() => setResult(null)} />}
-    </section>
-  );
-}
-
-/** Les décors du parc : chacun attire plus de visiteurs dans toute la réserve. */
-function DecorPanel() {
-  const reserve = useGame((s) => s.reserve);
-  const balles = useGame((s) => s.balles);
-  const buy = useGame((s) => s.reserveBuyDecor);
-  const toast = useGame((s) => s.toast);
-  const level = levelOf(reserve.visitors).level;
-  const owned = new Set(reserve.decor ?? []);
-  return (
-    <section className="rsv-panel rsv-decors" aria-label="Décors">
-      <h2>Décors {decorBonus(reserve) > 0 && <small>· +{Math.round(decorBonus(reserve) * 100)} % de visiteurs</small>}</h2>
-      <ul>
-        {DECORS.map((d) => {
-          const has = owned.has(d.id);
-          const locked = level < d.level;
-          return (
-            <li key={d.id} className={`rsv-decor${has ? ' is-owned' : ''}`}>
-              <span className="rsv-panel__name">
-                <b>{d.name}</b>
-                <small>+{Math.round(d.bonus * 100)} % de visiteurs</small>
-              </span>
-              {has ? (
-                <span className="rsv-request__done">✓ Installé</span>
-              ) : locked ? (
-                <span className="muted small">Niveau {d.level}</span>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn--gold btn--sm"
-                  disabled={balles < d.price}
-                  onClick={() => {
-                    if (buy(d.id)) {
-                      sfx.hammer();
-                      toast('success', `${d.name} : installé sur l’esplanade !`);
-                    }
-                  }}
-                >
-                  <BallIcon /> {d.price.toLocaleString('fr-FR')}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
     </section>
   );
 }
@@ -722,7 +742,7 @@ export function FriendReserveSheet({ profile, onClose }: { profile: PublicProfil
     const open = new Set(Object.keys(view.enclos).filter((id) => ENCLOS_BY_ID[id as EnclosId]) as EnclosId[]);
     const animals: SceneModel['animals'] = {};
     for (const id of open) animals[id] = (view.enclos[id] ?? []).filter((a) => ATHLETES_BY_ID[a]).map((a) => spriteForAthlete(ATHLETES_BY_ID[a]));
-    return { open, animals, gains: {}, rate: view.rate, decor: new Set(view.decor) };
+    return { open, animals, gains: {}, rate: view.rate };
   }, [view]);
   const count = Object.values(view.enclos).reduce((n, ids) => n + (ids?.length ?? 0), 0);
   const gift = async () => {
@@ -818,7 +838,7 @@ export function ReserveScreen() {
       sprites[id] = cards.map((c) => spriteForAthlete(ATHLETES_BY_ID[c.athleteId]));
       gains[id] = enclosVisitors(cards).reduce((a, b) => a + b, 0);
     }
-    return { open, animals: sprites, gains, rate, decor: new Set(reserve.decor ?? []) };
+    return { open, animals: sprites, gains, rate };
   }, [reserve, byUid, rate]);
   const hours = billetterieHours(reserve);
   const nextCaisse = BILLETTERIE_STEPS[(reserve.caisse ?? 0) + 1];
@@ -928,7 +948,6 @@ export function ReserveScreen() {
       </section>
       <RequestsPanel now={now} />
       <ExpeditionsPanel now={now} />
-      <DecorPanel />
       </div>
       {sheet && <EnclosSheet id={sheet} onClose={() => setSheet(null)} />}
     </div>

@@ -35,7 +35,6 @@ import {
   busyUids,
   levelRewardsDue,
   BILLETTERIE_STEPS,
-  DECORS_BY_ID,
   dailyRequests,
   requestProgress,
   levelOf,
@@ -254,8 +253,6 @@ export interface GameState {
   reserveBuyPlace: (enclos: EnclosId) => boolean;
   /** agrandit la billetterie d'un cran (8 h → 12 h → 24 h de visites) */
   reserveUpgradeCaisse: () => boolean;
-  /** achète un décor de l'esplanade */
-  reserveBuyDecor: (id: string) => boolean;
   /** tire les demandes des visiteurs du jour, si ce n'est pas déjà fait */
   reserveRefreshRequests: (now?: number) => void;
   /** récupère la récompense d'une demande remplie */
@@ -872,16 +869,6 @@ export const useGame = create<GameState>()(
           return true;
         },
 
-        reserveBuyDecor: (id) => {
-          const s = get();
-          const def = DECORS_BY_ID[id];
-          const owned = s.reserve.decor ?? [];
-          if (!def || owned.includes(id) || s.balles < def.price || levelOf(s.reserve.visitors).level < def.level) return false;
-          const reserve = bankReserve(s, Date.now());
-          set({ balles: s.balles - def.price, reserve: { ...reserve, decor: [...owned, id] } });
-          return true;
-        },
-
         reserveRefreshRequests: (now = Date.now()) => {
           const s = get();
           const day = dayKey(now);
@@ -1072,7 +1059,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 20,
+      version: 21,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1179,6 +1166,13 @@ export const useGame = create<GameState>()(
           const old = enclos.nocturne;
           delete enclos.nocturne;
           if (old && !enclos.montagne) enclos.montagne = { places: old.places, uids: [] };
+        }
+        // version 21 : les décors payants de la réserve (vendus quelques heures) sont retirés et remboursés
+        if (version < 21) {
+          const PRICES: Record<string, number> = { fontaine: 2_000, glaces: 4_000, piquenique: 7_000, jeux: 12_000, fleurs: 20_000, statue: 35_000 };
+          const old = state.reserve as ReserveState & { decor?: string[] };
+          for (const id of old.decor ?? []) state.balles += PRICES[id] ?? 0;
+          delete old.decor;
         }
         // version 18 : chaque enclos n'accueille plus que les animaux de ses milieux (fin des espèces « partout » dans
         // tous les enclos et des animaux de nuit dans la Maison nocturne) : les autres retournent dans la collection

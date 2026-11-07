@@ -21,7 +21,6 @@ import { hashString, mulberry32 } from './random';
 // - chaque enclos ouvre avec START_PLACES places, qu'on agrandit en payant jusqu'à MAX_PLACES ;
 // - chaque niveau gagné rapporte une récompense (LEVEL_REWARDS), versée à la récolte ;
 // - la billetterie s'agrandit (BILLETTERIE_STEPS : 8 h, 12 h, puis 24 h de visites) ;
-// - les décors achetés (DECORS) ajoutent chacun un pourcentage de visiteurs à toute la réserve ;
 // - chaque jour, trois demandes de visiteurs (dailyRequests) rapportent des crédits une fois remplies ;
 // - un animal qui n'est pas dans un enclos peut partir en expédition (EXPEDITIONS) : il revient avec des crédits, et
 //   parfois une carte ou un pack de la boutique ; pendant ce temps il ne peut être ni vendu, ni échangé.
@@ -118,8 +117,6 @@ export interface ReserveState {
   levelPaid?: number;
   /** taille de la billetterie : rang dans BILLETTERIE_STEPS (0 : 8 h) */
   caisse?: number;
-  /** décors achetés (identifiants de DECORS) */
-  decor?: string[];
   /** demandes des visiteurs du jour, et celles déjà récompensées */
   requests?: { day: string; list: ReserveRequest[]; done: number[] };
   /** animaux partis en expédition */
@@ -176,14 +173,14 @@ export function enclosVisitors(cards: CardFace[]): number[] {
   });
 }
 
-/** Visiteurs par heure de toute la réserve, décors compris. `cardOf` retrouve une carte de la collection. */
+/** Visiteurs par heure de toute la réserve. `cardOf` retrouve une carte de la collection (undefined : disparue). */
 export function reserveRate(state: ReserveState, cardOf: (uid: string) => CardFace | undefined): number {
   let total = 0;
   for (const enclos of Object.values(state.enclos)) {
     const cards = (enclos?.uids ?? []).map(cardOf).filter((c): c is CardFace => !!c);
     total += enclosVisitors(cards).reduce((a, b) => a + b, 0);
   }
-  return Math.round(total * (1 + decorBonus(state)));
+  return total;
 }
 
 /** Les tailles de la billetterie : heures de visites qu'elle peut compter, et prix pour y passer. */
@@ -254,36 +251,6 @@ export function levelRewardsDue(levelPaid: number, visitors: number): { level: n
     boosters += LEVEL_REWARDS[l]?.boosters ?? 0;
   }
   return { level, credits, boosters };
-}
-
-// ───────────── Décors ─────────────
-
-export interface DecorDef {
-  id: string;
-  name: string;
-  /** prix en crédits */
-  price: number;
-  /** visiteurs en plus dans toute la réserve (0.05 : +5 %) */
-  bonus: number;
-  /** niveau de la réserve à atteindre pour l'acheter */
-  level: number;
-}
-
-/** Les décors de l'esplanade, dans l'ordre où on les débloque. */
-export const DECORS: DecorDef[] = [
-  { id: 'fontaine', name: 'Fontaine', price: 2_000, bonus: 0.05, level: 2 },
-  { id: 'glaces', name: 'Kiosque à glaces', price: 4_000, bonus: 0.05, level: 3 },
-  { id: 'piquenique', name: 'Aire de pique-nique', price: 7_000, bonus: 0.05, level: 4 },
-  { id: 'jeux', name: 'Aire de jeux', price: 12_000, bonus: 0.05, level: 5 },
-  { id: 'fleurs', name: 'Massifs de fleurs', price: 20_000, bonus: 0.05, level: 6 },
-  { id: 'statue', name: 'Statue du lion', price: 35_000, bonus: 0.1, level: 8 },
-];
-
-export const DECORS_BY_ID = Object.fromEntries(DECORS.map((d) => [d.id, d])) as Record<string, DecorDef>;
-
-/** Visiteurs en plus grâce aux décors achetés (0.15 : +15 %). */
-export function decorBonus(state: ReserveState): number {
-  return (state.decor ?? []).reduce((sum, id) => sum + (DECORS_BY_ID[id]?.bonus ?? 0), 0);
 }
 
 // ───────────── Demandes des visiteurs ─────────────
@@ -455,19 +422,18 @@ export function expeditionCredits(card: CardFace, kind: ExpeditionDef['id']): nu
 
 // ───────────── Réserve vue par les amis ─────────────
 
-/** Ce que les amis voient de la réserve : niveau, visiteurs par heure, espèces de chaque enclos ouvert, décors. */
+/** Ce que les amis voient de la réserve : niveau, visiteurs par heure, espèces de chaque enclos ouvert. */
 export interface ReserveSnapshot {
   level: number;
   rate: number;
   enclos: Partial<Record<EnclosId, string[]>>;
-  decor: string[];
 }
 
 export function reserveSnapshot(state: ReserveState, cardOf: (uid: string) => CardFace | undefined): ReserveSnapshot {
   const enclos: Partial<Record<EnclosId, string[]>> = {};
   for (const [id, e] of Object.entries(state.enclos) as [EnclosId, EnclosState | undefined][])
     enclos[id] = (e?.uids ?? []).map((uid) => cardOf(uid)?.athleteId).filter((a): a is string => !!a && !!ATHLETES_BY_ID[a]);
-  return { level: levelOf(state.visitors).level, rate: reserveRate(state, cardOf), enclos, decor: [...(state.decor ?? [])] };
+  return { level: levelOf(state.visitors).level, rate: reserveRate(state, cardOf), enclos };
 }
 
 /** Visiteurs qu'on envoie à un ami (le serveur fixe le même nombre, voir reserve_gift dans supabase/schema.sql). */
