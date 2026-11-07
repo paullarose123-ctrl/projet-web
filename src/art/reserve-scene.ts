@@ -4,17 +4,15 @@ import { ENCLOS, type EnclosId } from '../engine/reserve';
 import { ATHLETES_BY_ID } from '../data/athletes';
 
 // Le plan de « Ma Réserve » en pixel art, dans la palette du jeu à l'heure dorée (voir aussi la maquette
-// promo/reserve-pixel.ts) : 8 enclos sur deux colonnes, reliés par des allées, puis l'esplanade et ses décors, et
-// l'entrée avec sa billetterie en bas.
+// promo/reserve-pixel.ts) : 8 enclos sur deux colonnes, reliés par des allées bordées de pelouses où se posent les
+// décors achetés, et l'entrée avec sa billetterie en bas.
 // Toile de SCENE_W × SCENE_H pixels, agrandie sans lissage. Le décor fixe (sols, clôtures, arbres) est peint une
 // fois par état des enclos ouverts ; les animaux, les visiteurs, l'eau, la brume et les lumières à chaque image.
 
 export const SCENE_W = 130;
 const ZONE_H = 50;
-const ROW = 58;
-/** hauteur de l'esplanade des décors, entre les enclos et l'entrée */
-const ESPLANADE = 34;
-export const SCENE_H = 3 + ROW * 4 + ESPLANADE + 30;
+/** d'une rangée d'enclos à la suivante : l'enclos, son allée, puis une pelouse où se posent les décors */
+const ROW = 78;
 
 type Ctx = CanvasRenderingContext2D;
 type Box = readonly [number, number, number, number];
@@ -28,9 +26,10 @@ export const ZONE_BOX: Record<EnclosId, Box> = Object.fromEntries(
 ) as unknown as Record<EnclosId, Box>;
 
 const PATH_ROWS = [0, 1, 2, 3].map((r) => 3 + r * ROW + ZONE_H + 1);
-/** haut de l'esplanade des décors */
-const DECOR_Y = PATH_ROWS[3] + 6;
-const PLAZA_Y = DECOR_Y + ESPLANADE;
+const PLAZA_Y = PATH_ROWS[3] + 6;
+export const SCENE_H = PLAZA_Y + 31;
+/** haut des pelouses sous les trois premières allées (21 pixels de haut), où se posent les décors */
+const LAWNS = PATH_ROWS.slice(0, 3).map((py) => py + 6);
 
 // ——— palette ———
 const G = ['#1a3322', '#24452b', '#2f5a34', '#3d6f3d', '#548848', '#7aa65a'];
@@ -95,7 +94,6 @@ const KIOSK: Sprite = {
     '.....sSSSs.....',
     '.....wvvvw.....',
     '......cCc......',
-    '.......c.......',
     '.rWrWrWrWrWrWr.',
     'rWrWrWrWrWrWrWr',
     '.bbbbbbbbbbbbb.',
@@ -104,7 +102,6 @@ const KIOSK: Sprite = {
     '.HydddPdddddyH.',
     '.HyddfdddqddyH.',
     '.HTTTTTTTTTTTH.',
-    '.HyyyyyyyyyyyH.',
     '.HyyrWrWrWyyyH.',
     '.HHHHHHHHHHHHH.',
   ],
@@ -149,7 +146,7 @@ const PLAYGROUND: Sprite = {
   pal: { k: '#c94a3a', c: '#9a9a90', S: '#5d8fd8', y: '#7f8076', Y: '#f2c84a' },
 };
 const PEDESTAL: Sprite = {
-  rows: ['.pppppppppppp.', 'pPPPPPPPPPPPPp', '.dddddddddddd.', '..DDDDDDDDDD..', '..DddddddddD..', '..DddddddddD..', '..DDDDDDDDDD..'],
+  rows: ['.pppppppppppp.', 'pPPPPPPPPPPPPp', '.dddddddddddd.', '..DddddddddD..', '..DDDDDDDDDD..'],
   pal: { p: '#cfcdb8', P: '#efe8d6', d: '#a8a796', D: '#7f8076' },
 };
 const FLOWERS: Sprite = {
@@ -418,21 +415,29 @@ export interface SceneModel {
   decor: Set<string>;
 }
 
-/** Place de chaque décor sur l'esplanade : [x, y] du coin haut gauche. */
+/**
+ * Place de chaque décor dans le parc, sur les pelouses le long des allées : [x, y] du coin haut gauche, posé pour
+ * que le bas du sprite repose au milieu de la pelouse, quelques pixels avant la clôture de l'enclos suivant. Chaque pelouse en accueille deux (de part et d'autre de l'allée
+ * centrale) ; les massifs de fleurs se répartissent dans les coins de toutes les pelouses.
+ */
+const ground = (lawn: number, h: number) => LAWNS[lawn] + 16 - h;
 const DECOR_AT = {
-  glaces: [6, DECOR_Y + 12],
-  jeux: [24, DECOR_Y + 18],
-  fontaine: [44, DECOR_Y + 16],
-  statue: [72, DECOR_Y + 20],
-  piquenique: [88, DECOR_Y + 13],
-  fleurs: [4, DECOR_Y + 2],
+  fontaine: [24, ground(0, 11)],
+  glaces: [92, ground(0, 13)],
+  jeux: [18, ground(1, 9)],
+  piquenique: [84, ground(1, 13)],
+  statue: [24, ground(2, 14)],
 } as const;
 const FLOWER_BEDS: [number, number][] = [
-  [4, DECOR_Y + 2],
-  [36, DECOR_Y + 3],
-  [74, DECOR_Y + 3],
-  [116, DECOR_Y + 4],
-  [116, DECOR_Y + 25],
+  ...LAWNS.flatMap((_, lawn): [number, number][] => [
+    [3, ground(lawn, 5)],
+    [47, ground(lawn, 5)],
+    [72, ground(lawn, 5)],
+    [117, ground(lawn, 5)],
+  ]),
+  [84, ground(2, 5)],
+  [92, ground(2, 5) - 4],
+  [100, ground(2, 5)],
 ];
 
 function paintDecor(c: Ctx, decor: Set<string>) {
@@ -442,14 +447,15 @@ function paintDecor(c: Ctx, decor: Set<string>) {
   if (decor.has('fontaine')) blit(c, FOUNTAIN, DECOR_AT.fontaine[0], DECOR_AT.fontaine[1], { shadow: true });
   if (decor.has('statue')) {
     const [x, y] = DECOR_AT.statue;
-    blit(c, PEDESTAL, x, y, { shadow: true });
-    if (GOLD_LION) blit(c, GOLD_LION, x, y - GOLD_LION.rows.length + 1);
+    blit(c, PEDESTAL, x, y + 9, { shadow: true });
+    if (GOLD_LION) blit(c, GOLD_LION, x + 1, y + 10 - GOLD_LION.rows.length);
   }
   if (decor.has('piquenique')) {
     const [x, y] = DECOR_AT.piquenique;
-    blit(c, TABLE, x, y + 8, { shadow: true });
-    blit(c, TABLE, x + 15, y + 3, { shadow: true });
     blit(c, PARASOL, x + 1, y, { shadow: true });
+    blit(c, TABLE, x, y + 8, { shadow: true });
+    blit(c, TABLE, x + 16, y + 8, { shadow: true });
+    blit(c, PARASOL, x + 17, y, { shadow: true });
   }
 }
 

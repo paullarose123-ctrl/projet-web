@@ -464,8 +464,137 @@
   color: var(--accent-text);
 }
 
-/* expéditions */
-.rsv-expedition,
+/* expéditions : chaque animal sur son chemin animé */
+.rsv-expedition {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+
+.rsv-trail {
+  display: block;
+  width: 100%;
+  aspect-ratio: 120 / 34;
+  border-radius: 8px;
+  image-rendering: pixelated;
+}
+
+.rsv-expedition__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.rsv-expedition__info .rsv-panel__name {
+  flex: 1;
+}
+
+/* retour d'expédition */
+.rsv-return-backdrop {
+  align-items: center;
+}
+
+.rsv-return {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(420px, calc(100% - 32px));
+  padding: 20px 18px 22px;
+  border-radius: 22px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: rsv-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes rsv-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+
+.rsv-return h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+
+.rsv-return .eyebrow {
+  margin: 0;
+}
+
+.rsv-trail--big {
+  border: 1px solid var(--line-2);
+}
+
+.rsv-return__credits {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: #ffd36b;
+  font-variant-numeric: tabular-nums;
+}
+
+.rsv-return__found {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.rsv-return__found p {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+/* la carte trouvée arrive face cachée, puis se retourne : le dos se referme, la face s'ouvre */
+.rsv-return__card {
+  position: relative;
+}
+
+.rsv-return__back {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 0.9em;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 211, 107, 0.55), transparent 55%),
+    repeating-linear-gradient(45deg, #24492b 0 8px, #1b3a23 8px 16px);
+  border: 2px solid #ffd36b;
+  box-shadow: 0 0 24px rgba(255, 211, 107, 0.45);
+  transition: transform 0.25s ease-in;
+  animation: rsv-wobble 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes rsv-wobble {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+
+.rsv-return__front {
+  transform: scaleX(0);
+  transition: transform 0.3s 0.25s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.rsv-return__found.is-revealed .rsv-return__back {
+  animation: none;
+  transform: scaleX(0);
+}
+
+.rsv-return__found.is-revealed .rsv-return__front {
+  transform: scaleX(1);
+}
+
 .rsv-decor {
   display: flex;
   align-items: center;
@@ -476,7 +605,6 @@
   background: var(--bg-3);
 }
 
-.rsv-expedition .rsv-panel__name,
 .rsv-decor .rsv-panel__name {
   flex: 1;
 }
