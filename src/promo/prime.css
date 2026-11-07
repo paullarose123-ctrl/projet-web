@@ -1,76 +1,43 @@
-/* Maquette : Reverse légendaire, plus proche de la Légendaire normale, avec un côté brillant (classes rl-m1, rl-m2). */
+/* Maquette : couleurs du côté brillant de la Reverse légendaire (classes br-1, br-2, br-3). */
 
-/* le lavis reprend le coucher de soleil de la Légendaire dans le même ordre et les mêmes proportions (violet en haut,
-   magenta, corail, orange, or en bas), en plus clair ; prune (le cadre de la Légendaire) pour les textes et les
-   liserés, or pour les filets du cadre */
-.card.is-reverse.r-legendaire:is(.rl-m1, .rl-m2) {
-  --foil:
-    radial-gradient(42% 20% at 50% 96%, rgba(255, 230, 140, 0.95), transparent 70%),
-    radial-gradient(55% 30% at 10% 6%, rgba(120, 80, 210, 0.85), transparent 72%),
-    linear-gradient(172deg, #9a78e0 0%, #d77fb4 32%, #ff9a86 62%, #ffc078 85%, #ffdf8a 100%);
-  --panel: #fff4ee;
-  --trim: #5a2160;
-  --gold: #e3a43a;
-  --metal: linear-gradient(180deg, #3a1446 0%, #7a2464 55%, #b0402e 100%);
-  --plate-ink: #3a1446;
-  --tier-bg: linear-gradient(90deg, #ff7a8a, #ffb157, #ffe08a);
-  --tier-ink: #1a0c1f;
-  --reverse-tier: linear-gradient(90deg, #1a0c1f, #3a1446);
-  --reverse-wash: linear-gradient(170deg, rgba(150, 110, 235, 0.5), rgba(230, 120, 180, 0.28) 38%, rgba(255, 150, 120, 0.3) 66%, rgba(255, 200, 100, 0.55));
-  --filet: rgba(90, 33, 96, 0.85);
-  --window-hole: 61.8% 16.2% / 84.8% 79.6%;
+/* 1 · nacre blanche : des reflets de lumière blanche, un grain argenté */
+.card.is-reverse.r-legendaire.br-1 .card__body::before {
+  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 9%, rgba(240, 244, 255, 0.8) 14%, rgba(255, 255, 255, 0) 24%) 0 0 / 220% 220%;
+  mix-blend-mode: soft-light;
+  opacity: 1;
 }
 
-.card.is-reverse.r-legendaire.serie-2:is(.rl-m1, .rl-m2) {
-  --window-hole: 58.8% 23.1% / 80.56% 75.62%;
+.card.is-reverse.r-legendaire.br-1 .card__body::after {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 1) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
+    radial-gradient(circle at 70% 60%, rgba(235, 240, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
 }
 
-/* côté brillant : des reflets couleur coucher de soleil et or glissent sur le cadre et la bordure (pas sur la photo) */
-.card.is-reverse.r-legendaire:is(.rl-m1, .rl-m2) .card__body::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  border-radius: inherit;
+/* 2 · arc-en-ciel : les reflets holographiques classiques, toutes les couleurs */
+.card.is-reverse.r-legendaire.br-2 .card__body::before {
   background: repeating-linear-gradient(
       115deg,
-      rgba(255, 230, 150, 0) 0%,
-      rgba(255, 230, 150, 0.95) 7%,
-      rgba(255, 150, 190, 0.85) 13%,
-      rgba(190, 150, 255, 0.85) 19%,
-      rgba(255, 230, 150, 0) 26%
+      rgba(255, 120, 190, 0.9) 0%,
+      rgba(255, 220, 120, 0.9) 6%,
+      rgba(120, 255, 200, 0.9) 12%,
+      rgba(110, 190, 255, 0.9) 18%,
+      rgba(200, 130, 255, 0.9) 24%,
+      rgba(255, 120, 190, 0.9) 30%
     )
-    0 0 / 220% 220%;
-  mix-blend-mode: overlay;
-  opacity: 0.8;
-  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  animation: holo-drift 6s linear infinite alternate;
+    0 0 / 200% 200%;
+  mix-blend-mode: color-dodge;
+  opacity: 0.4;
 }
 
-/* M2 : en plus, le grain pailleté d'or d'une feuille holographique */
-.card.is-reverse.r-legendaire.rl-m2 .card__body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  border-radius: inherit;
+.card.is-reverse.r-legendaire.br-2 .card__body::after {
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
-    radial-gradient(circle at 70% 60%, rgba(255, 226, 140, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
-  mix-blend-mode: screen;
-  opacity: 0.6;
-  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
-  animation: rl-glint 3s ease-in-out infinite alternate;
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 1) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
+    radial-gradient(circle at 70% 60%, rgba(200, 240, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
 }
 
-@keyframes rl-glint {
-  to {
-    opacity: 0.25;
-  }
+/* 3 · or seul : des reflets dorés, un grain d'or */
+.card.is-reverse.r-legendaire.br-3 .card__body::before {
+  background: repeating-linear-gradient(115deg, rgba(255, 214, 110, 0) 0%, rgba(255, 224, 140, 0.95) 9%, rgba(255, 190, 90, 0.85) 14%, rgba(255, 214, 110, 0) 24%) 0 0 / 220% 220%;
+  mix-blend-mode: color-dodge;
+  opacity: 0.55;
 }
