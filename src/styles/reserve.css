@@ -827,6 +827,27 @@
   }
 }
 
+/* réserves des amis */
+.rsv-friend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+
+.rsv-friend .rsv-panel__name {
+  flex: 1;
+}
+
+.rsv-friend .avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+
 /* choix de la durée d'une expédition */
 .rsv-trips {
   display: grid;
@@ -904,4 +925,15 @@
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 18px 12px;
   }
+}
+
+.rsv-friends .link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }
