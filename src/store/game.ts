@@ -32,6 +32,19 @@ import {
   placePrice,
   reserveRate,
   reservedUids,
+  busyUids,
+  levelRewardsDue,
+  BILLETTERIE_STEPS,
+  DECORS_BY_ID,
+  dailyRequests,
+  requestProgress,
+  levelOf,
+  MAX_EXPEDITIONS,
+  EXPEDITIONS_BY_ID,
+  canExplore,
+  expeditionEnd,
+  expeditionCredits,
+  type ExpeditionDef,
   type EnclosId,
   type ReserveState,
 } from '../engine/reserve';
@@ -238,6 +251,20 @@ export interface GameState {
   reserveCollect: (now?: number) => number;
   reserveUnlock: (enclos: EnclosId) => boolean;
   reserveBuyPlace: (enclos: EnclosId) => boolean;
+  /** agrandit la billetterie d'un cran (8 h → 12 h → 24 h de visites) */
+  reserveUpgradeCaisse: () => boolean;
+  /** achète un décor de l'esplanade */
+  reserveBuyDecor: (id: string) => boolean;
+  /** tire les demandes des visiteurs du jour, si ce n'est pas déjà fait */
+  reserveRefreshRequests: (now?: number) => void;
+  /** récupère la récompense d'une demande remplie */
+  reserveClaimRequest: (index: number) => boolean;
+  /** envoie un animal en expédition */
+  reserveSendExpedition: (uid: string, kind: ExpeditionDef['id']) => boolean;
+  /** fait revenir un animal d'expédition : ses gains si elle est finie, rien si on le rappelle avant */
+  reserveEndExpedition: (uid: string, now?: number) => void;
+  /** visiteurs offerts par un ami : ils passent à la billetterie */
+  reserveReceiveVisitors: (visitors: number) => void;
   setFavorite: (slot: number, uid: string | null) => void;
   setAvatar: (athleteId: string) => void;
   claimObjective: (id: string) => void;
@@ -585,7 +612,7 @@ export const useGame = create<GameState>()(
         quickSell: (uids) => {
           const state = get();
           const set_ = new Set(uids);
-          const reserved = reservedUids(state.reserve);
+          const reserved = busyUids(state.reserve);
           const sellable = state.collection.filter((c) => set_.has(c.uid) && !c.locked && !reserved.has(c.uid));
           const total = sellable.reduce((sum, c) => sum + quickSellValue(ATHLETES_BY_ID[c.athleteId], c.variant), 0);
           if (!sellable.length) return 0;
@@ -603,7 +630,7 @@ export const useGame = create<GameState>()(
         listCard: (uid, startPrice, buyNow, durationMin) => {
           const state = get();
           const card = state.collection.find((c) => c.uid === uid);
-          if (!card || card.locked || reservedUids(get().reserve).has(uid)) return false;
+          if (!card || card.locked || busyUids(get().reserve).has(uid)) return false;
           const active = state.market.myListings.filter((l) => l.status === 'active').length;
           if (active >= MAX_MY_LISTINGS) {
             pushToast('error', `Tu as déjà ${MAX_MY_LISTINGS} cartes en vente. Attends qu’une vente se termine.`);
@@ -796,6 +823,8 @@ export const useGame = create<GameState>()(
           const card = s.collection.find((c) => c.uid === uid);
           const athlete = card && ATHLETES_BY_ID[card.athleteId];
           if (!enclos || !card || !athlete || enclos.uids.length >= enclos.places || !canLiveIn(athlete, enclosId)) return false;
+          // un animal parti en expédition attend son retour
+          if ((s.reserve.expeditions ?? []).some((e) => e.uid === uid)) return false;
           const byUid = new Map(s.collection.map((c) => [c.uid, c]));
           // une seule carte par espèce dans toute la réserve
           for (const other of reservedUids(s.reserve)) if (other === uid || byUid.get(other)?.athleteId === card.athleteId) return false;
@@ -815,8 +844,95 @@ export const useGame = create<GameState>()(
         reserveCollect: (now = Date.now()) => {
           const s = get();
           const amount = billetterie(s.reserve, reserveRateOf(s), now);
-          set({ balles: s.balles + amount, reserve: { ...s.reserve, pending: 0, since: now, visitors: s.reserve.visitors + amount } });
+          const visitors = s.reserve.visitors + amount;
+          // les récompenses des niveaux gagnés avec ces visiteurs
+          const due = levelRewardsDue(s.reserve.levelPaid ?? 1, visitors);
+          set({
+            balles: s.balles + amount + due.credits,
+            freePacks: s.freePacks + due.boosters,
+            reserve: { ...s.reserve, pending: 0, since: now, visitors, levelPaid: Math.max(due.level, s.reserve.levelPaid ?? 1) },
+          });
+          if (due.credits || due.boosters) {
+            const gifts = [due.credits ? formatBalles(due.credits) : '', due.boosters ? `${due.boosters} booster${due.boosters > 1 ? 's' : ''} gratuit${due.boosters > 1 ? 's' : ''}` : ''].filter(Boolean).join(' et ');
+            pushToast('gold', `Ta réserve passe au niveau ${due.level} ! Récompense : ${gifts}.`);
+          }
           return amount;
+        },
+
+        reserveUpgradeCaisse: () => {
+          const s = get();
+          const next = BILLETTERIE_STEPS[(s.reserve.caisse ?? 0) + 1];
+          if (!next || s.balles < next.price) return false;
+          // ce qui a déjà été compté reste à la billetterie
+          const reserve = bankReserve(s, Date.now());
+          set({ balles: s.balles - next.price, reserve: { ...reserve, caisse: (s.reserve.caisse ?? 0) + 1 } });
+          return true;
+        },
+
+        reserveBuyDecor: (id) => {
+          const s = get();
+          const def = DECORS_BY_ID[id];
+          const owned = s.reserve.decor ?? [];
+          if (!def || owned.includes(id) || s.balles < def.price || levelOf(s.reserve.visitors).level < def.level) return false;
+          const reserve = bankReserve(s, Date.now());
+          set({ balles: s.balles - def.price, reserve: { ...reserve, decor: [...owned, id] } });
+          return true;
+        },
+
+        reserveRefreshRequests: (now = Date.now()) => {
+          const s = get();
+          const day = dayKey(now);
+          if (s.reserve.requests?.day === day) return;
+          const away = new Set((s.reserve.expeditions ?? []).map((e) => e.uid));
+          const list = dailyRequests(day, s.reserve, s.collection.filter((c) => !away.has(c.uid)), levelOf(s.reserve.visitors).level);
+          set({ reserve: { ...s.reserve, requests: { day, list, done: [] } } });
+        },
+
+        reserveClaimRequest: (index) => {
+          const s = get();
+          const requests = s.reserve.requests;
+          const request = requests?.list[index];
+          if (!requests || !request || requests.done.includes(index) || requests.day !== dayKey(Date.now())) return false;
+          const byUid = new Map(s.collection.map((c) => [c.uid, c]));
+          const { have, need } = requestProgress(request, s.reserve, (uid) => byUid.get(uid));
+          if (have < need) return false;
+          set({ balles: s.balles + request.reward, reserve: { ...s.reserve, requests: { ...requests, done: [...requests.done, index] } } });
+          pushToast('gold', `Demande remplie : +${formatBalles(request.reward)}`);
+          return true;
+        },
+
+        reserveSendExpedition: (uid, kind) => {
+          const s = get();
+          const card = s.collection.find((c) => c.uid === uid);
+          const away = s.reserve.expeditions ?? [];
+          if (!card || !EXPEDITIONS_BY_ID[kind] || !canExplore(ATHLETES_BY_ID[card.athleteId]) || busyUids(s.reserve).has(uid) || away.length >= MAX_EXPEDITIONS) return false;
+          set({ reserve: { ...s.reserve, expeditions: [...away, { uid, kind, start: Date.now() }] }, team: s.team.map((t) => (t === uid ? '' : t)) });
+          return true;
+        },
+
+        reserveEndExpedition: (uid, now = Date.now()) => {
+          const s = get();
+          const trip = (s.reserve.expeditions ?? []).find((e) => e.uid === uid);
+          if (!trip) return;
+          const reserve = { ...s.reserve, expeditions: (s.reserve.expeditions ?? []).filter((e) => e.uid !== uid) };
+          const card = s.collection.find((c) => c.uid === uid);
+          if (now < expeditionEnd(trip) || !card) {
+            set({ reserve });
+            return;
+          }
+          const credits = expeditionCredits(card, trip.kind);
+          const found = Math.random() < EXPEDITIONS_BY_ID[trip.kind].cardChance ? openPack({ ...FREE_PACK, size: 1 }, Math.random)[0] : null;
+          const extra = found ? [toOwned(found, now)] : [];
+          const discovered = found ? { ...s.discovered, [found.athleteId]: (s.discovered[found.athleteId] ?? 0) + 1 } : s.discovered;
+          set({ reserve, balles: s.balles + credits, collection: [...s.collection, ...extra], discovered });
+          const who = ATHLETES_BY_ID[card.athleteId];
+          const back = `${who ? `${who.first} ${who.last}`.trim() : 'Ton animal'} revient d’expédition : +${formatBalles(credits)}`;
+          pushToast('gold', found ? `${back}, et il a trouvé une carte : ${ATHLETES_BY_ID[found.athleteId]?.last ?? ''} !` : `${back}.`);
+        },
+
+        reserveReceiveVisitors: (visitors) => {
+          if (visitors <= 0) return;
+          set((s) => ({ reserve: { ...s.reserve, pending: s.reserve.pending + Math.round(visitors) } }));
         },
 
         reserveUnlock: (enclosId) => {
@@ -884,7 +1000,7 @@ export const useGame = create<GameState>()(
 
         escrowCard: (uid) => {
           const card = get().collection.find((c) => c.uid === uid);
-          if (!card || card.locked || reservedUids(get().reserve).has(uid)) return null;
+          if (!card || card.locked || busyUids(get().reserve).has(uid)) return null;
           set((s) => ({
             collection: s.collection.filter((c) => c.uid !== uid),
             team: s.team.map((t) => (t === uid ? '' : t)),

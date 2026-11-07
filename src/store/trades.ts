@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AccountError } from '../account/supabase';
 import { acceptTrade, cancelTrade, declineTrade, fetchTrades, proposeTrade, tradeDone, type Trade } from '../account/trades';
-import { reservedUids } from '../engine/reserve';
+import { busyUids } from '../engine/reserve';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { rarityOf } from '../engine/cards';
 import type { CardFace, OwnedCard } from '../engine/types';
@@ -128,7 +128,7 @@ export const useTrades = create<TradesState>()((set, get) => ({
     const game = useGame.getState();
     const session = await freshSession().catch(() => null);
     if (!session) return false;
-    const mine = copyToGive(game.collection, trade.wantId, reservedUids(game.reserve));
+    const mine = copyToGive(game.collection, trade.wantId, busyUids(game.reserve));
     if (!mine) {
       game.toast('error', `Tu n’as pas de ${name(trade.wantId)} à donner (ou il est verrouillé, ou dans ta réserve).`);
       return false;

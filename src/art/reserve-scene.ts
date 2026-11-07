@@ -1,16 +1,20 @@
 import { mix, mulberry32 } from './kit';
-import { blit, type Sprite } from './reserve-sprites';
+import { blit, spriteForAthlete, type Sprite } from './reserve-sprites';
 import { ENCLOS, type EnclosId } from '../engine/reserve';
+import { ATHLETES_BY_ID } from '../data/athletes';
 
 // Le plan de « Ma Réserve » en pixel art, dans la palette du jeu à l'heure dorée (voir aussi la maquette
-// promo/reserve-pixel.ts) : 8 enclos sur deux colonnes, reliés par des allées, l'entrée et sa billetterie en bas.
+// promo/reserve-pixel.ts) : 8 enclos sur deux colonnes, reliés par des allées, puis l'esplanade et ses décors, et
+// l'entrée avec sa billetterie en bas.
 // Toile de SCENE_W × SCENE_H pixels, agrandie sans lissage. Le décor fixe (sols, clôtures, arbres) est peint une
 // fois par état des enclos ouverts ; les animaux, les visiteurs, l'eau, la brume et les lumières à chaque image.
 
 export const SCENE_W = 130;
 const ZONE_H = 50;
 const ROW = 58;
-export const SCENE_H = 3 + ROW * 4 + 30;
+/** hauteur de l'esplanade des décors, entre les enclos et l'entrée */
+const ESPLANADE = 34;
+export const SCENE_H = 3 + ROW * 4 + ESPLANADE + 30;
 
 type Ctx = CanvasRenderingContext2D;
 type Box = readonly [number, number, number, number];
@@ -24,7 +28,9 @@ export const ZONE_BOX: Record<EnclosId, Box> = Object.fromEntries(
 ) as unknown as Record<EnclosId, Box>;
 
 const PATH_ROWS = [0, 1, 2, 3].map((r) => 3 + r * ROW + ZONE_H + 1);
-const PLAZA_Y = PATH_ROWS[3] + 6;
+/** haut de l'esplanade des décors */
+const DECOR_Y = PATH_ROWS[3] + 6;
+const PLAZA_Y = DECOR_Y + ESPLANADE;
 
 // ——— palette ———
 const G = ['#1a3322', '#24452b', '#2f5a34', '#3d6f3d', '#548848', '#7aa65a'];
@@ -81,6 +87,89 @@ const PADLOCK: Sprite = {
 const COIN: Sprite = { rows: ['.hHH.', 'hlHHd', 'hHHHd', 'HHHdd', '.ddd.'], pal: { h: '#ffe08a', H: '#e3ab3f', l: '#fff6d0', d: '#a8741f' } };
 const BENCH: Sprite = { rows: ['hTTTTT', 'tttttt', 'd....d'], pal: { h: WD[4], T: WD[3], t: WD[2], d: WD[1] } };
 const LAMP: Sprite = { rows: ['.k.', 'kHk', 'kHk', '.k.', '.k.', '.k.', '.k.', 'kkk'], pal: { H: '#ffe6a0', k: '#2f2e29' } };
+
+// ——— décors de l'esplanade (achetés dans la réserve, voir DECORS dans engine/reserve.ts) ———
+const KIOSK: Sprite = {
+  rows: [
+    '......sSs......',
+    '.....sSSSs.....',
+    '.....wvvvw.....',
+    '......cCc......',
+    '.......c.......',
+    '.rWrWrWrWrWrWr.',
+    'rWrWrWrWrWrWrWr',
+    '.bbbbbbbbbbbbb.',
+    '.HyyyyyyyyyyyH.',
+    '.HydddddddddyH.',
+    '.HydddPdddddyH.',
+    '.HyddfdddqddyH.',
+    '.HTTTTTTTTTTTH.',
+    '.HyyyyyyyyyyyH.',
+    '.HyyrWrWrWyyyH.',
+    '.HHHHHHHHHHHHH.',
+  ],
+  pal: { s: '#f2a7c8', S: '#f9cde0', w: '#fff3d6', v: '#f6e2b0', c: '#d9a441', C: '#b07a26', r: '#e8586b', W: '#fff4ea', b: '#b8404e', H: '#9a6234', y: '#fde7c1', d: '#5a3a1c', P: '#f1c9a5', f: '#86bccb', q: '#f2a7c8', T: '#e0ad62' },
+};
+const FOUNTAIN: Sprite = {
+  rows: [
+    '.......pp.......',
+    '......pPPp......',
+    '.......pq.......',
+    '.......pq.......',
+    '...ssssssssss...',
+    '..sAAAAAAAAAAs..',
+    '.sAAaAAAAAAaAAs.',
+    '.sAAAAAAaAAAAAs.',
+    '..sAAAAAAAAAAs..',
+    '..dddddddddddd..',
+    '...DDDDDDDDDD...',
+  ],
+  pal: { p: '#cfcdb8', P: '#efe8d6', q: '#a8a796', s: '#e4dfcc', A: '#3f8e9c', a: '#86bccb', d: '#a8a796', D: '#7f8076' },
+};
+const TABLE: Sprite = {
+  rows: ['..hhhhhhhh..', '.hTTTTTTTTt.', '..l......l..', 'BBBB....BBBB', 'b..b....b..b'],
+  pal: { h: WD[4], T: WD[3], t: WD[2], l: WD[1], B: WD[3], b: WD[1] },
+};
+const PARASOL: Sprite = {
+  rows: ['....rWr....', '..rWrWrWr..', '.rWrWrWrWr.', 'rrrrrrrrrrr', '.....k.....', '.....k.....', '.....k.....', '.....k.....'],
+  pal: { r: '#e8586b', W: '#fff4ea', k: '#5e3b20' },
+};
+const PLAYGROUND: Sprite = {
+  rows: [
+    '.kkkkkkkkkkk.......',
+    '.k.........k.......',
+    'k..c.....c..k...yy.',
+    'k..c.....c..k..yYYy',
+    'k..c.....c..k..y.Yy',
+    'k..SS...SS..k..y..Yy',
+    'k...........k..y...Yy',
+    'k...........k..y....Yy',
+    'k...........k..y.....YY',
+  ],
+  pal: { k: '#c94a3a', c: '#9a9a90', S: '#5d8fd8', y: '#7f8076', Y: '#f2c84a' },
+};
+const PEDESTAL: Sprite = {
+  rows: ['.pppppppppppp.', 'pPPPPPPPPPPPPp', '.dddddddddddd.', '..DDDDDDDDDD..', '..DddddddddD..', '..DddddddddD..', '..DDDDDDDDDD..'],
+  pal: { p: '#cfcdb8', P: '#efe8d6', d: '#a8a796', D: '#7f8076' },
+};
+const FLOWERS: Sprite = {
+  rows: ['..gRgYg...', '.gPgggRgg.', 'gYggRggPgg', '.gggYggggg', '..dddddd..'],
+  pal: { g: '#3d6f3d', R: '#e8586b', Y: '#ffe08a', P: '#f2a7c8', d: '#6b5636' },
+};
+
+/** Le lion de la statue : le sprite du lion, coulé en or. */
+const GOLD_LION: Sprite | null = (() => {
+  const lion = ATHLETES_BY_ID.lion;
+  if (!lion) return null;
+  const s = spriteForAthlete(lion);
+  const ramp = ['#7a5418', '#b8862c', '#e0b04a', '#f6dc8e'];
+  const lum = (hex: string) => {
+    const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+    return ((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11;
+  };
+  const pal = Object.fromEntries(Object.entries(s.pal).map(([k, col]) => [k, col.startsWith('#') ? ramp[Math.min(3, Math.floor(lum(col) / 64))] : col]));
+  return { rows: s.rows, pal };
+})();
 
 const FONT: Record<string, string[]> = {
   '0': ['111', '101', '101', '101', '111'],
@@ -211,7 +300,7 @@ function fence(c: Ctx, [x0, y0, x1, y1]: Box, glass = false) {
 
 // ——— décor de chaque enclos ———
 const WATERS: Partial<Record<EnclosId, Water>> = {};
-function decor(c: Ctx, id: EnclosId, [x0, y0, x1, y1]: Box) {
+function enclosDecor(c: Ctx, id: EnclosId, [x0, y0, x1, y1]: Box) {
   const r = mulberry32(x0 * 31 + y0);
   switch (id) {
     case 'foret':
@@ -325,6 +414,43 @@ export interface SceneModel {
   gains: Partial<Record<EnclosId, number>>;
   /** visiteurs par heure de toute la réserve : plus il y en a, plus il y a de monde dans les allées */
   rate: number;
+  /** décors achetés (identifiants de DECORS) */
+  decor: Set<string>;
+}
+
+/** Place de chaque décor sur l'esplanade : [x, y] du coin haut gauche. */
+const DECOR_AT = {
+  glaces: [6, DECOR_Y + 12],
+  jeux: [24, DECOR_Y + 18],
+  fontaine: [44, DECOR_Y + 16],
+  statue: [72, DECOR_Y + 20],
+  piquenique: [88, DECOR_Y + 13],
+  fleurs: [4, DECOR_Y + 2],
+} as const;
+const FLOWER_BEDS: [number, number][] = [
+  [4, DECOR_Y + 2],
+  [36, DECOR_Y + 3],
+  [74, DECOR_Y + 3],
+  [116, DECOR_Y + 4],
+  [116, DECOR_Y + 25],
+];
+
+function paintDecor(c: Ctx, decor: Set<string>) {
+  if (decor.has('fleurs')) for (const [x, y] of FLOWER_BEDS) blit(c, FLOWERS, x, y, { shadow: true });
+  if (decor.has('glaces')) blit(c, KIOSK, DECOR_AT.glaces[0], DECOR_AT.glaces[1], { shadow: true });
+  if (decor.has('jeux')) blit(c, PLAYGROUND, DECOR_AT.jeux[0], DECOR_AT.jeux[1], { shadow: true });
+  if (decor.has('fontaine')) blit(c, FOUNTAIN, DECOR_AT.fontaine[0], DECOR_AT.fontaine[1], { shadow: true });
+  if (decor.has('statue')) {
+    const [x, y] = DECOR_AT.statue;
+    blit(c, PEDESTAL, x, y, { shadow: true });
+    if (GOLD_LION) blit(c, GOLD_LION, x, y - GOLD_LION.rows.length + 1);
+  }
+  if (decor.has('piquenique')) {
+    const [x, y] = DECOR_AT.piquenique;
+    blit(c, TABLE, x, y + 8, { shadow: true });
+    blit(c, TABLE, x + 15, y + 3, { shadow: true });
+    blit(c, PARASOL, x + 1, y, { shadow: true });
+  }
 }
 
 const LAMPS: [number, number][] = [
@@ -333,7 +459,7 @@ const LAMPS: [number, number][] = [
   ...PATH_ROWS.slice(0, 3).map((py, i): [number, number] => (i % 2 ? [68, py - 8] : [58, py - 8])),
 ];
 
-function paintStatic(c: Ctx, open: Set<EnclosId>) {
+function paintStatic(c: Ctx, open: Set<EnclosId>, decor: Set<string>) {
   const r = mulberry32(7);
   const n1 = noise(11, 9);
   const n2 = noise(23, 4);
@@ -373,7 +499,7 @@ function paintStatic(c: Ctx, open: Set<EnclosId>) {
   }
   for (const e of ENCLOS) {
     const box = ZONE_BOX[e.id];
-    decor(c, e.id, box);
+    enclosDecor(c, e.id, box);
     if (open.has(e.id)) fence(c, box, e.id === 'aquarium');
   }
 
@@ -419,6 +545,7 @@ function paintStatic(c: Ctx, open: Set<EnclosId>) {
   blit(c, TREE, 117, by - 6, { shadow: true });
   blit(c, BUSH, 32, by + 16, { shadow: true });
   for (const [x, y] of LAMPS) blit(c, LAMP, x, y, { shadow: true });
+  paintDecor(c, decor);
 }
 
 // les animaux : places dans un enclos (centre bas, relatif à l'enclos), remplies dans cet ordre
@@ -431,25 +558,29 @@ const PUFFS = (() => {
   return Array.from({ length: 9 }, () => ({ x: r(), y: r(), s: 4 + r() * 5, v: 0.6 + r() * 0.8 }));
 })();
 
-let cache: { key: string; canvas: HTMLCanvasElement } | null = null;
+/** décor fixe déjà peint, par état des enclos et des décors (la sienne, celle d'un ami…) */
+const cache = new Map<string, { canvas: HTMLCanvasElement; waters: Partial<Record<EnclosId, Water>> }>();
 
 /** Dessine la réserve à l'instant t (secondes). */
 export function drawScene(c: Ctx, t: number, model: SceneModel) {
   c.imageSmoothingEnabled = false;
-  const key = ENCLOS.map((e) => (model.open.has(e.id) ? '1' : '0')).join('');
-  if (!cache || cache.key !== key) {
+  const key = ENCLOS.map((e) => (model.open.has(e.id) ? '1' : '0')).join('') + [...model.decor].sort().join(',');
+  let painted = cache.get(key);
+  if (!painted) {
     const canvas = document.createElement('canvas');
     canvas.width = SCENE_W;
     canvas.height = SCENE_H;
     for (const id of Object.keys(WATERS) as EnclosId[]) delete WATERS[id];
-    paintStatic(canvas.getContext('2d')!, model.open);
-    cache = { key, canvas };
+    paintStatic(canvas.getContext('2d')!, model.open, model.decor);
+    painted = { canvas, waters: { ...WATERS } };
+    if (cache.size >= 4) cache.delete(cache.keys().next().value!);
+    cache.set(key, painted);
   }
   c.globalCompositeOperation = 'source-over';
-  c.drawImage(cache.canvas, 0, 0);
+  c.drawImage(painted.canvas, 0, 0);
 
   // reflets sur l'eau
-  for (const w of Object.values(WATERS)) {
+  for (const w of Object.values(painted.waters)) {
     const [x0, y0, x1, y1] = w!.box;
     for (let k = 0; k < 5; k++) {
       const y = y0 + 2 + ((k * 5) % Math.max(1, y1 - y0 - 3));
@@ -457,6 +588,23 @@ export function drawScene(c: Ctx, t: number, model: SceneModel) {
       const span = x1 - x0;
       const x = x0 + Math.floor((((k * 13 + t * (2 + (k % 3))) % span) + span) % span);
       if (w!.d(x, y) < 0.7 && w!.d(x + len, y) < 0.7) rect(c, x, y, len, 1, k % 2 ? AQ[5] : AQ[4]);
+    }
+  }
+
+  // jets de la fontaine
+  if (model.decor.has('fontaine')) {
+    const [fx, fy] = DECOR_AT.fontaine;
+    const cx = fx + 7.5;
+    for (let k = 0; k < 8; k++) {
+      const p = (t * 1.3 + k / 8) % 1;
+      const side = k % 2 ? 1 : -1;
+      const x = Math.round(cx + side * p * 5);
+      const y = Math.round(fy - 2 - Math.sin(p * Math.PI) * 4 + p * 7);
+      px(c, x, y, p < 0.5 ? AQ[5] : AQ[4]);
+    }
+    for (let k = 0; k < 3; k++) {
+      const x = fx + 3 + ((Math.floor(t * 2) + k * 4) % 10);
+      px(c, x, fy + 7, AQ[5]);
     }
   }
 

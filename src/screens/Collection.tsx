@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { reservedUids } from '../engine/reserve';
+import { busyUids, reservedUids } from '../engine/reserve';
 import { useGame, formatBalles } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
@@ -45,7 +45,8 @@ function Club() {
   const collection = useGame((s) => s.collection);
   const team = useGame((s) => s.team);
   const reserve = useGame((s) => s.reserve);
-  const reserved = useMemo(() => reservedUids(reserve), [reserve]);
+  const reserved = useMemo(() => busyUids(reserve), [reserve]);
+  const inPens = useMemo(() => reservedUids(reserve), [reserve]);
   const quickSell = useGame((s) => s.quickSell);
   const openDetail = useUi((s) => s.openDetail);
   const [query, setQuery] = useState('');
@@ -213,7 +214,7 @@ function Club() {
               <Card card={card} size="sm" tilt onClick={() => openDetail({ card })} />
               {group.cards.length > 1 && <span className="count-badge">×{group.cards.length}</span>}
               {group.cards.some((c) => team.includes(c.uid)) && <span className="team-badge">Équipe</span>}
-              {group.cards.some((c) => reserved.has(c.uid)) && <span className="team-badge team-badge--reserve">Réserve</span>}
+              {group.cards.some((c) => reserved.has(c.uid)) && <span className="team-badge team-badge--reserve">{group.cards.some((c) => inPens.has(c.uid)) ? 'Réserve' : 'Expédition'}</span>}
               {group.cards.some((c) => c.locked) && (
                 <span className="lock-badge" aria-label="Verrouillée">
                   <svg viewBox="0 0 16 16" aria-hidden="true">

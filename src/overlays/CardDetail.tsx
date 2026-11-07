@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { reservedUids } from '../engine/reserve';
+import { busyUids, reservedUids } from '../engine/reserve';
 import { useGame, formatBalles } from '../store/game';
 import { useUi } from '../store/ui';
 import { useNow, formatDuration } from '../hooks/useNow';
@@ -337,7 +337,8 @@ export function CardDetail() {
   const vitesse = habitat ? undefined : encyclopedieOf(athlete.id)?.vitesse;
   const owned = 'uid' in detail.card && !detail.listingId ? collection.find((c) => c.uid === (detail.card as OwnedCard).uid) : undefined;
   const copies = collection.filter((c) => c.athleteId === face.athleteId && c.variant === face.variant);
-  const inReserve = !!owned && reservedUids(reserve).has(owned.uid);
+  const inReserve = !!owned && busyUids(reserve).has(owned.uid);
+  const onTrip = !!owned && inReserve && !reservedUids(reserve).has(owned.uid);
   const price = marketPrice(face, now, news);
   const history = priceHistory(face, now, news);
   const change = Math.round(((history[history.length - 1].price - history[0].price) / history[0].price) * 100);
@@ -524,7 +525,11 @@ export function CardDetail() {
                 )}
               </div>
               {owned.locked && <p className="muted small">Carte verrouillée : elle ne peut pas être vendue par erreur.</p>}
-              {inReserve && <p className="muted small">Cette carte vit dans ta réserve : retire-la de son enclos pour la vendre ou l’échanger.</p>}
+              {inReserve && (
+                <p className="muted small">
+                  {onTrip ? 'Cet animal est parti en expédition : attends son retour pour le vendre ou l’échanger.' : 'Cette carte vit dans ta réserve : retire-la de son enclos pour la vendre ou l’échanger.'}
+                </p>
+              )}
             </div>
           )}
           {owned && selling && <SellPanel card={owned} onDone={() => setSelling(false)} />}

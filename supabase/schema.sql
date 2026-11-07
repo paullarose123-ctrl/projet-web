@@ -510,4 +510,62 @@ end $$;
 revoke all on function public.presence_ping(uuid, boolean) from public;
 grant execute on function public.presence_ping(uuid, boolean) to anon, authenticated;
 
+-- Ma Réserve entre amis : ce que les autres joueurs voient de la réserve d'un joueur (niveau, enclos ouverts, espèces
+-- installées, décors), et les visiteurs que des amis s'envoient en cadeau, une fois par jour et par ami.
+alter table public.profiles add column if not exists reserve jsonb;
+
+create table if not exists public.reserve_gifts (
+  from_id uuid not null references auth.users (id) on delete cascade,
+  to_id uuid not null references auth.users (id) on delete cascade,
+  -- jour du cadeau, à l'heure de Paris
+  day date not null default ((now() at time zone 'Europe/Paris')::date),
+  visitors int not null check (visitors between 1 and 1000),
+  claimed boolean not null default false,
+  created_at timestamptz not null default now(),
+  primary key (from_id, to_id, day)
+);
+alter table public.reserve_gifts enable row level security;
+drop policy if exists "Voir ses cadeaux de visiteurs" on public.reserve_gifts;
+create policy "Voir ses cadeaux de visiteurs" on public.reserve_gifts for select using ((select auth.uid()) in (from_id, to_id));
+-- on ne les écrit qu'à travers reserve_gift et reserve_gifts_claim
+revoke all on public.reserve_gifts from anon, authenticated;
+grant select on public.reserve_gifts to authenticated;
+
+-- Envoie des visiteurs dans la réserve d'un ami (une fois par jour et par ami) ; renvoie leur nombre.
+create or replace function public.reserve_gift(p_to uuid)
+returns int language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  n int := 150;
+begin
+  if me is null or p_to is null or p_to = me then raise exception 'Cadeau impossible.'; end if;
+  if not exists (
+    select 1 from friendships
+    where status = 'accepted' and ((from_id = me and to_id = p_to) or (from_id = p_to and to_id = me))
+  ) then
+    raise exception 'Vous n''êtes pas amis.';
+  end if;
+  insert into reserve_gifts (from_id, to_id, visitors) values (me, p_to, n) on conflict do nothing;
+  if not found then raise exception 'Tu lui as déjà envoyé des visiteurs aujourd''hui.'; end if;
+  return n;
+end $$;
+
+-- Reçoit les visiteurs envoyés par les amis : chaque cadeau n'est reçu qu'une fois.
+create or replace function public.reserve_gifts_claim()
+returns table (giver text, amount int) language plpgsql security definer set search_path = public as $$
+begin
+  return query
+  with got as (
+    update reserve_gifts g set claimed = true
+    where g.to_id = auth.uid() and not g.claimed
+    returning g.from_id, g.visitors
+  )
+  select coalesce(p.pseudo, '?'), got.visitors from got left join profiles p on p.id = got.from_id;
+end $$;
+
+revoke all on function public.reserve_gift(uuid) from public;
+revoke all on function public.reserve_gifts_claim() from public;
+grant execute on function public.reserve_gift(uuid) to authenticated;
+grant execute on function public.reserve_gifts_claim() to authenticated;
+
 notify pgrst, 'reload schema';

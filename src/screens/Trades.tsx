@@ -10,7 +10,7 @@ import type { CardFace, OwnedCard } from '../engine/types';
 import type { PublicProfile } from '../account/supabase';
 import type { Trade } from '../account/trades';
 import { Card } from '../components/Card';
-import { reservedUids } from '../engine/reserve';
+import { busyUids } from '../engine/reserve';
 import { useNow, timeAgo } from '../hooks/useNow';
 
 // Échanges entre amis : proposer une de ses cartes contre une espèce de même rareté, et répondre aux propositions.
@@ -37,7 +37,7 @@ export function TradeModal({ friend, onClose }: { friend: PublicProfile; onClose
     const seen = new Set<string>();
     const q = normalize(query.trim());
     return collection
-      .filter((c) => !c.locked && !reservedUids(reserve).has(c.uid) && ATHLETES_BY_ID[c.athleteId])
+      .filter((c) => !c.locked && !busyUids(reserve).has(c.uid) && ATHLETES_BY_ID[c.athleteId])
       .filter((c) => {
         const key = `${c.athleteId}:${c.variant}`;
         if (seen.has(key)) return false;
@@ -168,7 +168,7 @@ function TradeRow({ trade, me }: { trade: Trade; me: string }) {
   const received = trade.toId === me;
   const other = received ? trade.from : trade.to;
   const want: CardFace = trade.given ?? { athleteId: trade.wantId, variant: 'base' };
-  const canGive = received && !!copyToGive(collection, trade.wantId, reservedUids(reserve));
+  const canGive = received && !!copyToGive(collection, trade.wantId, busyUids(reserve));
 
   let status: string;
   if (trade.status === 'pending') status = received ? `${other} te propose` : `En attente de ${other}`;
