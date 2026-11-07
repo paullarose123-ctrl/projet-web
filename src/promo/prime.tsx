@@ -12,8 +12,9 @@ import type { CardFace } from '../engine/types';
 const IDS = ['lion', 'panda', 'orque', 'gorille', 'husky', 'chat'];
 const ROWS: [string, string][] = [
   ['En ligne aujourd’hui', ''],
-  ['G · Nom et numéro en nacre, voile de la photo plus léger, double liseré autour de la photo', 'pr-g'],
-  ['H · Pareil, avec de fines lignes holographiques gravées dans le cadre', 'pr-g pr-h'],
+  ['I · Bordure de nacre plus large, avec un liseré nacré et des losanges', 'pr-i'],
+  ['J · Le dégradé de la photo qui ondule doucement (figé ici)', 'pr-j'],
+  ['K · Les deux', 'pr-i pr-j'],
 ];
 
 createRoot(document.getElementById('root')!).render(
