@@ -9,15 +9,16 @@ import type { CardFace, Variant } from '../engine/types';
 
 // Maquette (page de développement promo/prime.html) : la Reverse comme une carte normale « inversée ».
 
-const IDS = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
+const IDS = ['thylacine', 'quagga', 'lion-de-l-atlas', 'crapaud-dore', 'grizzli-du-mexique', 'phoque-moine-des-caraibes'];
 const ROWS: [string, Variant, string][] = [
-  ['Rare', 'reverse', ''],
-  ['Épique', 'reverse', ''],
-  ['Légendaire', 'reverse', ''],
-  ['Légendaire (Mexique)', 'reverse', ''],
+  ['Icônes aujourd’hui', 'base', ''],
+  ['1 · Cadre de musée doré', 'base', 'ic-1'],
+  ['2 · Pareil, avec la bordure semée de feuille d’or', 'base', 'ic-2'],
+  ['Prime du Mexique', 'prime', ''],
 ];
 
-const ID_BY_ROW: Record<string, string> = { Rare: 'ocelot', 'Épique': 'loup', 'Légendaire': 'lion', 'Légendaire (Mexique)': 'mx-axolotl' };
+const ROW_IDS: Record<string, string[]> = { 'Prime du Mexique': ['mx-jaguar', 'mx-requin-baleine', 'mx-requin-blanc', 'mx-chihuahua', 'xoloitzcuintle'] };
+const ID_BY_ROW: Record<string, string> = { 'Prime du Mexique': 'mx-jaguar' };
 const params = new URLSearchParams(location.search);
 const id = params.get('id') ?? 'lion';
 
@@ -37,7 +38,7 @@ createRoot(document.getElementById('root')!).render(
         <section key={title} style={{ display: 'grid', gap: 10 }}>
           <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 400 }}>{title}</h2>
           <div style={{ display: 'flex', gap: 14 }}>
-            {IDS.map((athleteId) => (
+            {(ROW_IDS[title] ?? IDS).map((athleteId) => (
               <Card key={athleteId} card={{ athleteId, variant } as CardFace} size="md" className={cls} />
             ))}
           </div>

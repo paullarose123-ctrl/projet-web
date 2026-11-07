@@ -1,1 +1,53 @@
-/* Maquette : rien de plus, la page montre les Reverse telles que dans card.css. */
+/* Maquette : Icônes plus belles, mêmes couleurs (classes ic-1, ic-2). */
+
+/* 1 · Cadre de musée : la bordure champagne s'élargit (cadre réduit à 95 %) et un liseré d'or aux coins creusés,
+   ponctué de losanges, en fait le tour, comme le cadre doré d'un tableau */
+.card.is-icon:not(.serie-2):is(.ic-1, .ic-2) .card__inner {
+  transform: scale(0.95);
+}
+
+.card.is-icon:is(.ic-1, .ic-2) .card__body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(160deg, #b8862c, #f3d98f 35%, #c4943a 60%, #f3d98f 85%, #b8862c);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M6.1 2.2H93.89999999999999A3.9 3.9 0 0 0 97.8 6.1V133.9A3.9 3.9 0 0 0 93.89999999999999 137.8H6.1A3.9 3.9 0 0 0 2.2 133.9V6.1A3.9 3.9 0 0 0 6.1 2.2Z' fill='none' stroke='%23000' stroke-width='.35'/%3E%3Cpath d='M50 0.9000000000000001L50.975 2.2L50 3.5L49.025 2.2ZM50 136.5L50.975 137.8L50 139.10000000000002L49.025 137.8ZM2.2 68.7L3.1750000000000003 70L2.2 71.3L1.225 70ZM97.8 68.7L98.77499999999999 70L97.8 71.3L96.825 70ZM3.1 2.2L3.7750000000000004 3.1L3.1 4.0L2.425 3.1ZM96.89999999999999 2.2L97.57499999999999 3.1L96.89999999999999 4.0L96.225 3.1ZM3.1 136.0L3.7750000000000004 136.9L3.1 137.8L2.425 136.9ZM96.89999999999999 136.0L97.57499999999999 136.9L96.89999999999999 137.8L96.225 136.9Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M6.1 2.2H93.89999999999999A3.9 3.9 0 0 0 97.8 6.1V133.9A3.9 3.9 0 0 0 93.89999999999999 137.8H6.1A3.9 3.9 0 0 0 2.2 133.9V6.1A3.9 3.9 0 0 0 6.1 2.2Z' fill='none' stroke='%23000' stroke-width='.35'/%3E%3Cpath d='M50 0.9000000000000001L50.975 2.2L50 3.5L49.025 2.2ZM50 136.5L50.975 137.8L50 139.10000000000002L49.025 137.8ZM2.2 68.7L3.1750000000000003 70L2.2 71.3L1.225 70ZM97.8 68.7L98.77499999999999 70L97.8 71.3L96.825 70ZM3.1 2.2L3.7750000000000004 3.1L3.1 4.0L2.425 3.1ZM96.89999999999999 2.2L97.57499999999999 3.1L96.89999999999999 4.0L96.225 3.1ZM3.1 136.0L3.7750000000000004 136.9L3.1 137.8L2.425 136.9ZM96.89999999999999 136.0L97.57499999999999 136.9L96.89999999999999 137.8L96.225 136.9Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  filter: drop-shadow(0 0.04em 0.05em rgba(90, 60, 15, 0.45));
+}
+
+.card.is-icon.serie-2:is(.ic-1, .ic-2) .card__body::before {
+  display: none;
+}
+
+/* 2 · Feuille d'or : en plus, la bordure est semée de paillettes d'or (feuille d'or posée sur le marbre) qui
+   scintillent, et le reflet doré passe plus franchement */
+.card.is-icon.ic-2 .card__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(214, 160, 60, 0.95) 0 0.05em, transparent 0.09em) 0 0 / 0.61em 0.53em,
+    radial-gradient(circle at 70% 60%, rgba(243, 217, 143, 1) 0 0.04em, transparent 0.08em) 0 0 / 0.43em 0.71em,
+    radial-gradient(circle at 50% 50%, rgba(184, 134, 44, 0.9) 0 0.06em, transparent 0.1em) 0 0 / 0.97em 0.83em;
+  opacity: 0.8;
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) 58.8% 23.1% / 80.56% 75.62% no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) 58.8% 23.1% / 80.56% 75.62% no-repeat;
+  animation: icon-flakes 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes icon-flakes {
+  to {
+    opacity: 0.45;
+  }
+}
+
+.card.is-icon.ic-2 .card__holo {
+  opacity: 0.4;
+}
