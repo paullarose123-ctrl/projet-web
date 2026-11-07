@@ -1,0 +1,34 @@
+/* Maquette : retouches des Prime de la Série 1 (classes pr-g, pr-h posées sur la carte). */
+
+/* G : le nom et le numéro en nacre irisée */
+.card.is-prime.pr-g {
+  --metal: linear-gradient(100deg, #ffd6ec 0%, #fff4c8 30%, #cdf6e6 55%, #d2ddff 80%, #f2d4ff 100%);
+  --metal-edge: #10124a;
+}
+
+/* G : le voile de la photo garde ses bandes pastel, en plus léger et sans les points */
+.card.is-prime.pr-g.has-photo .card__window::after {
+  background:
+    repeating-radial-gradient(ellipse at 15% 115%, rgba(255, 255, 255, 0.25) 0 0.1em, transparent 0.1em 1.1em),
+    repeating-linear-gradient(125deg, #f3b7d0 0 2.2em, #bfe8da 2.2em 4.4em, #c9d6f7 4.4em 6.6em, #f6e1a8 6.6em 8.8em);
+  opacity: 0.6;
+  box-shadow: inset 0 0 0 0.14em rgba(255, 206, 236, 0.9);
+}
+
+/* H : de fines lignes holographiques gravées dans le cadre, discrètes */
+.card.is-prime.pr-h .card__body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(115deg, #fff 0 0.07em, #000 0.07em 0.38em), linear-gradient(115deg, #ff8fcf, #ffd98a, #8ff0c8, #8cc4ff, #c693ff, #ff8fcf, #ffd98a) 0 0 / 300% 300%;
+  background-blend-mode: multiply;
+  mix-blend-mode: screen;
+  opacity: 0.45;
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) var(--window-hole) no-repeat;
+  animation: holo-drift 9s linear infinite alternate;
+}
