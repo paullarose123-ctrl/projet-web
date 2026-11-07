@@ -1,43 +1,35 @@
-/* Maquette : couleurs du côté brillant de la Reverse légendaire (classes br-1, br-2, br-3). */
+/* Maquette : le bas de la Reverse légendaire, sans le jaune (classes y-1, y-2). */
 
-/* 1 · nacre blanche : des reflets de lumière blanche, un grain argenté */
-.card.is-reverse.r-legendaire.br-1 .card__body::before {
-  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 9%, rgba(240, 244, 255, 0.8) 14%, rgba(255, 255, 255, 0) 24%) 0 0 / 220% 220%;
-  mix-blend-mode: soft-light;
-  opacity: 1;
+/* 1 · le bas en corail et orange, comme le bas de la Légendaire normale */
+.card.is-reverse.r-legendaire.y-1 {
+  --foil:
+    radial-gradient(60% 26% at 50% 100%, rgba(255, 160, 110, 0.9), transparent 75%),
+    radial-gradient(55% 34% at 8% 6%, rgba(150, 100, 235, 0.95), transparent 72%),
+    radial-gradient(50% 30% at 94% 22%, rgba(240, 100, 180, 0.95), transparent 72%),
+    radial-gradient(52% 32% at 90% 78%, rgba(255, 120, 90, 0.95), transparent 72%),
+    radial-gradient(46% 30% at 8% 70%, rgba(255, 150, 120, 0.9), transparent 72%),
+    linear-gradient(172deg, #b490f0 0%, #ee8fc8 30%, #ff9a84 58%, #ffa774 82%, #ffb27c 100%);
+  --hill-far: rgba(255, 206, 196, 0.75);
+  --hill-near: rgba(255, 214, 196, 0.85);
+  --reverse-wash: linear-gradient(170deg, rgba(170, 120, 245, 0.55), rgba(240, 120, 190, 0.3) 40%, rgba(255, 150, 110, 0.35) 70%, rgba(255, 140, 100, 0.5));
 }
 
-.card.is-reverse.r-legendaire.br-1 .card__body::after {
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 1) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
-    radial-gradient(circle at 70% 60%, rgba(235, 240, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
+/* 2 · le bas en rose corail, plus doux */
+.card.is-reverse.r-legendaire.y-2 {
+  --foil:
+    radial-gradient(60% 26% at 50% 100%, rgba(255, 150, 150, 0.85), transparent 75%),
+    radial-gradient(55% 34% at 8% 6%, rgba(150, 100, 235, 0.95), transparent 72%),
+    radial-gradient(50% 30% at 94% 22%, rgba(240, 100, 180, 0.95), transparent 72%),
+    radial-gradient(52% 32% at 90% 78%, rgba(255, 120, 120, 0.95), transparent 72%),
+    radial-gradient(46% 30% at 8% 70%, rgba(255, 140, 150, 0.9), transparent 72%),
+    linear-gradient(172deg, #b490f0 0%, #e88ccc 30%, #ff94a0 60%, #ff9c8e 82%, #ffa894 100%);
+  --hill-far: rgba(255, 200, 214, 0.75);
+  --hill-near: rgba(255, 210, 210, 0.85);
+  --reverse-wash: linear-gradient(170deg, rgba(170, 120, 245, 0.55), rgba(240, 120, 190, 0.3) 40%, rgba(255, 140, 150, 0.35) 70%, rgba(255, 130, 130, 0.5));
 }
 
-/* 2 · arc-en-ciel : les reflets holographiques classiques, toutes les couleurs */
-.card.is-reverse.r-legendaire.br-2 .card__body::before {
-  background: repeating-linear-gradient(
-      115deg,
-      rgba(255, 120, 190, 0.9) 0%,
-      rgba(255, 220, 120, 0.9) 6%,
-      rgba(120, 255, 200, 0.9) 12%,
-      rgba(110, 190, 255, 0.9) 18%,
-      rgba(200, 130, 255, 0.9) 24%,
-      rgba(255, 120, 190, 0.9) 30%
-    )
-    0 0 / 200% 200%;
-  mix-blend-mode: color-dodge;
-  opacity: 0.4;
-}
-
-.card.is-reverse.r-legendaire.br-2 .card__body::after {
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 1) 0 0.03em, transparent 0.07em) 0 0 / 0.37em 0.41em,
-    radial-gradient(circle at 70% 60%, rgba(200, 240, 255, 0.95) 0 0.03em, transparent 0.07em) 0 0 / 0.53em 0.47em;
-}
-
-/* 3 · or seul : des reflets dorés, un grain d'or */
-.card.is-reverse.r-legendaire.br-3 .card__body::before {
-  background: repeating-linear-gradient(115deg, rgba(255, 214, 110, 0) 0%, rgba(255, 224, 140, 0.95) 9%, rgba(255, 190, 90, 0.85) 14%, rgba(255, 214, 110, 0) 24%) 0 0 / 220% 220%;
-  mix-blend-mode: color-dodge;
-  opacity: 0.55;
+/* pour comparer les couleurs de la carte, sans les reflets */
+.card.is-reverse.r-legendaire .card__body::before,
+.card.is-reverse.r-legendaire .card__body::after {
+  display: none;
 }
