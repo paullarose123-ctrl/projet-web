@@ -7,25 +7,23 @@ import './prime.css';
 import { Card } from '../components/Card';
 import type { CardFace, Variant } from '../engine/types';
 
-// Maquette (page de développement promo/prime.html) : Prime de la Série 1 et Reverse légendaires.
+// Maquette (page de développement promo/prime.html) : la Reverse comme une carte normale « inversée ».
 
-const PRIMES = ['lion', 'panda', 'orque', 'gorille', 'husky', 'chat'];
-const LEGENDES = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
-const ROWS: [string, string[], Variant, string][] = [
-  ['Prime, version finale', PRIMES, 'prime', ''],
-  ['Légendaire normale', LEGENDES, 'base', ''],
-  ['Reverse légendaire aujourd’hui', LEGENDES, 'reverse', ''],
-  ['L1 · Crépuscule clair : les couleurs exactes de la Légendaire sur un cadre clair', LEGENDES, 'reverse', 'rl-1'],
-  ['L2 · Crépuscule inversé : la Légendaire en négatif (bordure prune, cadre couleur coucher de soleil)', LEGENDES, 'reverse', 'rl-2'],
+const IDS = ['ocelot', 'renard-roux', 'loup', 'jaguar', 'lion', 'mx-axolotl'];
+const ROWS: [string, Variant, string][] = [
+  ['Cartes normales', 'base', ''],
+  ['Reverse aujourd’hui', 'reverse', ''],
+  ['X1 · La carte normale, dont le cadre brille en arc-en-ciel (la photo non)', 'base', 'rv-x1'],
+  ['X2 · Pareil, avec le grain pailleté d’une feuille holographique', 'base', 'rv-x2'],
 ];
 
 createRoot(document.getElementById('root')!).render(
   <div style={{ padding: 24, display: 'grid', gap: 22, color: 'var(--text)' }}>
-    {ROWS.map(([title, ids, variant, cls]) => (
+    {ROWS.map(([title, variant, cls]) => (
       <section key={title} style={{ display: 'grid', gap: 10 }}>
         <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 400 }}>{title}</h2>
         <div style={{ display: 'flex', gap: 14 }}>
-          {ids.map((athleteId) => (
+          {IDS.map((athleteId) => (
             <Card key={athleteId} card={{ athleteId, variant } as CardFace} size="md" className={cls} />
           ))}
         </div>
