@@ -1,0 +1,120 @@
+/* Maquette : trois pistes pour les Reverse légendaires (classes rl-a, rl-b, rl-c posées sur la carte). */
+
+/* commun aux trois : la photo reste nette, sans la trame de points */
+.card.is-reverse.r-legendaire:is(.rl-a, .rl-b, .rl-c) .card__window::after {
+  background: radial-gradient(110% 70% at 0% 0%, rgba(255, 255, 255, 0.45), transparent 55%);
+}
+
+/* A · Aquarelle de feu : le coucher de soleil en lavis vifs, qui transparaît dans tout le cadre */
+.card.is-reverse.r-legendaire.rl-a {
+  --foil:
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.95) 0 0.045em, transparent 0.1em) 0 0 / 0.8em 1em,
+    radial-gradient(circle at 70% 20%, rgba(255, 226, 120, 0.95) 0 0.05em, transparent 0.11em) 0 0 / 1.3em 1.5em,
+    radial-gradient(60% 26% at 50% 100%, rgba(255, 214, 90, 1), transparent 75%),
+    radial-gradient(55% 34% at 8% 6%, rgba(150, 100, 235, 0.95), transparent 72%),
+    radial-gradient(50% 30% at 94% 22%, rgba(240, 100, 180, 0.95), transparent 72%),
+    radial-gradient(52% 32% at 90% 78%, rgba(255, 120, 90, 0.95), transparent 72%),
+    radial-gradient(46% 30% at 8% 70%, rgba(255, 150, 120, 0.9), transparent 72%),
+    linear-gradient(172deg, #b490f0 0%, #ee8fc8 30%, #ff9e84 58%, #ffc46e 82%, #ffe08a 100%);
+  --panel: rgba(255, 244, 236, 0.5);
+  --trim: #a8327a;
+  --metal: linear-gradient(180deg, #5e2a96 0%, #b8306e 52%, #e2662a 100%);
+  --plate-ink: #6a1f55;
+  --tier-bg: linear-gradient(90deg, #ffffff, #ffe9f3 50%, #fff0d6);
+  --tier-ink: #6a1f55;
+  --hill-far: rgba(255, 220, 236, 0.75);
+  --hill-near: rgba(255, 232, 214, 0.85);
+  --reverse-wash: linear-gradient(170deg, rgba(170, 120, 245, 0.55), rgba(240, 120, 190, 0.3) 40%, rgba(255, 150, 110, 0.35) 70%, rgba(255, 200, 90, 0.6));
+  --reverse-tier: linear-gradient(90deg, #6a2fb0, #d0306e, #ee7a20);
+}
+
+.card.is-reverse.r-legendaire.rl-a .card__body {
+  box-shadow: inset 0 0 0 0.1em rgba(168, 50, 122, 0.8), inset 0 0 0 0.24em rgba(255, 220, 140, 0.7);
+}
+
+/* B · Nacre arc-en-ciel : un cadre de nacre où glissent toutes les couleurs, comme une carte holographique */
+.card.is-reverse.r-legendaire.rl-b {
+  --foil:
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 1) 0 0.045em, transparent 0.1em) 0 0 / 0.8em 1em,
+    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.85) 0 0.05em, transparent 0.11em) 0 0 / 1.3em 1.5em,
+    repeating-linear-gradient(125deg, #ffb3d6 0 2.4em, #ffd9a8 2.4em 4.8em, #fff3a6 4.8em 7.2em, #b8f0cf 7.2em 9.6em, #b0dcff 9.6em 12em, #d2b8ff 12em 14.4em, #ffb3d6 14.4em 16.8em);
+  --panel: rgba(255, 255, 255, 0.42);
+  --trim: #7a52c4;
+  --metal: linear-gradient(180deg, #8a3fb0 0%, #4a4fc4 50%, #2a8aa8 100%);
+  --plate-ink: #4a3290;
+  --tier-bg: linear-gradient(90deg, #ffe0ef, #fff6d6 35%, #d9f7e8 65%, #e2e2ff);
+  --tier-ink: #4a3290;
+  --hill-far: rgba(255, 255, 255, 0.55);
+  --hill-near: rgba(255, 255, 255, 0.7);
+  --reverse-wash: linear-gradient(140deg, rgba(255, 170, 214, 0.5), rgba(255, 240, 160, 0.35) 35%, rgba(170, 240, 210, 0.4) 65%, rgba(190, 170, 255, 0.55));
+  --reverse-tier: linear-gradient(90deg, #d0407e, #e08a2a, #2a9a7a, #4a6ad0, #8a4ac4);
+}
+
+.card.is-reverse.r-legendaire.rl-b .card__bg {
+  animation: rl-rainbow 12s linear infinite;
+}
+
+@keyframes rl-rainbow {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.card.is-reverse.r-legendaire.rl-b .card__holo {
+  opacity: 0.38;
+  mix-blend-mode: color-dodge;
+  animation: holo-drift 6s linear infinite;
+}
+
+.card.is-reverse.r-legendaire.rl-b .card__body {
+  box-shadow: inset 0 0 0 0.1em rgba(122, 82, 196, 0.6), inset 0 0 0 0.24em rgba(255, 255, 255, 0.75);
+}
+
+/* C · Feuille d'or : le crépuscule en aquarelle, semé de paillettes d'or ; liserés et textes dorés */
+.card.is-reverse.r-legendaire.rl-c {
+  --foil:
+    radial-gradient(circle at 30% 40%, rgba(255, 236, 160, 1) 0 0.06em, transparent 0.12em) 0 0 / 0.9em 1.1em,
+    radial-gradient(circle at 70% 70%, rgba(226, 170, 60, 1) 0 0.08em, transparent 0.14em) 0 0 / 1.7em 1.4em,
+    radial-gradient(circle at 20% 80%, rgba(255, 250, 220, 1) 0 0.04em, transparent 0.09em) 0 0 / 1.1em 1.6em,
+    radial-gradient(52% 34% at 12% 8%, rgba(176, 140, 240, 0.95), transparent 72%),
+    radial-gradient(46% 30% at 92% 16%, rgba(240, 140, 200, 0.95), transparent 72%),
+    radial-gradient(48% 32% at 88% 84%, rgba(255, 150, 110, 0.95), transparent 72%),
+    radial-gradient(46% 30% at 10% 88%, rgba(255, 200, 90, 0.95), transparent 72%),
+    linear-gradient(172deg, #cfb6f4 0%, #f2b0d6 30%, #ffb8a0 58%, #ffd68a 82%, #ffe7a6 100%);
+  --panel: rgba(255, 248, 236, 0.55);
+  --trim: #b8862c;
+  --metal: linear-gradient(180deg, #7a4a10 0%, #c08a2a 45%, #8a5a14 70%, #5e3a0a 100%);
+  --metal-edge: rgba(255, 250, 230, 0.95);
+  --plate-ink: #6e4510;
+  --tier-bg: linear-gradient(90deg, #c4943a, #f6e2a0 50%, #c4943a);
+  --tier-ink: #3e2608;
+  --hill-far: rgba(255, 236, 200, 0.7);
+  --hill-near: rgba(255, 244, 220, 0.85);
+  --reverse-wash: linear-gradient(170deg, rgba(196, 168, 245, 0.55), rgba(238, 168, 214, 0.35) 38%, rgba(255, 186, 140, 0.4) 66%, rgba(255, 210, 110, 0.6));
+  --reverse-tier: linear-gradient(90deg, #6e4510, #3e2608);
+}
+
+.card.is-reverse.r-legendaire.rl-c .card__body {
+  box-shadow: inset 0 0 0 0.1em rgba(184, 134, 44, 0.9), inset 0 0 0 0.24em rgba(255, 236, 170, 0.75), inset 0 0 0 0.32em rgba(184, 134, 44, 0.6);
+}
+
+.card.is-reverse.r-legendaire.rl-c .card__holo {
+  opacity: 0.26;
+  animation: holo-drift 6s linear infinite;
+}
+
+/* le losange du numéro reste plein, même quand le cadre laisse transparaître le lavis */
+.card.is-reverse.r-legendaire:is(.rl-a, .rl-b) .card__rating::before {
+  background: #fffaf5;
+}
+
+/* B : l'arc-en-ciel glisse sur le cadre seulement, la photo garde ses couleurs */
+.card.is-reverse.r-legendaire.rl-b .card__holo {
+  -webkit-mask: linear-gradient(#000 0 0), linear-gradient(#000 0 0) 61.8% 16.2% / 84.8% 79.6% no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, linear-gradient(#000 0 0) 61.8% 16.2% / 84.8% 79.6% no-repeat;
+}
+
+.card.is-reverse.r-legendaire.rl-b {
+  --reverse-wash: linear-gradient(140deg, rgba(255, 190, 220, 0.35), transparent 40%, transparent 65%, rgba(200, 186, 255, 0.4));
+}
