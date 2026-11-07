@@ -28,6 +28,16 @@ function randomId(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/**
+ * Ce navigateur compte-t-il comme un visiteur ? Pas le jeu lancé en développement (npm run dev, tests et captures sur
+ * ce poste) : chaque test ouvre un navigateur neuf, qui compterait comme un nouveau joueur du jour.
+ */
+function countsAsVisitor(): boolean {
+  if (import.meta.env.DEV) return false;
+  const host = window.location.hostname;
+  return host !== 'localhost' && host !== '127.0.0.1' && host !== '';
+}
+
 /** L'identifiant anonyme de ce navigateur (créé à la première visite). */
 export function visitorId(): string {
   try {
@@ -49,7 +59,7 @@ export function visitorId(): string {
  * Null aussi si le serveur ne répond pas.
  */
 export async function pingPresence(online: boolean, token?: string): Promise<PresenceCounts | null> {
-  if (!accountsEnabled()) return null;
+  if (!accountsEnabled() || !countsAsVisitor()) return null;
   try {
     const counts = await call<{ online: number | null; today: number | null; accounts?: number; accountsToday?: number; accountsWeek?: number }>('/rest/v1/rpc/presence_ping', {
       method: 'POST',
