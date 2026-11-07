@@ -1,10 +1,11 @@
 import type { CardFace } from '../engine/types';
+import type { ReserveSnapshot } from '../engine/reserve';
 import { currentFace } from '../engine/cards';
 import { PSEUDO_EMAIL_DOMAIN, SUPABASE_KEY, SUPABASE_URL } from './config';
 
 // Petit client Supabase, sans bibliothèque : l'authentification (GoTrue) et deux tables (PostgREST).
 // - saves : la sauvegarde privée de chaque joueur (toute sa progression) ;
-// - profiles : son profil public (pseudo et cartes préférées), visible par les autres joueurs.
+// - profiles : son profil public (pseudo, cartes préférées, photo et réserve), visible par les autres joueurs.
 
 export interface Session {
   accessToken: string;
@@ -22,6 +23,8 @@ export interface PublicProfile {
   /** espèce dont la photo sert de photo de profil (vide : l'initiale du pseudo) */
   avatar: string;
   favorites: CardFace[];
+  /** sa réserve, telle que ses amis la voient (null : pas encore partagée) */
+  reserve: ReserveSnapshot | null;
   updatedAt: string;
 }
 
@@ -173,7 +176,7 @@ export async function storeSave(session: Session, data: unknown, keepalive = fal
   return stamp;
 }
 
-export async function storeProfile(session: Session, favorites: CardFace[], avatar: string): Promise<void> {
+export async function storeProfile(session: Session, favorites: CardFace[], avatar: string, reserve?: ReserveSnapshot): Promise<void> {
   const send = (extra: Record<string, unknown>) =>
     call('/rest/v1/profiles?on_conflict=id', {
       method: 'POST',
@@ -182,10 +185,14 @@ export async function storeProfile(session: Session, favorites: CardFace[], avat
       body: { id: session.userId, pseudo: session.pseudo, favorites, updated_at: new Date().toISOString(), ...extra },
     });
   try {
-    await send({ avatar });
+    await send(reserve ? { avatar, reserve } : { avatar });
   } catch {
-    // base créée avant la photo de profil (colonne « avatar » absente) : le reste du profil part quand même
-    await send({});
+    // base créée avant la réserve ou la photo de profil (colonne absente) : le reste du profil part quand même
+    try {
+      await send({ avatar });
+    } catch {
+      await send({});
+    }
   }
 }
 
@@ -205,6 +212,7 @@ interface ProfileRow {
   pseudo: string;
   favorites: CardFace[];
   avatar?: string | null;
+  reserve?: ReserveSnapshot | null;
   updated_at: string;
 }
 
@@ -214,6 +222,7 @@ const toProfile = (row: ProfileRow): PublicProfile => ({
   avatar: row.avatar ?? '',
   // une vitrine enregistrée avant le remplacement d'une espèce (ou d'une finition retirée) montre la carte d'aujourd'hui
   favorites: Array.isArray(row.favorites) ? row.favorites.map((f) => (f ? currentFace(f) : f)) : [],
+  reserve: row.reserve && typeof row.reserve === 'object' && row.reserve.enclos ? row.reserve : null,
   updatedAt: row.updated_at,
 });
 

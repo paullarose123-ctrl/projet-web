@@ -13,6 +13,7 @@ import { photoCredit } from '../photos';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { TradeModal, TradesPanel } from './Trades';
+import { FriendReserveSheet } from './Reserve';
 import { useLive } from '../store/live';
 import { FamilyBadge, SerieBadge } from '../components/FamilyBadge';
 import { familyProgress, serieBadge, serieProgress } from '../engine/badges';
@@ -332,6 +333,7 @@ function FriendRow({ profile, onRemove }: { profile: PublicProfile; onRemove: ()
   const [open, setOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [trading, setTrading] = useState(false);
+  const [visiting, setVisiting] = useState(false);
   const faces: CardFace[] = profile.favorites.filter((face) => ATHLETES_BY_ID[face?.athleteId]).slice(0, FAVORITES_SIZE);
   const challenge = () => {
     if (match) {
@@ -355,6 +357,11 @@ function FriendRow({ profile, onRemove }: { profile: PublicProfile; onRemove: ()
           {faces.length > 0 && (
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
               {open ? 'Cacher' : 'Sa vitrine'}
+            </button>
+          )}
+          {profile.reserve && (
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setVisiting(true)} title="Visiter sa réserve et lui envoyer des visiteurs">
+              Sa réserve
             </button>
           )}
           <button type="button" className="btn btn--gold btn--sm" onClick={() => setTrading(true)} title="Lui proposer une de tes cartes contre une des siennes, de même rareté">
@@ -384,6 +391,7 @@ function FriendRow({ profile, onRemove }: { profile: PublicProfile; onRemove: ()
         </div>
       </div>
       {trading && <TradeModal friend={profile} onClose={() => setTrading(false)} />}
+      {visiting && profile.reserve && <FriendReserveSheet profile={profile} onClose={() => setVisiting(false)} />}
       {open && faces.length > 0 && (
         <div className="vitrine vitrine--public">
           {faces.map((face, i) => (

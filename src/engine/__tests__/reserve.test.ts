@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
-import { ENCLOS, MAX_PLACES, billetterie, canLiveIn, billetterieFull, cardVisitors, emptyReserve, enclosFor, enclosVisitors, levelOf, placePrice, reserveRate } from '../reserve';
-import type { CardFace } from '../types';
+import {
+  ENCLOS,
+  LEVEL_REWARDS,
+  LEVELS,
+  MAX_PLACES,
+  billetterie,
+  billetterieHours,
+  busyUids,
+  canExplore,
+  canLiveIn,
+  billetterieFull,
+  cardVisitors,
+  dailyRequests,
+  decorBonus,
+  emptyReserve,
+  enclosFor,
+  enclosVisitors,
+  expeditionCredits,
+  levelOf,
+  levelRewardsDue,
+  placePrice,
+  requestProgress,
+  reserveRate,
+  reserveSnapshot,
+} from '../reserve';
+import type { CardFace, OwnedCard } from '../types';
 
 const card = (athleteId: string, variant: CardFace['variant'] = 'base'): CardFace => ({ athleteId, variant });
 const HOUR = 3_600_000;
@@ -61,5 +85,61 @@ describe('Ma Réserve', () => {
     expect(levelOf(0).level).toBe(1);
     expect(levelOf(600).level).toBe(2);
     expect(levelOf(10_000_000).to).toBeNull();
+  });
+
+  it('verse la récompense de chaque niveau gagné, une seule fois', () => {
+    expect(LEVEL_REWARDS.length).toBe(LEVELS.length + 1);
+    expect(levelRewardsDue(1, 0)).toEqual({ level: 1, credits: 0, boosters: 0 });
+    // de 1 à 3 d'un coup : les niveaux 2 et 3
+    const due = levelRewardsDue(1, LEVELS[2]);
+    expect(due.level).toBe(3);
+    expect(due.credits).toBe(LEVEL_REWARDS[2].credits + LEVEL_REWARDS[3].credits);
+    expect(due.boosters).toBe(LEVEL_REWARDS[3].boosters);
+    // déjà payé : rien de plus
+    expect(levelRewardsDue(3, LEVELS[2] + 10).credits).toBe(0);
+  });
+
+  it('agrandit la billetterie et ajoute le bonus des décors', () => {
+    const state = emptyReserve(0);
+    expect(billetterieHours(state)).toBe(8);
+    expect(billetterie({ ...state, caisse: 2 }, 100, 30 * HOUR)).toBe(2400);
+    const lion = card('lion');
+    const pens = { ...state, enclos: { savane: { places: 3, uids: ['a'] } } };
+    const decorated = { ...pens, decor: ['fontaine', 'statue'] };
+    expect(decorBonus(decorated)).toBeCloseTo(0.15);
+    expect(reserveRate(decorated, () => lion)).toBe(Math.round(cardVisitors(lion) * 1.15));
+  });
+
+  it('tire chaque jour des demandes que le joueur peut remplir', () => {
+    const owned = (athleteId: string, uid: string, variant: CardFace['variant'] = 'base'): OwnedCard => ({ athleteId, variant, uid, obtainedAt: 0 });
+    const cards = [owned('lion', 'a', 'reverse'), owned('guepard', 'b'), owned('zebre', 'c'), owned('loup', 'd'), owned('renard-roux', 'e')];
+    const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a', 'b', 'c'] }, foret: { places: 3, uids: [] } } };
+    const byUid = new Map(cards.map((c) => [c.uid, c]));
+    const list = dailyRequests('2026-11-07', state, cards, 3);
+    expect(list.length).toBe(3);
+    expect(dailyRequests('2026-11-07', state, cards, 3)).toEqual(list);
+    for (const r of list) {
+      expect(r.reward).toBeGreaterThan(0);
+      const { need } = requestProgress(r, state, (uid) => byUid.get(uid));
+      expect(need).toBeGreaterThan(0);
+    }
+    // une demande de Reverse est remplie quand une Reverse est installée
+    expect(requestProgress({ kind: 'reverse', reward: 1 }, state, (uid) => byUid.get(uid)).have).toBe(1);
+  });
+
+  it('envoie en expédition les animaux qui ne sont pas dans un enclos, et les garde de côté', () => {
+    expect(canExplore(ATHLETES_BY_ID['lion'])).toBe(true);
+    expect(canExplore(ATHLETES_BY_ID['thylacine'])).toBe(false);
+    expect(expeditionCredits(card('lion'), 'grande')).toBeGreaterThan(expeditionCredits(card('lion'), 'balade'));
+    const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a'] } }, expeditions: [{ uid: 'b', kind: 'balade' as const, start: 0 }] };
+    expect([...busyUids(state)].sort()).toEqual(['a', 'b']);
+  });
+
+  it('montre aux amis les espèces de chaque enclos', () => {
+    const state = { ...emptyReserve(0), enclos: { savane: { places: 3, uids: ['a', 'x'] }, foret: { places: 3, uids: [] } }, decor: ['fontaine'] };
+    const snap = reserveSnapshot(state, (uid) => (uid === 'a' ? card('lion') : undefined));
+    expect(snap.enclos).toEqual({ savane: ['lion'], foret: [] });
+    expect(snap.decor).toEqual(['fontaine']);
+    expect(snap.level).toBe(1);
   });
 });

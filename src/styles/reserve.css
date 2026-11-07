@@ -288,7 +288,7 @@
   gap: 6px;
 }
 
-.rsv-panel button {
+.rsv-panel--enclos button {
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -304,12 +304,12 @@
   cursor: pointer;
 }
 
-.rsv-panel button:hover {
+.rsv-panel--enclos button:hover {
   border-color: var(--line-2);
   background: var(--bg-4);
 }
 
-.rsv-panel button.is-locked {
+.rsv-panel--enclos button.is-locked {
   opacity: 0.7;
 }
 
@@ -346,6 +346,206 @@
 
 .rsv-panel__price {
   white-space: nowrap;
+}
+
+/* réserve d'un ami : le plan en lecture seule et le cadeau de visiteurs */
+.rsv-zone.is-view {
+  cursor: default;
+}
+
+.rsv-sheet--friend .rsv-scene {
+  margin: 12px auto 0;
+  max-width: 420px;
+}
+
+.rsv-gift {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.rsv-gift p {
+  margin: 0;
+}
+
+/* colonne des panneaux : enclos, demandes, expéditions, décors */
+.rsv-side {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.rsv-panel h2 small {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--accent-text);
+}
+
+.rsv-panel > .muted {
+  margin: 8px 0 0;
+}
+
+/* récompense du prochain niveau */
+.rsv-next {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+}
+
+.rsv-next .ball-icon {
+  margin-left: 2px;
+}
+
+.rsv-billetterie .btn--sm {
+  font-size: 12px;
+}
+
+/* demandes des visiteurs */
+.rsv-request {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+
+.rsv-request p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.rsv-request.is-ready {
+  border-color: rgba(255, 211, 107, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 211, 107, 0.25), 0 0 18px rgba(255, 211, 107, 0.12);
+}
+
+.rsv-request.is-done {
+  opacity: 0.6;
+}
+
+.rsv-request__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rsv-request__foot small {
+  min-width: 34px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.rsv-request__foot .btn {
+  margin-left: auto;
+}
+
+.rsv-request__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-4);
+  overflow: hidden;
+}
+
+.rsv-request__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-2), #ffd36b);
+}
+
+.rsv-request__done {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+/* expéditions */
+.rsv-expedition,
+.rsv-decor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+
+.rsv-expedition .rsv-panel__name,
+.rsv-decor .rsv-panel__name {
+  flex: 1;
+}
+
+.rsv-expedition.is-back {
+  border-color: rgba(255, 211, 107, 0.6);
+}
+
+.rsv-decor.is-owned {
+  opacity: 0.75;
+}
+
+.rsv-expedition__new {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-2);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rsv-expedition__new:hover {
+  color: var(--text);
+  border-color: var(--accent-text);
+}
+
+/* choix de la durée d'une expédition */
+.rsv-trips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.rsv-trip {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rsv-trip b {
+  font-size: 14px;
+}
+
+.rsv-trip small {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.rsv-trip.is-on {
+  border-color: var(--accent-text);
+  background: var(--bg-4);
+  box-shadow: 0 0 0 1px var(--accent-text);
+}
+
+@media (max-width: 480px) {
+  .rsv-trips {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ordinateur : le plan à gauche, les enclos à droite ; la fenêtre d'un enclos au centre de l'écran */
