@@ -24,7 +24,7 @@ import { hashString, mulberry32 } from './random';
 // - les décors achetés (DECORS) ajoutent chacun un pourcentage de visiteurs à toute la réserve ;
 // - chaque jour, trois demandes de visiteurs (dailyRequests) rapportent des crédits une fois remplies ;
 // - un animal qui n'est pas dans un enclos peut partir en expédition (EXPEDITIONS) : il revient avec des crédits, et
-//   parfois une carte ; pendant ce temps il ne peut être ni vendu, ni échangé.
+//   parfois une carte ou un pack de la boutique ; pendant ce temps il ne peut être ni vendu, ni échangé.
 
 /** La Réserve est ouverte à tous (ce drapeau permet de la refermer, ou de la réserver à l'aperçu). */
 export function reserveEnabled(): boolean {
@@ -124,6 +124,8 @@ export interface ReserveState {
   requests?: { day: string; list: ReserveRequest[]; done: number[] };
   /** animaux partis en expédition */
   expeditions?: Expedition[];
+  /** packs de la boutique rapportés d'expédition, pas encore ouverts (identifiants des packs) */
+  giftPacks?: string[];
 }
 
 export function emptyReserve(now: number): ReserveState {
@@ -400,13 +402,30 @@ export interface ExpeditionDef {
   hours: number;
   /** chance de revenir avec une carte */
   cardChance: number;
+  /** chance de revenir avec un pack de la boutique */
+  packChance: number;
+  /** lequel : poids de chaque pack de la boutique (identifiants de SHOP_PACKS) */
+  packs: Record<string, number>;
 }
 
 export const EXPEDITIONS: ExpeditionDef[] = [
-  { id: 'balade', name: 'Balade', hours: 1, cardChance: 0 },
-  { id: 'exploration', name: 'Exploration', hours: 4, cardChance: 0.3 },
-  { id: 'grande', name: 'Grande expédition', hours: 8, cardChance: 0.75 },
+  { id: 'balade', name: 'Balade', hours: 1, cardChance: 0, packChance: 0.1, packs: { decouverte: 1 } },
+  { id: 'exploration', name: 'Exploration', hours: 4, cardChance: 0.3, packChance: 0.25, packs: { decouverte: 70, pro: 30 } },
+  { id: 'grande', name: 'Grande expédition', hours: 8, cardChance: 0.75, packChance: 0.4, packs: { decouverte: 40, pro: 40, elite: 19, legende: 1 } },
 ];
+
+/** Le pack rapporté d'une expédition, ou null (`rng` : tirage entre 0 et 1). */
+export function rollExpeditionPack(kind: ExpeditionDef['id'], rng: () => number): string | null {
+  const def = EXPEDITIONS_BY_ID[kind];
+  if (rng() >= def.packChance) return null;
+  const entries = Object.entries(def.packs);
+  let roll = rng() * entries.reduce((sum, [, w]) => sum + w, 0);
+  for (const [id, w] of entries) {
+    roll -= w;
+    if (roll < 0) return id;
+  }
+  return entries[entries.length - 1][0];
+}
 
 export const EXPEDITIONS_BY_ID = Object.fromEntries(EXPEDITIONS.map((e) => [e.id, e])) as Record<ExpeditionDef['id'], ExpeditionDef>;
 

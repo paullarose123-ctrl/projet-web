@@ -44,6 +44,7 @@ import {
   canExplore,
   expeditionEnd,
   expeditionCredits,
+  rollExpeditionPack,
   type ExpeditionDef,
   type EnclosId,
   type ReserveState,
@@ -262,7 +263,9 @@ export interface GameState {
   /** envoie un animal en expédition */
   reserveSendExpedition: (uid: string, kind: ExpeditionDef['id']) => boolean;
   /** fait revenir un animal d'expédition : ses gains si elle est finie (renvoyés pour les montrer), rien si on le rappelle avant */
-  reserveEndExpedition: (uid: string, now?: number) => { credits: number; card: OwnedCard | null } | null;
+  reserveEndExpedition: (uid: string, now?: number) => { credits: number; card: OwnedCard | null; pack: string | null } | null;
+  /** ouvre un pack rapporté d'expédition */
+  reserveOpenGiftPack: (packId: string) => boolean;
   /** visiteurs offerts par un ami : ils passent à la billetterie */
   reserveReceiveVisitors: (visitors: number) => void;
   setFavorite: (slot: number, uid: string | null) => void;
@@ -924,8 +927,21 @@ export const useGame = create<GameState>()(
           const found = Math.random() < EXPEDITIONS_BY_ID[trip.kind].cardChance ? openPack({ ...FREE_PACK, size: 1 }, Math.random)[0] : null;
           const extra = found ? [toOwned(found, now)] : [];
           const discovered = found ? { ...s.discovered, [found.athleteId]: (s.discovered[found.athleteId] ?? 0) + 1 } : s.discovered;
-          set({ reserve, balles: s.balles + credits, collection: [...s.collection, ...extra], discovered });
-          return { credits, card: extra[0] ?? null };
+          const pack = rollExpeditionPack(trip.kind, Math.random);
+          const giftPacks = pack && packById(pack) ? [...(reserve.giftPacks ?? []), pack] : reserve.giftPacks;
+          set({ reserve: { ...reserve, giftPacks }, balles: s.balles + credits, collection: [...s.collection, ...extra], discovered });
+          return { credits, card: extra[0] ?? null, pack: pack && packById(pack) ? pack : null };
+        },
+
+        reserveOpenGiftPack: (packId) => {
+          const s = get();
+          const list = s.reserve.giftPacks ?? [];
+          const i = list.indexOf(packId);
+          const pack = packById(packId);
+          if (i < 0 || !pack || s.opening) return false;
+          set({ reserve: { ...s.reserve, giftPacks: [...list.slice(0, i), ...list.slice(i + 1)] } });
+          addCards(drawPack(pack), pack);
+          return true;
         },
 
         reserveReceiveVisitors: (visitors) => {
