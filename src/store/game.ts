@@ -261,8 +261,8 @@ export interface GameState {
   reserveClaimRequest: (index: number) => boolean;
   /** envoie un animal en expédition */
   reserveSendExpedition: (uid: string, kind: ExpeditionDef['id']) => boolean;
-  /** fait revenir un animal d'expédition : ses gains si elle est finie, rien si on le rappelle avant */
-  reserveEndExpedition: (uid: string, now?: number) => void;
+  /** fait revenir un animal d'expédition : ses gains si elle est finie (renvoyés pour les montrer), rien si on le rappelle avant */
+  reserveEndExpedition: (uid: string, now?: number) => { credits: number; card: OwnedCard | null } | null;
   /** visiteurs offerts par un ami : ils passent à la billetterie */
   reserveReceiveVisitors: (visitors: number) => void;
   setFavorite: (slot: number, uid: string | null) => void;
@@ -913,21 +913,19 @@ export const useGame = create<GameState>()(
         reserveEndExpedition: (uid, now = Date.now()) => {
           const s = get();
           const trip = (s.reserve.expeditions ?? []).find((e) => e.uid === uid);
-          if (!trip) return;
+          if (!trip) return null;
           const reserve = { ...s.reserve, expeditions: (s.reserve.expeditions ?? []).filter((e) => e.uid !== uid) };
           const card = s.collection.find((c) => c.uid === uid);
           if (now < expeditionEnd(trip) || !card) {
             set({ reserve });
-            return;
+            return null;
           }
           const credits = expeditionCredits(card, trip.kind);
           const found = Math.random() < EXPEDITIONS_BY_ID[trip.kind].cardChance ? openPack({ ...FREE_PACK, size: 1 }, Math.random)[0] : null;
           const extra = found ? [toOwned(found, now)] : [];
           const discovered = found ? { ...s.discovered, [found.athleteId]: (s.discovered[found.athleteId] ?? 0) + 1 } : s.discovered;
           set({ reserve, balles: s.balles + credits, collection: [...s.collection, ...extra], discovered });
-          const who = ATHLETES_BY_ID[card.athleteId];
-          const back = `${who ? `${who.first} ${who.last}`.trim() : 'Ton animal'} revient d’expédition : +${formatBalles(credits)}`;
-          pushToast('gold', found ? `${back}, et il a trouvé une carte : ${ATHLETES_BY_ID[found.athleteId]?.last ?? ''} !` : `${back}.`);
+          return { credits, card: extra[0] ?? null };
         },
 
         reserveReceiveVisitors: (visitors) => {

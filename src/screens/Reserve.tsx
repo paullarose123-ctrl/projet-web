@@ -40,6 +40,7 @@ import { freshSession, useAccount } from '../store/account';
 import type { OwnedCard } from '../engine/types';
 import { SCENE_H, SCENE_W, ZONE_BOX, drawScene, type SceneModel } from '../art/reserve-scene';
 import { blit, spriteForAthlete, type Sprite } from '../art/reserve-sprites';
+import { TRAIL_H, TRAIL_W, drawTrail } from '../art/expedition-scene';
 import { BallIcon } from '../components/Balles';
 import { Card } from '../components/Card';
 import { useNow } from '../hooks/useNow';
@@ -434,12 +435,92 @@ function ExpeditionSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Les animaux partis en expédition, et les places libres. */
+/** Le chemin d'une expédition, animé : l'animal avance vers l'arrivée, ou attend à côté de son coffre. */
+function Trail({ sprite, kind, start, end, back, className = '' }: { sprite: Sprite; kind: ExpeditionDef['id']; start: number; end: number; back: boolean; className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const latest = useRef({ sprite, kind, start, end, back });
+  latest.current = { sprite, kind, start, end, back };
+  useEffect(() => {
+    const c = ref.current!.getContext('2d')!;
+    let frame = 0;
+    const t0 = performance.now();
+    const loop = (now: number) => {
+      const v = latest.current;
+      drawTrail(c, (now - t0) / 1000, v.sprite, v.kind, (Date.now() - v.start) / (v.end - v.start), v.back);
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return <canvas ref={ref} className={`rsv-trail ${className}`} width={TRAIL_W} height={TRAIL_H} aria-hidden="true" />;
+}
+
+/** Retour d'expédition : l'animal saute de joie, les crédits défilent, et la carte trouvée se retourne. */
+function ExpeditionReturn({ card, kind, credits, found, onClose }: { card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null; onClose: () => void }) {
+  const [shown, setShown] = useState(0);
+  const [reveal, setReveal] = useState(false);
+  const size = useWide() ? 'sm' : 'xs';
+  useEffect(() => {
+    const t0 = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / 1100);
+      setShown(Math.round(credits * (1 - (1 - p) ** 3)));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    const flip = window.setTimeout(() => {
+      if (!found) return;
+      setReveal(true);
+      sfx.welcome(ATHLETES_BY_ID[found.athleteId]?.sport);
+    }, 1300);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(flip);
+    };
+  }, [credits, found]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  const now = Date.now();
+  return createPortal(
+    <div className="rsv-sheet-backdrop rsv-return-backdrop" onClick={onClose}>
+      <div className="rsv-return" role="dialog" aria-label="Retour d’expédition" onClick={(e) => e.stopPropagation()}>
+        <p className="eyebrow">{EXPEDITIONS_BY_ID[kind].name}</p>
+        <h2>{name(card)} est de retour !</h2>
+        <Trail sprite={spriteForAthlete(ATHLETES_BY_ID[card.athleteId])} kind={kind} start={now} end={now + 1} back className="rsv-trail--big" />
+        <p className="rsv-return__credits">
+          <BallIcon /> +{shown.toLocaleString('fr-FR')} crédits
+        </p>
+        {found && (
+          <div className={`rsv-return__found${reveal ? ' is-revealed' : ''}`}>
+            <p className="small">Et il a trouvé une carte en chemin :</p>
+            <div className="rsv-return__card">
+              <div className="rsv-return__back" aria-hidden="true" />
+              <div className="rsv-return__front">
+                <Card card={found} size={size} />
+              </div>
+            </div>
+          </div>
+        )}
+        <button type="button" className="btn btn--gold" onClick={onClose}>
+          Super !
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/** Les animaux partis en expédition, chacun sur son chemin animé, et les places libres. */
 function ExpeditionsPanel({ now }: { now: number }) {
   const reserve = useGame((s) => s.reserve);
   const collection = useGame((s) => s.collection);
   const end = useGame((s) => s.reserveEndExpedition);
   const [picking, setPicking] = useState(false);
+  const [result, setResult] = useState<{ card: OwnedCard; kind: ExpeditionDef['id']; credits: number; found: OwnedCard | null } | null>(null);
   const trips = reserve.expeditions ?? [];
   const byUid = useMemo(() => new Map(collection.map((c) => [c.uid, c])), [collection]);
   return (
@@ -449,36 +530,48 @@ function ExpeditionsPanel({ now }: { now: number }) {
         {trips.map((trip) => {
           const card = byUid.get(trip.uid);
           const athlete = card && ATHLETES_BY_ID[card.athleteId];
-          const left = expeditionEnd(trip) - now;
+          const finish = expeditionEnd(trip);
+          const left = finish - now;
           const back = left <= 0;
           return (
             <li key={trip.uid} className={`rsv-expedition${back ? ' is-back' : ''}`}>
-              {athlete && <Mini sprite={spriteForAthlete(athlete)} />}
-              <span className="rsv-panel__name">
-                <b>{card ? name(card) : 'Animal'}</b>
-                <small>
-                  {EXPEDITIONS_BY_ID[trip.kind].name} · {back ? 'de retour !' : `retour dans ${remaining(left)}`}
-                </small>
-              </span>
-              {back ? (
-                <button type="button" className="btn btn--gold btn--sm" onClick={() => {
-                    end(trip.uid);
-                    sfx.register();
-                  }}
-                >
-                  Récupérer
-                </button>
-              ) : (
-                <button type="button" className="btn btn--ghost btn--sm" onClick={() => end(trip.uid)} title="Il revient tout de suite, sans rien rapporter">
-                  Rappeler
-                </button>
-              )}
+              {athlete && <Trail sprite={spriteForAthlete(athlete)} kind={trip.kind} start={trip.start} end={finish} back={back} />}
+              <div className="rsv-expedition__info">
+                <span className="rsv-panel__name">
+                  <b>{card ? name(card) : 'Animal'}</b>
+                  <small>
+                    {EXPEDITIONS_BY_ID[trip.kind].name} · {back ? 'de retour !' : `retour dans ${remaining(left)}`}
+                  </small>
+                </span>
+                {back ? (
+                  <button
+                    type="button"
+                    className="btn btn--gold btn--sm"
+                    onClick={() => {
+                      const got = end(trip.uid);
+                      if (got && card) {
+                        sfx.register();
+                        setResult({ card, kind: trip.kind, credits: got.credits, found: got.card });
+                      }
+                    }}
+                  >
+                    Récupérer
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => end(trip.uid)} title="Il revient tout de suite, sans rien rapporter">
+                    Rappeler
+                  </button>
+                )}
+              </div>
             </li>
           );
         })}
         {trips.length < MAX_EXPEDITIONS && (
           <li>
-            <button type="button" className="rsv-expedition__new" onClick={() => {
+            <button
+              type="button"
+              className="rsv-expedition__new"
+              onClick={() => {
                 sfx.rustle();
                 setPicking(true);
               }}
@@ -490,11 +583,12 @@ function ExpeditionsPanel({ now }: { now: number }) {
       </ul>
       <p className="muted small">Un animal revient avec des crédits, selon sa rareté et la durée, et parfois avec une nouvelle carte.</p>
       {picking && <ExpeditionSheet onClose={() => setPicking(false)} />}
+      {result && <ExpeditionReturn {...result} onClose={() => setResult(null)} />}
     </section>
   );
 }
 
-/** Les décors de l'esplanade : chacun attire plus de visiteurs dans toute la réserve. */
+/** Les décors du parc : chacun attire plus de visiteurs dans toute la réserve. */
 function DecorPanel() {
   const reserve = useGame((s) => s.reserve);
   const balles = useGame((s) => s.balles);
