@@ -1,0 +1,70 @@
+/* Maquette : pistes pour la Reverse légendaire (classes rl-1, rl-2). */
+
+/* L1 · Crépuscule clair : exactement le coucher de soleil de la Légendaire (violet profond, magenta, corail, orange,
+   or), vu à travers un cadre crème ; liserés dorés, textes prune et magenta, pastille corail et or */
+.card.is-reverse.r-legendaire.rl-1 {
+  --foil:
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 230, 140, 0.95), transparent 70%),
+    linear-gradient(172deg, #4a2a80 0%, #a8457e 32%, #f2705a 62%, #ffb157 85%, #ffd66b 100%);
+  --panel: #fff4ea;
+  --trim: #6b2a6e;
+  --gold: #e9a838;
+  --metal: linear-gradient(180deg, #4a2a80 0%, #a8457e 55%, #c8502e 100%);
+  --plate-ink: #4a1c4e;
+  --tier-bg: linear-gradient(90deg, #ff7a8a, #ffb157, #ffe08a);
+  --tier-ink: #1a0c1f;
+  --hill-far: rgba(255, 214, 200, 0.7);
+  --hill-near: rgba(255, 230, 200, 0.85);
+  --reverse-tier: linear-gradient(90deg, #4a2a80, #a8457e);
+  --filet: rgba(233, 168, 56, 0.9);
+}
+
+.card.is-reverse.r-legendaire.rl-1 .card__panel {
+  fill-opacity: 0.62;
+}
+
+/* L2 · Crépuscule inversé : la Légendaire en négatif. Sa bordure coucher de soleil devient le cadre, et son cadre
+   prune devient la bordure ; mêmes liserés dorés et même pastille corail et or */
+.card.is-reverse.r-legendaire.rl-2 {
+  --foil:
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 230, 140, 0.95), transparent 70%),
+    linear-gradient(172deg, #6a3aa8 0%, #c0508e 32%, #f2705a 62%, #ffb157 85%, #ffd66b 100%);
+  --panel: #1a0c1f;
+  --trim: #ffcf7a;
+  --gold: #ffcf7a;
+  --metal: linear-gradient(180deg, #2a0f2c 0%, #4a1640 60%, #6a2030 100%);
+  --metal-edge: rgba(255, 230, 190, 0.7);
+  --plate-ink: #2a0f2c;
+  --tier-bg: linear-gradient(90deg, #ff7a8a, #ffb157, #ffe08a);
+  --tier-ink: #1a0c1f;
+  --hill-far: rgba(255, 190, 120, 0.55);
+  --hill-near: rgba(255, 214, 140, 0.7);
+  --reverse-tier: linear-gradient(90deg, #1a0c1f, #4a1640);
+  --filet: rgba(255, 207, 122, 0.9);
+}
+
+/* le cadre ne garde qu'un voile prune très léger : on voit le coucher de soleil */
+.card.is-reverse.r-legendaire.rl-2 .card__panel {
+  fill-opacity: 0.12;
+}
+
+/* la bordure prune */
+.card.is-reverse.r-legendaire.rl-2 .card__bg {
+  box-shadow: inset 0 0 0 0.86em #1a0c1f;
+}
+
+/* le numéro reste clair dans son losange prune */
+.card.is-reverse.r-legendaire.rl-2 .card__rating b {
+  --metal: linear-gradient(180deg, #ffffff 0%, #ffecd2 45%, #ffb98f 100%);
+  --metal-edge: #0d0510;
+}
+
+.card.is-reverse.r-legendaire.rl-2 .metal-text {
+  filter: drop-shadow(0 0.05em 0 rgba(255, 236, 200, 0.6));
+}
+
+/* la réglette des mesures, prune comme la bordure */
+.card.is-reverse.r-legendaire.rl-2 .card__facts {
+  background: linear-gradient(180deg, rgba(26, 12, 31, 0.6), rgba(26, 12, 31, 0.78));
+  color: #fff3e6;
+}
