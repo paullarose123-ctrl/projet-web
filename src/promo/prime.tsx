@@ -9,12 +9,12 @@ import type { CardFace, Variant } from '../engine/types';
 
 // Maquette (page de développement promo/prime.html) : la Reverse comme une carte normale « inversée ».
 
-const IDS = ['ocelot', 'renard-roux', 'loup', 'jaguar', 'lion', 'mx-axolotl'];
+const IDS = ['lion', 'tigre', 'panda', 'orque', 'requin-blanc', 'mx-axolotl'];
 const ROWS: [string, Variant, string][] = [
-  ['Cartes normales', 'base', ''],
-  ['Reverse aujourd’hui', 'reverse', ''],
-  ['X1 · La carte normale, dont le cadre brille en arc-en-ciel (la photo non)', 'base', 'rv-x1'],
-  ['X2 · Pareil, avec le grain pailleté d’une feuille holographique', 'base', 'rv-x2'],
+  ['Légendaire normale', 'base', ''],
+  ['Reverse légendaire aujourd’hui', 'reverse', ''],
+  ['M1 · Le coucher de soleil de la Légendaire en lavis, prune et or, avec des reflets qui glissent sur le cadre', 'reverse', 'rl-m1'],
+  ['M2 · Pareil, avec en plus un grain pailleté d’or', 'reverse', 'rl-m2'],
 ];
 
 createRoot(document.getElementById('root')!).render(
