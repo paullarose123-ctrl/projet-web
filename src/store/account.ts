@@ -78,9 +78,29 @@ function hashOf(raw: string | null): string | null {
   return `${raw.length}:${(h >>> 0).toString(36)}`;
 }
 
+/** Nombre d'actions du joueur enregistré dans une sauvegarde (voir `actions` dans store/game.ts). */
+function actionsOf(raw: string | null): number {
+  try {
+    return (JSON.parse(raw ?? 'null') as { state?: { actions?: number } } | null)?.state?.actions ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** actions du joueur dans la dernière partie envoyée ou reprise, et heure du dernier envoi */
+let sentActions: number | null = null;
+let sentAt = 0;
+/**
+ * Sans action du joueur, seul le temps a changé la partie (marché, boosters qui se rechargent) : on ne l'envoie qu'au
+ * plus toutes les PASSIVE_EVERY. Un appareil resté ouvert dans un coin n'écrase plus sans cesse la sauvegarde de celui
+ * sur lequel on joue.
+ */
+const PASSIVE_EVERY = 120_000;
+
 /** Retient la partie envoyée ou reprise : en mémoire, et son empreinte dans le navigateur. */
 function markSent(raw: string | null): void {
   lastSent = raw;
+  sentActions = raw === null ? null : actionsOf(raw);
   useAccount.setState({ sentHash: hashOf(raw) });
 }
 let timer: number | undefined;
@@ -95,13 +115,15 @@ const serial = <T>(task: () => Promise<T>): Promise<T> => {
 const sameStamp = (a: string, b: string) => Date.parse(a) === Date.parse(b);
 
 /**
- * Progression d'une sauvegarde : boosters ouverts, duels joués, cartes vendues ou achetées, cartes possédées,
- * objectifs récupérés, et la réserve (enclos ouverts, places, animaux installés, visiteurs récoltés).
+ * Progression d'une sauvegarde : actions du joueur (toutes celles qui changent la partie : expédition, récolte,
+ * vente…), boosters ouverts, duels joués, cartes vendues ou achetées, cartes possédées, objectifs récupérés, et la
+ * réserve (enclos ouverts, places, animaux installés, visiteurs récoltés).
  */
 function progressOf(raw: string | null): number {
   try {
     const saved = JSON.parse(raw ?? 'null') as {
       state?: {
+        actions?: number;
         stats?: Record<string, number>;
         collection?: unknown[];
         claimed?: unknown[];
@@ -113,6 +135,7 @@ function progressOf(raw: string | null): number {
     const enclos = Object.values(state?.reserve?.enclos ?? {});
     const reserve = enclos.reduce((sum, e) => sum + 1 + (e?.places ?? 0) + (e?.uids?.length ?? 0), 0) + Math.floor((state?.reserve?.visitors ?? 0) / 100);
     return (
+      (state?.actions ?? 0) +
       (stats.packsOpened ?? 0) + (stats.matchesPlayed ?? 0) + (stats.cardsSold ?? 0) + (stats.cardsBought ?? 0) + (state?.collection?.length ?? 0) + (state?.claimed?.length ?? 0) + reserve
     );
   } catch {
@@ -122,29 +145,35 @@ function progressOf(raw: string | null): number {
 
 /**
  * Regarde si un autre appareil a changé la sauvegarde du compte depuis notre dernière synchronisation ; si oui,
- * reprend sa partie (sauf si la nôtre a plus de progression, elle sera alors envoyée). Renvoie true si la partie
- * a été reprise du compte.
+ * reprend sa partie, sauf si la nôtre a plus de progression (elle sera alors envoyée). Renvoie 'adopted' si la partie
+ * a été reprise du compte, 'kept' si on garde la nôtre, 'busy' si le joueur a agi pendant la vérification (rien n'est
+ * décidé : la prochaine sauvegarde refera la comparaison).
  */
-async function reconcile(session: Session): Promise<boolean> {
+async function reconcile(session: Session): Promise<'adopted' | 'kept' | 'busy'> {
   const stamp = await loadSaveStamp(session);
-  if (!stamp) return false;
+  if (!stamp) return 'kept';
   const synced = useAccount.getState().syncedAt;
-  if (synced && sameStamp(stamp, synced)) return false;
+  if (synced && sameStamp(stamp, synced)) return 'kept';
+  const actionsBefore = useGame.getState().actions;
   const remote = await loadSave(session);
-  if (!remote) return false;
-  const remoteRaw = JSON.stringify(remote.data);
+  if (!remote) return 'kept';
+  // le joueur a agi pendant qu'on interrogeait le serveur (retour dans l'appli, puis une action tout de suite) : on ne
+  // touche pas à sa partie, son action serait perdue
+  if (useGame.getState().actions !== actionsBefore) return 'busy';
   const localRaw = readSave();
+  const remoteRaw = JSON.stringify(remote.data);
   // la nôtre n'a rien de neuf depuis le dernier envoi : celle du compte est la plus récente, on la reprend ;
   // sinon (changements pas envoyés, ou on ne sait pas) on garde la nôtre seulement si elle a plus de progression
   const sentHash = useAccount.getState().sentHash;
   const unsent = localRaw !== null && (sentHash === null || hashOf(localRaw) !== sentHash);
-  if (unsent && progressOf(localRaw) > progressOf(remoteRaw)) return false;
-  const changed = remoteRaw !== localRaw;
+  if (unsent && progressOf(localRaw) > progressOf(remoteRaw)) return 'kept';
+  // on ne prévient le joueur que si l'autre appareil a vraiment joué (pas seulement laissé passer le temps)
+  const played = actionsOf(remoteRaw) !== actionsOf(localRaw);
   await writeSave(remoteRaw);
   markSent(readSave());
   useAccount.setState({ syncedAt: remote.updatedAt, status: 'saved', lastSavedAt: Date.now(), error: null });
-  if (changed) useGame.getState().toast('info', 'Progression mise à jour : ta partie de ton autre appareil est reprise.');
-  return true;
+  if (played) useGame.getState().toast('info', 'Progression mise à jour : ta partie de ton autre appareil est reprise.');
+  return 'adopted';
 }
 
 /** À l'ouverture du jeu et quand il revient au premier plan : reprend la partie d'un autre appareil s'il y en a une. */
@@ -197,6 +226,8 @@ function upload(keepalive = false): Promise<boolean> {
 
 async function send(keepalive: boolean): Promise<boolean> {
   if (!readSave() || readSave() === lastSent) return true;
+  // rien de neuf de la part du joueur : seulement le temps qui passe, envoyé de loin en loin
+  if (!keepalive && sentActions !== null && actionsOf(readSave()) === sentActions && Date.now() - sentAt < PASSIVE_EVERY) return true;
   useAccount.setState({ status: 'saving' });
   try {
     const session = await freshSession();
@@ -205,12 +236,13 @@ async function send(keepalive: boolean): Promise<boolean> {
       return false;
     }
     // un autre appareil a sauvegardé entre-temps : on reprend sa partie au lieu de l'écraser
-    if (!keepalive && (await reconcile(session))) return true;
+    if (!keepalive && (await reconcile(session)) !== 'kept') return true;
     const raw = readSave();
     if (!raw) return true;
     // keepalive (envoi qui survit à la fermeture de l'onglet) est limité à 64 Ko par le navigateur
     const stamp = await storeSave(session, JSON.parse(raw), keepalive && raw.length < 60_000);
     markSent(raw);
+    sentAt = Date.now();
     useAccount.setState({ status: 'saved', lastSavedAt: Date.now(), syncedAt: stamp, error: null });
     return true;
   } catch (error) {
@@ -377,6 +409,7 @@ export function startAutoSave(): void {
   const local = readSave();
   const sent = useAccount.getState().sentHash !== null && hashOf(local) === useAccount.getState().sentHash;
   lastSent = sent ? local : null;
+  sentActions = sent ? actionsOf(local) : null;
   checkOtherDevices();
   if (!sent && useAccount.getState().session) void upload();
   useGame.subscribe(() => {

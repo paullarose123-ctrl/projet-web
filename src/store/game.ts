@@ -214,6 +214,11 @@ export interface GameState {
   badges: Record<string, number>;
   /** Ma Réserve : enclos, animaux installés et billetterie (voir engine/reserve.ts) */
   reserve: ReserveState;
+  /**
+   * Nombre d'actions du joueur sur cet appareil et ceux dont il a repris la partie (voir PASSIVE plus bas). Quand
+   * deux appareils ont chacun changé la partie, la sauvegarde garde celle du joueur le plus actif (store/account.ts).
+   */
+  actions: number;
   opening: Opening | null;
   toasts: Toast[];
 
@@ -361,6 +366,7 @@ function initialState(now: number) {
     avatar: '',
     badges: {} as Record<string, number>,
     reserve: emptyReserve(now),
+    actions: 0,
     opening: null as Opening | null,
     toasts: [] as Toast[],
   };
@@ -1198,6 +1204,35 @@ export const useGame = create<GameState>()(
     },
   ),
 );
+
+// Actions du joueur : chaque action qui change la partie compte une fois, sauf celles que le jeu fait tout seul
+// (le temps qui passe, les notifications, les règlements du marché et des échanges en ligne, les visiteurs offerts…).
+const PASSIVE = new Set([
+  'tick',
+  'toast',
+  'dismissToast',
+  'closeOpening',
+  'settleOnline',
+  'receiveOnce',
+  'restoreCard',
+  'reserveReceiveVisitors',
+  'reserveRefreshRequests',
+]);
+{
+  const counted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(useGame.getState())) {
+    if (typeof value !== 'function' || PASSIVE.has(key)) continue;
+    const action = value as (...args: unknown[]) => unknown;
+    counted[key] = (...args: unknown[]) => {
+      const before = useGame.getState();
+      const result = action(...args);
+      const after = useGame.getState();
+      if (after !== before) useGame.setState({ actions: (after.actions ?? 0) + 1 });
+      return result;
+    };
+  }
+  useGame.setState(counted as Partial<GameState>);
+}
 
 // Badges de collection : dès qu'une famille de l'album est complète (booster, marché, échange, partie rechargée…),
 // son badge est gagné pour de bon, avec une notification.
