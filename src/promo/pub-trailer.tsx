@@ -20,7 +20,6 @@ import type { CardFace } from '../engine/types';
 import * as fx from './trailer-fx';
 import { renderSoundtrack } from './pub-trailer-son';
 import cutLion from './detoures/lion.webp';
-import cutTigre from './detoures/tigre.webp';
 import cutRequin from './detoures/requin-blanc.webp';
 import cutCobra from './detoures/cobra-royal.webp';
 import cutPanda from './detoures/panda.webp';
@@ -66,7 +65,10 @@ interface Tf {
   zi?: number;
 }
 
-/** Place un élément (coordonnées depuis le centre de l'écran) ou le cache (null). */
+/** La caméra : elle tourne autour du centre de l'écran (lacet, tangage, roulis, en degrés). */
+let CAM = { yaw: 0, pitch: 0, roll: 0 };
+
+/** Place un élément dans l'espace (coordonnées depuis le centre de l'écran), vu par la caméra, ou le cache (null). */
 function put(k: string, f: Tf | null) {
   const el = els.get(k);
   if (!el) return;
@@ -78,7 +80,7 @@ function put(k: string, f: Tf | null) {
   el.style.visibility = 'visible';
   el.style.opacity = o >= 0.999 ? '' : o.toFixed(3);
   const s = f.s ?? 1;
-  el.style.transform = `perspective(1600px) translate3d(${(f.x ?? 0).toFixed(1)}px, ${(f.y ?? 0).toFixed(1)}px, ${(f.z ?? 0).toFixed(1)}px) rotateX(${(f.rx ?? 0).toFixed(2)}deg) rotateY(${(f.ry ?? 0).toFixed(2)}deg) rotateZ(${(f.rz ?? 0).toFixed(2)}deg) scale(${((f.sx ?? 1) * s).toFixed(4)}, ${s.toFixed(4)})`;
+  el.style.transform = `perspective(1600px) rotateZ(${CAM.roll.toFixed(2)}deg) rotateX(${CAM.pitch.toFixed(2)}deg) rotateY(${CAM.yaw.toFixed(2)}deg) translate3d(${(f.x ?? 0).toFixed(1)}px, ${(f.y ?? 0).toFixed(1)}px, ${(f.z ?? 0).toFixed(1)}px) rotateX(${(f.rx ?? 0).toFixed(2)}deg) rotateY(${(f.ry ?? 0).toFixed(2)}deg) rotateZ(${(f.rz ?? 0).toFixed(2)}deg) scale(${((f.sx ?? 1) * s).toFixed(4)}, ${s.toFixed(4)})`;
   el.style.filter = f.blur && f.blur > 0.4 ? `blur(${f.blur.toFixed(1)}px)` : '';
   if (f.zi !== undefined) el.style.zIndex = String(f.zi);
 }
@@ -107,11 +109,12 @@ function setLines(k: string, lines: string[]) {
 }
 
 /** Un titre qui claque : arrive en grand, se pose avec un rebond, repart en s'envolant. */
-function slam(k: string, t: number, t0: number, x: number, y: number, o: { from?: number; out?: number; outDur?: number; rz?: number; drift?: number; zi?: number } = {}) {
+function slam(k: string, t: number, t0: number, x: number, y: number, o: { from?: number; out?: number; outDur?: number; rz?: number; drift?: number; zi?: number; z?: number } = {}) {
   const outDur = o.outDur ?? 0.18;
   if (t < t0 || (o.out !== undefined && t >= o.out + outDur)) return put(k, null);
-  const k1 = fx.seg(t, t0, t0 + 0.24);
-  let s = fx.lerp(o.from ?? 2.2, 1, fx.outBack(k1, 1.7)) * (1 + (o.drift ?? 0.03) * Math.min(3, t - t0));
+  const k1 = fx.seg(t, t0, t0 + 0.3);
+  const from = 1 + ((o.from ?? 2.2) - 1) * 0.4;
+  let s = fx.lerp(from, 1, fx.outBack(k1, 1.7)) * (1 + (o.drift ?? 0.03) * Math.min(3, t - t0));
   let a = fx.seg(t, t0, t0 + 0.05);
   let dy = 0;
   if (o.out !== undefined && t >= o.out) {
@@ -120,7 +123,8 @@ function slam(k: string, t: number, t0: number, x: number, y: number, o: { from?
     a *= 1 - q;
     dy = -120 * q;
   }
-  put(k, { x, y: y + dy, s, rz: o.rz ?? -2, o: a, zi: o.zi });
+  // le titre bascule depuis l'arrière, comme une carte qu'on relève
+  put(k, { x, y: y + dy, z: (o.z ?? 90) - 500 * (1 - fx.outCubic(k1)), s, rx: fx.lerp(-85, 0, fx.outBack(k1, 1.3)), rz: o.rz ?? -2, o: a, zi: o.zi });
 }
 
 /** Une étiquette qui saute en place. */
@@ -128,7 +132,7 @@ function pop(k: string, t: number, t0: number, x: number, y: number, o: { out?: 
   if (t < t0 || (o.out !== undefined && t >= o.out + 0.15)) return put(k, null);
   const k1 = fx.seg(t, t0, t0 + 0.3);
   const q = o.out !== undefined ? fx.seg(t, o.out, o.out + 0.15) : 0;
-  put(k, { x, y, s: fx.lerp(0.2, 1, fx.outBack(k1, 2.2)) * (1 - 0.4 * q), o: fx.seg(t, t0, t0 + 0.06) * (1 - q), rz: o.rz ?? 0, zi: o.zi });
+  put(k, { x, y, z: 110, s: fx.lerp(0.4, 1, fx.outBack(k1, 2.2)) * (1 - 0.4 * q), ry: fx.lerp(-100, 0, fx.outBack(k1, 1.4)), o: fx.seg(t, t0, t0 + 0.06) * (1 - q), rz: o.rz ?? 0, zi: o.zi });
 }
 
 /** Un sur-titre qui glisse depuis la gauche, comme ceux des écrans du jeu. */
@@ -136,7 +140,7 @@ function slide(k: string, t: number, t0: number, x: number, y: number, o: { out?
   if (t < t0 || (o.out !== undefined && t >= o.out + 0.15)) return put(k, null);
   const e = fx.outCubic(fx.seg(t, t0, t0 + 0.35));
   const q = o.out !== undefined ? fx.seg(t, o.out, o.out + 0.15) : 0;
-  put(k, { x: x - 160 * (1 - e), y: y - 40 * q, o: fx.seg(t, t0, t0 + 0.2) * (1 - q), zi: o.zi });
+  put(k, { x: x - 160 * (1 - e), y: y - 40 * q, z: 100, ry: 50 * (1 - e), o: fx.seg(t, t0, t0 + 0.2) * (1 - q), zi: o.zi });
 }
 
 // ───────────── composants ─────────────
@@ -156,23 +160,35 @@ function C({ card, w }: { card: CardFace; w: number }) {
 }
 
 /** Carte à deux faces (le dos apparaît quand elle tourne). */
+/** Carte en volume : deux faces et une tranche (des couches de carton), on la voit quand elle tourne. */
 function Flip({ card, w }: { card: CardFace; w: number }) {
+  const d = Math.max(4, Math.round(w / 50));
+  const layers = 7;
   return (
     <div className="tr-flip" style={{ width: w, height: w * 1.4 }}>
-      <div className="tr-face">
+      {Array.from({ length: layers }, (_, i) => (
+        <div key={i} className="tr-edge" style={{ transform: `translateZ(${((i / (layers - 1) - 0.5) * (d - 1)).toFixed(2)}px)` }} />
+      ))}
+      <div className="tr-face" style={{ transform: `translateZ(${d / 2}px)` }}>
         <C card={card} w={w} />
+        <div className="tr-shade" />
       </div>
-      <div className="tr-face tr-back">
+      <div className="tr-face tr-back" style={{ transform: `rotateY(180deg) translateZ(${d / 2}px)` }}>
         <CardBack />
       </div>
     </div>
   );
 }
 
+/** Assombrit une carte (sans opacité, qui écraserait sa 3D). */
+function shade(k: string, v: number) {
+  const el = els.get(k)?.querySelector<HTMLElement>('.tr-shade');
+  if (el) el.style.opacity = v.toFixed(2);
+}
+
 type Edge = 'bottom' | 'left' | 'right';
 const CUTS: Record<string, { src: string; fade: Edge[] }> = {
   lion: { src: cutLion, fade: ['bottom'] },
-  tigre: { src: cutTigre, fade: ['right'] },
   'requin-blanc': { src: cutRequin, fade: ['right'] },
   'cobra-royal': { src: cutCobra, fade: ['left', 'bottom'] },
   panda: { src: cutPanda, fade: [] },
@@ -275,7 +291,9 @@ function lands(t: number) {
     el.style.visibility = on ? 'visible' : 'hidden';
     if (!on) return;
     const k = fx.inOut(fx.seg(t, l.a, Math.min(l.b, DURATION)));
-    el.style.transform = `scale(${fx.lerp(l.from, l.to, k).toFixed(4)}) translateY(${(-20 * k).toFixed(1)}px)`;
+    // l'affiche est loin derrière les cartes : quand la caméra tourne, elle glisse moins vite (parallaxe)
+    const kb = 1 + (fx.lerp(l.from, l.to, k) - 1) * 0.5;
+    el.style.transform = `perspective(1600px) rotateZ(${(CAM.roll * 0.4).toFixed(2)}deg) rotateX(${(CAM.pitch * 0.4).toFixed(2)}deg) rotateY(${(CAM.yaw * 0.4).toFixed(2)}deg) translateZ(-600px) scale(${(1.8 * kb).toFixed(4)})`;
   });
 }
 
@@ -288,7 +306,7 @@ const YREST = 60;
 const OPEN_Y = YREST - PH / 2 + 0.16 * PH;
 
 /** l'éventail de cinq dos de cartes qui sort du sachet (comme dans le jeu) ; la carte du milieu est la Légendaire */
-const FAN = [0, 1, 2, 3, 4].map((i) => ({ x: (i - 2) * 96, y: OPEN_Y - 170 + (i - 2) * (i - 2) * 11, rz: (i - 2) * 11 }));
+const FAN = [0, 1, 2, 3, 4].map((i) => ({ x: (i - 2) * 96, y: OPEN_Y - 170 + (i - 2) * (i - 2) * 11, rz: (i - 2) * 11, ry: (i - 2) * -16, z: -Math.abs(i - 2) * 60 }));
 const FAN_S = 0.7;
 const FLY = [
   { fan: 4, card: face('girafe'), tx: 760, ty: -1150, spin: 200 },
@@ -353,9 +371,8 @@ const IMPACTS: [number, number][] = [
   [11.0, 8],
   [11.5, 5],
   [12.0, 5],
-  [13.5, 24],
-  [14.5, 16],
-  [15.5, 8],
+  [13.5, 8],
+  [15.0, 18],
   [17.0, 10],
   [19.5, 18],
   [19.62, 10],
@@ -369,8 +386,7 @@ const PUNCH: [number, number][] = [
   [9, 0.06],
   [10, 0.06],
   [11, 0.04],
-  [13.5, 0.07],
-  [14.5, 0.05],
+  [15.0, 0.06],
   [17, 0.04],
   [19.5, 0.06],
 ];
@@ -392,11 +408,41 @@ const FLASHES: [number, number, number, string][] = [
   [10, 0.8, 0.2, CREAM],
   [11, 0.75, 0.25, CREAM],
   [13.0, 0.55, 0.2, CREAM],
-  [13.5, 0.95, 0.35, '#fff3cf'],
-  [14.5, 0.6, 0.25, CREAM],
+  [15.0, 0.7, 0.3, '#f0fff9'],
   [17.0, 0.75, 0.25, CREAM],
   [19.5, 0.95, 0.4, CREAM],
 ];
+
+/** Les mouvements de la caméra, plan par plan (en degrés). */
+function camAngles(t: number) {
+  if (t < 4) return { yaw: 8 * Math.sin(t * 0.9), pitch: 6 + 3 * Math.sin(t * 0.7), roll: 1.5 * Math.sin(t * 0.5) };
+  if (t < 5) {
+    const k = fx.outCubic(fx.seg(t, 4, 4.6));
+    return { yaw: -22 * (1 - k) + 4 * Math.sin(t * 2), pitch: 8 * (1 - k), roll: 0 };
+  }
+  if (t < 7) {
+    const k = fx.inOut(fx.seg(t, 5, 7));
+    return { yaw: fx.lerp(16, -12, k), pitch: fx.lerp(-12, -5, k), roll: fx.lerp(-2, 2, k) };
+  }
+  if (t < 11) {
+    const i = Math.floor(t - 7);
+    const u = t - 7 - i;
+    const side = i % 2 ? 1 : -1;
+    return { yaw: side * (28 * (1 - fx.outCubic(fx.seg(u, 0, 0.45))) - 8 * u), pitch: 7 - 3 * u, roll: side * -1.5 };
+  }
+  if (t < 13) return { yaw: 14 * Math.sin((t - 11) * 1.5), pitch: 5 + 3 * Math.sin((t - 11) * 1.1), roll: 0 };
+  if (t < 17) {
+    const k = fx.outCubic(fx.seg(t, 13, 13.7));
+    const rev = fx.inOut(fx.seg(t, 15, 15.7));
+    return { yaw: -26 * (1 - k) + 5 * Math.sin((t - 13) * 0.9) + 12 * rev, pitch: 6 - 3 * rev, roll: 0 };
+  }
+  if (t < 19.5) {
+    const k = fx.inOut(fx.seg(t, 17, 19.5));
+    return { yaw: fx.lerp(16, -14, k), pitch: fx.lerp(18, 8, k), roll: 0 };
+  }
+  const k = fx.outCubic(fx.seg(t, 19.5, 20.6));
+  return { yaw: 7 * Math.sin((t - 19.5) * 0.8) * k + 20 * (1 - k), pitch: fx.lerp(-12, -2, k), roll: 0 };
+}
 
 function camera(t: number) {
   const cam = els.get('cam');
@@ -440,7 +486,7 @@ function packBase(t: number) {
 function fanAt(i: number, t: number) {
   const e = fx.outBack(fx.seg(t, 2.0 + i * 0.03, 2.38 + i * 0.03), 1.4);
   const f = FAN[i];
-  return { x: f.x * e, y: fx.lerp(OPEN_Y + 140, f.y, e) + Math.sin(t * 2.4 + i) * 5, rz: f.rz * e, s: fx.lerp(0.45, FAN_S, e) };
+  return { x: f.x * e, y: fx.lerp(OPEN_Y + 140, f.y, e) + Math.sin(t * 2.4 + i) * 5, rz: f.rz * e, ry: f.ry * e, z: f.z * e, s: fx.lerp(0.45, FAN_S, e) };
 }
 
 function shotBooster(t: number) {
@@ -479,8 +525,10 @@ function shotBooster(t: number) {
       x: f.x + c.tx * Math.pow(p, 1.7),
       y: f.y + c.ty * Math.pow(p, 1.9),
       s: f.s + 3 * Math.pow(p, 2.2),
+      z: f.z + 500 * p,
       rz: f.rz + c.spin * p,
-      ry: 180 + 200 * fx.outCubic(p),
+      rx: 40 * p,
+      ry: 180 + f.ry + 260 * fx.outCubic(p),
       zi: t < 2.1 ? 8 : 14 + j,
       blur: p > 0.45 ? (p - 0.45) * 14 : 0,
     });
@@ -494,16 +542,16 @@ function shotBooster(t: number) {
     const f = fanAt(2, t);
     const k = fx.inOut(fx.seg(t, 3.2, 3.8));
     const squash = fx.seg(t, 3.85, 4.0);
-    put('hero', { x: f.x, y: fx.lerp(f.y, HY, k), s: fx.lerp(heroScale * (f.s / FAN_S), 1, k) * (1 - 0.06 * squash), ry: 180 + Math.sin((t - 2) * 3) * 8 * k, rz: f.rz, zi: t < 2.1 ? 9 : 13 });
+    put('hero', { x: f.x, y: fx.lerp(f.y, HY, k), z: 120 * k, s: fx.lerp(heroScale * (f.s / FAN_S), 1, k) * (1 - 0.06 * squash), ry: 180 + f.ry * (1 - k) + Math.sin((t - 2) * 2.6) * 22 * k, rx: Math.sin((t - 2) * 2.1) * 12 * k, rz: f.rz * (1 - k), zi: t < 2.1 ? 9 : 13 });
   } else if (t < 5.0) {
     const f = fx.seg(t, 4.0, 4.34);
     const ry = t < 4.34 ? 180 * (1 - fx.outBack(f, 1.3)) : Math.sin((t - 4.34) * 3) * 9;
-    put('hero', { y: HY, s: 0.94 + 0.06 * fx.outBack(f) + 0.015 * Math.sin((t - 4) * 4), ry, rx: Math.sin(t * 2.3) * 4, zi: 15 });
+    put('hero', { y: HY, z: 120, s: 0.94 + 0.06 * fx.outBack(f) + 0.015 * Math.sin((t - 4) * 4), ry, rx: Math.sin(t * 2.3) * 6, zi: 15 });
     glare('hero', t < 4.7 ? fx.lerp(-30, 130, fx.seg(t, 4.05, 4.7)) : 50 + ry * 3);
   } else {
     const k = fx.outCubic(fx.seg(t, 5.0, 5.35));
     const out = fx.seg(t, 6.7, 7.0);
-    put('hero', { y: fx.lerp(HY, 330, k) + 900 * fx.inCubic(out), rx: 52 * k, s: fx.lerp(1, 0.8, k), ry: Math.sin(t * 2) * 4, zi: 15 });
+    put('hero', { y: fx.lerp(HY, 330, k) + 900 * fx.inCubic(out), z: fx.lerp(120, -60, k), rx: 64 * k, s: fx.lerp(1, 0.85, k), ry: Math.sin(t * 2) * 4, zi: 15 });
     glare('hero', 50 + Math.sin(t * 2) * 25);
   }
 
@@ -512,14 +560,14 @@ function shotBooster(t: number) {
   else {
     const k = fx.seg(t, 5.0, 5.42);
     const s = (t < 5.42 ? fx.lerp(0.95, 2.15, fx.outBack(k, 1.5)) : 2.15 + 0.14 * fx.seg(t, 5.42, 7.0)) * (1 + 0.4 * fx.inCubic(fx.seg(t, 6.8, 7.0)));
-    put('cut-lion', { x: fx.lerp(0, -20, k), y: fx.lerp(-130, -330, fx.outCubic(k)) + fx.wobble(t * 1.4, 2) * 8, s, rz: fx.wobble(t * 0.9, 4) * 1.5, o: fx.seg(t, 5.0, 5.07), zi: 30 });
+    put('cut-lion', { x: fx.lerp(0, -20, k), y: fx.lerp(-130, -330, fx.outCubic(k)) + fx.wobble(t * 1.4, 2) * 8, z: fx.lerp(-60, 140, fx.outCubic(k)), s, rz: fx.wobble(t * 0.9, 4) * 1.5, ry: fx.wobble(t * 0.7, 5) * 6, o: fx.seg(t, 5.0, 5.07), zi: 30 });
   }
 
   slide('tx-pov1', t, 0.1, 0, -830, { out: 1.95 });
   slam('tx-pov2', t, 0.3, 0, -650, { out: 1.95 });
   slam('tx-legend', t, 4.1, 0, 400, { out: 4.92, from: 2.6 });
   pop('tag-new', t, 4.4, 0, 540, { out: 4.92, rz: -3 });
-  slam('tx-lion', t, 5.1, 0, -480, { from: 1.7, drift: 0.04, zi: 6, rz: -4 });
+  slam('tx-lion', t, 5.1, 0, -480, { from: 1.7, drift: 0.04, zi: 6, rz: -4, z: -260 });
   pop('tag-lion', t, 5.45, 0, 620);
 }
 
@@ -671,7 +719,7 @@ function shotMontage(t: number) {
     const e = fx.outCubic(fx.seg(u, 0, 0.2));
     const cx = side * 140;
     const cy = 470;
-    put(`m-card${i}`, { x: cx, y: fx.lerp(1400, cy, e) - 30 * u, rx: 30, rz: side * fx.lerp(30, 9, e), zi: 20 });
+    put(`m-card${i}`, { x: cx, y: fx.lerp(1400, cy, e) - 30 * u, z: -40, rx: 34, ry: side * -18, rz: side * fx.lerp(30, 9, e), zi: 20 });
     glare(`m-card${i}`, 50 + Math.sin(u * 4) * 40);
     const k = fx.seg(u, 0.1, 0.42);
     const ok = fx.outCubic(k);
@@ -679,11 +727,13 @@ function shotMontage(t: number) {
       x: fx.lerp(cx + m.from[0] * 0.2, m.to[0], ok) + m.drift * u,
       y: fx.lerp(cy - 60 + m.from[1] * 0.2, m.to[1], ok) - 20 * u,
       s: fx.lerp(0.7, m.s, fx.outBack(k, 1.5)) * (1 + 0.06 * u),
+      z: fx.lerp(-40, 150, ok),
       rz: fx.lerp(m.rz[0], m.rz[1], ok),
+      ry: side * 10 * Math.sin(u * 3),
       o: fx.seg(u, 0.1, 0.16),
       zi: 30,
     });
-    slam(`m-name${i}`, t, S + 0.16, 0, m.name.length > 1 ? 230 : 200, { from: 2.0, drift: 0.03, zi: 60, rz: -3 });
+    slam(`m-name${i}`, t, S + 0.16, 0, m.name.length > 1 ? 230 : 200, { from: 2.0, drift: 0.03, zi: 60, rz: -3, z: 220 });
     pop(`m-tag${i}`, t, S + 0.32, 0, -480, { zi: 70 });
   });
 }
@@ -715,11 +765,11 @@ function shotRares(t: number) {
     const k = fx.seg(t, r.t0, r.t0 + (i === 2 ? 0.42 : 0.32));
     const float = Math.sin(t * 2 + i) * 8;
     if (i === 2) {
-      put(r.k, { x: 0, y: r.y + float, s: fx.lerp(0.05, 1, fx.outCubic(k)) * (1 + 0.3 * out), ry: fx.lerp(720, 0, fx.outCubic(k)) + Math.sin((t - 11) * 2.5) * 6, zi: 16 });
+      put(r.k, { x: 0, y: r.y + float, z: fx.lerp(-1800, 120, fx.outCubic(k)), s: 1 + 0.3 * out, ry: fx.lerp(720, 0, fx.outCubic(k)) + Math.sin((t - 11) * 2.5) * 10, rx: Math.sin((t - 11) * 1.7) * 6, zi: 16 });
       glare(r.k, ((t - 11.3) * 110) % 170 - 35);
     } else {
       const side = i === 0 ? -1 : 1;
-      put(r.k, { x: fx.lerp(side * 1150, r.x, fx.outBack(k, 1.2)) + side * 200 * out, y: r.y + float, rz: r.rz, ry: fx.lerp(side * -100, r.ry, fx.outCubic(k)) + Math.sin(t * 2.4 + i) * 5, s: 1 + 0.3 * out, zi: 14 });
+      put(r.k, { x: fx.lerp(side * 1150, r.x, fx.outBack(k, 1.2)) + side * 200 * out, y: r.y + float, z: -90, rz: r.rz, ry: fx.lerp(side * -160, r.ry * 1.4, fx.outCubic(k)) + Math.sin(t * 2.4 + i) * 8, s: 1 + 0.3 * out, zi: 14 });
       glare(r.k, ((t - r.t0) * 120) % 170 - 35);
     }
     pop(`${r.k}-l`, t, r.t0 + 0.28, r.x, 350, { out: 12.85, zi: 70, rz: -3 });
@@ -741,105 +791,80 @@ function bgRares(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: nu
   fx.burst(f, t, 11.05, { seed: 62, n: 56, x: 540, y: 870, speed: 1900, gravity: 400, life: 1.2, size: 15, kind: 'spark', colors: [CREAM, HONEY, '#4ff0b0'] });
 }
 
-// ───────────── plan 5 : le duel ─────────────
-
-const SEAM_A: [number, number] = [-60, 1090];
-const SEAM_B: [number, number] = [1140, 840];
+// ───────────── plan 5 : le duel de records (culture générale) ─────────────
+// Comme dans le jeu : une question (« Le plus lourd »), chaque joueur envoie un animal sans voir ses mesures,
+// puis on révèle les vraies mesures. Tigre 220 kg contre lion 190 kg (data/mesures.ts) : le tigre gagne.
 
 function shotDuel(t: number) {
   const away = fx.inCubic(fx.seg(t, 16.75, 17.0));
-  const lx = -1300 * away;
-  const rx = 1300 * away;
-  const ek = (a: number) => fx.outBack(fx.seg(t, a, a + 0.3), 1.3);
-  put('d-c-lion', t < 13.12 ? null : { x: fx.lerp(-1250, -290, ek(13.12)) + lx, y: -400, rz: -8, zi: 20 });
-  put('d-c-tigre', t < 13.22 ? null : { x: fx.lerp(1250, 290, ek(13.22)) + rx, y: 420, rz: 8, zi: 20 });
-  glare('d-c-lion', 50 + Math.sin(t * 3) * 40);
-  glare('d-c-tigre', 50 - Math.sin(t * 3) * 40);
-  const breathe = 1 + 0.025 * Math.sin(t * 5);
-  const cl = fx.seg(t, 13.58, 13.92);
-  put('d-cut-lion', t < 13.58 ? null : { x: fx.lerp(-290, -160, fx.outCubic(cl)) + lx, y: fx.lerp(-430, -620, fx.outCubic(cl)), s: fx.lerp(0.6, 1.2, fx.outBack(cl, 1.5)) * breathe, o: fx.seg(t, 13.58, 13.63), zi: 30 });
-  const ct = fx.seg(t, 13.72, 14.06);
-  put('d-cut-tigre', t < 13.72 ? null : { x: fx.lerp(290, 190, fx.outCubic(ct)) + rx, y: fx.lerp(420, 470, fx.outCubic(ct)), s: fx.lerp(0.6, 1.2, fx.outBack(ct, 1.5)) * (2 - breathe), o: fx.seg(t, 13.72, 13.77), zi: 30 });
-  slam('d-vs', t, 13.48, 0, -15, { from: 3.0, out: 14.45, outDur: 0.12, rz: -4 });
-  slam('d-n-lion', t, 13.7, 250, -640, { out: 16.75, outDur: 0.2, rz: -5, drift: 0.02 });
-  slam('d-n-tigre', t, 13.82, -250, 640, { out: 16.75, outDur: 0.2, rz: -5, drift: 0.02 });
-  slam('d-q', t, 14.5, 0, -5, { from: 2.2, out: 16.75, outDur: 0.2, rz: -2, drift: 0.01 });
+  slide('d-eye', t, 13.02, 0, -880, { out: 16.75 });
+  slam('d-q', t, 13.12, 0, -610, { from: 2.0, out: 16.75, outDur: 0.2, rz: -1, drift: 0.008 });
+  const before = t < 15.35;
+  const qa = els.get('d-qa');
+  const qb = els.get('d-qb');
+  if (qa) qa.style.display = before ? '' : 'none';
+  if (qb) qb.style.display = before ? 'none' : '';
+  const reveal = fx.seg(t, 15.0, 15.6);
+  const ein = (a: number) => fx.outBack(fx.seg(t, a, a + 0.42), 1.2);
+  const me = ein(13.35);
+  const op = ein(13.5);
+  // ton animal (le tigre) gagne : il bondit vers nous en faisant un tour ; celui de l'adversaire recule
+  put('d-c-me', t < 13.35 ? null : { x: fx.lerp(-1300, -255, me) - 1300 * away, y: 30 + Math.sin(t * 2) * 8 - 40 * fx.outBack(reveal), z: fx.lerp(-700, 0, me) + 220 * fx.outCubic(reveal), ry: fx.lerp(130, 22, me) - 360 * fx.inOut(reveal) + Math.sin(t * 1.7) * 4, rz: -3, zi: 20 });
+  put('d-c-op', t < 13.5 ? null : { x: fx.lerp(1300, 255, op) + 1300 * away, y: 30 + Math.sin(t * 2 + 1) * 8 + 30 * reveal, z: fx.lerp(-700, 0, op) - 260 * fx.outCubic(reveal), rx: 22 * fx.outCubic(reveal), ry: fx.lerp(-130, -22, op) + Math.sin(t * 1.7 + 1) * 4, rz: 3, zi: 18 });
+  shade('d-c-op', 0.5 * fx.seg(t, 15.1, 15.5));
+  glare('d-c-me', 50 + Math.sin(t * 3) * 40);
+  glare('d-c-op', 50 - Math.sin(t * 3) * 40);
+  pop('d-me', t, 13.62, -255, -300, { out: 15.05, zi: 70 });
+  pop('d-op', t, 13.72, 255, -300, { out: 16.75, zi: 70 });
+  pop('d-win', t, 15.15, -255, -320, { out: 16.75, zi: 75, rz: -4 });
+  // les mesures, cachées puis retournées
+  (
+    [
+      ['d-m-me', -255, 13.85],
+      ['d-m-op', 255, 13.95],
+    ] as [string, number, number][]
+  ).forEach(([k, x, t0]) => {
+    if (t < t0 || t >= 16.95) return put(k, null);
+    const kk = fx.seg(t, t0, t0 + 0.3);
+    const flip = fx.seg(t, 15.0, 15.35);
+    const pulse = t < 15 ? 1 + 0.035 * Math.sin(t * 9) : 1;
+    put(k, { x: x + Math.sign(x) * 1300 * away, y: 400, z: 110, s: fx.lerp(0.4, 1, fx.outBack(kk, 2)) * pulse * (1 + 0.15 * Math.sin(Math.PI * flip)), rx: 180 * fx.outBack(flip, 1.2), o: fx.seg(t, t0, t0 + 0.06), zi: 70 });
+  });
+  pop('d-foot', t, 15.6, 0, 630, { out: 16.75 });
 }
 
 function bgDuel(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: number) {
-  // chaque camp a sa lumière : miel pour le lion, corail pour le tigre
-  fx.glow(c, 300, 420, 800, '#ffb347', 0.35);
-  fx.glow(c, 780, 1500, 800, CORAL, 0.35);
+  const rev = fx.seg(t, 15.0, 15.5);
+  fx.glow(c, 285, 990, 700, MINT, 0.12 + 0.35 * rev);
+  fx.glow(c, 795, 990, 700, CORAL, 0.25 * (1 - rev));
   fx.stream(c, t, { seed: 71, n: 50, kind: 'ember', colors: ['#ffd7a0', '#ffb347', CREAM], vx: 20, vy: -220, size: 6, sway: 20 });
-  fx.speedLines(c, 540, 965, Math.floor(t * 15), 60, 380, 0.4 * Math.exp(-Math.max(0, t - 13.5) * 3) + 0.08, CREAM);
-  if (t >= 13.3 && t < 16.8) {
-    // la ligne de front : un trait de lumière et des éclairs
-    const k = fx.outCubic(fx.seg(t, 13.3, 13.5));
-    const B: [number, number] = [fx.lerp(SEAM_A[0], SEAM_B[0], k), fx.lerp(SEAM_A[1], SEAM_B[1], k)];
-    c.save();
-    c.strokeStyle = 'rgba(255,243,207,0.95)';
-    c.shadowColor = '#ffd7a0';
-    c.shadowBlur = 40;
-    c.lineWidth = 12;
-    c.beginPath();
-    c.moveTo(SEAM_A[0], SEAM_A[1]);
-    c.lineTo(B[0], B[1]);
-    c.stroke();
-    c.restore();
-    if (t >= 13.45) {
-      const seed = Math.floor(t * 15);
-      fx.lightning(f, SEAM_A, SEAM_B, seed, '#ffd7a0', 4, 70);
-      fx.lightning(f, SEAM_A, SEAM_B, seed + 99, CORAL, 3, 50);
-    }
-    for (let k2 = 0; k2 < 2; k2++) {
-      const t0 = Math.floor(t * 4) / 4 - k2 * 0.25;
-      if (t0 >= 13.5) fx.burst(f, t, t0, { seed: Math.round(t0 * 100), n: 16, x: 540, y: 965, speed: 1300, gravity: 900, life: 0.5, size: 5, kind: 'streak', colors: [CREAM, HONEY, CORAL] });
-    }
-  }
-  if (t >= 13.6 && t < 16.8) {
-    const sides: [number, number, [string, string][], number][] = [
-      [
-        380,
-        360,
-        [
-          ['#ffb347', '#fff3d0'],
-          [HONEY, '#ffffff'],
-        ],
-        13.6,
-      ],
-      [
-        730,
-        1420,
-        [
-          [CORAL, '#ffe0d0'],
-          ['#ffd7a0', '#ffffff'],
-        ],
-        13.75,
-      ],
+  if (t >= 15.0) {
+    fx.speedLines(c, 285, 990, Math.floor(t * 15), 60, 380, 0.45 * Math.exp(-(t - 15) * 3), CREAM);
+    const cols: [string, string][] = [
+      [MINT, '#ffffff'],
+      [HONEY, '#fff3cf'],
     ];
-    for (const [x, y, cols, t0] of sides)
-      cols.forEach((colors, j) => {
-        const path = fx.helix(x, y, 330, 95, { turns: 1.6, rise: 520, tilt: j ? 0.25 : -0.25, phase: j * 2.4 });
-        const head = ((((t - t0) * 0.7 + j * 0.45) % 1) + 1) % 1;
-        fx.ribbon(c, f, path, head * 1.55, { colors, width: j ? 46 : 64, len: 0.55 });
-      });
+    cols.forEach((colors, j) => {
+      const path = fx.helix(285, 1000, 330, 95, { turns: 1.6, rise: 560, tilt: j ? 0.25 : -0.25, phase: j * 2.4 });
+      fx.ribbon(c, f, path, fx.seg(t, 15.0 + j * 0.1, 16.1 + j * 0.1) * 1.55, { colors, width: j ? 50 : 70, len: 0.55 });
+    });
   }
-  fx.ring(f, 540, 965, t, 13.5, 0.55, 1000, '#fff3cf', 44);
-  fx.ring(f, 540, 965, t, 14.5, 0.5, 900, HONEY, 36);
+  fx.ring(f, 285, 990, t, 15.0, 0.6, 800, MINT, 40);
+  fx.burst(f, t, 15.05, { seed: 77, n: 90, x: 285, y: 900, speed: 2000, gravity: 1300, life: 1.6, size: 12, kind: 'confetti', colors: [MINT, HONEY, CREAM, LICHEN] });
 }
 
 // ───────────── plan 6 : la réserve et les expéditions ─────────────
 
 function shotReserve(t: number) {
   const k = fx.seg(t, 17.0, 17.38);
-  put('e-panel', t < 17.0 ? null : { y: fx.lerp(1500, -215, fx.outBack(k, 1.2)), rx: 12, rz: -3 + Math.sin(t * 1.5) * 0.8, s: 1 + 0.02 * (t - 17), zi: 20 });
+  put('e-panel', t < 17.0 ? null : { y: fx.lerp(1500, -215, fx.outBack(k, 1.2)), z: fx.lerp(-900, 0, fx.outCubic(k)), rx: fx.lerp(70, 30, fx.outCubic(k)), rz: -3 + Math.sin(t * 1.5) * 0.8, s: 1 + 0.02 * (t - 17), zi: 20 });
   const pan = els.get('e-pan');
   if (pan) pan.style.transform = `translateY(${(-Math.max(0, PANEL_CANVAS_H - PANEL_H) * fx.inOut(fx.seg(t, 17.3, 19.4))).toFixed(1)}px)`;
   slide('e-eye', t, 17.02, 0, -885);
   slam('e-title', t, 17.08, 0, -730, { drift: 0.015 });
   slam('e-sub', t, 18.0, 0, 235, { drift: 0.015 });
   const kt = fx.seg(t, 18.05, 18.35);
-  put('e-trail', t < 18.05 ? null : { x: fx.lerp(1300, 0, fx.outBack(kt, 1.2)), y: 410, rz: 2, zi: 22 });
+  put('e-trail', t < 18.05 ? null : { x: fx.lerp(1300, 0, fx.outBack(kt, 1.2)), y: 410, z: 80, ry: fx.lerp(-70, -8, fx.outCubic(kt)), rx: -6, rz: 2, zi: 22 });
   for (let i = 0; i < 3; i++) pop(`e-g${i}`, t, 18.45 + i * 0.2, -320 + i * 320, 610, { zi: 70, rz: [-4, 2, -2][i] });
 }
 
@@ -859,15 +884,15 @@ function shotFinale(t: number) {
   const k = fx.seg(t, 19.55, 20.25);
   const R = 430 * fx.outBack(k, 1.3);
   const spin = -(t - 19.5) * 38 - 300 * (1 - fx.outCubic(fx.seg(t, 19.5, 20.7)));
-  put('f-ring', t < 19.5 ? null : { y: -110, rx: -7, ry: spin, s: fx.lerp(0.3, 1, fx.outCubic(k)), zi: 20 });
+  put('f-ring', t < 19.5 ? null : { y: -110, rx: -13, ry: spin, rz: 3, s: fx.lerp(0.3, 1, fx.outCubic(k)), zi: 20 });
   els.get('f-ring')?.querySelectorAll<HTMLElement>('.tr-slot').forEach((slot, i) => {
     slot.style.transform = `rotateY(${i * (360 / RING.length)}deg) translateZ(${R.toFixed(1)}px)`;
   });
   glare('f-ring', 50 + Math.sin(t * 2.5) * 45);
-  slam('f-logo', t, 19.62, 0, -730, { from: 2.4, rz: 0, drift: 0.012 });
+  slam('f-logo', t, 19.62, 0, -730, { from: 2.4, rz: 0, drift: 0.012, z: 140 });
   slide('f-tag', t, 20.0, 0, -585);
   const cta = fx.seg(t, 20.8, 21.1);
-  put('f-cta', t < 20.8 ? null : { y: 270, s: fx.lerp(0.2, 1, fx.outBack(cta, 2.2)) * (1 + 0.04 * Math.max(0, Math.sin((t - 21.1) * 7))), o: fx.seg(t, 20.8, 20.86), zi: 80 });
+  put('f-cta', t < 20.8 ? null : { y: 270, z: 130, rx: fx.lerp(-80, 0, fx.outBack(cta, 1.5)), s: fx.lerp(0.5, 1, fx.outBack(cta, 2.2)) * (1 + 0.04 * Math.max(0, Math.sin((t - 21.1) * 7))), o: fx.seg(t, 20.8, 20.86), zi: 80 });
   slam('f-url', t, 21.2, 0, 425, { from: 2.0, drift: 0.008, rz: -2 });
   pop('f-sub', t, 21.6, 0, 515);
   slam('f-q', t, 22.3, 0, 645, { from: 2.0, drift: 0.012, rz: -2 });
@@ -914,6 +939,7 @@ function frame(t: number) {
     a.pause();
     a.currentTime = t * 1000;
   }
+  CAM = camAngles(t);
   camera(t);
   lands(t);
   bg?.clearRect(0, 0, fx.W, fx.H);
@@ -1000,7 +1026,7 @@ function Trailer() {
           {MONT.map((m, i) => (
             <div key={m.id}>
               <Ob k={`m-card${i}`}>
-                <C card={face(m.id)} w={360} />
+                <Flip card={face(m.id)} w={360} />
               </Ob>
               <Cut k={`m-cut${i}`} id={m.id} aura={m.aura} />
               <Slam k={`m-name${i}`} lines={m.name} size={m.name.length > 1 ? 128 : Math.min(190, Math.round(1500 / m.name[0].length))} />
@@ -1028,23 +1054,44 @@ function Trailer() {
         </section>
 
         <section className="tr-shot" ref={reg('shot-d')}>
-          <Ob k="d-c-lion">
-            <C card={face('lion')} w={300} />
-          </Ob>
-          <Ob k="d-c-tigre">
-            <C card={face('tigre')} w={300} />
-          </Ob>
-          <Cut k="d-cut-lion" id="lion" aura="rgba(255,215,160,0.9)" />
-          <Cut k="d-cut-tigre" id="tigre" aura="rgba(255,190,170,0.9)" />
-          <Slam k="d-vs" lines={['VS']} size={280} fill={GOLD} />
-          <Slam k="d-n-lion" lines={['Lion']} size={160} fill={GOLD} />
-          <Slam k="d-n-tigre" lines={['Tigre']} size={160} fill={`linear-gradient(180deg, ${CREAM} 0%, #ffd0c2 50%, ${CORAL} 100%)`} />
+          <Eyebrow k="d-eye" text="Duel de records" />
           <Ob k="d-q" z={70}>
             <div className="tr-panel-ui">
-              <div className="tr-eyebrow">Duel</div>
-              <div className="tr-panel-title">Qui gagne ?</div>
-              <div className="tr-panel-text">Réponds en commentaire</div>
+              <div className="tr-panel-kicker">Question 1 sur 5</div>
+              <div className="tr-panel-title">Le plus lourd ?</div>
+              <div className="tr-panel-text" ref={reg('d-qa')}>
+                Lion ou tigre ?
+              </div>
+              <div className="tr-panel-text tr-panel-text--hot" ref={reg('d-qb')}>
+                Tu le savais ? Dis-le en commentaire
+              </div>
             </div>
+          </Ob>
+          <Ob k="d-c-me">
+            <Flip card={face('tigre')} w={380} />
+          </Ob>
+          <Ob k="d-c-op">
+            <Flip card={face('lion')} w={380} />
+          </Ob>
+          <Tag k="d-me" text="Toi" bg={MINT} ink="#0c3b35" />
+          <Tag k="d-op" text="Adversaire" bg={CORAL} />
+          <Tag k="d-win" text="Gagné !" bg="#8fd47e" ink="#00210f" size={46} />
+          <Ob k="d-m-me" z={70}>
+            <div className="tr-flipchip">
+              <span className="tr-chip">? kg</span>
+              <span className="tr-chip tr-flipchip-back">
+                <b>220 kg</b>
+              </span>
+            </div>
+          </Ob>
+          <Ob k="d-m-op" z={70}>
+            <div className="tr-flipchip">
+              <span className="tr-chip">? kg</span>
+              <span className="tr-chip tr-flipchip-back">190 kg</span>
+            </div>
+          </Ob>
+          <Ob k="d-foot" z={70}>
+            <span className="tr-chip">5 questions de culture générale</span>
           </Ob>
         </section>
 
