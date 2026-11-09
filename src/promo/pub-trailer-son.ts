@@ -117,8 +117,10 @@ function sparkleRun(ac: Ctx, fx: Bus, t: number, notes: number[], step = 0.0625,
 
 // ───────────── la partition ─────────────
 
-export async function renderSoundtrack(duration: number): Promise<string> {
-  const SR = 44100;
+const SR = 44100;
+
+/** la musique du montage d'origine (25 s) */
+async function renderMain(duration: number): Promise<AudioBuffer> {
   const off = new OfflineAudioContext(2, Math.ceil(SR * duration), SR);
   const ac = off as unknown as Ctx;
   noise = null;
@@ -240,8 +242,58 @@ export async function renderSoundtrack(duration: number): Promise<string> {
   strings(ac, music, [midi(50), midi(57), midi(62), midi(66), midi(69)], 24.0, 1.0, 0.05, { attack: 0.02, release: 0.9, open: 3000 });
   bell(ac, chimes, midi(93), 24.0, 0.07, 0, 2);
 
-  const buf = await off.startRendering();
-  return wav(buf);
+  return off.startRendering();
+}
+
+/** les 3 s du Mexique : marimba, guitare grattée, basse qui balance entre la tonique et la quinte */
+async function renderMexique(duration: number): Promise<AudioBuffer> {
+  const off = new OfflineAudioContext(2, Math.ceil(SR * duration), SR);
+  const ac = off as unknown as Ctx;
+  noise = null;
+  const music = createBus(ac, 1.1, 0.22);
+  const chimes = createBus(ac, 0.9, 0.35);
+  const drums = createBus(ac, 0.8, 0.06).dry;
+  const orch = createBus(ac, 1.2, 0.3);
+  crash(ac, drums, 0, 0.12);
+  stab(ac, orch, 0, [50, 62, 66, 69], 0.06, 0.8);
+  for (let t = 0; t < 3 - 1e-6; t += 0.5) {
+    kick(ac, drums, t, 0.65);
+    hat(ac, drums, t + 0.25, 0.08);
+    if (t % 1 === 0.5) clap(ac, drums, t, 0.26);
+    const root = t < 1 || t >= 2 ? 38 : 45;
+    roundBass(ac, music, midi(root), t, 0.2, 0.3);
+    roundBass(ac, music, midi(root + 7), t + 0.25, 0.18, 0.22);
+    // guitare grattée sur le contretemps
+    const chord = t < 1 || t >= 2 ? [62, 66, 69, 74] : [61, 64, 69, 73];
+    chord.forEach((n, i) => pluck(ac, music, midi(n), t + 0.25 + i * 0.014, 0.09, (i - 1.5) * 0.2, 0.7));
+  }
+  const tune = [74, 78, 81, 78, 83, 81, 78, 74, 76, 79, 81, 85, 86, 81, 78, 74];
+  tune.forEach((n, i) => marimba(ac, music, midi(n), i * 0.1875, 0.12, i % 2 ? 0.3 : -0.3));
+  sparkleRun(ac, chimes, 0.6, [81, 86, 90, 93], 0.06, 0.05);
+  roll(ac, drums, 2.5, 3.0, 0.2);
+  return off.startRendering();
+}
+
+/** toute la bande-son : la musique d'origine, avec le passage du Mexique inséré à `at` (il dure `len`) */
+export async function renderSoundtrack(duration: number, at = 11, len = 3): Promise<string> {
+  const main = await renderMain(duration - len);
+  const mex = await renderMexique(len + 1.5);
+  const off = new OfflineAudioContext(2, Math.ceil(SR * duration), SR);
+  const play = (buf: AudioBuffer, when: number, offset: number, dur: number, fadeIn: number, fadeOut: number) => {
+    const src = off.createBufferSource();
+    src.buffer = buf;
+    const g = off.createGain();
+    g.gain.setValueAtTime(fadeIn ? 0 : 1, when);
+    if (fadeIn) g.gain.linearRampToValueAtTime(1, when + fadeIn);
+    g.gain.setValueAtTime(1, when + dur - fadeOut);
+    g.gain.linearRampToValueAtTime(0, when + dur);
+    src.connect(g).connect(off.destination);
+    src.start(when, offset, dur);
+  };
+  play(main, 0, 0, at + 0.03, 0, 0.03);
+  play(mex, at, 0, len + 1.2, 0.004, 0.6);
+  play(main, at + len, at, duration - len - at, 0.01, 0.01);
+  return wav(await off.startRendering());
 }
 
 /** WAV 16 bits stéréo en base64, normalisé à -1 dB. */

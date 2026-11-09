@@ -10,6 +10,8 @@ import { CardBack } from '../components/CardBack';
 import { Logo } from '../components/Logo';
 import { PackArt, packScene } from '../components/PackArt';
 import { Landscape, type SceneDef } from '../components/PackScene';
+import { CardBackMexique } from '../components/CardBackMexique';
+import { MexicoBackdrop } from '../components/MexicoBackdrop';
 import { HERO_SCENE, SCREEN_SCENES } from '../art/scenes';
 import { SCENE_H, SCENE_W, drawScene, type SceneModel } from '../art/reserve-scene';
 import { TRAIL_H, TRAIL_W, drawTrail } from '../art/expedition-scene';
@@ -33,7 +35,15 @@ import cutPanthere from './detoures/panthere-des-neiges.webp';
 // Les animaux détourés viennent des photos libres du jeu (Unsplash, Pixabay) ; aucun fichier ne part sur le site.
 // Chaque image est calculée à partir du temps (window.__seek(t)) et la bande-son est rendue hors ligne, calée dessus.
 
-const DURATION = 25;
+/** le passage sur la Série 2 (Mexique) est inséré à 11 s et dure 3 s */
+const MX_AT = 11;
+const MX_LEN = 3;
+const DURATION = 28;
+/** temps du montage d'origine → temps de la vidéo (un début, puis une fin de plage) */
+const Va = (x: number) => (x < MX_AT ? x : x + MX_LEN);
+const Vb = (x: number) => (x <= MX_AT ? x : x + MX_LEN);
+/** temps de la vidéo → temps du montage d'origine ; null pendant le passage du Mexique */
+const oldTime = (t: number) => (t < MX_AT ? t : t >= MX_AT + MX_LEN ? t - MX_LEN : null);
 
 // couleurs du jeu (styles/base.css)
 const CREAM = '#fff8ec';
@@ -66,7 +76,44 @@ interface Tf {
 }
 
 /** La caméra : elle tourne autour du centre de l'écran (lacet, tangage, roulis, en degrés). */
-let CAM = { yaw: 0, pitch: 0, roll: 0 };
+let CAM = { yaw: 0, pitch: 0, roll: 0, dolly: 0 };
+
+/** Où tombe à l'écran un point de l'espace (les mêmes calculs que le navigateur) ; le 3e nombre : sa profondeur. */
+function project(x: number, y: number, z: number): [number, number, number] {
+  const r = Math.PI / 180;
+  const cy = Math.cos(CAM.yaw * r);
+  const sy = Math.sin(CAM.yaw * r);
+  const x1 = x * cy + z * sy;
+  const z1 = -x * sy + z * cy;
+  const cp = Math.cos(CAM.pitch * r);
+  const sp = Math.sin(CAM.pitch * r);
+  const y2 = y * cp - z1 * sp;
+  const z2 = y * sp + z1 * cp;
+  const cr = Math.cos(CAM.roll * r);
+  const sr = Math.sin(CAM.roll * r);
+  const x3 = x1 * cr - y2 * sr;
+  const y3 = x1 * sr + y2 * cr;
+  const z3 = z2 + CAM.dolly;
+  const w = 1600 / (1600 - z3);
+  return [540 + x3 * w, 960 + y3 * w, z3];
+}
+
+/** Hélice autour d'un axe vertical de l'espace, projetée : le ruban passe vraiment devant puis derrière. */
+function helix3d(cx: number, cy: number, cz: number, radius: number, o: { turns: number; rise: number; phase: number; tilt?: number }) {
+  const ct = Math.cos(o.tilt ?? 0);
+  const st = Math.sin(o.tilt ?? 0);
+  return (u: number): [number, number, number] => {
+    const th = o.phase + u * o.turns * Math.PI * 2;
+    const x = radius * Math.cos(th);
+    const zz = radius * Math.sin(th);
+    const y = (0.5 - u) * o.rise;
+    const y2 = y * ct - zz * st;
+    const z2 = y * st + zz * ct;
+    const pt = project(cx + x, cy + y2, cz + z2);
+    const axis = project(cx, cy + y2, cz);
+    return [pt[0], pt[1], pt[2] - axis[2]];
+  };
+}
 
 /** Place un élément dans l'espace (coordonnées depuis le centre de l'écran), vu par la caméra, ou le cache (null). */
 function put(k: string, f: Tf | null) {
@@ -80,7 +127,7 @@ function put(k: string, f: Tf | null) {
   el.style.visibility = 'visible';
   el.style.opacity = o >= 0.999 ? '' : o.toFixed(3);
   const s = f.s ?? 1;
-  el.style.transform = `perspective(1600px) rotateZ(${CAM.roll.toFixed(2)}deg) rotateX(${CAM.pitch.toFixed(2)}deg) rotateY(${CAM.yaw.toFixed(2)}deg) translate3d(${(f.x ?? 0).toFixed(1)}px, ${(f.y ?? 0).toFixed(1)}px, ${(f.z ?? 0).toFixed(1)}px) rotateX(${(f.rx ?? 0).toFixed(2)}deg) rotateY(${(f.ry ?? 0).toFixed(2)}deg) rotateZ(${(f.rz ?? 0).toFixed(2)}deg) scale(${((f.sx ?? 1) * s).toFixed(4)}, ${s.toFixed(4)})`;
+  el.style.transform = `perspective(1600px) translateZ(${CAM.dolly.toFixed(1)}px) rotateZ(${CAM.roll.toFixed(2)}deg) rotateX(${CAM.pitch.toFixed(2)}deg) rotateY(${CAM.yaw.toFixed(2)}deg) translate3d(${(f.x ?? 0).toFixed(1)}px, ${(f.y ?? 0).toFixed(1)}px, ${(f.z ?? 0).toFixed(1)}px) rotateX(${(f.rx ?? 0).toFixed(2)}deg) rotateY(${(f.ry ?? 0).toFixed(2)}deg) rotateZ(${(f.rz ?? 0).toFixed(2)}deg) scale(${((f.sx ?? 1) * s).toFixed(4)}, ${s.toFixed(4)})`;
   el.style.filter = f.blur && f.blur > 0.4 ? `blur(${f.blur.toFixed(1)}px)` : '';
   if (f.zi !== undefined) el.style.zIndex = String(f.zi);
 }
@@ -161,7 +208,7 @@ function C({ card, w }: { card: CardFace; w: number }) {
 
 /** Carte à deux faces (le dos apparaît quand elle tourne). */
 /** Carte en volume : deux faces et une tranche (des couches de carton), on la voit quand elle tourne. */
-function Flip({ card, w }: { card: CardFace; w: number }) {
+function Flip({ card, w, mx = false }: { card: CardFace; w: number; mx?: boolean }) {
   const d = Math.max(4, Math.round(w / 50));
   const layers = 7;
   return (
@@ -174,7 +221,7 @@ function Flip({ card, w }: { card: CardFace; w: number }) {
         <div className="tr-shade" />
       </div>
       <div className="tr-face tr-back" style={{ transform: `rotateY(180deg) translateZ(${d / 2}px)` }}>
-        <CardBack />
+        {mx ? <CardBackMexique /> : <CardBack />}
       </div>
     </div>
   );
@@ -267,6 +314,53 @@ function Pixel({ w, h, draw }: { w: number; h: number; draw: (c: CanvasRendering
   return <canvas ref={ref} width={w} height={h} />;
 }
 
+/** Dos du sachet : le ciel du booster gratuit, le logo et ce qu'il contient. */
+function PackBack() {
+  return (
+    <div className="tr-pack-back">
+      <div className="tr-pack-back-logo">
+        <Logo />
+      </div>
+      <div className="tr-pack-back-line">Booster · Série 1</div>
+      <div className="tr-pack-back-small">5 cartes · Animaux du monde</div>
+    </div>
+  );
+}
+
+/** Dos du sachet du Mexique : le ciel rouge et les terres vertes de la Série 2. */
+function PackBackMexique() {
+  return (
+    <div className="tr-pack-back tr-pack-back--mx">
+      <div className="tr-pack-back-logo">
+        <Logo />
+      </div>
+      <div className="tr-pack-back-line">Booster · Série 2</div>
+      <div className="tr-pack-back-small">5 cartes · Mexique</div>
+    </div>
+  );
+}
+
+/** Le sachet en volume : face, dos et une tranche de feuille métallisée. `part` : la bande du haut, le corps, ou tout. */
+function Pack3D({ part, art, back = <PackBack />, mx = false }: { part: 'top' | 'body' | 'whole'; art: ReactNode; back?: ReactNode; mx?: boolean }) {
+  const clip = part === 'top' ? 'inset(-6% -6% 84% -6%)' : part === 'body' ? 'inset(16% -6% -6% -6%)' : undefined;
+  const layers = 11;
+  return (
+    <div className="tr-pack" style={{ width: PW, height: PH }}>
+      {Array.from({ length: layers }, (_, i) => {
+        const v = (i / (layers - 1)) * 2 - 1;
+        return <div key={i} className={`tr-pack-layer${mx ? ' tr-pack-layer--mx' : ''}`} style={{ clipPath: clip, transform: `translateZ(${(v * (PD / 2 - 1)).toFixed(1)}px) scale(${(1 - 0.02 * v * v * v * v).toFixed(3)})` }} />;
+      })}
+      <div className="tr-face" style={{ clipPath: clip, transform: `translateZ(${PD / 2}px)` }}>
+        {art}
+      </div>
+      <div className="tr-face" style={{ clipPath: clip, transform: `rotateY(180deg) translateZ(${PD / 2}px)` }}>
+        {back}
+      </div>
+      {part === 'body' && <div className="tr-tear" ref={reg('pk-tear')} />}
+    </div>
+  );
+}
+
 // ───────────── les affiches peintes derrière chaque plan ─────────────
 
 const LANDS: { a: number; b: number; scene: SceneDef; from: number; to: number; dy?: number }[] = [
@@ -283,7 +377,21 @@ const LANDS: { a: number; b: number; scene: SceneDef; from: number; to: number; 
   { a: 19.5, b: DURATION + 1, scene: HERO_SCENE, from: 1.2, to: 1.04 },
 ];
 
+LANDS.forEach((l) => {
+  l.a = Va(l.a);
+  l.b = Vb(l.b);
+});
+
 function lands(t: number) {
+  const mxl = els.get('land-mx');
+  if (mxl) {
+    const on = t >= MX_AT && t < MX_AT + MX_LEN;
+    mxl.style.visibility = on ? 'visible' : 'hidden';
+    if (on) {
+      const k = fx.inOut(fx.seg(t, MX_AT, MX_AT + MX_LEN));
+      mxl.style.transform = `perspective(1600px) translateZ(${(CAM.dolly * 0.35).toFixed(1)}px) rotateX(${(CAM.pitch * 0.35).toFixed(2)}deg) rotateY(${(CAM.yaw * 0.35).toFixed(2)}deg) translateZ(-600px) scale(${(1.8 * (1.06 - 0.06 * k)).toFixed(4)})`;
+    }
+  }
   LANDS.forEach((l, i) => {
     const el = els.get(`land${i}`);
     if (!el) return;
@@ -293,7 +401,7 @@ function lands(t: number) {
     const k = fx.inOut(fx.seg(t, l.a, Math.min(l.b, DURATION)));
     // l'affiche est loin derrière les cartes : quand la caméra tourne, elle glisse moins vite (parallaxe)
     const kb = 1 + (fx.lerp(l.from, l.to, k) - 1) * 0.5;
-    el.style.transform = `perspective(1600px) rotateZ(${(CAM.roll * 0.4).toFixed(2)}deg) rotateX(${(CAM.pitch * 0.4).toFixed(2)}deg) rotateY(${(CAM.yaw * 0.4).toFixed(2)}deg) translateZ(-600px) scale(${(1.8 * kb).toFixed(4)})`;
+    el.style.transform = `perspective(1600px) translateZ(${(CAM.dolly * 0.35).toFixed(1)}px) rotateZ(${(CAM.roll * 0.35).toFixed(2)}deg) rotateX(${(CAM.pitch * 0.35).toFixed(2)}deg) rotateY(${(CAM.yaw * 0.35).toFixed(2)}deg) translateZ(-600px) scale(${(1.8 * kb).toFixed(4)})`;
   });
 }
 
@@ -305,15 +413,22 @@ const YREST = 60;
 /** hauteur de la déchirure (depuis le centre de l'écran) */
 const OPEN_Y = YREST - PH / 2 + 0.16 * PH;
 
-/** l'éventail de cinq dos de cartes qui sort du sachet (comme dans le jeu) ; la carte du milieu est la Légendaire */
-const FAN = [0, 1, 2, 3, 4].map((i) => ({ x: (i - 2) * 96, y: OPEN_Y - 170 + (i - 2) * (i - 2) * 11, rz: (i - 2) * 11, ry: (i - 2) * -16, z: -Math.abs(i - 2) * 60 }));
-const FAN_S = 0.7;
+/** épaisseur du sachet */
+const PD = 30;
+/** les cinq cartes sortent en pile, puis tournent en manège au-dessus du sachet ; celle du milieu (2) est la Légendaire */
+const RING_Y = OPEN_Y - 300;
+const RING_R = 330;
 const FLY = [
-  { fan: 4, card: face('girafe'), tx: 760, ty: -1150, spin: 200 },
-  { fan: 0, card: face('crocodile-du-nil'), tx: -800, ty: -950, spin: -220 },
-  { fan: 3, card: face('leopard'), tx: 840, ty: 700, spin: 180 },
-  { fan: 1, card: face('loup'), tx: -820, ty: 850, spin: -200 },
+  { fan: 4, card: face('girafe'), tx: 620, ty: -520, spin: 160 },
+  { fan: 0, card: face('crocodile-du-nil'), tx: -640, ty: -420, spin: -170 },
+  { fan: 3, card: face('leopard'), tx: 600, ty: 520, spin: 150 },
+  { fan: 1, card: face('loup'), tx: -620, ty: 560, spin: -160 },
 ];
+/** lucioles posées dans l'espace autour du sachet */
+const MOTES = Array.from({ length: 40 }, (_, i) => {
+  const r = fx.rng(900 + i);
+  return { x: (r() - 0.5) * 1700, y: (r() - 0.5) * 2600, z: -1000 + r() * 1700, s: 0.5 + r() * 1.1, ph: r() * 10, v: 20 + r() * 50 };
+});
 
 type Theme = 'recif' | 'jungle' | 'foret' | 'neige';
 const MONT: { id: string; name: string[]; tag: string; tagBg: string; theme: Theme; from: [number, number]; to: [number, number]; drift: number; s: number; rz: [number, number]; aura: string }[] = [
@@ -329,7 +444,7 @@ const RARES: { k: string; card: CardFace; x: number; y: number; w: number; rz: n
   { k: 'r-icone', card: face('thylacine'), x: 0, y: -90, w: 380, rz: 0, ry: 0, t0: 11.0, label: 'Icône', bg: 'linear-gradient(180deg, #fff1c4, #e8b04c)', ink: '#3a2606' },
 ];
 
-const RING: CardFace[] = [face('lion'), face('requin-blanc'), face('panda', 'prime'), face('thylacine'), face('tigre', 'reverse'), face('panthere-des-neiges'), face('chat', 'prime'), face('cobra-royal')];
+const RING: CardFace[] = [face('lion'), face('requin-blanc'), face('panda', 'prime'), face('thylacine'), face('tigre', 'reverse'), face('panthere-des-neiges'), face('chat', 'prime'), face('vaquita')];
 const RING_W = 250;
 
 const sprite = (id: string) => spriteForAthlete(ATHLETES_BY_ID[id]);
@@ -413,9 +528,41 @@ const FLASHES: [number, number, number, string][] = [
   [19.5, 0.95, 0.4, CREAM],
 ];
 
+// les temps ci-dessus sont ceux du montage d'origine : on les décale après le passage du Mexique, puis on ajoute le sien
+IMPACTS.forEach((e) => (e[0] = Va(e[0])));
+PUNCH.forEach((e) => (e[0] = Va(e[0])));
+SWALLOW.forEach((e) => {
+  e[0] = Va(e[0]);
+  e[1] = Va(e[1]);
+});
+FLASHES.forEach((e) => (e[0] = Va(e[0])));
+IMPACTS.push([11, 12], [11.6, 12]);
+PUNCH.push([11, 0.06], [11.6, 0.06]);
+SWALLOW.push([10.85, 11.0], [13.82, 14.0]);
+FLASHES.push([11, 0.8, 0.25, CREAM], [11.6, 0.6, 0.25, '#ffe9b0']);
+
 /** Les mouvements de la caméra, plan par plan (en degrés). */
-function camAngles(t: number) {
-  if (t < 4) return { yaw: 8 * Math.sin(t * 0.9), pitch: 6 + 3 * Math.sin(t * 0.7), roll: 1.5 * Math.sin(t * 0.5) };
+/** caméra de l'ouverture : [temps, lacet, tangage, travelling avant] */
+const BOOSTER_CAM: [number, number, number, number][] = [
+  [0, -14, 6, 0],
+  [0.5, -10, 6, 0],
+  [1.35, 26, 2, 60],
+  [2.0, 4, 12, 260],
+  [2.4, 4, 0, 130],
+  [3.0, -8, -10, 60],
+  [3.7, 6, -2, 0],
+  [4.0, 2, -2, 0],
+];
+
+function camAngles(t: number): { yaw: number; pitch: number; roll: number; dolly?: number } {
+  if (t < 4) {
+    let i = 0;
+    while (i < BOOSTER_CAM.length - 2 && t >= BOOSTER_CAM[i + 1][0]) i++;
+    const [t0, y0, p0, d0] = BOOSTER_CAM[i];
+    const [t1, y1, p1, d1] = BOOSTER_CAM[i + 1];
+    const k = fx.inOut(fx.seg(t, t0, t1));
+    return { yaw: fx.lerp(y0, y1, k), pitch: fx.lerp(p0, p1, k), roll: 1.5 * Math.sin(t * 0.5), dolly: fx.lerp(d0, d1, k) };
+  }
   if (t < 5) {
     const k = fx.outCubic(fx.seg(t, 4, 4.6));
     return { yaw: -22 * (1 - k) + 4 * Math.sin(t * 2), pitch: 8 * (1 - k), roll: 0 };
@@ -467,86 +614,124 @@ function camera(t: number) {
 // ───────────── plan 1 et 2 : le booster, la Légendaire, le lion qui jaillit ─────────────
 
 function packBase(t: number) {
-  if (t < 0.45) {
-    const k = fx.outCubic(fx.seg(t, 0, 0.45));
-    return { x: 0, y: fx.lerp(-1500, YREST, k), ry: fx.lerp(40, 0, k), rz: fx.lerp(-28, -4, k), s: 1 };
+  // le sachet arrive du fond de l'image en tournant sur lui-même (on voit son dos et sa tranche)
+  if (t < 0.5) {
+    const k = fx.outCubic(fx.seg(t, 0, 0.5));
+    return { x: fx.lerp(-260, 0, k), y: fx.lerp(-420, YREST, k), z: fx.lerp(-2600, 0, k), rx: fx.lerp(30, 0, k), ry: fx.lerp(-540, 0, k), rz: fx.lerp(-25, -3, k), s: 1 };
   }
-  const d = t - 0.45;
+  const d = t - 0.5;
   const charge = fx.seg(t, 1.3, 2.0);
   return {
-    x: fx.wobble(t * 60, 1) * 12 * charge,
-    y: YREST + Math.sin(d * 3.2) * 10 + 34 * Math.exp(-d * 8) * Math.sin(d * 20),
-    ry: Math.sin(d * 2.1) * 12,
-    rz: -4 + Math.sin(d * 1.6) * 2.5 + fx.wobble(t * 55, 3) * 2.5 * charge,
+    x: fx.wobble(t * 60, 1) * 10 * charge,
+    y: YREST + Math.sin(d * 3) * 10,
+    z: 60 * Math.exp(-d * 6) * Math.sin(d * 16),
+    rx: Math.sin(d * 1.4) * 5 + 8 * charge,
+    ry: Math.sin(d * 1.8) * 12,
+    rz: -3 + Math.sin(d * 1.6) * 2 + fx.wobble(t * 55, 3) * 2.5 * charge,
     s: 1 + 0.04 * charge,
   };
 }
 
-/** position d'une carte de l'éventail (sortie du sachet à 2 s) */
-function fanAt(i: number, t: number) {
-  const e = fx.outBack(fx.seg(t, 2.0 + i * 0.03, 2.38 + i * 0.03), 1.4);
-  const f = FAN[i];
-  return { x: f.x * e, y: fx.lerp(OPEN_Y + 140, f.y, e) + Math.sin(t * 2.4 + i) * 5, rz: f.rz * e, ry: f.ry * e, z: f.z * e, s: fx.lerp(0.45, FAN_S, e) };
+/** angle du manège (degrés) : il tourne vite puis ralentit, la Légendaire s'arrête devant nous à 3 s */
+const ringAngle = (t: number) => -260 * (1 - fx.outCubic(fx.seg(t, 2.4, 3.0)));
+
+/** une des cinq cartes : en pile dans le sachet, puis sortie, puis en manège autour de l'axe du sachet */
+function inRing(i: number, t: number) {
+  const rise = fx.outBack(fx.seg(t, 2.0 + i * 0.05, 2.45 + i * 0.05), 1.25);
+  const spread = fx.outBack(fx.seg(t, 2.4, 2.85), 1.3);
+  const deg = ringAngle(t) + (i - 2) * 72;
+  const a = (deg * Math.PI) / 180;
+  return {
+    x: RING_R * spread * Math.sin(a),
+    y: fx.lerp(OPEN_Y + 170, RING_Y, rise) + Math.sin(t * 2.4 + i) * 6 * spread,
+    z: RING_R * spread * Math.cos(a) + (i - 2) * -10 * (1 - spread),
+    // les cartes gardent le dos tourné vers nous (sinon celles du fond montreraient leur face) en suivant un peu le manège
+    ry: 180 + 0.4 * (((((deg + 180) % 360) + 360) % 360) - 180),
+    rise,
+    depth: Math.cos(a) * spread,
+  };
 }
 
 function shotBooster(t: number) {
   const b = packBase(Math.min(t, 2));
+  // la bande du haut se décolle le long de la déchirure (elle pivote vers l'arrière), puis s'envole
+  const peel = els.get('pk-peel');
+  const pk = fx.seg(t, 1.35, 1.98);
+  if (peel) peel.style.transform = `rotateX(${(62 * fx.inCubic(pk) + 4 * Math.sin(t * 40) * pk * (1 - pk)).toFixed(2)}deg) rotateZ(${(-7 * pk).toFixed(2)}deg)`;
   if (t < 2) put('pk-top', { ...b, zi: 12 });
   else {
-    const k = fx.outCubic(fx.seg(t, 2, 2.6));
-    put('pk-top', { x: b.x + 760 * k, y: b.y - 720 * k, rz: b.rz + 80 * k, ry: b.ry, s: b.s, o: 1 - fx.seg(t, 2.35, 2.6), zi: 12 });
+    const k = fx.outCubic(fx.seg(t, 2, 2.7));
+    put('pk-top', { x: b.x + 620 * k, y: b.y - 640 * k, z: b.z + 650 * k, rx: b.rx + 220 * k, ry: b.ry + 260 * k, rz: b.rz + 90 * k, s: b.s, o: 1 - fx.seg(t, 2.45, 2.7), zi: 12 });
   }
   let by = b.y;
-  let brz = b.rz;
+  let bz = b.z;
+  let brx = b.rx;
   let bo = 1;
   if (t >= 2) {
     by += 40 * fx.outCubic(fx.seg(t, 2, 2.12)) - 18 * fx.seg(t, 2.12, 2.5);
-    const f = fx.seg(t, 3.1, 3.7);
-    by += 1700 * fx.inCubic(f);
-    brz += 30 * f;
-    bo = 1 - fx.seg(t, 3.55, 3.7);
+    // le sachet vide bascule en arrière et tombe dans la profondeur
+    const f = fx.seg(t, 3.0, 3.7);
+    by += 1100 * fx.inCubic(f);
+    bz -= 700 * f;
+    brx += 75 * fx.inOut(f);
+    bo = 1 - fx.seg(t, 3.5, 3.7);
   }
-  put('pk-body', t < 3.7 ? { ...b, y: by, rz: brz, o: bo, zi: 10 } : null);
+  put('pk-body', t < 3.7 ? { ...b, y: by, z: bz, rx: brx, o: bo, zi: 10 } : null);
   const tear = els.get('pk-tear');
   if (tear) {
-    tear.style.transform = `scaleX(${fx.seg(t, 1.35, 1.95).toFixed(3)})`;
+    tear.style.transform = `translateZ(${PD / 2 + 2}px) scaleX(${fx.seg(t, 1.35, 1.95).toFixed(3)})`;
     tear.style.opacity = t < 2.03 ? '1' : '0';
   }
 
-  // l'éventail, puis quatre cartes qui filent vers nous en se retournant
+  // des lucioles posées dans l'espace : elles glissent à des vitesses différentes quand la caméra tourne
+  MOTES.forEach((m, i) => {
+    if (t >= 4.3) return put(`mote${i}`, null);
+    const y = ((((m.y - m.v * t + 1300) % 2600) + 2600) % 2600) - 1300;
+    put(`mote${i}`, { x: m.x + Math.sin(t * 0.8 + m.ph) * 40, y, z: m.z, s: m.s * (0.75 + 0.25 * Math.sin(t * 3 + m.ph)), o: 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * 2.2 + m.ph)), zi: m.z > 250 ? 45 : 4 });
+  });
+
+  // quatre cartes quittent le manège et foncent vers nous en se retournant
   FLY.forEach((c, j) => {
     const k = `fly${j}`;
     if (t < 2.0) return put(k, null);
-    const f = fanAt(c.fan, t);
-    const T = 2.55 + 0.17 * j;
-    const p = fx.seg(t, T, T + 0.55);
+    const T = 3.02 + 0.13 * j;
+    const r = inRing(c.fan, Math.min(t, T));
+    const p = fx.seg(t, T, T + 0.5);
     if (p >= 1) return put(k, null);
     put(k, {
-      x: f.x + c.tx * Math.pow(p, 1.7),
-      y: f.y + c.ty * Math.pow(p, 1.9),
-      s: f.s + 3 * Math.pow(p, 2.2),
-      z: f.z + 500 * p,
-      rz: f.rz + c.spin * p,
-      rx: 40 * p,
-      ry: 180 + f.ry + 260 * fx.outCubic(p),
-      zi: t < 2.1 ? 8 : 14 + j,
-      blur: p > 0.45 ? (p - 0.45) * 14 : 0,
+      x: r.x + c.tx * Math.pow(p, 1.6),
+      y: r.y + c.ty * Math.pow(p, 1.8),
+      z: r.z + 1250 * Math.pow(p, 1.5),
+      s: 0.8,
+      ry: r.ry + 180 * fx.outCubic(p),
+      rz: c.spin * p,
+      rx: 30 * p,
+      zi: r.rise < 0.35 ? 8 : p > 0 ? 30 + j : 12 + Math.round(r.depth * 5),
+      blur: p > 0.55 ? (p - 0.55) * 16 : 0,
     });
   });
 
-  // la carte du milieu : face cachée, puis retournée… Légendaire
+  // la carte du milieu : face cachée, elle s'avance vers nous… puis se retourne : Légendaire
   const HY = -110;
-  const heroScale = (FAN_S * 300) / 520;
   if (t < 2.0 || t >= 7.0) put('hero', null);
   else if (t < 4.0) {
-    const f = fanAt(2, t);
-    const k = fx.inOut(fx.seg(t, 3.2, 3.8));
+    const r = inRing(2, Math.min(t, 3.05));
+    const k = fx.inOut(fx.seg(t, 3.05, 3.65));
     const squash = fx.seg(t, 3.85, 4.0);
-    put('hero', { x: f.x, y: fx.lerp(f.y, HY, k), z: 120 * k, s: fx.lerp(heroScale * (f.s / FAN_S), 1, k) * (1 - 0.06 * squash), ry: 180 + f.ry * (1 - k) + Math.sin((t - 2) * 2.6) * 22 * k, rx: Math.sin((t - 2) * 2.1) * 12 * k, rz: f.rz * (1 - k), zi: t < 2.1 ? 9 : 13 });
+    const tremble = fx.seg(t, 3.6, 4.0);
+    put('hero', {
+      x: r.x * (1 - k) + fx.wobble(t * 50, 9) * 4 * tremble,
+      y: fx.lerp(r.y, HY, k),
+      z: fx.lerp(r.z, 150, k),
+      s: fx.lerp(0.46, 1, k) * (1 - 0.06 * squash),
+      ry: fx.lerp(r.ry, 180, k) + Math.sin((t - 2) * 2.6) * 16 * k,
+      rx: Math.sin((t - 2) * 2.1) * 10 * k,
+      zi: r.rise < 0.35 ? 9 : 13 + Math.round(r.depth * 5),
+    });
   } else if (t < 5.0) {
     const f = fx.seg(t, 4.0, 4.34);
     const ry = t < 4.34 ? 180 * (1 - fx.outBack(f, 1.3)) : Math.sin((t - 4.34) * 3) * 9;
-    put('hero', { y: HY, z: 120, s: 0.94 + 0.06 * fx.outBack(f) + 0.015 * Math.sin((t - 4) * 4), ry, rx: Math.sin(t * 2.3) * 6, zi: 15 });
+    put('hero', { y: HY, z: 150 + 220 * Math.sin(Math.PI * f) - 30 * fx.seg(t, 4.34, 4.6), s: 0.94 + 0.06 * fx.outBack(f) + 0.015 * Math.sin((t - 4) * 4), ry, rx: 22 * Math.sin(Math.PI * f) + Math.sin(t * 2.3) * 6, zi: 15 });
     glare('hero', t < 4.7 ? fx.lerp(-30, 130, fx.seg(t, 4.05, 4.7)) : 50 + ry * 3);
   } else {
     const k = fx.outCubic(fx.seg(t, 5.0, 5.35));
@@ -584,38 +769,52 @@ const FX_LION: [string, string][] = [
 
 function bgBooster(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: number) {
   const charge = fx.seg(t, 1.2, 2.0);
-  const packY = 960 + YREST;
-  const openY = 960 + OPEN_Y;
   if (t < 4.0) {
-    fx.glow(c, 540, packY, 760, '#ffd9a0', 0.25 + 0.45 * charge);
-    fx.rays(c, 540, packY - 120, 14, t * 0.25, '#fff0cf', 0.04 + 0.1 * charge);
-    fx.stream(c, t, { seed: 3, n: 46, kind: 'ember', colors: FIREFLY, vx: 10, vy: -40, size: 5, sway: 30, alpha: 0.85 });
-    if (t < 2.0) fx.speedLines(c, 540, packY - 120, Math.floor(t * 15), 70, 470, 0.35 * charge, CREAM);
-    // la lumière s'enroule autour du sachet
-    if (t > 0.4 && t < 2.1)
+    // les effets suivent le sachet tel que la caméra le voit
+    const P = project(0, YREST, 0);
+    const O = project(0, OPEN_Y, 0);
+    fx.glow(c, P[0], P[1], 760, '#ffd9a0', 0.25 + 0.45 * charge);
+    fx.rays(c, P[0], P[1] - 120, 14, t * 0.25, '#fff0cf', 0.04 + 0.1 * charge);
+    fx.stream(c, t, { seed: 3, n: 30, kind: 'ember', colors: FIREFLY, vx: 10, vy: -40, size: 4, sway: 30, alpha: 0.6 });
+    if (t < 2.0) fx.speedLines(c, P[0], P[1] - 120, Math.floor(t * 15), 70, 470, 0.35 * charge, CREAM);
+    // la lumière s'enroule vraiment autour du sachet (une hélice dans l'espace, vue par la caméra)
+    if (t > 0.45 && t < 2.1)
       FX_PACK.forEach((colors, i) => {
-        const path = fx.helix(540, packY + 40, 330, 85, { turns: 2, rise: 760, tilt: -0.15, phase: i * 2.1, grow: 0.3 });
-        fx.ribbon(c, f, path, fx.seg(t, 0.5 + i * 0.15, 2.0 + i * 0.05) * 1.55, { colors, width: [54, 40, 32][i], len: 0.55 });
+        const path = helix3d(0, YREST, 0, 380, { turns: 1.8, rise: 860, phase: i * 2.1, tilt: 0.14 });
+        fx.ribbon(c, f, path, fx.seg(t, 0.5 + i * 0.15, 2.0 + i * 0.05) * 1.55, { colors, width: [56, 42, 32][i], len: 0.55 });
       });
     if (t >= 2.0) {
       // le faisceau qui sort du sachet ouvert
-      const a = Math.max(Math.exp(-(t - 2) * 3.2), fx.seg(t, 2.9, 3.9) * 0.8);
+      const a = Math.max(Math.exp(-(t - 2) * 3.2), fx.seg(t, 2.9, 3.6) * 0.6) * (1 - fx.seg(t, 3.4, 3.7) * 0.6);
       const w = 140 + 240 * a;
       c.save();
       c.globalCompositeOperation = 'lighter';
-      const g = c.createLinearGradient(0, openY, 0, 0);
+      const g = c.createLinearGradient(0, O[1], 0, 0);
       g.addColorStop(0, `rgba(255,240,207,${0.85 * a})`);
       g.addColorStop(1, 'rgba(255,211,107,0)');
       c.fillStyle = g;
-      c.fillRect(540 - w / 2, 0, w, openY);
+      c.fillRect(O[0] - w / 2, 0, w, O[1]);
       c.restore();
-      fx.glow(c, 540, openY, 520, '#fff0cf', a * 0.8);
+      fx.glow(c, O[0], O[1], 520, '#fff0cf', a * 0.8);
     }
-    fx.ring(f, 540, packY, t, 0.45, 0.5, 600, '#fff0cf', 26);
-    fx.ring(f, 540, openY, t, 2.0, 0.6, 950, CREAM, 44);
-    fx.burst(f, t, 2.0, { seed: 11, n: 60, x: 540, y: openY, speed: 2200, gravity: 700, life: 1.1, size: 15, kind: 'spark', colors: [CREAM, HONEY, LICHEN] });
-    fx.burst(f, t, 2.0, { seed: 13, n: 26, x: 540, y: openY, speed: 1600, gravity: 900, life: 1.4, size: 16, kind: 'leaf', colors: ['#7d9a6a', LICHEN, '#c9e29a'] });
-    fx.glow(c, 540, 850, 700, '#ffe7bd', fx.seg(t, 3.0, 4.0) * 0.7);
+    // la traînée de lumière du manège de cartes
+    if (t >= 2.4 && t < 3.3) {
+      const aHero = (ringAngle(t) * Math.PI) / 180;
+      const head = t < 3.0 ? fx.seg(t, 2.4, 2.6) : 1 + 0.75 * fx.seg(t, 3.0, 3.25);
+      [
+        [HONEY, '#fff3cf'],
+        [LICHEN, '#f0ffd8'],
+      ].forEach((colors, i) => {
+        const path = helix3d(0, RING_Y + 150 + i * 40, 0, RING_R * (1.05 + i * 0.1), { turns: 1, rise: 0, phase: Math.PI / 2 - aHero + i * 0.6 });
+        fx.ribbon(c, f, path, head, { colors: colors as [string, string], width: i ? 30 : 44, len: 0.75 });
+      });
+    }
+    fx.ring(f, P[0], P[1], t, 0.5, 0.5, 600, '#fff0cf', 26);
+    fx.ring(f, O[0], O[1], t, 2.0, 0.6, 950, CREAM, 44);
+    fx.burst(f, t, 2.0, { seed: 11, n: 60, x: O[0], y: O[1], speed: 2200, gravity: 700, life: 1.1, size: 15, kind: 'spark', colors: [CREAM, HONEY, LICHEN] });
+    fx.burst(f, t, 2.0, { seed: 13, n: 26, x: O[0], y: O[1], speed: 1600, gravity: 900, life: 1.4, size: 16, kind: 'leaf', colors: ['#7d9a6a', LICHEN, '#c9e29a'] });
+    const Hh = project(0, -110, 150);
+    fx.glow(c, Hh[0], Hh[1], 700, '#ffe7bd', fx.seg(t, 3.1, 4.0) * 0.75);
   }
   // la Légendaire : nuit d'or, rayons et constellations
   if (t >= 4.0 && t < 5.0) {
@@ -754,6 +953,77 @@ function bgMontage(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: 
   });
   fx.ring(f, ax, ay, t, 7 + i + 0.12, 0.45, 900, th.ribbons[0][1], 36);
   fx.burst(f, t, 7 + i + 0.1, { seed: 50 + i, n: 32, x: ax, y: ay, speed: 2000, gravity: 0, life: 0.7, size: 13, kind: 'spark', colors: [CREAM, th.ribbons[0][0]] });
+}
+
+// ───────────── plan 3 bis : la Série 2, le Mexique ─────────────
+// Le booster du Mexique arrive en tournant, s'ouvre, et cinq cartes de la Série 2 se déploient en éventail.
+// La vaquita (Légendaire) : « on n'en a compté que 6 à 8 en 2024 » (data/athletes.ts) ; 110 espèces dans la série.
+
+const MX_CARDS: CardFace[] = [face('condor-de-californie'), face('mx-aigle-royal'), face('vaquita'), face('xoloitzcuintle'), face('grizzli-du-mexique')];
+const MX_PACK_Y = 300;
+const MX_PINK = '#e8417d';
+const MX_GOLD = '#ffd166';
+const MX_TEAL = '#7fe0d0';
+const MX_MARIGOLD = '#ff9f1c';
+
+/** caméra du Mexique : elle glisse de gauche à droite en se rapprochant */
+function mexCam(u: number) {
+  const k = fx.inOut(fx.seg(u, 0, 3));
+  return { yaw: fx.lerp(-16, 10, k), pitch: fx.lerp(9, 2, k), roll: 0, dolly: 90 * k };
+}
+
+function shotMexique(u: number) {
+  slide('mx-eye', u, 0.03, 0, -885);
+  slam('mx-title', u, 0.08, 0, -715, { from: 2.4, drift: 0.02, z: 40 });
+  const k = fx.outCubic(fx.seg(u, 0.05, 0.55));
+  const bump = Math.exp(-Math.max(0, u - 0.6) * 9) * (u >= 0.6 ? 1 : 0);
+  put('mx-pack', {
+    x: fx.lerp(260, 0, k),
+    y: fx.lerp(-300, MX_PACK_Y, k) + Math.sin(u * 3) * 8,
+    z: fx.lerp(-2400, 0, k),
+    ry: fx.lerp(540, 0, k) + Math.sin(u * 1.9) * 10,
+    rx: fx.lerp(-30, 0, k) + 6,
+    rz: fx.lerp(25, 3, k),
+    s: 0.8 * (1 + 0.08 * bump),
+    zi: 10,
+  });
+  MX_CARDS.forEach((_, i) => {
+    const e = fx.outBack(fx.seg(u, 0.6 + Math.abs(i - 2) * 0.05, 1.0 + Math.abs(i - 2) * 0.05), 1.3);
+    if (u < 0.6) return put(`mx-c${i}`, null);
+    const center = i === 2;
+    put(`mx-c${i}`, {
+      x: (i - 2) * 200 * e,
+      y: fx.lerp(MX_PACK_Y, -230 + Math.abs(i - 2) * 30, e) + Math.sin(u * 2.2 + i) * 6,
+      z: (center ? 90 : -Math.abs(i - 2) * 110) * e,
+      ry: (i - 2) * -24 * e + Math.sin(u * 1.6 + i) * 6,
+      rz: (i - 2) * 7 * e,
+      s: fx.lerp(0.3, center ? 0.92 : 0.78, e),
+      zi: center ? 20 : 16 - Math.abs(i - 2),
+    });
+  });
+  glare('mx-c2', ((u - 1) * 110) % 170 - 35);
+  pop('mx-chip', u, 1.1, 0, 655);
+  pop('mx-fact', u, 1.5, 0, -40, { zi: 75, rz: -3 });
+}
+
+function bgMexique(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, u: number) {
+  const P = project(0, MX_PACK_Y, 0);
+  fx.glow(c, P[0], P[1], 800, '#ffc38a', 0.35);
+  fx.glow(c, 540, 730, 700, MX_PINK, 0.18 + 0.2 * fx.seg(u, 0.6, 1.0));
+  fx.rays(c, 540, 700, 16, u * 0.4, '#fff3dc', 0.1);
+  fx.stream(c, u + 11, { seed: 121, n: 40, kind: 'petal', colors: [MX_MARIGOLD, '#ffb703', MX_PINK], vx: 60, vy: 230, size: 15, sway: 50 });
+  fx.stream(c, u + 11, { seed: 122, n: 26, kind: 'ember', colors: FIREFLY, vx: 0, vy: -60, size: 5, sway: 30 });
+  const cols: [string, string][] = [
+    [MX_PINK, '#ffd6e6'],
+    [MX_GOLD, '#fff6dc'],
+    [MX_TEAL, '#ffffff'],
+  ];
+  cols.forEach((colors, i) => {
+    const path = helix3d(0, MX_PACK_Y - 80, 0, 400, { turns: 1.6, rise: 900, phase: i * 2.1, tilt: 0.12 });
+    fx.ribbon(c, f, path, fx.seg(u, 0.1 + i * 0.1, 1.4 + i * 0.1) * 1.55, { colors, width: [64, 50, 38][i], len: 0.55 });
+  });
+  fx.ring(f, P[0], P[1] - 200, u, 0.6, 0.6, 900, MX_GOLD, 40);
+  fx.burst(f, u, 0.6, { seed: 123, n: 110, x: P[0], y: P[1] - 200, speed: 2300, gravity: 1100, life: 1.8, size: 13, kind: 'confetti', colors: [MX_PINK, MX_TEAL, MX_GOLD, '#2a9d8f', MX_MARIGOLD], drag: 2 });
 }
 
 // ───────────── plan 4 : les ultra-rares ─────────────
@@ -920,13 +1190,17 @@ function bgFinale(c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: n
 
 // ───────────── la page ─────────────
 
-const SHOTS: { k: string; a: number; b: number; draw: (c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: number) => void; run: (t: number) => void }[] = [
+const SHOTS_OLD: { k: string; a: number; b: number; draw: (c: CanvasRenderingContext2D, f: CanvasRenderingContext2D, t: number) => void; run: (t: number) => void }[] = [
   { k: 'shot-a', a: 0, b: 7.0, draw: bgBooster, run: shotBooster },
   { k: 'shot-b', a: 7.0, b: 11.0, draw: bgMontage, run: shotMontage },
   { k: 'shot-c', a: 11.0, b: 13.0, draw: bgRares, run: shotRares },
   { k: 'shot-d', a: 13.0, b: 17.0, draw: bgDuel, run: shotDuel },
   { k: 'shot-e', a: 17.0, b: 19.5, draw: bgReserve, run: shotReserve },
   { k: 'shot-f', a: 19.5, b: DURATION + 1, draw: bgFinale, run: shotFinale },
+];
+const SHOTS = [
+  ...SHOTS_OLD.map((s) => ({ ...s, a: Va(s.a), b: Vb(s.b), local: oldTime })),
+  { k: 'shot-mx', a: MX_AT, b: MX_AT + MX_LEN, draw: bgMexique, run: shotMexique, local: (t: number) => t - MX_AT },
 ];
 
 let bg: CanvasRenderingContext2D | null = null;
@@ -939,7 +1213,9 @@ function frame(t: number) {
     a.pause();
     a.currentTime = t * 1000;
   }
-  CAM = camAngles(t);
+  const to = oldTime(t);
+  const cam = to === null ? mexCam(t - MX_AT) : camAngles(to);
+  CAM = { ...cam, dolly: cam.dolly ?? 0 };
   camera(t);
   lands(t);
   bg?.clearRect(0, 0, fx.W, fx.H);
@@ -958,8 +1234,9 @@ function frame(t: number) {
     const el = els.get(s.k);
     if (el) el.style.display = on ? '' : 'none';
     if (!on) continue;
-    s.run(t);
-    if (bg && fg) s.draw(bg, fg, t);
+    const lt = s.local(t) ?? 0;
+    s.run(lt);
+    if (bg && fg) s.draw(bg, fg, lt);
   }
   if (fg) {
     for (const [ti, a, d, col] of FLASHES) if (t >= ti && t < ti + d) fx.flash(fg, a * (1 - (t - ti) / d), col);
@@ -969,7 +1246,7 @@ function frame(t: number) {
     fg.fillStyle = g;
     fg.fillRect(0, 0, fx.W, fx.H);
   }
-  for (const draw of draws) draw(t);
+  for (const draw of draws) draw(to ?? MX_AT);
 }
 
 function Trailer() {
@@ -991,17 +1268,24 @@ function Trailer() {
             <Landscape scene={l.scene} seed={`bande-annonce-${i}`} maxWidth={1080} />
           </div>
         ))}
+        <div className="tr-land" ref={reg('land-mx')}>
+          <MexicoBackdrop scene="volcanes" seed="bande-annonce-mexique" />
+        </div>
         <canvas className="tr-cv" ref={back} width={fx.W} height={fx.H} style={{ zIndex: 0 }} />
 
         <section className="tr-shot" ref={reg('shot-a')}>
+          {MOTES.map((_, i) => (
+            <Ob key={i} k={`mote${i}`} z={4}>
+              <i className="tr-mote" />
+            </Ob>
+          ))}
           <Ob k="pk-body">
-            <div style={{ width: PW, position: 'relative' }}>
-              <div style={{ clipPath: 'inset(16% -10% -10% -10%)' }}>{packArt}</div>
-              <div className="tr-tear" ref={reg('pk-tear')} />
-            </div>
+            <Pack3D part="body" art={packArt} />
           </Ob>
           <Ob k="pk-top">
-            <div style={{ width: PW, clipPath: 'inset(-10% -10% 84% -10%)' }}>{packArt}</div>
+            <div className="tr-peel" ref={reg('pk-peel')} style={{ width: PW, height: PH }}>
+              <Pack3D part="top" art={packArt} />
+            </div>
           </Ob>
           {FLY.map((c, i) => (
             <Ob key={i} k={`fly${i}`}>
@@ -1033,6 +1317,25 @@ function Trailer() {
               <Tag k={`m-tag${i}`} text={m.tag} bg={m.tagBg} />
             </div>
           ))}
+        </section>
+
+        <section className="tr-shot" ref={reg('shot-mx')}>
+          <Ob k="mx-pack">
+            <Pack3D part="whole" art={<PackArt tone="mexique" name="Booster gratuit" size={5} />} back={<PackBackMexique />} mx />
+          </Ob>
+          {MX_CARDS.map((card, i) => (
+            <Ob key={i} k={`mx-c${i}`}>
+              <Flip card={card} w={300} mx />
+            </Ob>
+          ))}
+          <Eyebrow k="mx-eye" text="Nouveau · Série 2" />
+          <Slam k="mx-title" lines={['Mexique']} size={190} fill={`linear-gradient(180deg, #fff6dc 0%, ${MX_GOLD} 45%, ${MX_PINK} 100%)`} stroke="#2a0a1c" />
+          <Ob k="mx-chip" z={70}>
+            <span className="tr-chip">
+              <b>110</b> nouvelles espèces
+            </span>
+          </Ob>
+          <Tag k="mx-fact" text="Vaquita : il en reste moins de 10" bg={MX_PINK} ink="#fff8ec" size={38} />
         </section>
 
         <section className="tr-shot" ref={reg('shot-c')}>
