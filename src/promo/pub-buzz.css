@@ -1,0 +1,233 @@
+/* Pub TikTok « AnimalCards » (promo/pub-buzz.html) : reprend les pièces de pub-reserve.css et ajoute les siennes. */
+
+.ad-night {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, #1d2a22, #050806 70%);
+}
+
+/* grain de vieux film, pour l'accroche */
+.ad-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background:
+    repeating-radial-gradient(circle at 17% 32%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 3px),
+    repeating-radial-gradient(circle at 71% 64%, rgba(255, 255, 255, 0.35) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+  animation: ad-grain 0.4s steps(4) infinite;
+}
+
+@keyframes ad-grain {
+  25% {
+    transform: translate(-6px, 4px);
+  }
+  50% {
+    transform: translate(5px, -3px);
+  }
+  75% {
+    transform: translate(-3px, -6px);
+  }
+}
+
+.ad-hook {
+  position: absolute;
+  left: 50px;
+  right: 50px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 92px;
+  line-height: 1.08;
+  color: #fff8ec;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.7);
+}
+
+.ad-hook b {
+  color: #ffd36b;
+  font-weight: inherit;
+}
+
+/* la carte de l'Icône passe du noir et blanc à la couleur */
+@keyframes ad-revive {
+  from {
+    filter: grayscale(1) brightness(0.55) contrast(1.1);
+  }
+  to {
+    filter: grayscale(0) brightness(1) drop-shadow(0 0 60px rgba(255, 211, 107, 0.7));
+  }
+}
+
+@keyframes ad-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.ad-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #fff8ec;
+  pointer-events: none;
+}
+
+@keyframes ad-zoom-slow {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.08;
+  }
+}
+
+@keyframes ad-shake {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  10% {
+    rotate: -6deg;
+  }
+  20% {
+    rotate: 6deg;
+  }
+  30% {
+    rotate: -8deg;
+  }
+  40% {
+    rotate: 8deg;
+  }
+  50% {
+    rotate: -10deg;
+  }
+  60% {
+    rotate: 10deg;
+  }
+  70% {
+    rotate: -12deg;
+  }
+  80% {
+    rotate: 12deg;
+  }
+  90% {
+    rotate: -6deg;
+  }
+}
+
+@keyframes ad-vanish {
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+/* les cartes jaillissent du booster */
+@keyframes ad-burst {
+  from {
+    opacity: 0;
+    transform: translate(var(--fx), var(--fy)) scale(0.2) rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(var(--r, 0deg));
+  }
+}
+
+@keyframes ad-halo {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 211, 107, 0);
+  }
+  to {
+    box-shadow: 0 0 90px 30px rgba(255, 211, 107, 0.75);
+  }
+}
+
+.ad-halo {
+  border-radius: 24px;
+}
+
+@keyframes ad-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-900px) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--r, 0deg));
+  }
+}
+
+@keyframes ad-from-right2 {
+  from {
+    opacity: 0;
+    transform: translateX(900px) rotate(12deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--r, 0deg));
+  }
+}
+
+@keyframes ad-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-1100px) rotate(-14deg);
+  }
+}
+
+.ad-vs {
+  position: absolute;
+  left: 50%;
+  top: 880px;
+  width: 260px;
+  height: 260px;
+  margin-left: -130px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff8fb8, #e8586b 60%, #a8324a);
+  border: 8px solid #fff8ec;
+  font-family: var(--font-display);
+  font-size: 120px;
+  color: #fff;
+  text-shadow: 0 6px 0 #7a1f33;
+  box-shadow: 0 0 80px rgba(232, 88, 107, 0.7), 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.ad-fact {
+  position: absolute;
+  left: 70px;
+  right: 70px;
+  top: 1450px;
+  padding: 26px 34px;
+  border-radius: 28px;
+  background: rgba(14, 23, 18, 0.88);
+  border: 3px solid rgba(255, 211, 107, 0.6);
+  text-align: center;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.2;
+  color: #fff8ec;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ad-fact b {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 60px;
+  color: #ffd36b;
+}
+
+@keyframes ad-pan-down {
+  to {
+    transform: translateY(-420px);
+  }
+}
