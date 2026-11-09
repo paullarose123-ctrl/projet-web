@@ -1,15 +1,15 @@
 // Bande-son de la bande-annonce (promo/pub-trailer.html), rendue hors ligne (OfflineAudioContext) et calée sur
-// l'image : 120 battements par minute (un temps = 0,5 s), en ré mineur (Ré m, Si♭, Fa, Do).
-// Batterie, basse et accords synthétisés ici ; cloches, cordes pincées, nappes et souffles viennent du moteur du jeu.
+// l'image : 120 battements par minute (un temps = 0,5 s), en ré majeur comme la musique du jeu (Ré, Si m, Sol, La).
+// Batterie et basse synthétisées ici ; harpe, kalimba, marimba, cloches, cordes et souffles viennent du moteur du jeu.
 import { air, bell, boom, createBus, kalimba, marimba, midi, pluck, strings, bass as roundBass, type Bus } from '../audio/engine';
 
 type Ctx = AudioContext;
 
 const PROG = [
-  { root: 38, chord: [62, 65, 69] }, // Ré m
-  { root: 34, chord: [58, 62, 65] }, // Si♭
-  { root: 41, chord: [60, 65, 69] }, // Fa
-  { root: 36, chord: [60, 64, 67] }, // Do
+  { root: 38, chord: [62, 66, 69] }, // Ré
+  { root: 35, chord: [59, 62, 66] }, // Si m
+  { root: 43, chord: [59, 62, 67] }, // Sol
+  { root: 45, chord: [61, 64, 69] }, // La
 ];
 const chordAt = (t: number) => PROG[(((Math.floor((t - 4) / 2) % 4) + 4) % 4)];
 
@@ -185,25 +185,10 @@ function roar(ac: Ctx, out: AudioNode, t: number, gain = 0.32, dur = 1.3) {
   }
 }
 
-/** accord « cuivré » : scies désaccordées, filtre qui se referme */
-function stab(ac: Ctx, out: AudioNode, t: number, notes: number[], gain = 0.07, dur = 0.45) {
-  const f = ac.createBiquadFilter();
-  f.type = 'lowpass';
-  f.frequency.setValueAtTime(4200, t);
-  f.frequency.exponentialRampToValueAtTime(500, t + dur);
-  f.Q.value = 2;
-  const g = env(ac, t, gain, 0.006, dur);
-  f.connect(g).connect(out);
-  for (const n of notes)
-    for (const det of [-9, 0, 9]) {
-      const o = ac.createOscillator();
-      o.type = 'sawtooth';
-      o.frequency.value = midi(n);
-      o.detune.value = det;
-      o.connect(f);
-      o.start(t);
-      o.stop(t + dur + 0.05);
-    }
+/** accord d'orchestre : cordes qui attaquent franchement et harpe pincée, comme les instruments du jeu */
+function stab(ac: Ctx, bus: Bus, t: number, notes: number[], gain = 0.07, dur = 0.45) {
+  strings(ac, bus, notes.map(midi), t, dur, gain * 0.75, { attack: 0.02, release: Math.max(0.4, dur), open: 3600 });
+  notes.forEach((n, i) => pluck(ac, bus, midi(n + 12), t + i * 0.012, gain * 2.4, (i / Math.max(1, notes.length - 1) - 0.5) * 0.6, 0.65));
 }
 
 function sparkleRun(ac: Ctx, fx: Bus, t: number, notes: number[], step = 0.0625, gain = 0.05) {
@@ -222,6 +207,7 @@ export async function renderSoundtrack(duration: number): Promise<string> {
   const drumBus = createBus(ac, 0.8, 0.06);
   const drums = drumBus.dry;
   const synth = createBus(ac, 1.15, 0.18).dry;
+  const orch = createBus(ac, 1.2, 0.3);
 
   // ── 0 à 2 s : le sachet tombe, l'énergie monte
   strings(ac, music, [midi(38), midi(45), midi(50)], 0, 4, 0.045, { attack: 1.2, release: 1, open: 900 });
@@ -251,9 +237,9 @@ export async function renderSoundtrack(duration: number): Promise<string> {
 
   // ── 4 s : LÉGENDAIRE
   impact(ac, drums, fxb, 4.0, 1.2);
-  stab(ac, synth, 4.0, [50, 62, 65, 69], 0.06, 0.9);
-  strings(ac, music, [midi(50), midi(62), midi(65), midi(69), midi(74)], 4.0, 1.2, 0.05, { attack: 0.06, release: 2, open: 3400 });
-  [62, 65, 69, 74, 77, 81, 86].forEach((n, i) => pluck(ac, music, midi(n), 4.0 + i * 0.05, 0.2, (i - 3) * 0.12, 0.6));
+  stab(ac, orch, 4.0, [50, 62, 66, 69], 0.06, 0.9);
+  strings(ac, music, [midi(50), midi(62), midi(66), midi(69), midi(74)], 4.0, 1.2, 0.05, { attack: 0.06, release: 2, open: 3400 });
+  [62, 66, 69, 74, 78, 81, 86].forEach((n, i) => pluck(ac, music, midi(n), 4.0 + i * 0.05, 0.2, (i - 3) * 0.12, 0.6));
   bell(ac, fxb, midi(86), 4.35, 0.07, 0.2, 3);
   // ── 5 s : le lion jaillit
   impact(ac, drums, fxb, 5.0, 1);
@@ -282,8 +268,8 @@ export async function renderSoundtrack(duration: number): Promise<string> {
   for (let bar = 4; bar < 24; bar += 2) {
     const { chord, root } = chordAt(bar);
     if (bar >= 11 && bar < 13) continue;
-    stab(ac, synth, bar, [root + 12, ...chord], 0.05, 0.5);
-    stab(ac, synth, bar + 0.75, chord, 0.035, 0.3);
+    stab(ac, orch, bar, [root + 12, ...chord], 0.05, 0.6);
+    stab(ac, orch, bar + 0.75, chord, 0.035, 0.35);
     strings(ac, music, chord.map(midi), bar, 2, 0.022, { attack: 0.3, release: 0.6, open: 2400 });
   }
   roll(ac, drums, 12.5, 13.0, 0.2);
@@ -326,7 +312,7 @@ export async function renderSoundtrack(duration: number): Promise<string> {
     boom(ac, fxb, t + 0.25, 0.25, 55);
     sparkleRun(ac, fxb, t + 0.28, [[81, 86, 90, 93], [83, 86, 90, 95], [86, 90, 93, 98]][i], 0.055, 0.055);
   });
-  strings(ac, music, [midi(62), midi(69), midi(74), midi(77), midi(81)], 11.0, 2, 0.04, { attack: 0.4, release: 0.8, open: 4500 });
+  strings(ac, music, [midi(62), midi(69), midi(74), midi(78), midi(81)], 11.0, 2, 0.04, { attack: 0.4, release: 0.8, open: 4500 });
   crash(ac, drums, 11.0, 0.12);
   bell(ac, fxb, midi(98), 12.45, 0.06, 0, 2.5);
 
@@ -335,10 +321,10 @@ export async function renderSoundtrack(duration: number): Promise<string> {
   tom(ac, drums, 13.12, 90, 0.4);
   tom(ac, drums, 13.22, 80, 0.4);
   impact(ac, drums, fxb, 13.5, 1.3);
-  stab(ac, synth, 13.5, [38, 50, 62, 65, 69], 0.08, 1.1);
+  stab(ac, orch, 13.5, [38, 50, 62, 66, 69], 0.08, 1.1);
   roar(ac, synth, 13.62, 0.22, 0.8);
   impact(ac, drums, fxb, 14.5, 1);
-  stab(ac, synth, 14.5, [46, 58, 62, 65], 0.07, 0.8);
+  stab(ac, orch, 14.5, [47, 59, 62, 66], 0.07, 0.8);
   for (let t = 14.75; t < 16.5; t += 1) {
     tom(ac, drums, t, 120, 0.3);
     tom(ac, drums, t + 0.125, 95, 0.3);
@@ -348,7 +334,7 @@ export async function renderSoundtrack(duration: number): Promise<string> {
 
   // ── 17 à 19,5 s : la réserve, un air de marimba
   impact(ac, drums, fxb, 17.0, 0.7);
-  const tune = [74, 77, 81, 79, 77, 74, 72, 74, 77, 81, 84, 81, 79, 77, 76, 72];
+  const tune = [74, 79, 83, 79, 78, 74, 71, 74, 76, 81, 85, 81, 78, 76, 73, 76];
   tune.forEach((n, i) => marimba(ac, music, midi(n), 17.0 + i * 0.125, 0.12, (i % 2 ? 0.3 : -0.3)));
   whoosh(fxb, ac, 18.0, 0.14, 0.35);
   [18.45, 18.65, 18.85].forEach((t, i) => {
@@ -358,7 +344,7 @@ export async function renderSoundtrack(duration: number): Promise<string> {
 
   // ── 19,5 s : le final
   impact(ac, drums, fxb, 19.5, 1.2);
-  stab(ac, synth, 19.5, [38, 50, 62, 65, 69, 74], 0.07, 1.2);
+  stab(ac, orch, 19.5, [38, 50, 62, 66, 69, 74], 0.07, 1.2);
   bell(ac, fxb, midi(86), 19.65, 0.08, 0, 3);
   boom(ac, fxb, 19.62, 0.3, 50);
   for (let t = 20.0; t < 24.0 - 1e-6; t += 0.125) {
@@ -369,11 +355,11 @@ export async function renderSoundtrack(duration: number): Promise<string> {
   }
   [74, 78, 81, 86].forEach((n, i) => kalimba(ac, fxb, midi(n), 20.8 + i * 0.05, 0.14, (i - 1.5) * 0.3));
   boom(ac, fxb, 21.2, 0.22, 60);
-  stab(ac, synth, 22.3, [62, 65, 69, 74], 0.05, 0.6);
+  stab(ac, orch, 22.3, [62, 66, 69, 74], 0.05, 0.6);
   // dernier accord
   impact(ac, drums, fxb, 24.0, 1.1);
-  stab(ac, synth, 24.0, [38, 50, 57, 62, 65, 69], 0.08, 1.6);
-  strings(ac, music, [midi(50), midi(57), midi(62), midi(65), midi(69)], 24.0, 1.0, 0.05, { attack: 0.02, release: 0.9, open: 3000 });
+  stab(ac, orch, 24.0, [38, 50, 57, 62, 66, 69], 0.08, 1.6);
+  strings(ac, music, [midi(50), midi(57), midi(62), midi(66), midi(69)], 24.0, 1.0, 0.05, { attack: 0.02, release: 0.9, open: 3000 });
   bell(ac, fxb, midi(93), 24.0, 0.07, 0, 2);
 
   const buf = await off.startRendering();
