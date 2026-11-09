@@ -92,9 +92,8 @@
   font-family: 'Lilita One', var(--font-display);
   text-align: center;
   white-space: nowrap;
-  line-height: 0.98;
-  text-transform: uppercase;
-  transform: skewX(-7deg);
+  line-height: 1;
+  transform: skewX(-8deg);
 }
 
 .tr-line {
@@ -111,8 +110,8 @@
   color: var(--stroke);
   -webkit-text-stroke: var(--sw) var(--stroke);
   text-shadow:
-    0 calc(var(--sw) * 0.75) 0 var(--stroke),
-    0 calc(var(--sw) * 1.3) 40px rgba(0, 0, 0, 0.55);
+    0 calc(var(--sw) * 0.6) 0 var(--stroke),
+    0 calc(var(--sw) * 1.2) 36px rgba(3, 10, 6, 0.6);
 }
 
 .tr-line > span {
@@ -125,59 +124,136 @@
 }
 
 .tr-chip {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
   white-space: nowrap;
-  padding: 14px 34px;
+  padding: 16px 32px;
   border-radius: 999px;
-  background: rgba(12, 6, 24, 0.8);
-  border: 4px solid var(--edge, #ffd36b);
-  font-weight: 800;
-  font-size: 40px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #fff;
-  box-shadow:
-    0 0 24px var(--edge, #ffd36b),
-    0 12px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(20, 32, 25, 0.92);
+  border: 2px solid rgba(232, 222, 196, 0.22);
+  font-weight: 700;
+  font-size: 38px;
+  color: #efe8d6;
+  box-shadow: 0 14px 34px rgba(3, 10, 6, 0.5);
 }
 
-.tr-cta {
+.tr-chip b {
+  color: #ffd36b;
+  font-weight: 800;
+}
+
+.tr-coin {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3cf, #ffd36b 45%, #d9a441 75%, #a8741f);
+  box-shadow: inset 0 0 0 3px rgba(122, 78, 12, 0.35);
+}
+
+/* pastille de palier, comme les étiquettes sous les cartes du jeu */
+.tr-tag {
+  display: inline-block;
   white-space: nowrap;
-  padding: 30px 74px 34px;
+  padding: 10px 30px 12px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #fff3b0 0%, #ffd23f 45%, #ff9d1c 100%);
-  color: #3a1405;
-  font-family: 'Lilita One', var(--font-display);
-  font-size: 76px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   box-shadow:
-    0 12px 0 #b4560c,
-    0 0 50px rgba(255, 210, 63, 0.75),
-    0 30px 60px rgba(0, 0, 0, 0.5);
+    0 0 0 4px rgba(11, 21, 16, 0.55),
+    0 14px 30px rgba(3, 10, 6, 0.5);
+}
+
+/* sur-titre des écrans du jeu : petites capitales espacées, trait miel et lichen */
+.tr-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 38px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(255, 248, 236, 0.9);
+  text-shadow: 0 2px 14px rgba(3, 10, 6, 0.8);
+}
+
+.tr-eyebrow--tight {
+  font-size: 34px;
+  letter-spacing: 0.12em;
+}
+
+.tr-eyebrow::before {
+  content: '';
+  width: 64px;
+  height: 7px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #d9a441, #a9cf7e);
+  box-shadow: 0 0 16px rgba(217, 164, 65, 0.7);
+}
+
+/* encadré du jeu (panneau vert forêt) */
+.tr-panel-ui {
+  min-width: 760px;
+  padding: 40px 60px 46px;
+  border-radius: 40px;
+  text-align: center;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(230, 196, 120, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(232, 222, 196, 0.05), rgba(232, 222, 196, 0) 45%),
+    rgba(20, 32, 25, 0.94);
+  border: 2px solid rgba(232, 222, 196, 0.2);
+  box-shadow:
+    inset 0 2px 0 rgba(232, 222, 196, 0.08),
+    0 30px 70px rgba(3, 10, 6, 0.6);
+}
+
+.tr-panel-title {
+  margin: 14px 0 8px;
+  font-family: 'Lilita One', var(--font-display);
+  font-size: 150px;
+  line-height: 1;
+  color: #fff8ec;
+  transform: skewX(-8deg);
+  white-space: nowrap;
+}
+
+.tr-panel-text {
+  font-size: 40px;
+  font-weight: 600;
+  color: #b2ab95;
+}
+
+/* bouton principal du jeu : menthe pastel, bord plus sombre */
+.tr-cta {
+  white-space: nowrap;
+  padding: 32px 80px 36px;
+  border-radius: 34px;
+  background: #8fe3d4;
+  color: #0c3b35;
+  font-family: 'Lilita One', var(--font-display);
+  font-size: 80px;
+  box-shadow:
+    0 12px 0 #3fa596,
+    0 0 50px rgba(143, 227, 212, 0.45),
+    0 34px 60px rgba(3, 10, 6, 0.5);
 }
 
 .tr-logo {
   font-size: 156px;
   color: #fff8ec;
   white-space: nowrap;
-  filter: drop-shadow(0 0 24px rgba(255, 120, 220, 0.6)) drop-shadow(0 14px 30px rgba(0, 0, 0, 0.6));
-}
-
-.tr-tag {
-  white-space: nowrap;
-  font-weight: 800;
-  font-size: 44px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  filter: drop-shadow(0 0 30px rgba(255, 231, 189, 0.45)) drop-shadow(0 14px 30px rgba(3, 10, 6, 0.6));
 }
 
 .tr-small {
   white-space: nowrap;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 36px;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.8);
+  color: #efe8d6;
+  text-shadow: 0 3px 14px rgba(3, 10, 6, 0.85);
 }
 
 .tr-tear {
@@ -185,14 +261,37 @@
   left: -3%;
   width: 106%;
   top: 16%;
-  height: 16px;
-  margin-top: -8px;
+  height: 14px;
+  margin-top: -7px;
   border-radius: 99px;
-  background: linear-gradient(90deg, #fff6a8, #ffffff 50%, #ffd6f5);
+  background: linear-gradient(90deg, #fff3cf, #ffffff 50%, #f0ffd8);
   box-shadow:
-    0 0 22px 10px rgba(255, 240, 170, 0.95),
-    0 0 70px 26px rgba(255, 90, 210, 0.65);
+    0 0 22px 10px rgba(255, 240, 207, 0.95),
+    0 0 70px 26px rgba(255, 211, 107, 0.6);
   transform-origin: left center;
+}
+
+/* affiches peintes du jeu, en plein écran derrière chaque plan */
+.tr-land {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  transform-origin: 50% 70%;
+}
+
+.tr-land > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* grain de papier du jeu, par-dessus tout */
+.tr-grain {
+  position: absolute;
+  inset: 0;
+  background: var(--grain);
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 .tr-panel {
