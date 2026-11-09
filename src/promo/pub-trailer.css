@@ -386,3 +386,71 @@
   position: absolute;
   transform-style: preserve-3d;
 }
+
+/* le sachet en volume */
+.tr-pack {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.tr-pack-layer {
+  position: absolute;
+  inset: 0.6% 0.8%;
+  border-radius: 2.5%;
+  background: linear-gradient(180deg, #e3f6ef 0%, #8fd0c1 25%, #3d8f7f 70%, #173f37 100%);
+}
+
+.tr-pack-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 2.5%;
+  background: linear-gradient(180deg, #6cc6c0 0%, #ffe1a6 50%, #8cc2a6 51%, #0d2a26 100%);
+  color: #fff8ec;
+  text-align: center;
+}
+
+.tr-pack-back-logo {
+  font-size: 64px;
+  filter: drop-shadow(0 4px 10px rgba(3, 10, 6, 0.5));
+}
+
+.tr-pack-back-line {
+  font-family: 'Lilita One', var(--font-display);
+  font-size: 40px;
+}
+
+.tr-pack-back-small {
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* la bande du haut pivote autour de la déchirure */
+.tr-peel {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 16%;
+}
+
+.tr-mote {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe0 0%, #f2ffb0 22%, rgba(230, 255, 122, 0.35) 45%, rgba(230, 255, 122, 0) 70%);
+}
+
+.tr-pack-layer--mx {
+  background: linear-gradient(180deg, #ffe0b5 0%, #f28a5c 30%, #c4213a 65%, #05261a 100%);
+}
+
+.tr-pack-back--mx {
+  background: linear-gradient(180deg, #c4213a 0%, #ffe0b5 52%, #5ba878 53%, #05261a 100%);
+}
