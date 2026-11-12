@@ -2520,3 +2520,429 @@ h3 {
     animation: none !important;
   }
 }
+
+/* ───────────── Terrain du duel : le décor de la division, deux socles, la question au milieu, la main en bas ───────────── */
+.board {
+  --metal: #eebf98;
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+
+.board__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+}
+
+/* un voile pour que les cartes et le texte restent lisibles sur le paysage */
+.board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 34% at 50% 50%, color-mix(in srgb, var(--metal) 22%, transparent), transparent 75%),
+    linear-gradient(180deg, rgba(6, 12, 9, 0.62), rgba(6, 12, 9, 0.28) 30%, rgba(6, 12, 9, 0.28) 62%, rgba(6, 12, 9, 0.78));
+}
+
+.board__mat {
+  display: grid;
+  gap: 8px;
+  padding: 12px 10px 10px;
+}
+
+.board__scoreline {
+  display: grid;
+  grid-template-columns: 1fr auto auto 1fr;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.board__scoreline span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board__scoreline span:first-child {
+  text-align: right;
+}
+
+.board__scoreline span:last-child {
+  text-align: left;
+}
+
+.board__score {
+  min-width: 1.9em;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--metal);
+  color: #1c3124;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.board__row {
+  display: flex;
+  justify-content: center;
+  gap: clamp(4px, 1.6vw, 10px);
+}
+
+.board__opp {
+  transition: opacity 0.3s, filter 0.3s, transform 0.3s;
+}
+
+.board__opp.is-used {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.board__opp.is-playing {
+  opacity: 0.35;
+  transform: translateY(6px);
+}
+
+/* le terrain : socle adverse, question, ton socle */
+.board__field {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.socle {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.socle__slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(78px, min(26vw, 14vh), 128px);
+  aspect-ratio: 100 / 140;
+  border-radius: 14px;
+  border: 2px dashed color-mix(in srgb, var(--metal) 70%, transparent);
+  background: rgba(8, 14, 11, 0.42);
+  perspective: 900px;
+}
+
+/* le socle lui-même : une dalle ovale de la couleur du métal de la division */
+.socle__slot::after {
+  content: '';
+  position: absolute;
+  left: -16%;
+  right: -16%;
+  bottom: -16px;
+  height: 30px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--metal) 85%, white 15%), color-mix(in srgb, var(--metal) 35%, transparent) 70%, transparent);
+  opacity: 0.75;
+}
+
+.socle--opp .socle__slot::after {
+  bottom: auto;
+  top: -16px;
+}
+
+.socle__wait {
+  padding: 0 8px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.socle__card {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+}
+
+button.socle__card:not(:disabled) {
+  cursor: pointer;
+}
+
+.socle__card--drop {
+  animation: socle-drop 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.socle__card--flip {
+  animation: socle-flip 0.6s ease-out;
+  transform-origin: 50% 50%;
+}
+
+@keyframes socle-drop {
+  from {
+    transform: translateY(60px) scale(0.85);
+    opacity: 0;
+  }
+}
+
+@keyframes socle-flip {
+  from {
+    transform: rotateY(90deg) translateY(-30px);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+.socle.is-winner .socle__slot {
+  border-color: #ffd36b;
+  border-style: solid;
+  box-shadow: 0 0 24px rgba(255, 211, 107, 0.55);
+}
+
+.socle.is-loser .socle__card {
+  filter: grayscale(0.7) brightness(0.75);
+  transition: filter 0.4s 0.6s;
+}
+
+.socle__value {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  translate: -50% 0;
+  max-width: 190px;
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  white-space: nowrap;
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: rgba(6, 12, 9, 0.78);
+  border: 1px solid var(--line-2);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.1;
+  animation: value-pop 0.3s 0.55s both;
+}
+
+.socle--opp .socle__value {
+  bottom: -14px;
+}
+
+.socle--me .socle__value {
+  top: -14px;
+}
+
+.socle__value small {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.socle__value.is-winner {
+  background: #ffd36b;
+  color: #1c3124;
+  border-color: transparent;
+}
+
+.socle__value.is-winner small {
+  color: #3c4a33;
+}
+
+@keyframes value-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* la question de la manche, au milieu du terrain */
+.board__question {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: min(100%, 460px);
+  padding: 10px 16px 12px;
+  border-radius: 18px;
+  background: rgba(6, 12, 9, 0.72);
+  border: 1px solid color-mix(in srgb, var(--metal) 55%, transparent);
+  text-align: center;
+  backdrop-filter: blur(4px);
+  animation: question-in 0.4s ease-out;
+}
+
+.board__question.is-me {
+  border-color: var(--good);
+}
+
+.board__question.is-opp {
+  border-color: var(--bad);
+}
+
+@keyframes question-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+}
+
+.board__rounds {
+  display: flex;
+  gap: 5px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.board__rounds li {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.board__rounds li.is-current {
+  background: var(--metal);
+  box-shadow: 0 0 6px var(--metal);
+}
+
+.board__rounds li.is-me {
+  background: var(--good);
+}
+
+.board__rounds li.is-opp {
+  background: var(--bad);
+}
+
+.board__rounds li.is-draw {
+  background: var(--text-faint);
+}
+
+.board__round {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--metal);
+}
+
+.board__record {
+  margin: 0;
+  font-size: clamp(1.3rem, 5vw, 1.8rem);
+  text-transform: none;
+}
+
+.board__desc {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.board__verdict {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  animation: value-pop 0.3s 0.6s both;
+}
+
+.board__question.is-me .board__verdict {
+  color: var(--good);
+}
+
+.board__question.is-opp .board__verdict {
+  color: var(--bad);
+}
+
+.board__actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* sur un écran large, les deux socles se font face, la question entre les deux */
+@media (min-width: 760px) {
+  .board__field {
+    grid-template-columns: 1fr minmax(0, 340px) 1fr;
+    align-items: center;
+    padding: 14px 18px;
+  }
+
+  .board__field .socle--opp {
+    order: 3;
+  }
+
+  .board__field .socle--me {
+    order: 1;
+  }
+
+  .board__field .board__question {
+    order: 2;
+  }
+
+  .socle--opp .socle__slot::after,
+  .socle--me .socle__slot::after {
+    top: auto;
+    bottom: -16px;
+  }
+
+  .socle--me .socle__value {
+    top: auto;
+    bottom: -14px;
+  }
+}
+
+/* ta main : les animaux déjà joués en grisé, celui posé sur le socle laisse sa place vide */
+.board__hand {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.board__hand:not(:disabled):hover {
+  transform: translateY(-6px);
+}
+
+.board__hand.is-placed {
+  opacity: 0.18;
+  transform: translateY(-4px);
+}
+
+.board__hand.is-used {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+.board__hand:disabled {
+  cursor: default;
+}
+
+.board__quit {
+  display: flex;
+  justify-content: center;
+  padding: 0 12px 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .socle__card--drop,
+  .socle__card--flip,
+  .socle__value,
+  .board__question,
+  .board__verdict {
+    animation: none;
+  }
+}

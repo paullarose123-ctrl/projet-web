@@ -16,8 +16,6 @@ import {
   canDuel,
   duelResult,
   formatRecordValue,
-  isFree,
-  isSuddenDeath,
   rewardFor,
   type DuelRound,
   type DuelState,
@@ -30,6 +28,7 @@ import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
 import { DivisionBadge } from '../components/DivisionBadge';
+import { DuelBoard } from '../components/DuelBoard';
 import { DIVISION_COUNT, DIVISION_NUMBERS, TIER_NAMES, TOP_DIVISION, divisionInfo, divisionName } from '../engine/divisions';
 import {
   HARD_DIVISION,
@@ -404,12 +403,7 @@ function DuelView({ match }: { match: DuelState }) {
   const bestDivision = useGame((s) => s.bestDivision);
   const winStreak = useGame((s) => s.winStreak);
   const abandon = useGame((s) => s.abandonMatch);
-  const [selected, setSelected] = useState<number | null>(null);
   const [revealing, setRevealing] = useState(false);
-  const [confirmAbandon, setConfirmAbandon] = useState(false);
-
-  const recordId = match.records[match.round];
-  const record = recordId ? RECORDS[recordId] : null;
 
   if (match.finished && !revealing) {
     const result = duelResult(match);
@@ -508,113 +502,17 @@ function DuelView({ match }: { match: DuelState }) {
   }
 
   const lastLog = match.log[match.log.length - 1];
-  if (revealing && lastLog) {
-    return (
-      <RoundResolution
-        match={match}
-        log={lastLog}
-        onNext={() => {
-          setRevealing(false);
-          window.scrollTo({ top: 0 });
-        }}
-      />
-    );
-  }
-
   return (
-    <div className="match">
-      <section className="scoreboard" aria-label="Score">
-        <div className="scoreboard__team">
-          <span>{match.me.name}</span>
-        </div>
-        <div className="scoreboard__score">
-          <b>{match.me.score}</b>
-          <span>–</span>
-          <b>{match.opp.score}</b>
-        </div>
-        <div className="scoreboard__team scoreboard__team--opp">
-          <span>{match.opp.name}</span>
-        </div>
-        <ol className="scoreboard__rounds" aria-label="Records du duel">
-          {/* les questions se découvrent manche après manche : celles à venir restent cachées */}
-          {Array.from({ length: Math.max(ROUNDS, match.records.length) }, (_, i) => (
-            <li key={i} className={i < match.round ? `is-${match.log[i].winner}` : i === match.round ? 'is-current' : ''}>
-              {i <= match.round && match.records[i] ? RECORDS[match.records[i]].name : '?'}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {record && (
-        <section className="event-banner">
-          <p className="eyebrow">{isSuddenDeath(match) ? 'Manche décisive : tous tes animaux peuvent rejouer' : `Manche ${match.round + 1} sur ${ROUNDS}`}</p>
-          <h2>{record.name}</h2>
-          <p>{record.desc}</p>
-        </section>
-      )}
-
-      <section className="panel">
-        <h3 className="panel__title">L’équipe adverse</h3>
-        <p className="muted small">Personne ne voit les mesures : c’est ta culture générale qui compte.</p>
-        <div className="card-row card-row--tight">
-          {match.opp.cards.map((card, i) => (
-            <div key={card.uid} className={`opp-card${isFree(match, 'opp', i) ? '' : ' is-used'}`}>
-              <Card card={card} size="xs" hideFacts />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel">
-        <h3 className="panel__title">Choisis ton animal pour « {record?.name} »</h3>
-        <div className="hand">
-          {match.me.cards.map((card, i) => {
-            const used = !isFree(match, 'me', i);
-            return (
-              <button
-                key={card.uid}
-                type="button"
-                className={`hand__card${used ? ' is-used' : ''}${selected === i ? ' is-selected' : ''}`}
-                disabled={used}
-                onClick={() => {
-                  sfx.click();
-                  setSelected(i);
-                }}
-                aria-pressed={selected === i}
-                aria-label={ATHLETES_BY_ID[card.athleteId].last}
-              >
-                <Card card={card} size="sm" hideFacts />
-              </button>
-            );
-          })}
-        </div>
-        <div className="btn-row">
-          <button
-            type="button"
-            className="btn btn--primary btn--xl"
-            disabled={selected === null}
-            onClick={() => {
-              if (selected === null) return;
-              play(selected);
-              setSelected(null);
-              setRevealing(true);
-              window.scrollTo({ top: 0 });
-            }}
-          >
-            Jouer la manche
-          </button>
-          {!confirmAbandon ? (
-            <button type="button" className="btn btn--ghost" onClick={() => setConfirmAbandon(true)}>
-              Abandonner
-            </button>
-          ) : (
-            <button type="button" className="btn btn--danger" onClick={abandon}>
-              Confirmer l’abandon (aucune récompense)
-            </button>
-          )}
-        </div>
-      </section>
-    </div>
+    <DuelBoard
+      match={match}
+      reveal={revealing && lastLog ? lastLog : null}
+      onPlay={(index) => {
+        play(index);
+        setRevealing(true);
+      }}
+      onNext={() => setRevealing(false)}
+      onAbandon={abandon}
+    />
   );
 }
 
@@ -622,15 +520,18 @@ export function MatchScreen() {
   const match = useGame((s) => s.match);
   return (
     <div className="screen">
+      {/* pendant un duel, le terrain prend toute la place */}
+      {!match && (
       <header className="screen__head screen__head--art">
         <Landscape className="screen__art" scene={SCREEN_SCENES.matchs} seed="arène" />
         <SaisonHead seed="arène" />
         <div>
           <p className="eyebrow">Duel de records</p>
-          <h1>{match ? `${match.me.name} contre ${match.opp.name}` : 'Composer mon équipe'}</h1>
-          {!match && <p className="muted">5 animaux, 5 questions : le plus lourd, le plus petit, vient d’Afrique… Les mesures sont cachées : c’est ta culture générale qui compte.</p>}
+          <h1>Composer mon équipe</h1>
+          <p className="muted">5 animaux, 5 questions : le plus lourd, le plus petit, vient d’Afrique… Les mesures sont cachées : c’est ta culture générale qui compte.</p>
         </div>
       </header>
+      )}
       {match ? <DuelView key={match.id} match={match} /> : <TeamBuilder />}
     </div>
   );
