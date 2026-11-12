@@ -6,7 +6,7 @@ import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE1_RETIR
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
-import { isReleased, serieOf } from '../engine/series';
+import { isReleased, releasedAthletes, serieOf } from '../engine/series';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
   MAX_MY_LISTINGS,
@@ -20,7 +20,16 @@ import {
 } from '../engine/market';
 import { TEAM_SIZE, autoTeamFrom, canDuel, createDuel, duelResult, playDuelRound, rewardFor, type DuelState } from '../engine/duel';
 import { makeUid } from '../engine/random';
-import { divisionName } from '../engine/divisions';
+import { DIVISION_COUNT, divisionName } from '../engine/divisions';
+import {
+  applyLeaguePoints,
+  leaguePoints,
+  seasonKey,
+  seasonLabel,
+  seasonReward,
+  seasonStartDivision,
+  streakMultiplier,
+} from '../engine/league';
 import { newBadges } from '../engine/badges';
 import {
   ENCLOS_BY_ID,
@@ -62,12 +71,14 @@ export const MAX_FREE_PACKS = 5;
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
 export const UNLIMITED_BALLES = 99_999_999_999;
-export const DIVISION_POINTS_TO_PROMOTE = 7;
+export { leaguePoints };
+/** Division à atteindre pour recevoir une carte Prime en cadeau de promotion : la Légende. */
+const PRIME_DIVISION = 2;
 
-/** Points de ligue d'un duel : victoire +3, nul +1, défaite −2. Un duel entre amis ne compte pas pour la ligue. */
-export function leaguePoints(result: 'win' | 'draw' | 'loss', friend?: string): number {
-  if (friend) return 0;
-  return result === 'win' ? 3 : result === 'draw' ? 1 : -2;
+/** Graines d'un duel : le barème de la division, +25 % à partir de 3 victoires d'affilée en ligue. */
+export function duelReward(result: 'win' | 'draw' | 'loss', division: number, streak = 0): number {
+  const base = rewardFor(result, division);
+  return result === 'win' ? Math.round((base * streakMultiplier(streak)) / 10) * 10 : base;
 }
 
 /** Graines rendues pour chaque carte d'une espèce retirée du jeu (sauvegardes < v4). */
@@ -193,6 +204,13 @@ export interface GameState {
   team: string[];
   division: number;
   divisionPoints: number;
+  /** meilleure division jamais atteinte : chaque nouvelle division rapporte un booster (une seule fois) */
+  bestDivision: number;
+  /** victoires d'affilée en ligue (bonus de graines à partir de 3) */
+  winStreak: number;
+  /** saison de ligue en cours (« 2026-11 ») et duels de ligue joués pendant cette saison */
+  leagueSeason: string;
+  seasonPlayed: number;
   /** duel de records en cours */
   match: DuelState | null;
   stats: GameStats;
@@ -351,8 +369,12 @@ function initialState(now: number) {
     market: createMarket(now, Math.random),
     watchlist: [] as string[],
     team: [] as string[],
-    division: 10,
+    division: DIVISION_COUNT,
     divisionPoints: 0,
+    bestDivision: DIVISION_COUNT,
+    winStreak: 0,
+    leagueSeason: seasonKey(now),
+    seasonPlayed: 0,
     match: null as DuelState | null,
     stats: { packsOpened: 0, cardsSold: 0, cardsBought: 0, matchesPlayed: 0, matchesWon: 0 } as GameStats,
     claimed: [] as string[],
@@ -410,7 +432,7 @@ export const OBJECTIVES: Objective[] = [
   { id: 'first-win', title: 'Gagner un duel de records', reward: 1_500, progress: (s) => [Math.min(1, s.stats.matchesWon), 1] },
   { id: 'first-epic', title: 'Obtenir une carte Épique', reward: 2_500, progress: (s) => [hasRarity(s, 3) ? 1 : 0, 1] },
   { id: 'collect-100', title: 'Obtenir 100 espèces différentes', reward: 10_000, progress: (s) => [Math.min(100, uniqueCount(s)), 100] },
-  { id: 'division-5', title: `Atteindre la division ${divisionName(5)}`, reward: 8_000, progress: (s) => [Math.min(5, 10 - s.division), 5] },
+  { id: 'division-5', title: `Atteindre la division ${divisionName(DIVISION_COUNT - 5)}`, reward: 8_000, progress: (s) => [Math.min(5, DIVISION_COUNT - s.division), 5] },
   { id: 'first-legend', title: 'Obtenir une carte Légendaire', reward: 10_000, progress: (s) => [hasRarity(s, 4) ? 1 : 0, 1] },
   { id: 'first-prime', title: 'Obtenir une carte Prime', reward: 10_000, progress: (s) => [Object.keys(s.primesFound).length ? 1 : 0, 1] },
   { id: 'sport-complete', title: 'Compléter une famille de l’album', reward: 20_000, progress: (s) => bestSportCompletion(s) },
@@ -581,6 +603,29 @@ export const useGame = create<GameState>()(
             set({ freePacks, nextFreePackAt: freePacks >= MAX_FREE_PACKS ? now + FREE_PACK_INTERVAL : state.nextFreePackAt + earned * FREE_PACK_INTERVAL });
           } else if (state.freePacks >= MAX_FREE_PACKS && state.nextFreePackAt < now) {
             set({ nextFreePackAt: now + FREE_PACK_INTERVAL });
+          }
+          // fin de la saison de ligue : récompense selon la division atteinte (si on a joué), puis 2 divisions plus bas
+          const season = seasonKey(now);
+          if (state.leagueSeason !== season) {
+            const played = state.seasonPlayed > 0;
+            const reward = played ? seasonReward(state.division) : { balles: 0, boosters: 0 };
+            const division = seasonStartDivision(state.division);
+            set((s) => ({
+              leagueSeason: season,
+              seasonPlayed: 0,
+              division,
+              divisionPoints: 0,
+              winStreak: 0,
+              balles: s.balles + reward.balles,
+              freePacks: s.freePacks + reward.boosters,
+            }));
+            if (played) {
+              const boosters = reward.boosters ? ` et ${reward.boosters} booster${reward.boosters > 1 ? 's' : ''}` : '';
+              pushToast(
+                'gold',
+                `Fin de la saison ${seasonLabel(state.leagueSeason)} en division ${divisionName(state.division)} : +${formatBalles(reward.balles)}${boosters}. Nouvelle saison en division ${divisionName(division)}`,
+              );
+            }
           }
           // marché
           const { state: market, events } = advanceMarket(get().market, now, Math.random);
@@ -797,25 +842,35 @@ export const useGame = create<GameState>()(
           const match = state.match;
           if (!match || !match.finished) return;
           const result = duelResult(match);
-          const reward = rewardFor(result, match.division);
-          let division = state.division;
-          // un duel entre amis rapporte des graines mais ne compte pas pour la ligue ; les points ne descendent pas sous zéro
-          let points = Math.max(0, state.divisionPoints + leaguePoints(result, match.friend));
-          let promoted = false;
-          if (points >= DIVISION_POINTS_TO_PROMOTE && division > 1) {
-            division -= 1;
-            points = 0;
-            promoted = true;
-          }
+          const league = !match.friend;
+          // un duel entre amis rapporte des graines mais ne compte ni pour la ligue ni pour la série de victoires
+          const winStreak = league ? (result === 'win' ? state.winStreak + 1 : 0) : state.winStreak;
+          const reward = duelReward(result, match.division, league ? winStreak : 0);
+          const step = league
+            ? applyLeaguePoints(state.division, state.divisionPoints, leaguePoints(result))
+            : { division: state.division, points: state.divisionPoints, promoted: false, relegated: false };
+          // première fois dans cette division : un booster offert, et une carte Prime en arrivant en Légende
+          const firstTime = step.promoted && step.division < state.bestDivision;
           set((s) => ({
             match: null,
             balles: s.balles + reward,
-            division,
-            divisionPoints: points,
+            division: step.division,
+            divisionPoints: step.points,
+            bestDivision: Math.min(s.bestDivision, step.division),
+            winStreak,
+            seasonPlayed: s.seasonPlayed + (league ? 1 : 0),
+            freePacks: s.freePacks + (firstTime ? 1 : 0),
             stats: { ...s.stats, matchesPlayed: s.stats.matchesPlayed + 1, matchesWon: s.stats.matchesWon + (result === 'win' ? 1 : 0) },
           }));
-          pushToast(result === 'win' ? 'gold' : 'info', `${result === 'win' ? 'Victoire' : result === 'draw' ? 'Match nul' : 'Défaite'} : +${formatBalles(reward)}`);
-          if (promoted) pushToast('gold', `Promotion ! Bienvenue en division ${divisionName(division)}`);
+          const bonus = league && result === 'win' && streakMultiplier(winStreak) > 1 ? ` (série de ${winStreak} victoires : +25 %)` : '';
+          pushToast(result === 'win' ? 'gold' : 'info', `${result === 'win' ? 'Victoire' : result === 'draw' ? 'Match nul' : 'Défaite'} : +${formatBalles(reward)}${bonus}`);
+          if (step.promoted) pushToast('gold', `Promotion ! Bienvenue en division ${divisionName(step.division)}${firstTime ? ' : un booster gratuit t’attend' : ''}`);
+          if (step.relegated) pushToast('error', `Relégation : retour en division ${divisionName(step.division)}`);
+          if (firstTime && step.division <= PRIME_DIVISION) {
+            const primes = releasedAthletes().filter((a) => canBePrime(a) && canDuel(a));
+            const athlete = primes[Math.floor(Math.random() * primes.length)];
+            if (athlete) get().receiveOnce(`ligue:prime:${step.division}`, { athleteId: athlete.id, variant: 'prime' }, `Cadeau de la Légende : ${athlete.last} en version Prime !`);
+          }
           bumpDaily({ played: 1, won: result === 'win' ? 1 : 0 });
         },
 
@@ -1065,7 +1120,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 21,
+      version: 22,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1191,6 +1246,18 @@ export const useGame = create<GameState>()(
               return !!athlete && canLiveIn(athlete, id as EnclosId);
             });
           }
+        }
+        // version 22 : la ligue passe de 10 à 14 divisions (Requin de diamant, rubis et Baleine bleue mythique ajoutés
+        // au-dessus du Tigre de diamant) : les numéros sont décalés de 4, chacun garde son blason (le Lion légendaire
+        // devient le Requin de diamant, juste au-dessus du Tigre) ; la première saison de ligue commence
+        if (version < 22) {
+          const shift = DIVISION_COUNT - 10;
+          state.division = Math.min(DIVISION_COUNT, (state.division ?? 10) + shift);
+          state.bestDivision = state.division;
+          state.winStreak = 0;
+          state.leagueSeason = seasonKey(Date.now());
+          state.seasonPlayed = 0;
+          if (state.match) state.match = { ...state.match, division: Math.min(DIVISION_COUNT, state.match.division + shift) };
         }
         return state;
       },

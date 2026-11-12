@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DIVISION_POINTS_TO_PROMOTE, leaguePoints, useGame } from '../store/game';
+import { duelReward, useGame } from '../store/game';
 import { useUi } from '../store/ui';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { displayName } from '../engine/cards';
 import {
   MAX_QUESTIONS,
+  MAX_TIEBREAKS,
   RECORDS,
   RECORDS_BY_THEME,
   RECORD_ORDER,
@@ -15,6 +16,8 @@ import {
   canDuel,
   duelResult,
   formatRecordValue,
+  isFree,
+  isSuddenDeath,
   rewardFor,
   type DuelRound,
   type DuelState,
@@ -27,7 +30,20 @@ import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
 import { DivisionBadge } from '../components/DivisionBadge';
-import { TIER_NAMES, divisionInfo, divisionName } from '../engine/divisions';
+import { DIVISION_COUNT, DIVISION_NUMBERS, TIER_NAMES, TOP_DIVISION, divisionInfo, divisionName } from '../engine/divisions';
+import {
+  HARD_DIVISION,
+  STREAK_FROM,
+  applyLeaguePoints,
+  canBeRelegated,
+  leaguePoints,
+  pointsToPromote,
+  seasonDaysLeft,
+  seasonKey,
+  seasonLabel,
+  seasonReward,
+  seasonStartDivision,
+} from '../engine/league';
 import { SaisonHead } from '../components/Saison';
 
 // Duel de records : 5 animaux, 5 records tirés au sort. Ce sont les vraies mesures des espèces
@@ -120,9 +136,24 @@ function Picker({ initial, onConfirm, onClose }: { initial: string[]; onConfirm:
   );
 }
 
-/** « Hérisson de bronze » → « Hérisson », « Lion légendaire » → « Lion ». */
+/** « Hérisson de bronze » → « Hérisson », « Lion légendaire » → « Lion », « Baleine bleue mythique » → « Baleine bleue ». */
 function shortDivisionName(number: number): string {
-  return divisionName(number).replace(/ (de |d’).*$| légendaire$/, '');
+  return divisionName(number).replace(/ (de |d’).*$| légendaire$| mythique$/, '');
+}
+
+/** La saison de ligue en cours : sa fin, la récompense de la division actuelle et la division de départ de la suivante. */
+function SeasonInfo({ division }: { division: number }) {
+  const played = useGame((s) => s.seasonPlayed);
+  const days = seasonDaysLeft();
+  const reward = seasonReward(division);
+  const next = seasonStartDivision(division);
+  return (
+    <p className="division__season small">
+      <b>Saison {seasonLabel(seasonKey())}</b> · fin dans {days} jour{days > 1 ? 's' : ''}. Récompense actuelle : <Balles value={reward.balles} />
+      {reward.boosters ? ` + ${reward.boosters} booster${reward.boosters > 1 ? 's' : ''}` : ''}
+      {played ? '' : ' (joue au moins un duel de ligue ce mois-ci pour la recevoir)'}. La saison suivante repart en division {divisionName(next)}.
+    </p>
+  );
 }
 
 function TeamBuilder() {
@@ -135,6 +166,7 @@ function TeamBuilder() {
   const startMatch = useGame((s) => s.startMatch);
   const division = useGame((s) => s.division);
   const points = useGame((s) => s.divisionPoints);
+  const winStreak = useGame((s) => s.winStreak);
   const openDetail = useUi((s) => s.openDetail);
   const [picking, setPicking] = useState(false);
   const ladder = useRef<HTMLOListElement>(null);
@@ -160,15 +192,26 @@ function TeamBuilder() {
           <span className="division__metal">{TIER_NAMES[divisionInfo(division).tier]}</span>
         </div>
         <div>
-          <p className="eyebrow">Ligue des naturalistes · rang {11 - division}/10</p>
+          <p className="eyebrow">
+            Ligue des naturalistes · rang {DIVISION_COUNT + 1 - division}/{DIVISION_COUNT}
+          </p>
           <h2>Division {divisionName(division)}</h2>
           <p className="muted">
-            Plus la division est haute, mieux tes adversaires connaissent leurs animaux. Victoire : <Balles value={rewardFor('win', division)} /> · Nul :{' '}
-            <Balles value={rewardFor('draw', division)} />
+            Plus la division est haute, mieux tes adversaires connaissent leurs animaux
+            {division <= HARD_DIVISION ? ' : à partir du rubis, ils composent même leur équipe pour les questions du duel' : ''}. Victoire :{' '}
+            <Balles value={rewardFor('win', division)} /> · Nul : <Balles value={rewardFor('draw', division)} />
           </p>
+          {winStreak > 0 && (
+            <p className="small">
+              <b>
+                Série de {winStreak} victoire{winStreak > 1 ? 's' : ''}
+              </b>
+              {winStreak >= STREAK_FROM ? ' : +25 % de graines à chaque victoire' : ` : +25 % de graines à partir de ${STREAK_FROM} victoires d’affilée`}
+            </p>
+          )}
         </div>
         <div className="division__progress">
-          {division > 1 ? (
+          {division > TOP_DIVISION ? (
             <>
               {/* le prochain blason, encore dans l'ombre */}
               <div className="division__next">
@@ -179,20 +222,28 @@ function TeamBuilder() {
                 </span>
               </div>
               <span>
-                {points}/{DIVISION_POINTS_TO_PROMOTE} points pour monter
+                {points}/{pointsToPromote(division)} points pour monter
               </span>
               <span className="meter">
-                <span className="meter__fill" style={{ width: `${(points / DIVISION_POINTS_TO_PROMOTE) * 100}%` }} />
+                <span className="meter__fill" style={{ width: `${(points / pointsToPromote(division)) * 100}%` }} />
               </span>
-              <span className="muted small">Victoire +3, nul +1, défaite −2</span>
+              <span className="muted small">
+                Victoire +3, nul +1, défaite −2{canBeRelegated(division) ? ' · sous zéro, tu redescends d’une division' : ''}
+              </span>
             </>
           ) : (
-            <span>Tu es au sommet de la ligue : le blason légendaire est à toi.</span>
+            <>
+              <span>
+                Tu es au sommet de la ligue : <b>{points} étoile{points > 1 ? 's' : ''}</b>
+              </span>
+              <span className="muted small">Chaque victoire rapporte 3 étoiles, une défaite en retire 2 ; sous zéro, tu redescends d’une division.</span>
+            </>
           )}
         </div>
-        {/* l'échelle des dix blasons : gagnés, actuel, à conquérir */}
-        <ol ref={ladder} className="division__ladder" aria-label="Les dix divisions de la ligue">
-          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
+        <SeasonInfo division={division} />
+        {/* l'échelle des blasons : gagnés, actuel, à conquérir */}
+        <ol ref={ladder} className="division__ladder" aria-label={`Les ${DIVISION_COUNT} divisions de la ligue`}>
+          {DIVISION_NUMBERS.map((n) => (
             <li key={n} className={n === division ? 'is-current' : n > division ? 'is-won' : 'is-locked'}>
               <DivisionBadge number={n} state={n === division ? 'current' : n > division ? 'won' : 'locked'} />
               <span>{shortDivisionName(n)}</span>
@@ -262,11 +313,13 @@ function TeamBuilder() {
           <h2>Règles du duel de records</h2>
         </summary>
         <p>
-          Un duel se joue en {ROUNDS} manches. Chaque manche est une question tirée au sort, annoncée dès le début : un record (le plus lourd, le plus menacé…)
-          ou une question oui/non (« Pond des œufs ? », « Sait voler ? », « Plus lourd qu’un humain ? »). Les {RECORD_ORDER.length} questions sont rangées en{' '}
+          Un duel se joue en {ROUNDS} manches. Chaque manche est une question tirée au sort, découverte au moment de la jouer : un record (le plus lourd, le
+          plus menacé…) ou une question oui/non (« Pond des œufs ? », « Sait voler ? », « Plus lourd qu’un humain ? »). Les {RECORD_ORDER.length} questions sont rangées en{' '}
           {Object.keys(THEMES).length} thèmes ; un duel en pioche cinq différents, avec au plus {MAX_QUESTIONS} questions oui/non. Tu choisis quel animal
           envoyer, sans voir ses mesures : c’est un jeu de culture générale. Chaque animal ne joue qu’une fois. Ce sont les vraies données de l’espèce qui
           comptent (celles de sa fiche « En savoir plus ») ; un animal dont la mesure n’est pas connue perd la manche, et pour une question, oui bat non.
+          En cas d’égalité après {ROUNDS} manches, une manche décisive départage les deux équipes : tous les animaux peuvent rejouer (jusqu’à{' '}
+          {MAX_TIEBREAKS} manches décisives, puis c’est un match nul).
         </p>
         <ul className="rules__events">
           {(Object.keys(THEMES) as Theme[]).map((theme) => (
@@ -324,7 +377,7 @@ export function RoundResolution({ match, log, onNext }: { match: DuelState; log:
   return (
     <div className={`clash clash--${log.winner}`}>
       <p className="clash__event">
-        Manche {log.round + 1} · {record.name}
+        {log.round >= ROUNDS ? 'Manche décisive' : `Manche ${log.round + 1}`} · {record.name}
       </p>
       <div className="clash__arena">
         {side('me')}
@@ -348,6 +401,8 @@ function DuelView({ match }: { match: DuelState }) {
   const finish = useGame((s) => s.finishMatch);
   const division = useGame((s) => s.division);
   const divisionPoints = useGame((s) => s.divisionPoints);
+  const bestDivision = useGame((s) => s.bestDivision);
+  const winStreak = useGame((s) => s.winStreak);
   const abandon = useGame((s) => s.abandonMatch);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealing, setRevealing] = useState(false);
@@ -359,27 +414,49 @@ function DuelView({ match }: { match: DuelState }) {
   if (match.finished && !revealing) {
     const result = duelResult(match);
     // les points que ce duel rapporte (ou fait perdre) à la ligue, et la promotion qu'ils déclenchent peut-être
-    const after = Math.max(0, divisionPoints + leaguePoints(result, match.friend));
-    const delta = after - divisionPoints;
-    const promotion = !match.friend && division > 1 && after >= DIVISION_POINTS_TO_PROMOTE;
+    const league = !match.friend;
+    const step = applyLeaguePoints(division, divisionPoints, leaguePoints(result, match.friend));
+    const after = step.points;
+    const delta = league && !step.promoted && !step.relegated ? after - divisionPoints : 0;
+    const promotion = league && step.promoted;
+    const relegation = league && step.relegated;
+    const firstTime = promotion && step.division < bestDivision;
+    const streak = league && result === 'win' ? winStreak + 1 : 0;
+    const reward = duelReward(result, match.division, streak);
     return (
       <section className={`panel final final--${result}`}>
         <p className="eyebrow">Fin du duel · {match.friend ? `contre ton ami ${match.friend}` : `Division ${divisionName(match.division)}`}</p>
         <h1>{result === 'win' ? 'Victoire !' : result === 'draw' ? 'Match nul' : 'Défaite'}</h1>
         {promotion ? (
           <div className="final__promotion">
-            <DivisionBadge number={division - 1} state="current" className="final__badge" />
+            <DivisionBadge number={step.division} state="current" className="final__badge" />
             <div>
               <p className="eyebrow">Promotion !</p>
-              <h2>Division {divisionName(division - 1)}</h2>
-              <p className="muted">Ce nouveau blason est à toi : encaisse pour monter dans la ligue.</p>
+              <h2>Division {divisionName(step.division)}</h2>
+              <p className="muted">
+                Ce nouveau blason est à toi : encaisse pour monter dans la ligue.
+                {firstTime && ' Première fois ici : un booster gratuit en cadeau'}
+                {firstTime && step.division <= 2 && ', et une carte Prime pour ton arrivée en Légende'}
+                {firstTime && '.'}
+              </p>
+            </div>
+          </div>
+        ) : relegation ? (
+          <div className="final__promotion">
+            <DivisionBadge number={step.division} state="current" className="final__badge" />
+            <div>
+              <p className="eyebrow">Relégation</p>
+              <h2>Retour en division {divisionName(step.division)}</h2>
+              <p className="muted">
+                Tu repars avec {step.points}/{pointsToPromote(step.division)} points : quelques victoires et tu remontes.
+              </p>
             </div>
           </div>
         ) : (
           !match.friend && (
             <div className="final__league">
               <DivisionBadge number={division} state="current" className="final__badge final__badge--small" />
-              {division > 1 ? (
+              {division > TOP_DIVISION ? (
                 <span>
                   {delta !== 0 && (
                     <b className={delta > 0 ? 'final__delta is-up' : 'final__delta is-down'}>
@@ -388,10 +465,19 @@ function DuelView({ match }: { match: DuelState }) {
                     </b>
                   )}
                   {delta !== 0 && ' · '}
-                  {Math.min(DIVISION_POINTS_TO_PROMOTE, after)}/{DIVISION_POINTS_TO_PROMOTE} pour le blason {divisionName(division - 1)}
+                  {after}/{pointsToPromote(division)} pour le blason {divisionName(division - 1)}
                 </span>
               ) : (
-                <span>Le blason légendaire reste à toi</span>
+                <span>
+                  {delta !== 0 && (
+                    <b className={delta > 0 ? 'final__delta is-up' : 'final__delta is-down'}>
+                      {delta > 0 ? '+' : '−'}
+                      {Math.abs(delta)} étoile{Math.abs(delta) > 1 ? 's' : ''}
+                    </b>
+                  )}
+                  {delta !== 0 && ' · '}
+                  {after} étoile{after > 1 ? 's' : ''} au sommet de la ligue
+                </span>
               )}
             </div>
           )
@@ -411,7 +497,8 @@ function DuelView({ match }: { match: DuelState }) {
           ))}
         </ol>
         <p>
-          Récompense : <Balles value={rewardFor(result, match.division)} />
+          Récompense : <Balles value={reward} />
+          {reward > rewardFor(result, match.division) && ` (série de ${streak} victoires : +25 %)`}
         </p>
         <button type="button" className="btn btn--primary btn--xl" onClick={finish}>
           Encaisser et continuer
@@ -449,9 +536,10 @@ function DuelView({ match }: { match: DuelState }) {
           <span>{match.opp.name}</span>
         </div>
         <ol className="scoreboard__rounds" aria-label="Records du duel">
-          {match.records.map((id, i) => (
+          {/* les questions se découvrent manche après manche : celles à venir restent cachées */}
+          {Array.from({ length: Math.max(ROUNDS, match.records.length) }, (_, i) => (
             <li key={i} className={i < match.round ? `is-${match.log[i].winner}` : i === match.round ? 'is-current' : ''}>
-              {RECORDS[id].name}
+              {i <= match.round && match.records[i] ? RECORDS[match.records[i]].name : '?'}
             </li>
           ))}
         </ol>
@@ -459,9 +547,7 @@ function DuelView({ match }: { match: DuelState }) {
 
       {record && (
         <section className="event-banner">
-          <p className="eyebrow">
-            Manche {match.round + 1} sur {ROUNDS}
-          </p>
+          <p className="eyebrow">{isSuddenDeath(match) ? 'Manche décisive : tous tes animaux peuvent rejouer' : `Manche ${match.round + 1} sur ${ROUNDS}`}</p>
           <h2>{record.name}</h2>
           <p>{record.desc}</p>
         </section>
@@ -472,7 +558,7 @@ function DuelView({ match }: { match: DuelState }) {
         <p className="muted small">Personne ne voit les mesures : c’est ta culture générale qui compte.</p>
         <div className="card-row card-row--tight">
           {match.opp.cards.map((card, i) => (
-            <div key={card.uid} className={`opp-card${match.opp.used.includes(i) ? ' is-used' : ''}`}>
+            <div key={card.uid} className={`opp-card${isFree(match, 'opp', i) ? '' : ' is-used'}`}>
               <Card card={card} size="xs" hideFacts />
             </div>
           ))}
@@ -483,7 +569,7 @@ function DuelView({ match }: { match: DuelState }) {
         <h3 className="panel__title">Choisis ton animal pour « {record?.name} »</h3>
         <div className="hand">
           {match.me.cards.map((card, i) => {
-            const used = match.me.used.includes(i);
+            const used = !isFree(match, 'me', i);
             return (
               <button
                 key={card.uid}

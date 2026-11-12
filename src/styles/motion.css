@@ -1596,8 +1596,16 @@ h3 {
   --metal: #d5c8f4;
 }
 
+.division--rubis {
+  --metal: #f2919f;
+}
+
 .division--legende {
   --metal: #f6ad97;
+}
+
+.division--mythique {
+  --metal: #a9cdfb;
 }
 
 .division__emblem {
@@ -1649,7 +1657,14 @@ h3 {
   font-size: 0.95rem;
 }
 
-/* l'échelle des dix blasons */
+/* la saison de ligue en cours, sur toute la largeur */
+.division__season {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-dim);
+}
+
+/* l'échelle des blasons */
 .division__ladder {
   grid-column: 1 / -1;
   display: flex;
@@ -2471,8 +2486,16 @@ h3 {
   --glow: rgba(213, 200, 244, 0.6);
 }
 
+.dbadge--rubis {
+  --glow: rgba(242, 145, 159, 0.65);
+}
+
 .dbadge--legende {
   --glow: rgba(246, 173, 151, 0.65);
+}
+
+.dbadge--mythique {
+  --glow: rgba(169, 205, 251, 0.75);
 }
 
 .dbadge.is-current {
