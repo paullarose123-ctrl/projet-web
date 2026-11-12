@@ -2521,12 +2521,23 @@ h3 {
   }
 }
 
-/* ───────────── Terrain du duel : le décor de la division, deux socles, la question au milieu, la main en bas ───────────── */
+/* ───────────── Terrain du duel : face-à-face vertical, sur toute la hauteur de l'écran ─────────────
+   Le terrain a la hauteur de l'écran (moins la barre du haut et la navigation) et un format portrait ; toutes les
+   tailles, cartes comprises, sont en unités de ce conteneur (cqh, cqw) pour que tout tienne sans défiler. */
 .board {
   --metal: #eebf98;
+  --board-h: max(560px, calc(100dvh - var(--nav-h) - 128px));
+  container-type: size;
   position: relative;
-  max-width: 760px;
+  display: grid;
+  grid-template-rows: auto 1fr auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  gap: 1cqh;
+  width: min(100%, calc(var(--board-h) * 0.7));
+  height: var(--board-h);
   margin: 0 auto;
+  padding: 1.6cqh 2cqw;
   border-radius: 26px;
   overflow: hidden;
   border: 1px solid var(--line-2);
@@ -2550,56 +2561,14 @@ h3 {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(70% 34% at 50% 50%, color-mix(in srgb, var(--metal) 22%, transparent), transparent 75%),
-    linear-gradient(180deg, rgba(6, 12, 9, 0.62), rgba(6, 12, 9, 0.28) 30%, rgba(6, 12, 9, 0.28) 62%, rgba(6, 12, 9, 0.78));
-}
-
-.board__mat {
-  display: grid;
-  gap: 8px;
-  padding: 12px 10px 10px;
-}
-
-.board__scoreline {
-  display: grid;
-  grid-template-columns: 1fr auto auto 1fr;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  margin: 0 0 4px;
-  font-size: 0.78rem;
-  color: var(--text-dim);
-}
-
-.board__scoreline span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.board__scoreline span:first-child {
-  text-align: right;
-}
-
-.board__scoreline span:last-child {
-  text-align: left;
-}
-
-.board__score {
-  min-width: 1.9em;
-  padding: 1px 8px;
-  border-radius: 99px;
-  background: var(--metal);
-  color: #1c3124;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  text-align: center;
+    radial-gradient(80% 30% at 50% 50%, color-mix(in srgb, var(--metal) 22%, transparent), transparent 75%),
+    linear-gradient(180deg, rgba(6, 12, 9, 0.6), rgba(6, 12, 9, 0.22) 30%, rgba(6, 12, 9, 0.22) 64%, rgba(6, 12, 9, 0.75));
 }
 
 .board__row {
   display: flex;
   justify-content: center;
-  gap: clamp(4px, 1.6vw, 10px);
+  gap: 1.6cqw;
 }
 
 .board__opp {
@@ -2613,15 +2582,56 @@ h3 {
 
 .board__opp.is-playing {
   opacity: 0.35;
-  transform: translateY(6px);
+  transform: translateY(4px);
 }
 
-/* le terrain : socle adverse, question, ton socle */
-.board__field {
+/* une rangée de socle : nom et score à gauche, le socle au centre, une action à droite */
+.board__lane {
   display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding: 2px 0;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2.5cqw;
+  width: 100%;
+}
+
+.board__side {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.board__name {
+  max-width: 100%;
+  font-size: max(11px, 1.7cqh);
+  color: var(--text);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.board__score {
+  min-width: 1.9em;
+  padding: 1px 10px;
+  border-radius: 99px;
+  background: var(--metal);
+  color: #1c3124;
+  font-family: var(--font-display);
+  font-size: max(16px, 3.2cqh);
+  text-align: center;
+}
+
+.board__aside {
+  display: grid;
+  justify-items: end;
+  min-width: 0;
+}
+
+.board__go {
+  padding-inline: 4cqw;
+  font-size: max(14px, 2.2cqh);
 }
 
 .socle {
@@ -2634,7 +2644,7 @@ h3 {
   position: relative;
   display: grid;
   place-items: center;
-  width: clamp(78px, min(26vw, 14vh), 128px);
+  width: min(21.5cqh, 48cqw);
   aspect-ratio: 100 / 140;
   border-radius: 14px;
   border: 2px dashed color-mix(in srgb, var(--metal) 70%, transparent);
@@ -2646,24 +2656,19 @@ h3 {
 .socle__slot::after {
   content: '';
   position: absolute;
-  left: -16%;
-  right: -16%;
-  bottom: -16px;
-  height: 30px;
+  left: -18%;
+  right: -18%;
+  bottom: -14px;
+  height: 28px;
   z-index: -1;
   border-radius: 50%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--metal) 85%, white 15%), color-mix(in srgb, var(--metal) 35%, transparent) 70%, transparent);
   opacity: 0.75;
 }
 
-.socle--opp .socle__slot::after {
-  bottom: auto;
-  top: -16px;
-}
-
 .socle__wait {
-  padding: 0 8px;
-  font-size: 0.78rem;
+  padding: 0 10px;
+  font-size: max(12px, 1.7cqh);
   color: var(--text-dim);
   text-align: center;
 }
@@ -2690,7 +2695,7 @@ button.socle__card:not(:disabled) {
 
 @keyframes socle-drop {
   from {
-    transform: translateY(60px) scale(0.85);
+    transform: translateY(80px) scale(0.7);
     opacity: 0;
   }
 }
@@ -2708,7 +2713,7 @@ button.socle__card:not(:disabled) {
 .socle.is-winner .socle__slot {
   border-color: #ffd36b;
   border-style: solid;
-  box-shadow: 0 0 24px rgba(255, 211, 107, 0.55);
+  box-shadow: 0 0 28px rgba(255, 211, 107, 0.6);
 }
 
 .socle.is-loser .socle__card {
@@ -2716,40 +2721,34 @@ button.socle__card:not(:disabled) {
   transition: filter 0.4s 0.6s;
 }
 
+/* la réponse, posée sur le bas de la carte du socle */
 .socle__value {
   position: absolute;
   z-index: 2;
   left: 50%;
+  bottom: 8%;
   translate: -50% 0;
-  max-width: 190px;
   display: grid;
   justify-items: center;
+  max-width: 120%;
   margin: 0;
-  white-space: nowrap;
   padding: 3px 12px;
   border-radius: 12px;
-  background: rgba(6, 12, 9, 0.78);
+  background: rgba(6, 12, 9, 0.85);
   border: 1px solid var(--line-2);
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: max(15px, 2.6cqh);
   line-height: 1.1;
+  white-space: nowrap;
   animation: value-pop 0.3s 0.55s both;
 }
 
-.socle--opp .socle__value {
-  bottom: -14px;
-}
-
-.socle--me .socle__value {
-  top: -14px;
-}
-
 .socle__value small {
-  max-width: 170px;
+  max-width: 44cqw;
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-size: max(10px, 1.4cqh);
   color: var(--text-dim);
 }
 
@@ -2772,13 +2771,16 @@ button.socle__card:not(:disabled) {
 
 /* la question de la manche, au milieu du terrain */
 .board__question {
+  position: relative;
+  z-index: 3;
+  margin-block: -1.6cqh;
   display: grid;
   justify-items: center;
-  gap: 2px;
-  width: min(100%, 460px);
-  padding: 10px 16px 12px;
-  border-radius: 18px;
-  background: rgba(6, 12, 9, 0.72);
+  gap: 1px;
+  width: min(100%, 520px);
+  padding: 1cqh 14px 1.2cqh;
+  border-radius: 16px;
+  background: rgba(6, 12, 9, 0.74);
   border: 1px solid color-mix(in srgb, var(--metal) 55%, transparent);
   text-align: center;
   backdrop-filter: blur(4px);
@@ -2803,14 +2805,14 @@ button.socle__card:not(:disabled) {
 .board__rounds {
   display: flex;
   gap: 5px;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   padding: 0;
   list-style: none;
 }
 
 .board__rounds li {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
 }
@@ -2834,7 +2836,7 @@ button.socle__card:not(:disabled) {
 
 .board__round {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: max(10px, 1.3cqh);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--metal);
@@ -2842,20 +2844,20 @@ button.socle__card:not(:disabled) {
 
 .board__record {
   margin: 0;
-  font-size: clamp(1.3rem, 5vw, 1.8rem);
+  font-size: max(18px, 3.3cqh);
   text-transform: none;
 }
 
 .board__desc {
-  margin: 2px 0 0;
-  font-size: 0.82rem;
+  margin: 0;
+  font-size: max(11px, 1.55cqh);
   color: var(--text-dim);
 }
 
 .board__verdict {
-  margin: 2px 0 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: max(15px, 2.3cqh);
   animation: value-pop 0.3s 0.6s both;
 }
 
@@ -2865,43 +2867,6 @@ button.socle__card:not(:disabled) {
 
 .board__question.is-opp .board__verdict {
   color: var(--bad);
-}
-
-.board__actions {
-  display: flex;
-  justify-content: center;
-}
-
-/* sur un écran large, les deux socles se font face, la question entre les deux */
-@media (min-width: 760px) {
-  .board__field {
-    grid-template-columns: 1fr minmax(0, 340px) 1fr;
-    align-items: center;
-    padding: 14px 18px;
-  }
-
-  .board__field .socle--opp {
-    order: 3;
-  }
-
-  .board__field .socle--me {
-    order: 1;
-  }
-
-  .board__field .board__question {
-    order: 2;
-  }
-
-  .socle--opp .socle__slot::after,
-  .socle--me .socle__slot::after {
-    top: auto;
-    bottom: -16px;
-  }
-
-  .socle--me .socle__value {
-    top: auto;
-    bottom: -14px;
-  }
 }
 
 /* ta main : les animaux déjà joués en grisé, celui posé sur le socle laisse sa place vide */
@@ -2929,12 +2894,6 @@ button.socle__card:not(:disabled) {
 
 .board__hand:disabled {
   cursor: default;
-}
-
-.board__quit {
-  display: flex;
-  justify-content: center;
-  padding: 0 12px 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {
