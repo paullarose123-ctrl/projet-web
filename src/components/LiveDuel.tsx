@@ -165,9 +165,10 @@ function Playing({ duel, me }: { duel: LiveDuel; me: string }) {
           <span>{match.opp.name}</span>
         </div>
         <ol className="scoreboard__rounds" aria-label="Records du duel">
+          {/* les questions se découvrent manche après manche : celles à venir restent cachées */}
           {match.records.map((id, i) => (
             <li key={i} className={i < match.log.length ? `is-${match.log[i].winner}` : i === match.round ? 'is-current' : ''}>
-              {RECORDS[id].name}
+              {i <= match.round ? RECORDS[id].name : '?'}
             </li>
           ))}
         </ol>

@@ -8,6 +8,8 @@ import { canBePrime, isHabitat } from './cards';
 import { CONTINENTS_MULTIPLES, type Continent } from '../data/repartition';
 import { ENCYCLOPEDIE, REGIMES, RYTHMES, UICN, type Encyclo, type RegimeId, type Uicn } from '../data/encyclopedie';
 import { makeUid, pick, shuffle, type Rng } from './random';
+import { DIVISION_COUNT } from './divisions';
+import { HARD_DIVISION } from './league';
 
 // Duel de records : un jeu de culture générale sur les animaux, avec leurs vraies mesures.
 // Un duel se joue en 5 manches ; chaque manche est une question tirée au sort : un record (le plus lourd, le plus
@@ -21,6 +23,8 @@ import { makeUid, pick, shuffle, type Rng } from './random';
 
 export const TEAM_SIZE = 5;
 export const ROUNDS = 5;
+/** Manches décisives au plus en cas d'égalité après les 5 manches ; si l'égalité tient encore, c'est un match nul. */
+export const MAX_TIEBREAKS = 3;
 
 export type RecordId =
   | 'lourd'
@@ -642,11 +646,42 @@ export function canDuel(athlete: Athlete): boolean {
 }
 
 /**
- * Chance que l'adversaire joue sa meilleure carte pour le record : 35 % en division 10, 95 % en division 1.
- * Le reste du temps, il joue au hasard.
+ * Chance que l'adversaire joue sa meilleure carte pour le record : 35 % dans la plus basse division, 95 % à partir
+ * de la Légende. Le reste du temps, il joue au hasard.
  */
 export function aiSkill(division: number): number {
-  return Math.min(0.95, 0.35 + (10 - division) * (0.6 / 9));
+  return Math.min(0.95, 0.35 + (DIVISION_COUNT - division) * (0.6 / (DIVISION_COUNT - 2)));
+}
+
+/** Taille du vivier où l'adversaire d'une division dure (rubis et au-dessus) choisit ses animaux. */
+const SCOUTED_POOL = 40;
+
+/**
+ * Équipe adverse d'une division dure : parmi un vivier d'animaux tirés au sort, le meilleur pour chaque question du duel.
+ * Le joueur, lui, ne connaît pas les questions à l'avance.
+ */
+function scoutTeam(pool: Athlete[], records: RecordId[], count: number, rng: Rng): Athlete[] {
+  const sample = shuffle(rng, pool).slice(0, SCOUTED_POOL);
+  const chosen: Athlete[] = [];
+  for (const record of records) {
+    if (chosen.length >= count) break;
+    const def = RECORDS[record];
+    let best: Athlete | null = null;
+    let bestScore = -Infinity;
+    for (const athlete of sample) {
+      if (chosen.includes(athlete)) continue;
+      const v = def.value(athlete);
+      if (v === null) continue;
+      const score = def.best === 'max' ? v : -v;
+      if (score > bestScore) {
+        best = athlete;
+        bestScore = score;
+      }
+    }
+    if (best) chosen.push(best);
+  }
+  for (const athlete of sample) if (chosen.length < count && !chosen.includes(athlete)) chosen.push(athlete);
+  return chosen;
 }
 
 export function createDuel(
@@ -661,18 +696,20 @@ export function createDuel(
   const taken = new Set(given.map((c) => c.athleteId));
   // adversaires tirés parmi les cartes déjà sorties (aucune carte d'une série à venir)
   const pool = releasedAthletes().filter((a) => canDuel(a) && !taken.has(a.id));
-  const chosen = shuffle(rng, pool).slice(0, TEAM_SIZE - given.length);
+  const records = drawRecords(rng);
+  // dans les divisions dures, l'adversaire de la ligue compose son équipe pour les questions du duel
+  const chosen = !friend && division <= HARD_DIVISION ? scoutTeam(pool, records, TEAM_SIZE - given.length, rng) : shuffle(rng, pool).slice(0, TEAM_SIZE - given.length);
   const oppCards = given.map((c) => ({ uid: makeUid('o'), athleteId: c.athleteId, variant: c.variant })).concat(chosen.map((athlete) => ({
     uid: makeUid('o'),
     athleteId: athlete.id,
-    variant: division <= 3 && canBePrime(athlete) && rng() < 0.15 ? ('prime' as const) : ('base' as const),
+    variant: division <= 7 && canBePrime(athlete) && rng() < 0.15 ? ('prime' as const) : ('base' as const),
   })));
   return {
     id: makeUid('duel'),
     kind: 'duel',
     ...(friend ? { friend: friend.pseudo } : {}),
     division,
-    records: drawRecords(rng),
+    records,
     round: 0,
     me: { name: myName, cards: myCards, used: [], score: 0 },
     opp: { name: friend?.pseudo ?? pick(rng, RIVALS), cards: oppCards, used: [], score: 0 },
@@ -697,7 +734,7 @@ export function compare(record: RecordId, mine: number | null, theirs: number | 
 /** Choix de l'adversaire : sa meilleure carte pour le record (selon son niveau), sinon une carte au hasard. */
 export function aiChoose(state: DuelState, rng: Rng): number {
   const record = state.records[state.round];
-  const free = state.opp.cards.map((_, i) => i).filter((i) => !state.opp.used.includes(i));
+  const free = state.opp.cards.map((_, i) => i).filter((i) => isFree(state, 'opp', i));
   if (rng() >= aiSkill(state.division)) return pick(rng, free);
   const score = (i: number) => {
     const v = recordValue(state.opp.cards[i], record);
@@ -705,6 +742,27 @@ export function aiChoose(state: DuelState, rng: Rng): number {
     return RECORDS[record].best === 'max' ? v : -v;
   };
   return free.reduce((best, i) => (score(i) > score(best) ? i : best), free[0]);
+}
+
+/** Manche décisive : après les 5 manches, en cas d'égalité. */
+export function isSuddenDeath(state: Pick<DuelState, 'round'>): boolean {
+  return state.round >= ROUNDS;
+}
+
+/** Une carte peut-elle jouer cette manche ? Chaque animal joue une fois ; en manche décisive, tous reviennent. */
+export function isFree(state: Pick<DuelState, 'round' | 'me' | 'opp'>, side: 'me' | 'opp', index: number): boolean {
+  return isSuddenDeath(state) || !state[side].used.slice(0, ROUNDS).includes(index);
+}
+
+/**
+ * Question d'une manche décisive : un record chiffré (moins d'égalités qu'un oui/non), d'un thème pas encore joué
+ * si possible, jamais une question déjà posée.
+ */
+export function drawTiebreak(rng: Rng, asked: RecordId[]): RecordId {
+  const themes = new Set(asked.map((id) => RECORDS[id].theme));
+  const numeric = RECORD_ORDER.filter((id) => !RECORDS[id].question && !asked.includes(id));
+  const fresh = numeric.filter((id) => !themes.has(RECORDS[id].theme));
+  return pick(rng, fresh.length ? fresh : numeric.length ? numeric : RECORD_ORDER);
 }
 
 export function playDuelRound(state: DuelState, myIndex: number, rng: Rng): { state: DuelState; log: DuelRound } {
@@ -715,15 +773,17 @@ export function playDuelRound(state: DuelState, myIndex: number, rng: Rng): { st
   const winner = compare(record, myValue, oppValue);
   const log: DuelRound = { round: state.round, record, me: myIndex, opp: oppIndex, myValue, oppValue, winner };
   const round = state.round + 1;
+  const me = { ...state.me, used: [...state.me.used, myIndex], score: state.me.score + (winner === 'me' ? 1 : 0) };
+  const opp = { ...state.opp, used: [...state.opp.used, oppIndex], score: state.opp.score + (winner === 'opp' ? 1 : 0) };
+  // après les 5 manches, une égalité se joue en manche décisive (au plus MAX_TIEBREAKS fois)
+  let records = state.records;
+  let finished = false;
+  if (round >= ROUNDS) {
+    if (me.score !== opp.score || round >= ROUNDS + MAX_TIEBREAKS) finished = true;
+    else if (records.length <= round) records = [...records, drawTiebreak(rng, records)];
+  }
   return {
-    state: {
-      ...state,
-      round,
-      me: { ...state.me, used: [...state.me.used, myIndex], score: state.me.score + (winner === 'me' ? 1 : 0) },
-      opp: { ...state.opp, used: [...state.opp.used, oppIndex], score: state.opp.score + (winner === 'opp' ? 1 : 0) },
-      log: [...state.log, log],
-      finished: round >= ROUNDS,
-    },
+    state: { ...state, records, round, me, opp, log: [...state.log, log], finished },
     log,
   };
 }
@@ -735,7 +795,7 @@ export function duelResult(state: DuelState): 'win' | 'draw' | 'loss' {
 }
 
 export function rewardFor(result: 'win' | 'draw' | 'loss', division: number): number {
-  const scale = 1 + (10 - division) * 0.25;
+  const scale = 1 + (DIVISION_COUNT - division) * 0.25;
   const base = result === 'win' ? 500 : result === 'draw' ? 200 : 80;
   return Math.round((base * scale) / 10) * 10;
 }

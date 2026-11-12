@@ -2,7 +2,7 @@ import { divisionInfo, type DivisionTier } from '../engine/divisions';
 
 // Blasons des divisions de la Ligue des naturalistes, à plat comme les boutons d'ouverture : un rond pastel uni, un filet
 // vert sombre, l'animal de la division en silhouette à l'encre et une à trois étoiles dessous. La couleur change avec
-// le métal (bronze, argent, or, platine, diamant, légende).
+// le métal (bronze, argent, or, platine, diamant, rubis, légende, mythique).
 // Repère : le rond est un cercle de rayon 50 centré en (0, 0).
 
 export const DIVISION_PASTELS: Record<DivisionTier, string> = {
@@ -11,7 +11,9 @@ export const DIVISION_PASTELS: Record<DivisionTier, string> = {
   or: '#f3d98a',
   platine: '#b9e3e3',
   diamant: '#d5c8f4',
+  rubis: '#f2919f',
   legende: '#f6ad97',
+  mythique: '#a9cdfb',
 };
 const INK = '#1c3124';
 const CREAM = '#fff8ec';
@@ -141,6 +143,60 @@ const EMBLEMS: Record<string, Emblem> = {
   },
 };
 
+// les blasons des hautes divisions (requin, éléphant, crocodile, baleine bleue)
+Object.assign(EMBLEMS, {
+  // requin blanc de profil : aileron dorsal, queue en croissant, ventre blanc, fentes des ouïes
+  'requin-blanc': {
+    mid:
+      'M27 2C24 -4 16 -8 6 -9C4 -15 1 -20 -2 -24C-3 -18 -4 -13 -6 -9C-13 -8 -19 -5 -22 -2C-24 -7 -26 -12 -29 -17' +
+      'C-28 -9 -27 -3 -26 1C-27 6 -28 11 -29 16C-26 11 -23 7 -21 4C-15 8 -6 10 4 10C2 14 0 17 -2 20C3 18 7 14 10 10C18 9 25 7 27 2Z',
+    light: 'M26 4C22 8 14 9.5 6 9.5C-4 9.5 -12 7.5 -18 4C-10 5 0 5.6 10 5C17 4.6 22 4.2 26 4Z',
+    dark:
+      'M15.6 -2a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0Z' +
+      polygon([[7, -4], [8, -4], [8, 3], [7, 3]]) +
+      polygon([[9.5, -4.5], [10.5, -4.5], [10.5, 3], [9.5, 3]]) +
+      polygon([[12, -5], [13, -5], [13, 2.5], [12, 2.5]]) +
+      polygon([[26, 3], [16, 4.5], [16, 5.3], [26, 3.7]]),
+  },
+  // éléphant de face : grandes oreilles, trompe, défenses
+  elephant: {
+    mid:
+      mirrored([[0, -18], [8, -17], [11, -10], [10, -2], [7, 5], [4, 10], [3.5, 22], [1.5, 24], [0, 24]]) +
+      both([[9, -15], [20, -19], [26, -10], [25, 2], [19, 9], [12, 8], [9, -2]]),
+    light: both([[5.5, 4], [9, 9], [8.6, 14], [5, 9]]),
+    dark:
+      both([[10.2, -14], [11.6, -14.6], [11.6, 5], [10.2, 4.4]]) +
+      both([[17, -10], [21.5, -11], [22.5, -5], [18.5, -6]]) +
+      'M4.4 -6a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0Z M-7.6 -6a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0Z',
+  },
+  // crocodile de profil : long museau entrouvert, dents, l'œil en bosse et les écailles du dos
+  'crocodile-du-nil': {
+    mid: 'M-26 -6C-20 -12 -12 -13 -6 -12L-3 -16C0 -18 4 -17 5 -13L26 -8C28 -7.5 28 -5 26 -4.5L10 -1L26 1.5C28 2 28 4.5 26 5L-6 9C-14 11 -22 10 -26 6Z',
+    light:
+      polygon([[13, -2.1], [15.4, -2.6], [14.4, 0.2]]) +
+      polygon([[18, -3.2], [20.4, -3.7], [19.4, -0.9]]) +
+      polygon([[23, -4.2], [25, -4.5], [24.2, -2]]) +
+      polygon([[15.5, 0.4], [17.9, 0.8], [16.5, -1.8]]) +
+      polygon([[20.5, 1.2], [22.9, 1.5], [21.5, -1]]),
+    dark:
+      'M-1.6 -13a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0Z M23 -7.4a1 1 0 1 0 2 0a1 1 0 1 0-2 0Z' +
+      polygon([[-22, -8.6], [-20, -11], [-18, -9.6]]) +
+      polygon([[-16, -10.4], [-14, -12.6], [-12, -11.4]]) +
+      polygon([[-24, 4], [-8, 5.6], [-8, 6.6], [-23, 5.4]]),
+  },
+  // baleine bleue de profil : long corps, petit aileron, nageoire, le souffle au-dessus de l'évent
+  'baleine-bleue': {
+    mid:
+      'M28 0C28 -6 20 -9 8 -9C-4 -9 -14 -6 -21 -2L-25 -9C-27 -11 -29 -10 -28 -7L-26 0L-28 7C-29 10 -27 11 -25 9L-21 2' +
+      'C-14 6 -4 9 8 9C20 9 28 6 28 0Z' +
+      polygon([[-14, -5.5], [-11, -9], [-9, -6]]) +
+      'M6 6L0 15L3 15.5L11 7Z' +
+      'M17 -10C16 -14 13 -16 10 -17C14 -17 17 -15 18 -12C19 -15 22 -17 26 -17C23 -16 20 -14 19 -10Z',
+    light: 'M27 2C25 6 18 8 8 8.4C0 8.6 -6 7.6 -10 6C-4 6.8 4 6.6 12 5.8C19 5 24 3.8 27 2Z',
+    dark: 'M16.6 -1.6a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0-2.8 0Z' + polygon([[28, 0.2], [14, 2.2], [14, 2.9], [28, 1]]),
+  },
+} satisfies Record<string, Emblem>);
+
 const STAR = (cx: number, cy: number, r: number) =>
   polygon(Array.from({ length: 10 }, (_, k): Pt => {
     const a = (k / 10) * Math.PI * 2 - Math.PI / 2;
@@ -150,13 +206,13 @@ const STAR = (cx: number, cy: number, r: number) =>
 
 export type BadgeState = 'current' | 'won' | 'locked';
 
-/** Le blason d'une division (10 = la plus basse, 1 = la légende). */
+/** Le blason d'une division (14 = la plus basse, 1 = la Baleine bleue mythique). */
 export function DivisionBadge({ number, state = 'won', className = '' }: { number: number; state?: BadgeState; className?: string }) {
   const info = divisionInfo(number);
   const pastel = DIVISION_PASTELS[info.tier];
   const emblem = EMBLEMS[info.athleteId] ?? {};
-  // deux divisions par métal : la première a une étoile, la seconde deux ; le diamant et la légende en ont trois
-  const stars = info.tier === 'diamant' || info.tier === 'legende' ? 3 : number % 2 === 0 ? 1 : 2;
+  // deux divisions par métal : la première a une étoile, la seconde deux ; la légende et le mythique en ont trois
+  const stars = info.tier === 'legende' || info.tier === 'mythique' ? 3 : number % 2 === 0 ? 1 : 2;
   return (
     <svg className={`dbadge dbadge--${info.tier} is-${state} ${className}`} viewBox="-52 -52 104 104" role="img" aria-label={`Blason de la division ${info.name}`}>
       <circle r={50} fill={pastel} />
