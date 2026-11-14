@@ -4,6 +4,9 @@ import { air, bass, bell, boom, kalimba, marimba, midi, pluck, strings, tick, ty
 import { Card } from '../components/Card';
 import { CardBack } from '../components/CardBack';
 import { Logo } from '../components/Logo';
+import { PackArt } from '../components/PackArt';
+import { PackArtHiver } from '../components/PackArtHiver';
+import { PackArtMexique } from '../components/PackArtMexique';
 import { Landscape } from '../components/PackScene';
 import { formatRecordValue } from '../engine/duel';
 import { photoCredit } from '../photos';
@@ -208,6 +211,13 @@ function Album({ t }: { t: number }) {
   );
 }
 
+// les boosters des séries : Série 1 · Animaux du monde, Série 2 · Mexique, Série 3 · Hiver (1er décembre)
+const SERIES: { label: string; art: ReactNode }[] = [
+  { label: 'Série 1 · Monde', art: <PackArt tone="bronze" name="Booster gratuit" title="Animaux du monde" /> },
+  { label: 'Série 2 · Mexique', art: <PackArtMexique kicker="Booster" /> },
+  { label: 'Série 3 · 1er déc.', art: <PackArtHiver kicker="Bientôt" /> },
+];
+
 // ───────────── la vidéo ─────────────
 
 export function JourPromo({ t }: { t: number }) {
@@ -333,18 +343,19 @@ export function JourPromo({ t }: { t: number }) {
             <Logo />
           </Line>
           <div className="jour__fan">
-            {(['pieuvre', 'axolotl', 'girafe'] as const).map((id, k) => {
-              const kin = easeOut(span(t, END + 0.15 + k * 0.1, END + 0.65 + k * 0.1));
-              const rot = (k - 1) * 13 * kin + Math.sin(t * 1.2 + k) * 1.5;
+            {SERIES.map(({ label, art }, k) => {
+              const kin = easeOut(span(t, END + 0.15 + k * 0.12, END + 0.65 + k * 0.12));
+              const rot = (k - 1) * 10 * kin + Math.sin(t * 1.2 + k) * 1.5;
               return (
-                <div key={id} className="jour__fan-card" style={{ opacity: kin, transform: `translate(${(k - 1) * 112 * kin}px, ${(1 - kin) * 80 + Math.abs(k - 1) * 22}px) rotate(${rot}deg)`, zIndex: k === 1 ? 2 : 1 }}>
-                  <Card card={face(id)} size="sm" style={cw(160)} />
+                <div key={label} className="jour__fan-pack" style={{ opacity: kin, transform: `translate(${(k - 1) * 150 * kin}px, ${(1 - kin) * 80 + Math.abs(k - 1) * 16}px) rotate(${rot}deg)`, zIndex: k === 1 ? 2 : 1 }}>
+                  {art}
+                  <span className="jour__pack-label">{label}</span>
                 </div>
               );
             })}
           </div>
           {[
-            ['Ouvre des boosters', 'd’animaux'],
+            ['Ouvre des boosters', 'de plusieurs séries'],
             ['Collectionne', 'plus de 500 vraies espèces'],
             ['Apprends un vrai truc', 'à chaque carte'],
           ].map(([a, b], k) => (

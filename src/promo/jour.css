@@ -341,13 +341,23 @@
   justify-content: center;
 }
 
-.jour__fan-card {
+.jour__fan-pack {
   position: absolute;
   top: 0;
+  width: 140px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
 
-.jour__fan-card .card {
-  --card-w: 160px;
+.jour__pack-label {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(8, 17, 13, 0.75);
+  color: #ffd166;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .jour__point {
