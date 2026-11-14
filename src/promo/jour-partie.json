@@ -1,0 +1,35 @@
+{
+  "note": "Extraits d'une vraie partie (promo/captures/jour-partie.mp4, scripts/promo/captures-jour.mjs), en secondes de l'enregistrement",
+  "segments": [
+    {
+      "from": 2.0,
+      "to": 3.5,
+      "speed": 1,
+      "caption": "Des boosters gratuits, en plusieurs séries"
+    },
+    {
+      "from": 3.7,
+      "to": 8.1,
+      "speed": 1.7,
+      "caption": "Tu ouvres ton booster…"
+    },
+    {
+      "from": 8.2,
+      "to": 11.4,
+      "speed": 1,
+      "caption": "…et chaque carte t’apprend un vrai truc"
+    },
+    {
+      "from": 15.0,
+      "to": 16.4,
+      "speed": 1,
+      "caption": "Ton album se remplit : 566 espèces"
+    },
+    {
+      "from": 17.3,
+      "to": 18.9,
+      "speed": 1,
+      "caption": "Et tu joues en duel de culture G"
+    }
+  ]
+}

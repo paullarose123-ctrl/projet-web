@@ -10,6 +10,7 @@ import { PackArtMexique } from '../components/PackArtMexique';
 import { Landscape } from '../components/PackScene';
 import { formatRecordValue } from '../engine/duel';
 import { photoCredit } from '../photos';
+import PARTIE from './jour-partie.json';
 import { Fireflies, Line, backOut, clamp, easeInOut, easeOut, life, pop, rise, span } from './anim';
 
 // Pub TikTok « 30 jours, 30 cartes » (1080 × 1920, 24,5 s) : une éphéméride dont on arrache une page par jour.
@@ -80,14 +81,25 @@ const DU = D30 + 2.0; // duel
 const PICK = DU + 1.35;
 const SHOW = DU + 2.2;
 const WIN = DU + 2.5;
-const END = DU + 4.1;
+/** la vraie partie dans un téléphone : l'enregistrement est incrusté par scripts/promo/jour-montage.mjs */
+export const REAL = DU + 4.1;
+export const CLIP_AT = REAL + 0.55;
+const CLIP_SEGMENTS = PARTIE.segments.map((s) => ({ ...s, length: (s.to - s.from) / s.speed }));
+export const CLIP_LENGTH = CLIP_SEGMENTS.reduce((n, s) => n + s.length, 0);
+const END = CLIP_AT + CLIP_LENGTH + 0.45;
+/** écran du téléphone, en pixels de la page (540 × 960) */
+export const SCREEN = { x: 140, y: 214, w: 260, h: 563 };
 export const DURATION = END + 5.2;
 
 const ALL: { id: string; at: number; fact: ReactNode }[] = [...FIRST, ...RUSH.map(([id, fact], k) => ({ id, at: RUSH_AT[k], fact }))];
-export const IMAGES = [...new Set([...ALL.map((d) => d.id), 'axolotl'])]
-  .map((id) => photoCredit(id))
-  .filter((c): c is NonNullable<typeof c> => !!c)
-  .map((c) => `/photos/${c.file}${c.v ? `?v=${c.v}` : ''}`);
+export const IMAGES = [
+  ...[...new Set(ALL.map((d) => d.id))]
+    .map((id) => photoCredit(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .map((c) => `/photos/${c.file}${c.v ? `?v=${c.v}` : ''}`),
+  '/promo/captures/jour-debut.png',
+  '/promo/captures/jour-fin.png',
+];
 
 /** Jour affiché sur l'éphéméride au temps t (1 à 30). */
 const dayAt = (t: number) => ALL.reduce((n, d, i) => (t >= d.at ? i + 1 : n), 1);
@@ -218,6 +230,46 @@ const SERIES: { label: string; art: ReactNode }[] = [
   { label: 'Série 3 · 1er déc.', art: <PackArtHiver kicker="Bientôt" /> },
 ];
 
+// ───────────── la vraie partie ─────────────
+
+function Phone({ t }: { t: number }) {
+  const inK = easeOut(span(t, REAL - 0.2, CLIP_AT));
+  const outK = easeInOut(span(t, END - 0.45, END));
+  // l'écran montre la première image à l'arrivée, la dernière au départ ; entre les deux, l'enregistrement est incrusté au montage
+  const still = t < CLIP_AT + CLIP_LENGTH / 2 ? '/promo/captures/jour-debut.png' : '/promo/captures/jour-fin.png';
+  let at = CLIP_AT;
+  return (
+    <>
+      <Line className="promo__eyebrow" style={{ ...rise(life(t, REAL - 0.1, REAL + 0.3, END - 0.4, END)), top: 108 }}>
+        Le vrai jeu
+      </Line>
+      {CLIP_SEGMENTS.map((seg, i) => {
+        const a = at;
+        at += seg.length;
+        const k = life(t, a - (i === 0 ? 0.5 : 0.1), a + 0.2, i === CLIP_SEGMENTS.length - 1 ? END - 0.4 : at - 0.15, i === CLIP_SEGMENTS.length - 1 ? END : at);
+        return k > 0 ? (
+          <Line key={seg.caption} className="jour__phone-caption" style={{ ...rise(k, 14), top: 138 }}>
+            {seg.caption}
+          </Line>
+        ) : null;
+      })}
+      <div
+        className="jour__phone"
+        style={{
+          left: SCREEN.x - 10,
+          top: SCREEN.y - 10,
+          width: SCREEN.w + 20,
+          height: SCREEN.h + 20,
+          opacity: inK * (1 - outK),
+          transform: `translateY(${(1 - inK) * 300 + outK * 260}px) rotate(${(1 - inK) * 6}deg)`,
+        }}
+      >
+        <img src={still} alt="" />
+      </div>
+    </>
+  );
+}
+
 // ───────────── la vidéo ─────────────
 
 export function JourPromo({ t }: { t: number }) {
@@ -231,10 +283,10 @@ export function JourPromo({ t }: { t: number }) {
   const rushDay = ALL[n - 1];
   const rushFact = t >= R0 + 0.15 && t < D30;
   const calOpacity = 1 - easeInOut(span(t, DU - 0.5, DU - 0.1));
-  const duel = t >= DU - 0.2 && t < END + 0.4;
+  const duel = t >= DU - 0.2 && t < REAL + 0.4;
   const end = t >= END - 0.1;
-  const endOut = easeInOut(span(t, END - 0.4, END));
-  const duelIn = (a: number, b: number) => life(t, a, b, END - 0.4, END);
+  const endOut = easeInOut(span(t, REAL - 0.4, REAL));
+  const duelIn = (a: number, b: number) => life(t, a, b, REAL - 0.4, REAL);
   const shake = t >= D30 && t < D30 + 0.3 ? Math.sin(t * 90) * 5 * (1 - span(t, D30, D30 + 0.3)) : 0;
 
   return (
@@ -336,6 +388,9 @@ export function JourPromo({ t }: { t: number }) {
         </>
       )}
 
+      {/* la vraie partie, dans un téléphone */}
+      {t >= REAL - 0.3 && t < END + 0.1 && <Phone t={t} />}
+
       {/* fin : le jeu en trois lignes */}
       {end && (
         <>
@@ -429,7 +484,9 @@ export function scheduleJour(ac: AudioContext, out: Bus, t0: number) {
   air(ac, out, t0 + SHOW - 0.7, 0.7, { gain: 0.045, from: 500, to: 6000, q: 0.7, attack: 0.6, send: 0.4 });
   boom(ac, out, t0 + SHOW, 0.18, 50);
   [69, 73, 76, 81, 85].forEach((n, j) => bell(ac, out, midi(n), t0 + WIN + j * 0.06, 0.05, -0.3 + j * 0.15, 2));
-  strings(ac, out, [57, 61, 64].map(midi), t0 + WIN, END - WIN + 0.4, 0.028, { attack: 0.1, release: 1, open: 1800 });
+  strings(ac, out, [57, 61, 64].map(midi), t0 + WIN, REAL - WIN + 0.4, 0.028, { attack: 0.1, release: 1, open: 1800 });
+  // la vraie partie
+  groove(REAL + 0.3, END, { bassGain: 0.1 });
   // fin
   groove(END, DURATION - 1.6, { bassGain: 0.13 });
   [45, 57, 61, 64, 69].forEach((n, j) => pluck(ac, out, midi(n), t0 + END + j * 0.04, 0.1, (j - 2) * 0.12, 0.4));
