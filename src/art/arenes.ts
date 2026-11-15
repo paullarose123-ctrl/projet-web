@@ -40,7 +40,25 @@ export function arenaScene(division: number): SceneDef {
   return ARENES[division] ?? ARENES[14];
 }
 
-const ALL = Object.values(ARENES);
+/** Nouveaux décors proposés pour les duels, en plus des paysages de la ligue. */
+export const NOUVEAUX: Array<{ name: string; scene: SceneDef }> = [
+  { name: 'Banquise au soleil de minuit', scene: { kind: 'banquise', creature: 'manchots', palette: { sky: ['#f4a3b9', '#ffe7d1'], sun: '#fff6e8', far: '#4c7fbf', near: '#0b1f3d', accent: '#f4fbff' } } },
+  { name: 'Grand canyon au couchant', scene: { kind: 'canyon', creature: 'aigle', palette: { sky: ['#ff8f5a', '#ffe0ae'], sun: '#fff3d6', far: '#d27a52', near: '#3a1508', accent: '#ffd28a' } } },
+  { name: 'Bambouseraie dans la brume', scene: { kind: 'bambou', creature: 'panda', palette: { sky: ['#bfe0bb', '#f6f1d6'], sun: '#ffab8f', far: '#7fb487', near: '#0f2a17', accent: '#ffffff' } } },
+  { name: 'Chute d’eau tropicale', scene: { kind: 'cascade', palette: { sky: ['#5cbfee', '#dff6ff'], sun: '#ffffff', far: '#58a87c', near: '#062a1a', accent: '#eefaff' } } },
+  { name: 'Abysses lumineuses', scene: { kind: 'abysses', creature: 'baudroie', palette: { sky: ['#0d2c5e', '#020617'], sun: '#d6fff6', far: '#1b3a6b', near: '#01040f', accent: '#7ff7e0', accent2: '#ff7aa8' } } },
+  { name: 'Grotte aux cristaux', scene: { kind: 'grotte', creature: 'chauves-souris', palette: { sky: ['#1a1f3d', '#3d4278'], sun: '#efeaff', far: '#34376a', near: '#07071a', accent: '#b98cff', accent2: '#6ff0ff' } } },
+  { name: 'Lac de montagne', scene: { kind: 'lac', creature: 'cerf', palette: { sky: ['#78c4f0', '#fff0cf'], sun: '#fffbe8', far: '#7a9cc4', near: '#0d2420', accent: '#ffffff' } } },
+  { name: 'Forêt sous la neige', scene: { kind: 'neige', creature: 'renard', palette: { sky: ['#9db3dc', '#f4e4ee'], sun: '#fff6f0', far: '#8ea2c8', near: '#1a2440', accent: '#ffffff', accent2: '#ef7a32' } } },
+  { name: 'Cerisiers en fleurs', scene: { kind: 'printemps', creature: 'papillons', palette: { sky: ['#ffc2d5', '#fff5e6'], sun: '#fffaf0', far: '#b7d49c', near: '#1f3320', accent: '#ff9ec2', accent2: '#ffe3ee' } } },
+  { name: 'Désert de cactus', scene: { kind: 'desert', palette: { sky: ['#f2a65a', '#ffe9c2'], sun: '#fff8e0', far: '#d98a54', near: '#3a1a0c', accent: '#ffffff' } } },
+  { name: 'Bush australien', scene: { kind: 'outback', creature: 'kangourou', palette: { sky: ['#ff7e4f', '#ffd9a0'], sun: '#fff4dc', far: '#c8643c', near: '#2b0f08', accent: '#ffffff' } } },
+  { name: 'Lagon aux méduses', scene: { kind: 'recif', creature: 'meduses', palette: { sky: ['#2fb8d8', '#0a3a78'], sun: '#ffffff', far: '#2a7fb8', near: '#04163a', accent: '#ffb3e6' } } },
+  { name: 'Banc de poissons', scene: { kind: 'recif', creature: 'banc', palette: { sky: ['#3fd0c9', '#0b4f7a'], sun: '#ffffff', far: '#2d9a9a', near: '#052a3a', accent: '#ffe27a' } } },
+  { name: 'Cerf sous les étoiles', scene: { kind: 'nuit', creature: 'cerf', palette: { sky: ['#1b1440', '#7a5aa8'], sun: '#fff6e0', far: '#4b3f7e', near: '#0b0820', accent: '#e8dcff' } } },
+];
+
+const ALL = [...Object.values(ARENES), ...NOUVEAUX.map((n) => n.scene)];
 const KEY = 'animalcards-arene';
 
 /** Le décor d'un match : chaque duel tire l'un des 14 paysages d'après son identifiant, jamais le même que celui du
