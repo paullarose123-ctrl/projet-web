@@ -3487,6 +3487,375 @@ button.socle__card:not(:disabled) {
   }
 }
 
+/* ───────────── La question de la manche : thème, vraie question, règle ─────────────
+   Le panneau du milieu (replié) et l'annonce en grand à chaque nouvelle manche (.announce). */
+.board__theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font: 700 12px/1.2 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5ee7c0;
+}
+
+.board__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.board__record {
+  text-wrap: balance;
+}
+
+.board__rule {
+  margin: 4px 0 0;
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: #5ee7c0;
+  color: #05281b;
+  font: 700 13px/1.25 var(--font-body);
+}
+
+.board__question .board__desc {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.8);
+  text-wrap: balance;
+}
+
+/* sur téléphone, les précisions restent dans l'annonce : le panneau replié garde la place pour les cartes */
+@media (max-width: 640px) {
+  .board__question .board__desc {
+    display: none;
+  }
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .board__theme {
+    font-size: 14px;
+  }
+
+  .board__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .board__rule {
+    font-size: 15px;
+    padding: 4px 14px;
+  }
+
+  .board__question .board__desc {
+    font-size: clamp(14px, 1.15cqw, 17px);
+  }
+}
+
+/* l'annonce : le terrain se floute, la question arrive en grand ; un toucher la replie */
+.announce {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 4cqh 4cqw;
+  border: 0;
+  border-radius: inherit;
+  background: rgba(8, 10, 18, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  font-family: var(--font-body);
+  text-align: center;
+  cursor: pointer;
+  animation: announce-in 0.35s ease-out both;
+}
+
+.announce__card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 640px);
+  padding: 26px 22px 22px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 16, 28, 0.72);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  animation: announce-card 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.announce__round {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.announce__badge {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #5ee7c0, #2bb5a0);
+  color: #05281b;
+  box-shadow: 0 10px 30px rgba(43, 181, 160, 0.45);
+  animation: announce-badge 0.6s 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.announce__icon {
+  width: 42px;
+  height: 42px;
+}
+
+.announce__theme {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5ee7c0;
+}
+
+.announce__ask {
+  font-weight: 800;
+  font-size: clamp(28px, 8.5cqw, 54px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: announce-text 0.45s 0.25s ease-out both;
+}
+
+.announce__rule {
+  padding: 5px 16px;
+  border-radius: 99px;
+  background: #5ee7c0;
+  color: #05281b;
+  font-weight: 700;
+  font-size: 16px;
+  animation: announce-text 0.45s 0.4s ease-out both;
+}
+
+.announce__more {
+  max-width: 48ch;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+  text-wrap: balance;
+  animation: announce-text 0.45s 0.5s ease-out both;
+}
+
+.announce__hint {
+  margin-top: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  animation: announce-hint 1.6s 1s ease-in-out infinite both;
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .announce__ask {
+    font-size: clamp(36px, 3.6cqw, 58px);
+  }
+
+  .announce__more {
+    font-size: 16px;
+  }
+}
+
+@keyframes announce-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes announce-card {
+  from {
+    transform: scale(0.6) translateY(30px);
+    opacity: 0;
+  }
+}
+
+@keyframes announce-badge {
+  from {
+    transform: scale(0) rotate(-40deg);
+  }
+}
+
+@keyframes announce-text {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+
+@keyframes announce-hint {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ───────────── Un duel plus vivant ─────────────
+   La main se distribue au début, l'équipe adverse arrive d'en haut, la carte posée tombe sur son socle avec une onde,
+   l'animal adverse se retourne, le gagnant de la manche bondit dans un éclat, le perdant vacille, le score saute. */
+.board__hand {
+  animation: hand-deal 0.5s calc(0.08s * var(--i, 0) + 0.15s) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+
+.board__opp {
+  animation: opp-arrive 0.45s calc(0.06s * var(--i, 0)) ease-out backwards;
+}
+
+@keyframes hand-deal {
+  from {
+    transform: translateY(120%) rotate(calc((var(--i, 0) - 2) * 6deg));
+    opacity: 0;
+  }
+}
+
+@keyframes opp-arrive {
+  from {
+    transform: translateY(-80%) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* la carte posée : elle tombe de la main, rebondit, et une onde part du socle */
+.socle__card--drop {
+  position: relative;
+  animation: socle-land 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+.socle__card--drop::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 16px;
+  border: 3px solid rgba(94, 231, 192, 0.9);
+  pointer-events: none;
+  animation: socle-wave 0.6s 0.28s ease-out both;
+}
+
+@keyframes socle-land {
+  0% {
+    transform: translateY(70%) rotate(-10deg) scale(0.55);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(-6%) rotate(2deg) scale(1.06);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(1%) scale(0.98);
+  }
+}
+
+@keyframes socle-wave {
+  from {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+/* la révélation : le gagnant bondit dans un éclat, le perdant vacille */
+.socle.is-winner .socle__card {
+  animation: socle-win 0.6s 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.socle.is-winner .socle__slot::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(94, 231, 192, 0.55), rgba(255, 223, 120, 0.25) 55%, transparent);
+  animation: socle-burst 0.9s 0.7s ease-out both;
+}
+
+.socle.is-loser .socle__card {
+  animation: socle-lose 0.5s 0.75s ease-in-out both;
+}
+
+@keyframes socle-win {
+  40% {
+    transform: translateY(-8%) scale(1.07);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes socle-burst {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.1);
+    opacity: 0.55;
+  }
+}
+
+@keyframes socle-lose {
+  20% {
+    transform: translateX(-4%) rotate(-3deg);
+  }
+  45% {
+    transform: translateX(4%) rotate(2deg);
+  }
+  70% {
+    transform: translateX(-2%) rotate(-1deg);
+  }
+  to {
+    transform: rotate(-2deg) scale(0.97);
+  }
+}
+
+/* le score qui change saute */
+.board__score {
+  animation: score-pop 0.5s 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.6) backwards;
+}
+
+@keyframes score-pop {
+  from {
+    transform: scale(1.9);
+    background: #5ee7c0;
+  }
+}
+
+/* le panneau de la question se déplie quand l'annonce se replie */
+.board__question {
+  animation: question-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announce,
+  .announce__card,
+  .announce__badge,
+  .announce__ask,
+  .announce__rule,
+  .announce__more,
+  .announce__hint,
+  .board__hand,
+  .board__opp,
+  .board__score,
+  .socle__card--drop::after,
+  .socle.is-winner .socle__card,
+  .socle.is-winner .socle__slot::before,
+  .socle.is-loser .socle__card {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .socle__card--drop,
   .socle__card--flip,
