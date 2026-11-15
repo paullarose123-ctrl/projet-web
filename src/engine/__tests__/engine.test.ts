@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
 import { baseValueOf, canBePrime, canBeReverse, currentFace, rarityOf } from '../cards';
-import { FREE_ODDS, FREE_PACK, NO_DUPE_WINDOW, SHOP_PACKS, openPack, primeOdds, sportPack } from '../packs';
+import { FREE_ODDS, FREE_PACK, FREE_PACK_CREDITS, MAX_FREE_PACKS, NO_DUPE_WINDOW, addFreePacks, SHOP_PACKS, openPack, primeOdds, sportPack } from '../packs';
 import { advanceMarket, createAiListing, createMarket, createMyListing, marketPrice, netAfterTax, TARGET_LISTINGS, type MarketState } from '../market';
 import { MAX_QUESTIONS, RECORDS, RECORDS_BY_THEME, RECORD_ORDER, ROUNDS, THEMES, aiSkill, autoTeamFrom, classeOf, compare, createDuel, drawRecords, duelResult, formatRecordValue, playDuelRound, recordValue, type DuelCard, type Theme } from '../duel';
 import { mulberry32 } from '../random';
@@ -413,5 +413,21 @@ describe('duel de records', () => {
       previous = uids;
     }
     expect(seen.size).toBeGreaterThan(5);
+  });
+});
+
+describe('réserve de boosters gratuits', () => {
+  it('ajoute les boosters offerts sans dépasser le maximum', () => {
+    expect(addFreePacks(2, 1)).toEqual({ freePacks: 3, overflow: 0, credits: 0 });
+    expect(addFreePacks(4, 1)).toEqual({ freePacks: MAX_FREE_PACKS, overflow: 0, credits: 0 });
+  });
+
+  it('paie en crédits les boosters qui ne tiennent plus', () => {
+    expect(addFreePacks(5, 3)).toEqual({ freePacks: 5, overflow: 3, credits: 3 * FREE_PACK_CREDITS });
+    expect(addFreePacks(4, 3)).toEqual({ freePacks: 5, overflow: 2, credits: 2 * FREE_PACK_CREDITS });
+  });
+
+  it('ramène sous le plafond une ancienne sauvegarde qui le dépasse', () => {
+    expect(addFreePacks(9, 0)).toEqual({ freePacks: 5, overflow: 4, credits: 4 * FREE_PACK_CREDITS });
   });
 });
