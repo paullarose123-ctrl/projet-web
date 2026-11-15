@@ -67,6 +67,8 @@ export const FAVORITES_SIZE = 5;
  * sienne, pour ne jamais toucher à la vraie partie
  */
 const SAVE_NAME = import.meta.env.MODE === 'apercu' ? 'animalcards-apercu' : 'animalcards-save';
+/** Version du format de la sauvegarde (voir `migrate` plus bas). */
+export const SAVE_VERSION = 22;
 export const MAX_FREE_PACKS = 5;
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
@@ -1120,7 +1122,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 22,
+      version: SAVE_VERSION,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1250,7 +1252,10 @@ export const useGame = create<GameState>()(
         // version 22 : la ligue passe de 10 à 14 divisions (Requin de diamant, rubis et Baleine bleue mythique ajoutés
         // au-dessus du Tigre de diamant) : les numéros sont décalés de 4, chacun garde son blason (le Lion légendaire
         // devient le Requin de diamant, juste au-dessus du Tigre) ; la première saison de ligue commence
-        if (version < 22) {
+        // Le décalage ne se fait qu'une fois : une partie déjà passée aux 14 divisions a un `bestDivision`. Un onglet
+        // resté ouvert avec l'ancien jeu (version 21) pouvait reprendre une partie à 14 divisions puis la renvoyer
+        // marquée « version 21 » : sans ce garde-fou, elle était décalée une deuxième fois (Platine → Bronze).
+        if (version < 22 && state.bestDivision === undefined) {
           const shift = DIVISION_COUNT - 10;
           state.division = Math.min(DIVISION_COUNT, (state.division ?? 10) + shift);
           state.bestDivision = state.division;

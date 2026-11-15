@@ -23,7 +23,7 @@ import {
 } from '../account/supabase';
 import type { CardFace } from '../engine/types';
 import { reserveSnapshot } from '../engine/reserve';
-import { readSave, useGame, writeSave } from './game';
+import { SAVE_VERSION, readSave, useGame, writeSave } from './game';
 
 // Compte du joueur : la session Supabase (gardée dans le navigateur) et la sauvegarde automatique.
 // En invité, la partie reste dans ce navigateur. Une fois connecté, elle est envoyée au compte SAVE_EVERY
@@ -115,6 +115,25 @@ const serial = <T>(task: () => Promise<T>): Promise<T> => {
 const sameStamp = (a: string, b: string) => Date.parse(a) === Date.parse(b);
 
 /**
+ * La sauvegarde du compte vient-elle d'une version plus récente du jeu ? Alors cet onglet fait tourner un ancien jeu :
+ * il ne doit ni la reprendre ni l'écraser (il la renverrait avec son ancien numéro de version, et elle serait migrée
+ * une seconde fois). On recharge la page une fois pour passer au nouveau jeu.
+ */
+function fromNewerGame(data: unknown): boolean {
+  const version = (data as { version?: number } | null)?.version ?? 0;
+  if (version <= SAVE_VERSION) return false;
+  try {
+    if (window.sessionStorage.getItem('animalcards-recharge') !== String(version)) {
+      window.sessionStorage.setItem('animalcards-recharge', String(version));
+      window.location.reload();
+    }
+  } catch {
+    // stockage indisponible : on ne recharge pas, mais on ne touche pas non plus à la sauvegarde
+  }
+  return true;
+}
+
+/**
  * Progression d'une sauvegarde : actions du joueur (toutes celles qui changent la partie : expédition, récolte,
  * vente…), boosters ouverts, duels joués, cartes vendues ou achetées, cartes possédées, objectifs récupérés, et la
  * réserve (enclos ouverts, places, animaux installés, visiteurs récoltés).
@@ -160,6 +179,8 @@ async function reconcile(session: Session): Promise<'adopted' | 'kept' | 'busy'>
   // le joueur a agi pendant qu'on interrogeait le serveur (retour dans l'appli, puis une action tout de suite) : on ne
   // touche pas à sa partie, son action serait perdue
   if (useGame.getState().actions !== actionsBefore) return 'busy';
+  // une version plus récente du jeu a sauvegardé : rien n'est repris ni envoyé depuis cet ancien jeu
+  if (fromNewerGame(remote.data)) return 'busy';
   const localRaw = readSave();
   const remoteRaw = JSON.stringify(remote.data);
   // la nôtre n'a rien de neuf depuis le dernier envoi : celle du compte est la plus récente, on la reprend ;
@@ -256,6 +277,10 @@ async function adopt(session: Session, fresh: boolean): Promise<void> {
   useAccount.setState({ session, error: null });
   if (!fresh) {
     const remote = await loadSave(session);
+    if (remote && fromNewerGame(remote.data)) {
+      useAccount.setState({ status: 'idle' });
+      return;
+    }
     if (remote) {
       await writeSave(JSON.stringify(remote.data));
       markSent(readSave());
