@@ -59,7 +59,16 @@ export type SceneKind =
   | 'outback'
   | 'desert'
   | 'collines'
-  | 'marais';
+  | 'marais'
+  | 'banquise'
+  | 'canyon'
+  | 'bambou'
+  | 'cascade'
+  | 'abysses'
+  | 'grotte'
+  | 'lac'
+  | 'neige'
+  | 'printemps';
 
 export type Creature =
   | 'girafes'
@@ -78,7 +87,12 @@ export type Creature =
   | 'lucioles'
   | 'ferme'
   | 'kangourou'
-  | 'lapin';
+  | 'lapin'
+  | 'manchots'
+  | 'panda'
+  | 'renard'
+  | 'baudroie'
+  | 'chauves-souris';
 
 export interface Palette {
   /** haut et bas du ciel (ou de l'eau, sous la mer) */
@@ -233,6 +247,66 @@ function saguaro(x: number, y: number, h: number, fill: string, key: number): Re
     />
   );
 }
+
+/** Manchot debout : corps sombre, ventre clair, petit bec. */
+function penguin(dark: string, belly: string): ReactNode {
+  return (
+    <g>
+      <path d="M-2.6 -0.2C-3.2 -3 -3 -6.4 -1.8 -8.4C-1.4 -10.4 -0.6 -11.4 0.4 -11.4C1.6 -11.4 2.2 -10.4 2.2 -9.4L3.6 -9L2.2 -8.6C2.8 -6.4 2.8 -3 2.2 -0.2Z" fill={dark} />
+      <path d="M-0.6 -0.6C-1.4 -3 -1.2 -6 0.2 -8.2C1.4 -6 1.6 -3 1.2 -0.6Z" fill={belly} />
+      <path d="M-2.2 -6.6Q-4.2 -4.6 -3.8 -2.4" stroke={dark} strokeWidth={0.9} strokeLinecap="round" fill="none" />
+      <path d="M-1.6 0L-0.2 0M0.6 0L2 0" stroke={dark} strokeWidth={0.6} strokeLinecap="round" />
+    </g>
+  );
+}
+
+/** Panda assis, de face : corps et tête clairs, pattes, oreilles et lunettes sombres. */
+function panda(light: string, dark: string): ReactNode {
+  return (
+    <g>
+      <ellipse cx={0} cy={-5.6} rx={5} ry={5.6} fill={light} />
+      <ellipse cx={-3.4} cy={-1.2} rx={2.4} ry={1.5} fill={dark} />
+      <ellipse cx={3.4} cy={-1.2} rx={2.4} ry={1.5} fill={dark} />
+      <path d="M-4.6 -8.6Q-3 -6.2 -1.4 -5.4Q-2.6 -4 -4.4 -4.8Z M4.6 -8.6Q3 -6.2 1.4 -5.4Q2.6 -4 4.4 -4.8Z" fill={dark} />
+      <path d="M-5.2 -9.8Q0 -8 5.2 -9.8L4.4 -7.6Q0 -6.4 -4.4 -7.6Z" fill={dark} />
+      <circle cx={-2.9} cy={-15.6} r={1.3} fill={dark} />
+      <circle cx={2.9} cy={-15.6} r={1.3} fill={dark} />
+      <circle cx={0} cy={-12.8} r={3.7} fill={light} />
+      <ellipse cx={-1.4} cy={-13.2} rx={0.9} ry={1.2} transform="rotate(25 -1.4 -13.2)" fill={dark} />
+      <ellipse cx={1.4} cy={-13.2} rx={0.9} ry={1.2} transform="rotate(-25 1.4 -13.2)" fill={dark} />
+      <ellipse cx={0} cy={-11.2} rx={0.7} ry={0.45} fill={dark} />
+      <path d="M5.4 -1L7.6 -16" stroke={mix(light, dark, 0.35)} strokeWidth={0.8} strokeLinecap="round" />
+      <path d="M7 -12q2.4 -1 3.6 -0.2q-2 1 -3.6 0.2ZM7.4 -15q-2.2 -1.6 -3.4 -1q1.6 1.6 3.4 1Z" fill={mix(light, dark, 0.35)} />
+    </g>
+  );
+}
+
+/** Renard assis, de profil, la queue enroulée devant lui. */
+function fox(fill: string, tip: string): ReactNode {
+  return (
+    <g>
+      <path d="M-6 0C-9.6 0 -11 -2.6 -9.8 -4.4C-8.6 -6 -6 -5 -4.2 -3.6Z" fill={fill} />
+      <path d="M-10.2 -2.2C-10.6 -1 -10 0 -8.6 0L-7.2 0C-8.6 -0.6 -9.6 -1.2 -10.2 -2.2Z" fill={tip} />
+      <path d="M-4.8 0C-5.6 -3 -5 -6.6 -2.8 -9.2C-1.8 -10.4 -0.6 -11.2 0.4 -11.6L0 -14.6L1.6 -12.4L2.6 -14.8L3 -11.8C4.2 -11.4 5.8 -10.8 6.8 -10.2L6.6 -9.6C5.2 -9.4 3.6 -9.2 2.8 -8.6C3 -6 2.4 -3.4 1.6 -1.2L2.6 -0.4L2.6 0Z" fill={fill} />
+      <path d="M0.8 -8.2C1.6 -6.4 1.8 -4 1.2 -2.2C0.4 -3.8 0.2 -6 0.8 -8.2Z" fill={tip} opacity={0.7} />
+    </g>
+  );
+}
+
+/** Baudroie des abysses : grosse tête, mâchoire hérissée, et sa lanterne au bout d'un filament. */
+function angler(fill: string, teeth: string): ReactNode {
+  return (
+    <g>
+      <path d="M-9 -1C-9 -5 -5 -8 0 -8C4 -8 7 -6 8 -3L4 -1.6L8.4 0.6C7.6 3.6 4.4 5.6 0 5.6C-4 5.6 -7 4 -8.6 2L-13 5L-12 0L-13 -5Z" fill={fill} />
+      <path d="M4 -1.6L5 -0.2L5.8 -1.8L6.6 -0.4L7.4 -2.4M4 -1.6L5.2 -0.6L5.6 0.4L6.6 -0.4L7.4 0.6L8.4 0.6" stroke={teeth} strokeWidth={0.35} fill="none" strokeLinejoin="round" />
+      <circle cx={3.4} cy={-4.6} r={0.9} fill={teeth} opacity={0.8} />
+      <path d="M1 -7.8Q3 -14 9 -13.6" stroke={fill} strokeWidth={0.5} fill="none" strokeLinecap="round" />
+    </g>
+  );
+}
+
+/** Chauve-souris en vol, ailes festonnées. */
+const BAT = 'M0 -1.6L0.7 -2.6L1 -1.4C2 -2 3.4 -2.2 4.6 -2C5.8 -1.8 6.8 -1.2 7.6 -0.6C6.6 -0.6 5.8 -0.2 5.2 0.4C4.4 -0.2 3.4 -0.2 2.6 0.4C2 0 1.4 0 0.8 0.4L0 1.2L-0.8 0.4C-1.4 0 -2 0 -2.6 0.4C-3.4 -0.2 -4.4 -0.2 -5.2 0.4C-5.8 -0.2 -6.6 -0.6 -7.6 -0.6C-6.8 -1.2 -5.8 -1.8 -4.6 -2C-3.4 -2.2 -2 -2 -1 -1.4L-0.7 -2.6Z';
 
 // ───────────── peinture d'un paysage ─────────────
 
@@ -966,6 +1040,531 @@ function paint(def: SceneDef, seed: string, id: string, W = SPAN, shade = true):
       }
       break;
     }
+    case 'banquise': {
+      const horizon = 100;
+      const ice = p.accent;
+      const iceShade = mix(p.accent, p.far, 0.5);
+      sun(X(30), 86, 13);
+      cloud(X(82), 44, 36, '#ffffff', 0.5);
+      cloud(X(20), 54, 24, '#ffffff', 0.35);
+      streak(X(46), 70, wider(52), p.sun, 0.3);
+      // icebergs à l'horizon : un plateau tabulaire et des pointes, chacun avec sa face à l'ombre
+      const berg = (x: number, w: number, h: number, flat: boolean) => {
+        const top: Pt[] = flat
+          ? [
+              [x - w / 2, horizon],
+              [x - w / 2 + 1.5, horizon - h],
+              [x + w / 2 - 2, horizon - h - 0.6],
+              [x + w / 2, horizon],
+            ]
+          : [
+              [x - w / 2, horizon],
+              [x - w * 0.3, horizon - h * 0.55],
+              [x - w * 0.12, horizon - h * 0.7],
+              [x + w * 0.04, horizon - h],
+              [x + w * 0.22, horizon - h * 0.6],
+              [x + w * 0.34, horizon - h * 0.45],
+              [x + w / 2, horizon],
+            ];
+        path(poly(top), ice);
+        path(poly([[x + (flat ? w * 0.18 : w * 0.04), horizon - (flat ? h + 0.3 : h)], ...top.filter(([px]) => px > x + (flat ? w * 0.18 : w * 0.04)), [x + w * 0.1, horizon]]), iceShade, { opacity: 0.55 });
+        path(poly(top.map(([px, py]): Pt => [px, horizon + (horizon - py) * 0.35])), iceShade, { opacity: 0.35 });
+      };
+      tiles((ox) => {
+        berg(ox + 22 + jit(14), 34, 11 + jit(4), true);
+        berg(ox + 70 + jit(10), 18, 20 + jit(6), false);
+        berg(ox + 104 + jit(10), 12, 9, false);
+      });
+      path(area(() => horizon + 0.5), mix(p.far, p.sky[1], 0.25), { opacity: 0.5 });
+      add(<rect x={-2} y={horizon + 0.5} width={f(W + 4)} height={H} fill={p.far} />);
+      let glints = '';
+      for (let i = 0; i < 10; i++) glints += ellipse(X(30) + (r() - 0.5) * 4, horizon + 2 + i * 1.8 + i * i * 0.2, 13 - i, 0.38);
+      path(glints, p.sun, { opacity: 0.8 });
+      const floes = (y: number, n: number, s: number, color: string) => {
+        let d = '';
+        for (let i = 0; i < many(n); i++) d += ellipse(r() * W, y + r() * 6, s * (0.6 + r()), s * 0.22);
+        path(d, color);
+      };
+      floes(106, 7, 4, mix(ice, p.far, 0.25));
+      path(area(hills(r, 112, 1.2, 0.6), 1.2), tone(0.3), { opacity: 0.6 });
+      floes(116, 5, 7, mix(ice, p.far, 0.15));
+      path(area(hills(r, 124, 1.6, 0.6), 1.2), tone(0.55), { opacity: 0.6 });
+      // la banquise au premier plan, son bord à l'ombre et la colonie dessus
+      const shelf = hills(r, 130, 2, 0.4);
+      path(area((x) => shelf(x) + 3.5), mix(p.far, p.near, 0.6));
+      path(area(shelf), mix(ice, p.far, 0.12));
+      if (c === 'manchots') {
+        const colony: Pt3[] = [
+          [-14, 0, 1.25],
+          [-6, 1, 1.5],
+          [3, 0.4, 1.35],
+          [12, 1.2, 1.1],
+          [19, 0.6, 0.95],
+        ];
+        const cx = X(76);
+        for (const [x0, dy, s] of colony) place(cx + x0, shelf(cx + x0) + 1 + dy, s, penguin(p.near, ice), x0 === 3 || x0 === 19);
+      }
+      break;
+    }
+
+    case 'canyon': {
+      sun(X(60), 62, 12);
+      flock(X(36), 44, 5, 22, tone(0.8));
+      streak(X(78), 52, wider(44), p.sun, 0.3);
+      const mid = X(60);
+      // falaises en gradins : des corniches horizontales, puis une chute, du bord vers le lit de la rivière
+      const wall = (outer: number, inner: number, top: number, bottom: number, steps: number) => {
+        const list: Pt[] = [
+          [outer, H + 2],
+          [outer, top],
+        ];
+        let x = outer;
+        for (let i = 0; i < steps; i++) {
+          const t0 = i / steps;
+          const t1 = (i + 1) / steps;
+          const ya = top + (bottom - top) * t0;
+          const yb = top + (bottom - top) * t1;
+          const xa = outer + (inner - outer) * (t0 + (t1 - t0) * (0.5 + r() * 0.25));
+          list.push([xa, ya + (r() - 0.5) * 1.2]);
+          x = xa + (inner - outer) * (0.02 + r() * 0.02);
+          list.push([x, yb]);
+        }
+        list.push([inner, bottom], [inner, H + 2]);
+        return poly(list);
+      };
+      const pair = (gap: number, top: number, bottom: number, steps: number, fill: string, strata: number) => {
+        const left = wall(-2, mid - gap, top + jit(6), bottom, steps);
+        const right = wall(W + 2, mid + gap, top + jit(6), bottom, steps);
+        path(left + right, fill);
+        path(left + right, `url(#${id}-strata)`, { opacity: strata });
+        path(right, p.near, { opacity: 0.18 });
+      };
+      pair(X(10), 84, 104, 3, mix(p.far, p.sky[1], 0.35), 0.1);
+      // la rivière qui serpente vers l'horizon
+      path(`M${f(mid - 1)} 104C${f(mid + 6)} 112 ${f(mid - 14)} 118 ${f(mid - 6)} 128L${f(mid + 22)} 128C${f(mid + 6)} 118 ${f(mid + 10)} 110 ${f(mid + 1)} 104Z`, mix(p.sky[1], p.far, 0.15));
+      path(ellipse(mid - 2, 116, 2.5, 0.35) + ellipse(mid + 4, 122, 4, 0.4), p.sun, { opacity: 0.8 });
+      pair(X(16), 66, 116, 4, p.far, 0.14);
+      mist(104, 124, 0.25);
+      pair(X(26), 50, 134, 5, tone(0.55), 0.16);
+      path(area(hills(r, 136, 2)), p.near);
+      if (c === 'aigle') place(X(60), 76, 1.4, <path d={EAGLE} fill={tone(0.9)} />, false, 8);
+      break;
+    }
+
+    case 'bambou': {
+      sun(X(68), 64, 24, false);
+      flock(X(36), 46, 3, 12, tone(0.7), 1.3);
+      // une tige de bambou : un fût légèrement penché, ses nœuds, et quelques feuilles en lames
+      const stalk = (x: number, w: number, lean: number, color: string, leaves: number) => {
+        const top = -4;
+        const base = H + 2;
+        let d = poly([
+          [x - w / 2, base],
+          [x - w / 2 + lean, top],
+          [x + w / 2 + lean, top],
+          [x + w / 2, base],
+        ]);
+        let knots = '';
+        for (let y = base - 10 - r() * 8; y > top; y -= 14 + r() * 6) {
+          const xx = x + lean * ((base - y) / (base - top));
+          knots += `M${f(xx - w / 2 - 0.2)} ${f(y)}L${f(xx + w / 2 + 0.2)} ${f(y)}`;
+        }
+        for (let i = 0; i < leaves; i++) {
+          const y = 20 + r() * 90;
+          const xx = x + lean * ((base - y) / (base - top));
+          const side = r() < 0.5 ? -1 : 1;
+          for (let j = 0; j < 3; j++) {
+            const a = ((side > 0 ? 20 : 160) + (j - 1) * 22 + (r() - 0.5) * 10) * (Math.PI / 180);
+            const len = (6 + r() * 5) * (w / 2.4 + 0.4);
+            const tip: Pt = [xx + Math.cos(a) * len, y + Math.sin(a) * len + len * 0.25];
+            const mx = (xx + tip[0]) / 2;
+            const my = (y + tip[1]) / 2;
+            const nx = -(tip[1] - y) / len;
+            const ny = (tip[0] - xx) / len;
+            const bw = len * 0.13;
+            d += `M${f(xx)} ${f(y)}Q${f(mx + nx * bw)} ${f(my + ny * bw)} ${f(tip[0])} ${f(tip[1])}Q${f(mx - nx * bw)} ${f(my - ny * bw)} ${f(xx)} ${f(y)}Z`;
+          }
+        }
+        path(d, color);
+        path(knots, 'none', { stroke: mix(color, p.sky[1], 0.35), strokeWidth: 0.4 });
+      };
+      for (let i = 0; i < many(16); i++) stalk(r() * W, 1 + r() * 0.6, (r() - 0.5) * 6, tone(0.05), 1);
+      mist(0, 172, 0.55);
+      for (let i = 0; i < many(9); i++) stalk(r() * W, 1.8 + r() * 0.8, (r() - 0.5) * 8, tone(0.32), 2);
+      mist(60, 172, 0.45);
+      const ground = hills(r, 138, 2);
+      if (c === 'panda') place(X(58), ground(X(58)) + 1, 1.7, panda(mix(p.accent, p.sky[1], 0.15), p.near));
+      path(area(ground), tone(0.7));
+      path(grass(ground, 2, 6, 6), tone(0.7));
+      for (const x of [X(6), X(14), W - X(8), W - X(18)]) stalk(x + jit(4), 3.6 + r() * 1.4, (r() - 0.5) * 6, p.near, 3);
+      break;
+    }
+
+    case 'cascade': {
+      sun(X(84), 40, 10);
+      cloud(X(28), 34, 32, '#ffffff', 0.8);
+      cloud(X(90), 58, 24, '#ffffff', 0.55);
+      const l0 = hills(r, 82, 5);
+      path(area(l0) + along(l0, (x, y, s) => circle(x, y - s * 0.3, s), 4, 8, 7), p.far);
+      mist(60, 96, 0.5);
+      // la falaise et sa crête de forêt, entaillée là où tombe l'eau
+      const fall = X(60);
+      const cliffTop = hills(r, 70, 4);
+      const lip = (x: number) => cliffTop(x) + Math.max(0, 6 - Math.abs(x - fall) * 0.5);
+      path(area(lip), tone(0.4));
+      path(area(lip), `url(#${id}-strata)`, { opacity: 0.12 });
+      path(along(lip, (x, y, s) => (Math.abs(x - fall) < 9 ? '' : circle(x, y - s * 0.2, s)), 4, 8, 6), tone(0.55));
+      const pool = 120;
+      const streams: Array<[number, number]> = [
+        [fall, 7],
+        [fall - X(30), 2],
+        [fall + X(28), 2.6],
+      ];
+      for (const [x, w] of streams) {
+        const y0 = lip(x) + 1;
+        path(poly([[x - w, y0], [x + w, y0], [x + w * 1.25, pool], [x - w * 1.25, pool]]), p.accent, { opacity: 0.92 });
+        let lines = '';
+        for (let i = 0; i < Math.max(2, Math.round(w)); i++) {
+          const xx = x - w + (2 * w * (i + 0.5)) / Math.max(2, Math.round(w)) + (r() - 0.5);
+          lines += `M${f(xx)} ${f(y0 + r() * 6)}L${f(xx + (xx - x) * 0.25)} ${pool}`;
+        }
+        path(lines, 'none', { stroke: mix(p.accent, p.far, 0.35), strokeWidth: 0.35, opacity: 0.6 });
+      }
+      // arc-en-ciel dans les embruns
+      const bow = ['#ff6b6b', '#ffb84d', '#ffe66b', '#7ee081', '#6bb8ff', '#a98bff'];
+      bow.forEach((col, i) => add(<path d={`M${f(fall - 34 + i * 1.2)} ${pool}A${f(34 - i * 1.2)} ${f(34 - i * 1.2)} 0 0 1 ${f(fall + 34 - i * 1.2)} ${pool}`} fill="none" stroke={col} strokeWidth={1.2} opacity={0.32} />));
+      add(<rect x={-2} y={pool} width={f(W + 4)} height={H} fill={`url(#${id}-lake)`} />);
+      add(
+        <g filter={`url(#${id}-blur)`} opacity={0.8}>
+          <ellipse cx={f(fall)} cy={pool} rx={18} ry={5} fill="#ffffff" />
+          <ellipse cx={f(fall - X(30))} cy={pool} rx={6} ry={2} fill="#ffffff" />
+          <ellipse cx={f(fall + X(28))} cy={pool} rx={7} ry={2} fill="#ffffff" />
+        </g>,
+      );
+      let ripples = '';
+      for (let i = 0; i < many(10); i++) ripples += ellipse(r() * W, pool + 4 + r() * 14, 3 + r() * 7, 0.25);
+      path(ripples, '#ffffff', { opacity: 0.4 });
+      flock(X(30), 52, 3, 12, tone(0.85), 1.3);
+      const l2 = hills(r, 134, 3);
+      path(area(l2), p.near);
+      fronds(
+        [
+          [-4, 150, -58, 60, 12, 11],
+          [-6, 126, -24, 44, 9, 9],
+          [W + 4, 150, -122, 58, -12, 11],
+          [W + 6, 124, -156, 42, -9, 9],
+        ],
+        p.near,
+      );
+      break;
+    }
+
+    case 'abysses': {
+      // neige marine et petites lueurs
+      stars(many(70), 168, mix(p.accent, '#ffffff', 0.5));
+      let sparks = '';
+      for (let i = 0; i < many(18); i++) sparks += circle(r() * W, 20 + r() * 110, 0.5 + r() * 0.7);
+      add(
+        <>
+          <path d={sparks} fill={p.accent} filter={`url(#${id}-soft)`} />
+          <path d={sparks} fill="#ffffff" opacity={0.7} />
+        </>,
+      );
+      const jelly = mix(p.accent2 ?? p.accent, '#ffffff', 0.45);
+      const at = (x: number, y: number, s: number, rot: number) => `translate(${f(X(x))} ${y}) scale(${s}) rotate(${rot})`;
+      add(
+        <>
+          <g filter={`url(#${id}-soft)`} opacity={0.75}>
+            <g transform={at(22, 40, 1.7, -8)}>{jellyfish(p.accent2 ?? p.accent)}</g>
+            <g transform={at(100, 56, 1.2, 10)}>{jellyfish(p.accent2 ?? p.accent)}</g>
+          </g>
+          <g opacity={0.8}>
+            <g transform={at(22, 40, 1.6, -8)}>{jellyfish(jelly)}</g>
+            <g transform={at(100, 56, 1.1, 10)}>{jellyfish(jelly)}</g>
+          </g>
+        </>,
+      );
+      if (c === 'baudroie') {
+        const ax = X(64);
+        const ay = 84;
+        const s = 2.1;
+        add(<circle cx={f(ax + 9 * s)} cy={f(ay - 13.6 * s)} r={14} fill={`url(#${id}-glow)`} />);
+        place(ax, ay, s, angler(tone(0.25), p.accent));
+        add(<circle cx={f(ax + 9 * s)} cy={f(ay - 13.6 * s)} r={1.8} fill={p.sun} />);
+      }
+      // le fond : collines de vase, cheminées fumantes et vers géants
+      const l1 = hills(r, 126, 4);
+      path(area(l1), tone(0.35));
+      const vent = (x: number, h: number) => {
+        const y = l1(x) + 2;
+        path(poly([[x - 6, y], [x - 3.5, y - h * 0.5], [x - 2.4, y - h], [x + 2.4, y - h], [x + 3.2, y - h * 0.6], [x + 6, y]]), tone(0.5));
+        let smoke = '';
+        for (let i = 0; i < 7; i++) smoke += circle(x + i * 1.6 + (r() - 0.5) * 2, y - h - 3 - i * 5, 2.4 + i * 1.1);
+        path(smoke, mix(p.far, p.sky[0], 0.3), { opacity: 0.45 });
+        path(ellipse(x, y - h, 2.2, 0.8), p.accent, { opacity: 0.8 });
+      };
+      vent(X(18), 26);
+      vent(W - X(16), 18);
+      const worms = (x0: number) => {
+        let stems = '';
+        let tips = '';
+        for (let i = 0; i < 7; i++) {
+          const x = x0 + (i - 3) * 1.6 + (r() - 0.5);
+          const y = l1(x) + 2;
+          const h = 8 + r() * 10;
+          const lean = (r() - 0.5) * 3;
+          stems += `M${f(x)} ${f(y)}Q${f(x + lean)} ${f(y - h * 0.5)} ${f(x + lean * 0.6)} ${f(y - h)}`;
+          tips += ellipse(x + lean * 0.6, y - h, 1, 1.6);
+        }
+        path(stems, 'none', { stroke: mix(p.accent, '#ffffff', 0.6), strokeWidth: 0.8, strokeLinecap: 'round', opacity: 0.8 });
+        path(tips, p.accent2 ?? p.accent);
+      };
+      worms(X(32));
+      worms(W - X(32));
+      const l2 = hills(r, 140, 3);
+      path(area(l2) + along(l2, (x, y, s) => ellipse(x, y, s * 1.4, s), 3, 6, 9), p.near);
+      break;
+    }
+
+    case 'grotte': {
+      // un puits de lumière tombe du plafond sur un lac souterrain
+      const hole = X(64);
+      add(
+        <path
+          d={poly([
+            [hole - 7, -2],
+            [hole + 7, -2],
+            [hole + 30, 132],
+            [hole - 22, 132],
+          ])}
+          fill={`url(#${id}-ray)`}
+        />,
+      );
+      add(<circle cx={f(hole)} cy={4} r={20} fill={`url(#${id}-glow)`} />);
+      const roof = (base: number, amp: number, gapW: number, drip: number, fill: string) => {
+        const prof = hills(r, base, amp);
+        const y = (x: number) => (Math.abs(x - hole) < gapW ? -4 : prof(x) - Math.max(0, gapW + 10 - Math.abs(x - hole)) * 0.6);
+        let d = `M-2 -4`;
+        for (let x = -2; x <= W + 2.01; x += 1.5) d += `L${f(x)} ${f(y(x))}`;
+        d += `L${f(W + 2)} -4Z`;
+        for (let x = 2 + r() * 5; x < W; x += 3 + r() * 7) {
+          if (Math.abs(x - hole) < gapW + 4) continue;
+          const len = drip * (0.3 + r() * r() * 1.4);
+          const w = 0.8 + len * 0.12;
+          d += poly([
+            [x - w, y(x) - 1],
+            [x + 0.2, y(x) + len],
+            [x + w, y(x) - 1],
+          ]);
+        }
+        path(d, fill);
+      };
+      roof(22, 6, 10, 18, tone(0.15));
+      // fond de la salle et lac
+      const back = hills(r, 104, 5);
+      path(area(back), tone(0.2));
+      add(<rect x={-2} y={112} width={f(W + 4)} height={H} fill={`url(#${id}-lake)`} />);
+      path(ellipse(hole + 4, 116, 12, 0.6) + ellipse(hole + 3, 120, 8, 0.45) + ellipse(hole + 2, 124, 5, 0.35), p.sun, { opacity: 0.55 });
+      // cristaux lumineux : des prismes taillés en biseau, en grappes
+      const crystals = (x0: number, y0: number, s: number, color: string) => {
+        let d = '';
+        let lit = '';
+        for (let i = 0; i < 6; i++) {
+          const a = ((i - 2.5) * 16 + (r() - 0.5) * 10) * (Math.PI / 180);
+          const len = s * (0.5 + r() * 0.7) * (i === 2 || i === 3 ? 1.3 : 1);
+          const w = s * 0.12;
+          const bx = x0 + (i - 2.5) * s * 0.12;
+          const ux = Math.sin(a);
+          const uy = -Math.cos(a);
+          const tip: Pt = [bx + ux * len, y0 + uy * len];
+          const sh: Pt = [bx + ux * len * 0.82, y0 + uy * len * 0.82];
+          d += poly([[bx - w, y0], [sh[0] - w, sh[1]], tip, [sh[0] + w, sh[1]], [bx + w, y0]]);
+          lit += poly([[bx - w, y0], [sh[0] - w, sh[1]], tip, [bx, y0]]);
+        }
+        add(<path d={d} fill={color} filter={`url(#${id}-blur)`} opacity={0.8} />);
+        path(d, color);
+        path(lit, '#ffffff', { opacity: 0.35 });
+      };
+      const shore = hills(r, 128, 3);
+      path(area(shore), tone(0.6));
+      crystals(X(22), shore(X(22)) + 1, 18, p.accent);
+      crystals(W - X(18), shore(W - X(18)) + 1, 13, p.accent2 ?? p.accent);
+      crystals(X(84), shore(X(84)) + 1, 8, p.accent);
+      // stalagmites et voûte du premier plan
+      const near = hills(r, 140, 3);
+      let mites = '';
+      for (const x of [X(4), X(12), W - X(6), W - X(30), X(40)]) {
+        const h = 10 + r() * 20;
+        mites += poly([
+          [x - 3 - h * 0.1, near(x) + 1],
+          [x - 0.6, near(x) - h],
+          [x + 0.6, near(x) - h + 1],
+          [x + 3 + h * 0.1, near(x) + 1],
+        ]);
+      }
+      path(area(near) + mites, p.near);
+      roof(8, 4, 13, 26, p.near);
+      if (c === 'chauves-souris') {
+        place(hole - 10, 30, 1.3, <path d={BAT} fill={p.near} />, false, -10);
+        place(hole + 8, 44, 1, <path d={BAT} fill={p.near} />, false, 12);
+        place(hole - 2, 54, 0.8, <path d={BAT} fill={p.near} />, false, -4);
+      }
+      break;
+    }
+
+    case 'lac': {
+      const shoreY = 104;
+      const start = nodes.length;
+      sun(X(32), 72, 12);
+      tiles((ox) => {
+        for (const [px, py, wl, wr] of [
+          [104, 58, 30, 28],
+          [26, 50, 38, 34],
+          [68, 34, 40, 40],
+        ] as Array<[number, number, number, number]>) {
+          const m = mountain(r, ox + px + jit(14), py + jit(10), shoreY + 2, wl, wr);
+          path(m.body, p.far);
+          path(m.snow, p.accent, { opacity: 0.92 });
+          path(m.shadow, p.near, { opacity: 0.2 });
+        }
+      });
+      const shore = hills(r, shoreY, 1.5);
+      const firs = along(shore, pine, 8, 16, 3.8, 1.5);
+      path(firs, tone(0.5));
+      const mirror = nodes.slice(start);
+      mist(80, shoreY, 0.5);
+      path(firs, tone(0.5));
+      path(area(shore), tone(0.5));
+      cloud(X(84), 40, 30, '#ffffff', 0.6);
+      cloud(X(20), 30, 22, '#ffffff', 0.45);
+      // le lac : le paysage s'y reflète, un peu brouillé par les rides
+      add(<rect x={-2} y={shoreY + 0.5} width={f(W + 4)} height={H} fill={`url(#${id}-lake)`} />);
+      add(
+        <g transform={`translate(0 ${f(shoreY * 2 + 1)}) scale(1 -1)`} opacity={0.45}>
+          {mirror}
+        </g>,
+      );
+      let ripples = '';
+      for (let i = 0; i < many(18); i++) ripples += ellipse(r() * W, shoreY + 3 + r() * 30, 4 + r() * 10, 0.3);
+      path(ripples, '#ffffff', { opacity: 0.35 });
+      path(ellipse(X(32), shoreY + 14, 8, 0.4) + ellipse(X(32), shoreY + 18, 5, 0.35), p.sun, { opacity: 0.6 });
+      const l2 = hills(r, 132, 3);
+      if (c === 'cerf') place(X(82), l2(X(82)) + 0.6, 1.25, stag(p.near));
+      path(area(l2), p.near);
+      for (const [x, h] of [
+        [X(6), 46],
+        [X(16), 32],
+        [W - X(8), 40],
+      ] as Pt[])
+        path(pine(x, l2(x) + 1, h), p.near);
+      path(grass(l2, 2, 5, 9), p.near);
+      break;
+    }
+
+    case 'neige': {
+      sun(X(76), 70, 11);
+      const snow = p.accent;
+      tiles((ox) => {
+        for (const [px, py, wl, wr] of [
+          [96, 66, 30, 30],
+          [30, 58, 38, 34],
+        ] as Array<[number, number, number, number]>) {
+          const m = mountain(r, ox + px + jit(14), py + jit(10), 112, wl, wr);
+          path(m.body, p.far);
+          path(m.snow, snow, { opacity: 0.9 });
+          path(m.shadow, p.near, { opacity: 0.18 });
+        }
+      });
+      mist(84, 112, 0.6);
+      // des collines blanches, des sapins sombres poudrés de neige
+      const layer = (base: number, amp: number, t: number, min: number, max: number, gap: number) => {
+        const l = hills(r, base, amp);
+        path(area(l), mix(snow, p.far, 0.15 + t * 0.25));
+        const trees = spots(l, min, max, gap, 1.5);
+        path(draw(trees, pine), tone(t));
+        path(
+          draw(trees, (x, y, s) => poly([[x - s * 0.08, y - s * 0.92], [x, y - s], [x + s * 0.08, y - s * 0.92]]) + ellipse(x - s * 0.06, y - s * 0.62, s * 0.13, s * 0.03) + ellipse(x + s * 0.08, y - s * 0.36, s * 0.18, s * 0.035)),
+          snow,
+          { opacity: 0.85 },
+        );
+        return l;
+      };
+      layer(112, 3, 0.3, 8, 13, 4);
+      mist(100, 124, 0.35);
+      const l2 = layer(124, 3, 0.6, 14, 22, 6);
+      if (c === 'renard') place(X(62), l2(X(62)) + 2, 1.5, fox(p.accent2 ?? '#e8742c', snow));
+      const l3 = hills(r, 136, 2.5);
+      path(area(l3), mix(snow, p.near, 0.45));
+      for (const [x, h] of [
+        [X(4), 50],
+        [W - X(6), 42],
+      ] as Pt[]) {
+        path(pine(x, l3(x) + 1, h), p.near);
+      }
+      // flocons qui tombent, les plus gros flous devant
+      let flakes = '';
+      for (let i = 0; i < many(70); i++) flakes += circle(r() * W, r() * 170, 0.3 + r() * 0.5);
+      path(flakes, '#ffffff', { opacity: 0.85 });
+      let big = '';
+      for (let i = 0; i < many(10); i++) big += circle(r() * W, r() * 150, 1 + r());
+      add(<path d={big} fill="#ffffff" opacity={0.7} filter={`url(#${id}-soft)`} />);
+      break;
+    }
+
+    case 'printemps': {
+      sun(X(24), 46, 11);
+      cloud(X(70), 38, 34, '#ffffff', 0.8);
+      cloud(X(100), 60, 22, '#ffffff', 0.55);
+      const l0 = hills(r, 100, 6);
+      path(area(l0), p.far);
+      const far = spots(l0, 5, 8, 10);
+      path(draw(far, lollipop), tone(0.25));
+      path(draw(far, crown), p.accent, { opacity: 0.85 });
+      mist(88, 112, 0.35);
+      const l1 = hills(r, 116, 5);
+      path(area(l1), tone(0.35));
+      // grands cerisiers : tronc tordu et nuages de fleurs en deux tons
+      const cherry = (x: number, y: number, s: number) => {
+        path(
+          `M${f(x - s * 0.08)} ${f(y + 1)}C${f(x - s * 0.04)} ${f(y - s * 0.3)} ${f(x - s * 0.2)} ${f(y - s * 0.45)} ${f(x - s * 0.3)} ${f(y - s * 0.62)}L${f(x - s * 0.26)} ${f(y - s * 0.64)}C${f(x - s * 0.1)} ${f(y - s * 0.5)} ${f(x + s * 0.02)} ${f(y - s * 0.5)} ${f(x + s * 0.06)} ${f(y - s * 0.66)}L${f(x + s * 0.1)} ${f(y - s * 0.64)}C${f(x + s * 0.08)} ${f(y - s * 0.4)} ${f(x + s * 0.08)} ${f(y - s * 0.2)} ${f(x + s * 0.08)} ${f(y + 1)}Z`,
+          tone(0.75),
+        );
+        let bloom = '';
+        let light = '';
+        for (let i = 0; i < 14; i++) {
+          const a = r() * Math.PI;
+          const rad = s * (0.18 + r() * 0.28);
+          const bx = x - s * 0.1 + Math.cos(a) * rad * 1.4;
+          const by = y - s * 0.66 - Math.sin(a) * rad * 0.7;
+          bloom += circle(bx, by, s * (0.1 + r() * 0.08));
+          if (r() < 0.6) light += circle(bx - s * 0.03, by - s * 0.03, s * (0.05 + r() * 0.05));
+        }
+        path(bloom, p.accent);
+        path(light, p.accent2 ?? '#ffffff', { opacity: 0.9 });
+      };
+      cherry(X(84), l1(X(84)) + 1, 40);
+      if (wide) cherry(W - X(14), l1(W - X(14)) + 1, 30);
+      const l2 = hills(r, 130, 3);
+      path(area(l2), p.near);
+      path(grass(l2, 2, 5, 7), p.near);
+      cherry(X(10), l2(X(10)) + 1, 62);
+      // pétales qui volent
+      let petals = '';
+      for (let i = 0; i < many(26); i++) {
+        const x = r() * W;
+        const y = 30 + r() * 110;
+        const a = r() * 180;
+        const s = 0.6 + r() * 0.6;
+        petals += `M${f(x)} ${f(y)}q${f(s * Math.cos(a))} ${f(-s)} ${f(s * 2)} 0q${f(-s)} ${f(s)} ${f(-s * 2)} 0Z`;
+      }
+      path(petals, p.accent2 ?? '#ffffff', { opacity: 0.9 });
+      if (c === 'papillons') {
+        place(X(46), 70, 1.6, butterfly(p.accent, p.near), false, -14);
+        place(X(60), 88, 1.1, butterfly('#ffd166', p.near), false, 12);
+      }
+      break;
+    }
+
   }
 
   // ombre au pied de la scène, pour que le texte posé dessus se lise toujours
@@ -1019,6 +1618,9 @@ function paint(def: SceneDef, seed: string, id: string, W = SPAN, shade = true):
         </linearGradient>
         <pattern id={`${id}-rows`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)">
           <rect width="4" height="1.4" fill={p.near} />
+        </pattern>
+        <pattern id={`${id}-strata`} width="6" height="5" patternUnits="userSpaceOnUse">
+          <rect width="6" height="1.1" fill={p.near} />
         </pattern>
         <filter id={`${id}-blur`} x="-20%" y="-50%" width="140%" height="200%">
           <feGaussianBlur stdDeviation="1.6" />

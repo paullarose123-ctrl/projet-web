@@ -13,6 +13,7 @@ import { serieDef } from '../engine/series';
 import { Landscape, type SceneDef } from '../components/PackScene';
 import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
 import { HERO_SCENE, SCREEN_SCENES } from '../art/scenes';
+import { NOUVEAUX } from '../art/arenes';
 import { Logo } from '../components/Logo';
 import { Flag, countryName } from '../components/Flag';
 import { CardStats } from '../components/CardStats';
@@ -28,8 +29,8 @@ import { accountsEnabled } from '../account/supabase';
 // pack : le sachet attend ; charging : il se charge et tremble ; tearing : il se déchire et les cartes sortent
 type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
 
-/** Paysages possibles derrière une ouverture : tous ceux des boosters, des familles et des écrans. */
-const BACKDROPS: SceneDef[] = [...ALL_PACK_SCENES, HERO_SCENE, ...Object.values(SCREEN_SCENES)];
+/** Paysages possibles derrière une ouverture : tous ceux des boosters, des familles, des écrans et des nouveaux terrains de duel. */
+const BACKDROPS: SceneDef[] = [...ALL_PACK_SCENES, HERO_SCENE, ...Object.values(SCREEN_SCENES), ...NOUVEAUX.map((n) => n.scene)];
 let lastBackdrop = -1;
 let lastMexico = -1;
 
