@@ -23,6 +23,7 @@ import { makeUid } from '../engine/random';
 import { DIVISION_COUNT, divisionName } from '../engine/divisions';
 import {
   applyLeaguePoints,
+  divisionFromDuels,
   leaguePoints,
   seasonKey,
   seasonLabel,
@@ -67,6 +68,8 @@ export const FAVORITES_SIZE = 5;
  * sienne, pour ne jamais toucher à la vraie partie
  */
 const SAVE_NAME = import.meta.env.MODE === 'apercu' ? 'animalcards-apercu' : 'animalcards-save';
+/** Version du format de la sauvegarde (voir `migrate` plus bas). */
+export const SAVE_VERSION = 23;
 export { MAX_FREE_PACKS };
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
@@ -211,6 +214,8 @@ export interface GameState {
   /** saison de ligue en cours (« 2026-11 ») et duels de ligue joués pendant cette saison */
   leagueSeason: string;
   seasonPlayed: number;
+  /** division rendue par la réparation de novembre 2026 (à annoncer au joueur, puis effacé) */
+  leagueRepaired?: number;
   /** duel de records en cours */
   match: DuelState | null;
   stats: GameStats;
@@ -1140,7 +1145,7 @@ export const useGame = create<GameState>()(
     {
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
-      version: 22,
+      version: SAVE_VERSION,
       storage: createJSONStorage(() => safeStorage),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
@@ -1270,7 +1275,10 @@ export const useGame = create<GameState>()(
         // version 22 : la ligue passe de 10 à 14 divisions (Requin de diamant, rubis et Baleine bleue mythique ajoutés
         // au-dessus du Tigre de diamant) : les numéros sont décalés de 4, chacun garde son blason (le Lion légendaire
         // devient le Requin de diamant, juste au-dessus du Tigre) ; la première saison de ligue commence
-        if (version < 22) {
+        // Le décalage ne se fait qu'une fois : une partie déjà passée aux 14 divisions a un `bestDivision`. Un onglet
+        // resté ouvert avec l'ancien jeu (version 21) pouvait reprendre une partie à 14 divisions puis la renvoyer
+        // marquée « version 21 » : sans ce garde-fou, elle était décalée une deuxième fois (Platine → Bronze).
+        if (version < 22 && state.bestDivision === undefined) {
           const shift = DIVISION_COUNT - 10;
           state.division = Math.min(DIVISION_COUNT, (state.division ?? 10) + shift);
           state.bestDivision = state.division;
@@ -1278,6 +1286,18 @@ export const useGame = create<GameState>()(
           state.leagueSeason = seasonKey(Date.now());
           state.seasonPlayed = 0;
           if (state.match) state.match = { ...state.match, division: Math.min(DIVISION_COUNT, state.match.division + shift) };
+        }
+        // version 23 : réparation des parties décalées deux fois (voir plus haut). La division perdue n'a laissé aucune
+        // trace : on rend celle que les duels joués permettent d'atteindre (règles identiques sous le rubis), si elle est
+        // meilleure. Seulement pendant la première saison (novembre 2026), avant toute descente de fin de saison.
+        if (version < 23 && state.leagueSeason === '2026-11' && state.stats) {
+          const earned = divisionFromDuels(state.stats.matchesPlayed ?? 0, state.stats.matchesWon ?? 0);
+          if (earned < state.division) {
+            state.division = earned;
+            state.divisionPoints = 0;
+            state.bestDivision = Math.min(state.bestDivision ?? earned, earned);
+            state.leagueRepaired = earned;
+          }
         }
         return state;
       },
@@ -1340,6 +1360,17 @@ useGame.subscribe((state, previous) => {
 });
 // la sauvegarde du navigateur est relue avant cet abonnement : on vérifie aussi la partie chargée
 awardBadges(useGame.getState());
+
+// Réparation de la ligue (version 23) : on prévient le joueur une fois, dès que sa partie réparée est chargée
+// (au démarrage ou en reprenant celle du compte).
+function announceLeagueRepair(state: GameState) {
+  if (!state.leagueRepaired) return;
+  const division = state.leagueRepaired;
+  useGame.setState({ leagueRepaired: undefined });
+  state.toast('gold', `Ligue réparée : une erreur de sauvegarde t’avait fait redescendre. Te revoilà en division ${divisionName(division)} !`);
+}
+useGame.subscribe((state) => announceLeagueRepair(state));
+announceLeagueRepair(useGame.getState());
 
 /**
  * Graines offertes à la compilation : VITE_GRAINES=100000000 (page d'aperçu, version de test) fixe ce solde une seule

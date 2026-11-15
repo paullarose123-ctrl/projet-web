@@ -92,3 +92,18 @@ export function seasonReward(division: number): SeasonReward {
 export function seasonStartDivision(division: number): number {
   return Math.min(DIVISION_COUNT, division + SEASON_DROP);
 }
+
+/**
+ * Division que les duels joués permettent d'atteindre avec les règles d'avant le rubis (victoire +3, défaite −2,
+ * 7 points pour monter, pas de relégation) : sert à rendre leur division aux joueurs rétrogradés à tort en novembre
+ * 2026 (sauvegarde décalée deux fois lors du passage aux 14 divisions). Les nuls comptent comme des défaites : on
+ * reste prudent. Jamais au-dessus du Requin de diamant (le Lion légendaire d'avant, la plus haute division d'alors).
+ */
+export function divisionFromDuels(played: number, won: number): number {
+  const lost = Math.max(0, played - won);
+  const promotions = Math.floor(Math.max(0, 3 * won - 2 * lost) / 7);
+  return Math.max(REPAIR_CEILING, DIVISION_COUNT - promotions);
+}
+
+/** Plus haute division que la réparation de novembre 2026 peut rendre : le Requin de diamant. */
+export const REPAIR_CEILING = 5;
