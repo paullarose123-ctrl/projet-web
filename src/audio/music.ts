@@ -1,5 +1,5 @@
 import { bird, createBus, sharedAudio, type Bus } from './engine';
-import { allTracks, type Track } from './tracks';
+import { allTracks, duelTracks, type Track } from './tracks';
 
 // La radio du jeu : sept morceaux calmes de la même famille (src/audio/tracks.ts), joués l'un après l'autre
 // dans un ordre mélangé, sans jamais repasser deux fois le même avant d'avoir entendu tous les autres.
@@ -15,9 +15,11 @@ const RING = 4;
 const GAP_MIN = 4;
 const GAP_MAX = 8;
 
-/** morceaux imposés par les tests ; sinon ceux du jour (voir allTracks) */
+/** morceaux imposés par les tests ; sinon ceux du jour (voir allTracks), ou ceux du duel sur le terrain */
 let testTracks: Track[] | null = null;
-const currentTracks = () => testTracks ?? allTracks();
+/** la radio, ou les musiques de duel pendant un duel (voir setMusicMode) */
+let mode: 'radio' | 'duel' = 'radio';
+const currentTracks = () => testTracks ?? (mode === 'duel' ? duelTracks() : allTracks());
 
 interface Playing {
   track: Track;
@@ -95,7 +97,8 @@ function endTrack(ac: AudioContext, at: number) {
   if (!current) return;
   release(current.bus, at - ac.currentTime + RING + 2);
   current = null;
-  nextTrackAt = at + RING + GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
+  // pendant un duel, les morceaux s'enchaînent presque sans pause
+  nextTrackAt = mode === 'duel' ? at + 2 : at + RING + GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
   nextBird = at + RING;
 }
 
@@ -174,6 +177,14 @@ export function nextTrack(): void {
   }
   nextTrackAt = ac.currentTime + 0.9;
   loop();
+}
+
+/** Passe des musiques de la radio à celles du duel (et retour) : le morceau en cours s'efface en fondu. */
+export function setMusicMode(next: 'radio' | 'duel'): void {
+  if (next === mode) return;
+  mode = next;
+  queue = [];
+  nextTrack();
 }
 
 /** Titre du dernier morceau lancé (null avant le premier). */

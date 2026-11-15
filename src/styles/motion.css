@@ -2521,12 +2521,16 @@ h3 {
   }
 }
 
-/* ───────────── Terrain du duel : face-à-face vertical, sur toute la hauteur de l'écran ─────────────
-   Le terrain a la hauteur de l'écran (moins la barre du haut et la navigation) et un format portrait ; toutes les
-   tailles, cartes comprises, sont en unités de ce conteneur (cqh, cqw) pour que tout tienne sans défiler. */
+/* ───────────── Terrain du duel ─────────────
+   Le terrain a la hauteur de l'écran (moins la barre du haut et la navigation) ; toutes les tailles, cartes comprises,
+   sont en unités de ce conteneur (cqh, cqw) pour que tout tienne sans défiler. La disposition des éléments est donnée
+   plus bas : « sur téléphone » (portrait) et « sur ordinateur » (paysage). */
 .board {
   --metal: #eebf98;
   --board-h: max(560px, calc(100dvh - var(--nav-h) - 128px));
+  --w-opp: min(7.6cqh, 16cqw);
+  --w-hand: min(10.4cqh, 18.4cqw);
+  --w-socle: min(21.5cqh, 48cqw);
   container-type: size;
   position: relative;
   display: grid;
@@ -2594,11 +2598,22 @@ h3 {
   width: 100%;
 }
 
+/* le score et le nom du joueur : une étiquette posée sur le bord haut de son socle */
 .board__side {
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-  min-width: 0;
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  translate: -50% -60%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100cqw - 8px);
+  padding: 3px 12px 3px 4px;
+  border-radius: 99px;
+  background: rgba(6, 12, 9, 0.88);
+  border: 1px solid color-mix(in srgb, var(--metal) 55%, transparent);
 }
 
 .board__name {
@@ -2644,7 +2659,7 @@ h3 {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(21.5cqh, 48cqw);
+  width: var(--w-socle);
   aspect-ratio: 100 / 140;
   border-radius: 14px;
   border: 2px dashed color-mix(in srgb, var(--metal) 70%, transparent);
@@ -2894,6 +2909,1087 @@ button.socle__card:not(:disabled) {
 
 .board__hand:disabled {
   cursor: default;
+}
+
+/* ───────────── Terrain du duel sur téléphone (portrait) ─────────────
+   Le terrain occupe tout l'écran, d'un bord à l'autre, jusqu'à la navigation : rien n'est coupé et rien ne défile
+   (la barre du haut s'efface pendant le duel). Les deux socles passent côte à côte (toi à gauche, l'adversaire à
+   droite), ce qui libère la hauteur pour des cartes plus grandes et une question bien lisible :
+     équipe adverse · question · les deux socles (score et nom posés sur leur bord) · Abandonner / Jouer · ta main.
+   Les rangées .board__lane disparaissent (display: contents) et leurs éléments se placent dans la grille du terrain ;
+   les socles prennent toute la hauteur qui reste (ce sont eux-mêmes des conteneurs, d'où --w-socle en unités du socle).
+   Une tablette tenue en portrait prend aussi cette mise en page. */
+@media (max-width: 640px), (orientation: portrait) and (max-width: 1100px) {
+  /* pendant le duel, la barre du haut et le titre de la radio laissent la place au terrain et à la question */
+  body:has(.board) .topbar,
+  body:has(.board) .now-playing {
+    display: none;
+  }
+
+  .content:has(.board) {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .board {
+    --board-h: calc(100dvh - var(--nav-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    --w-opp: min(11cqw, 6.6cqh);
+    --w-hand: min(26cqw, 15.5cqh);
+    grid-template-columns: 1fr 1fr;
+    /* la rangée des socles prend la hauteur qui reste, sans dépasser la taille d'une carte de la largeur de sa
+       colonne ; sur un grand écran, le surplus se répartit entre les rangées */
+    grid-template-rows: auto auto minmax(0, calc(63.7vw + 14px)) auto auto;
+    align-content: space-evenly;
+    grid-template-areas:
+      'opp opp'
+      'question question'
+      'me-socle opp-socle'
+      'abandon go'
+      'hand hand';
+    column-gap: 3cqw;
+    row-gap: max(6px, 1.2cqh);
+    width: calc(100% + 32px);
+    min-height: 420px;
+    margin: 0 -16px;
+    padding: max(8px, 1.4cqh) 3cqw max(8px, 1.4cqh);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .board__row--opp {
+    grid-area: opp;
+    gap: 2cqw;
+  }
+
+  /* à partir de 900 px, la navigation flotte à 16 px du bas */
+  @media (min-width: 900px) {
+    .board {
+      --board-h: calc(100dvh - var(--nav-h) - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  .board__row--hand {
+    grid-area: hand;
+    gap: 1.6cqw;
+  }
+
+  .board__lane {
+    display: contents;
+  }
+
+  /* la question : en grand, sur toute la largeur */
+  .board__question {
+    grid-area: question;
+    width: 100%;
+    margin: 0;
+    padding: 6px 12px 8px;
+    gap: 1px;
+  }
+
+  .board__round {
+    font-size: 12px;
+  }
+
+  .board__record {
+    font-size: clamp(22px, 7cqw, 30px);
+    line-height: 1.1;
+  }
+
+  .board__desc {
+    font-size: clamp(14px, 3.8cqw, 16px);
+    line-height: 1.35;
+    color: var(--text);
+  }
+
+  .board__verdict {
+    font-size: clamp(18px, 5.6cqw, 24px);
+  }
+
+  .board__rounds li {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* le score et le nom du joueur, en étiquette posée sur le bord haut de son socle */
+  .board__lane--me .socle {
+    grid-area: me-socle;
+  }
+
+  .board__lane--opp .socle {
+    grid-area: opp-socle;
+  }
+
+  .board__side {
+    gap: 6px;
+    padding: 2px 10px 2px 3px;
+  }
+
+  .board__name {
+    font-size: 12px;
+    -webkit-line-clamp: 1;
+    word-break: break-all;
+  }
+
+  .board__score {
+    flex: none;
+    font-size: 17px;
+    padding: 0 8px;
+  }
+
+  /* le socle remplit sa case (sous l'étiquette) ; la carte y est la plus grande possible, en largeur ou en hauteur */
+  .socle {
+    --w-socle: min(100cqw, 100cqh * 100 / 140);
+    container-type: size;
+    width: 100%;
+    height: 100%;
+    padding-top: 14px;
+    align-content: start;
+    justify-items: center;
+  }
+
+  .socle__slot::after {
+    bottom: -8px;
+    height: 18px;
+  }
+
+  .socle__wait {
+    font-size: 13px;
+  }
+
+  .socle__value {
+    font-size: clamp(16px, 11cqw, 22px);
+    max-width: calc(var(--w-socle) + 6px);
+  }
+
+  .socle__value small {
+    max-width: 100%;
+    font-size: 11px;
+  }
+
+  /* sous les socles : Abandonner à gauche, le grand bouton Jouer / Suivante à droite */
+  .board__lane--opp .board__aside {
+    grid-area: abandon;
+    justify-items: start;
+  }
+
+  .board__lane--me .board__aside {
+    grid-area: go;
+    justify-items: stretch;
+  }
+
+  .board__go {
+    width: 100%;
+    min-height: 46px;
+    font-size: 18px;
+  }
+
+  .board__hand:not(:disabled):hover {
+    transform: none;
+  }
+}
+
+/* ───────────── Terrain du duel sur ordinateur et tablette (paysage) ─────────────
+   Le terrain s'étale en largeur et tient en entier entre la barre du haut et la navigation :
+     en haut l'équipe adverse (et Abandonner dans le coin) ; au milieu ton socle, la question en grand puis Jouer,
+     le socle adverse ; en bas ta main.
+   Comme sur téléphone, les rangées .board__lane disparaissent et les socles remplissent leur case. */
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .content:has(.board) {
+    padding-bottom: calc(var(--nav-h) + 24px);
+  }
+
+  .board {
+    --board-h: max(500px, calc(100dvh - 77px - var(--nav-h) - 40px));
+    --w-opp: min(5cqw, 9cqh);
+    --w-hand: min(11cqw, 21cqh);
+    grid-template-columns: 1fr minmax(260px, 1.15fr) 1fr;
+    /* la rangée de la question garde au moins la hauteur de son texte : elle ne déborde plus sur l'équipe adverse */
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas:
+      'opp opp opp'
+      'me-socle question opp-socle'
+      'me-socle go opp-socle'
+      'hand hand hand';
+    column-gap: 2.5cqw;
+    row-gap: 1.6cqh;
+    /* sur grand écran, le terrain déborde de la colonne du site (1180 px) pour des cartes plus grandes */
+    --board-w: min(calc(100vw - 48px), 1500px);
+    width: var(--board-w);
+    margin-left: calc((100% - var(--board-w)) / 2);
+    padding: 1.8cqh 2.5cqw 2.2cqh;
+  }
+
+  .board__row--opp {
+    grid-area: opp;
+    gap: 1cqw;
+  }
+
+  .board__row--hand {
+    grid-area: hand;
+    gap: 1.4cqw;
+  }
+
+  .board__lane {
+    display: contents;
+  }
+
+  /* la question au centre du terrain, entre les deux socles, en grand */
+  .board__question {
+    grid-area: question;
+    align-self: end;
+    width: 100%;
+    margin: 0;
+    padding: 2.2cqh 22px 2.6cqh;
+    gap: 6px;
+    border-radius: 20px;
+  }
+
+  .board__rounds li {
+    width: 12px;
+    height: 12px;
+  }
+
+  .board__round {
+    font-size: max(13px, 1.9cqh);
+  }
+
+  .board__record {
+    font-size: clamp(26px, 2.8cqw, 40px);
+    line-height: 1.1;
+  }
+
+  .board__desc {
+    font-size: clamp(16px, 1.45cqw, 20px);
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .board__verdict {
+    font-size: clamp(22px, 2.2cqw, 32px);
+  }
+
+  /* le score et le nom, en étiquette sur le bord haut du socle */
+  .board__lane--me .socle {
+    grid-area: me-socle;
+  }
+
+  .board__lane--opp .socle {
+    grid-area: opp-socle;
+  }
+
+  .board__side {
+    gap: 8px;
+    padding: 3px 14px 3px 4px;
+  }
+
+  .board__name {
+    font-size: 15px;
+    -webkit-line-clamp: 1;
+    word-break: break-all;
+  }
+
+  .board__score {
+    flex: none;
+    font-size: 22px;
+    padding: 0 10px;
+  }
+
+  .socle {
+    --w-socle: min(100cqw, 100cqh * 100 / 140);
+    container-type: size;
+    width: 100%;
+    height: 100%;
+    padding-top: 18px;
+    align-content: center;
+    justify-items: center;
+  }
+
+  .socle__wait {
+    font-size: 16px;
+  }
+
+  .socle__value {
+    font-size: clamp(18px, 9cqw, 30px);
+    max-width: calc(var(--w-socle) + 8px);
+  }
+
+  .socle__value small {
+    max-width: 100%;
+    font-size: 13px;
+  }
+
+  /* sous la question : le grand bouton Jouer / Suivante */
+  .board__lane--me .board__aside {
+    grid-area: go;
+    justify-items: center;
+  }
+
+  /* Abandonner, discret, dans le coin en haut à droite du terrain */
+  .board__lane--opp .board__aside {
+    grid-row: 1;
+    grid-column: 3;
+    align-self: start;
+    justify-items: end;
+  }
+
+  .board__go {
+    min-width: min(100%, 260px);
+    min-height: 52px;
+    font-size: 20px;
+  }
+}
+
+/* ───────────── Habillage du duel : épuré, panneaux en verre dépoli ─────────────
+   Des panneaux sombres translucides et floutés, la police de l'interface (Outfit) en gras et en grand, des pastilles
+   blanches pour les scores et un bouton Jouer blanc arrondi. Ta main est un carrousel de grandes cartes qu'on fait
+   glisser au doigt sur téléphone (trois cartes et demie visibles) ; sur ordinateur les cinq tiennent sur une rangée. */
+.board::before {
+  background: linear-gradient(180deg, rgba(6, 12, 9, 0.15), rgba(6, 12, 9, 0.05) 40%, rgba(6, 12, 9, 0.55));
+}
+
+.board__question {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  background: rgba(14, 16, 28, 0.42);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.board__question.is-me {
+  border-color: rgba(56, 211, 159, 0.9);
+}
+
+.board__question.is-opp {
+  border-color: rgba(255, 107, 107, 0.9);
+}
+
+.board__round {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.board__record {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.board__desc {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.board__verdict {
+  font-family: var(--font-body);
+  font-weight: 800;
+}
+
+.board__question.is-me .board__verdict {
+  color: #38d39f;
+}
+
+.board__question.is-opp .board__verdict {
+  color: #ff8a8a;
+}
+
+/* les manches : de petits traits plutôt que des points */
+.board__rounds li,
+.board__rounds li.is-current,
+.board__rounds li.is-me,
+.board__rounds li.is-opp,
+.board__rounds li.is-draw {
+  width: 22px;
+  height: 5px;
+  border-radius: 3px;
+  box-shadow: none;
+}
+
+.board__rounds li {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.board__rounds li.is-current {
+  background: #fff;
+}
+
+.board__rounds li.is-me {
+  background: #38d39f;
+}
+
+.board__rounds li.is-opp {
+  background: #ff8a8a;
+}
+
+.board__side {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(14, 16, 28, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.board__name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: #fff;
+}
+
+.board__score {
+  font-family: var(--font-body);
+  font-weight: 800;
+  background: #fff;
+  color: #111;
+}
+
+.socle__slot {
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.socle__slot::after {
+  opacity: 0.35;
+}
+
+.socle.is-winner .socle__slot {
+  border-color: #38d39f;
+  box-shadow: 0 0 28px rgba(56, 211, 159, 0.55);
+}
+
+.socle__wait {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.socle__value {
+  border: 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-family: var(--font-body);
+  font-weight: 800;
+}
+
+.socle__value small {
+  color: #444;
+}
+
+.socle__value.is-winner {
+  background: #38d39f;
+  color: #05281b;
+}
+
+.socle__value.is-winner small {
+  color: #0d4a33;
+}
+
+/* (sélecteurs renforcés : les boutons principaux sont repeints par les saisons, voir .saison-fete dans app.css) */
+.board .board__lane .btn.board__go,
+.board .board__lane .btn.board__go:hover:not(:disabled),
+.board .board__lane .btn.board__go:active:not(:disabled) {
+  --pastel: #fff;
+  border: 0;
+  border-radius: 99px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-body);
+  font-weight: 800;
+  text-shadow: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.board .board__lane .btn.board__go:disabled {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.board .board__lane .btn.board__go::after {
+  display: none;
+}
+
+.board__aside .btn--ghost,
+.board__aside .btn--danger {
+  border-radius: 99px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.board__aside .btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(14, 16, 28, 0.45);
+  color: #fff;
+}
+
+/* ta main : un carrousel de grandes cartes */
+.board__row--hand {
+  justify-content: center;
+  padding: 6px 2px 4px;
+}
+
+.board__hand {
+  flex: none;
+}
+
+@media (max-width: 640px), (orientation: portrait) and (max-width: 1100px) {
+  .board__row--hand {
+    justify-content: flex-start;
+    width: calc(100% + 6cqw);
+    margin-inline: -3cqw;
+    padding-inline: 3cqw;
+    gap: 2.4cqw;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 3cqw;
+    scrollbar-width: none;
+  }
+
+  .board__row--hand::-webkit-scrollbar {
+    display: none;
+  }
+
+  .board__hand {
+    scroll-snap-align: start;
+  }
+}
+
+/* tablette tenue en portrait : les cinq cartes de la main tiennent sur une rangée, et les textes grandissent */
+@media (min-width: 641px) and (max-width: 1100px) and (orientation: portrait) {
+  .board {
+    --w-hand: min(18cqw, 15.5cqh);
+  }
+
+  .board__row--hand {
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .board__record {
+    font-size: 36px;
+  }
+
+  .board__desc {
+    font-size: 19px;
+  }
+
+  .board__name {
+    font-size: 15px;
+  }
+
+  .board__score {
+    font-size: 22px;
+  }
+}
+
+/* ───────────── La question de la manche : thème, vraie question, règle ─────────────
+   Le panneau du milieu (replié) et l'annonce en grand à chaque nouvelle manche (.announce). */
+.board__theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font: 700 12px/1.2 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5ee7c0;
+}
+
+.board__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.board__record {
+  text-wrap: balance;
+}
+
+.board__rule {
+  margin: 4px 0 0;
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: #5ee7c0;
+  color: #05281b;
+  font: 700 13px/1.25 var(--font-body);
+}
+
+.board__question .board__desc {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.8);
+  text-wrap: balance;
+}
+
+/* sur téléphone, les précisions restent dans l'annonce : le panneau replié garde la place pour les cartes */
+@media (max-width: 640px) {
+  .board__question .board__desc {
+    display: none;
+  }
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .board__theme {
+    font-size: 14px;
+  }
+
+  .board__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .board__rule {
+    font-size: 15px;
+    padding: 4px 14px;
+  }
+
+  .board__question .board__desc {
+    font-size: clamp(14px, 1.15cqw, 17px);
+  }
+}
+
+/* l'annonce : le terrain se floute, la question arrive en grand ; un toucher la replie */
+.announce {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 4cqh 4cqw;
+  border: 0;
+  border-radius: inherit;
+  background: rgba(8, 10, 18, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  font-family: var(--font-body);
+  text-align: center;
+  cursor: pointer;
+  animation: announce-in 0.35s ease-out both;
+}
+
+.announce__card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 640px);
+  padding: 26px 22px 22px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 16, 28, 0.72);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  animation: announce-card 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.announce__round {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.announce__badge {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #5ee7c0, #2bb5a0);
+  color: #05281b;
+  box-shadow: 0 10px 30px rgba(43, 181, 160, 0.45);
+  animation: announce-badge 0.6s 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.announce__icon {
+  width: 42px;
+  height: 42px;
+}
+
+.announce__theme {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5ee7c0;
+}
+
+.announce__ask {
+  font-weight: 800;
+  font-size: clamp(28px, 8.5cqw, 54px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: announce-text 0.45s 0.25s ease-out both;
+}
+
+.announce__rule {
+  padding: 5px 16px;
+  border-radius: 99px;
+  background: #5ee7c0;
+  color: #05281b;
+  font-weight: 700;
+  font-size: 16px;
+  animation: announce-text 0.45s 0.4s ease-out both;
+}
+
+.announce__more {
+  max-width: 48ch;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+  text-wrap: balance;
+  animation: announce-text 0.45s 0.5s ease-out both;
+}
+
+.announce__hint {
+  margin-top: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  animation: announce-hint 1.6s 1s ease-in-out infinite both;
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .announce__ask {
+    font-size: clamp(36px, 3.6cqw, 58px);
+  }
+
+  .announce__more {
+    font-size: 16px;
+  }
+}
+
+@keyframes announce-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes announce-card {
+  from {
+    transform: scale(0.6) translateY(30px);
+    opacity: 0;
+  }
+}
+
+@keyframes announce-badge {
+  from {
+    transform: scale(0) rotate(-40deg);
+  }
+}
+
+@keyframes announce-text {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+
+@keyframes announce-hint {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ───────────── Un duel plus vivant ─────────────
+   La main se distribue au début, l'équipe adverse arrive d'en haut, la carte posée tombe sur son socle avec une onde,
+   l'animal adverse se retourne, le gagnant de la manche bondit dans un éclat, le perdant vacille, le score saute. */
+.board__hand {
+  animation: hand-deal 0.5s calc(0.08s * var(--i, 0) + 0.15s) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+
+.board__opp {
+  animation: opp-arrive 0.45s calc(0.06s * var(--i, 0)) ease-out backwards;
+}
+
+@keyframes hand-deal {
+  from {
+    transform: translateY(120%) rotate(calc((var(--i, 0) - 2) * 6deg));
+    opacity: 0;
+  }
+}
+
+@keyframes opp-arrive {
+  from {
+    transform: translateY(-80%) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* la carte posée : elle tombe de la main, rebondit, et une onde part du socle */
+.socle__card--drop {
+  position: relative;
+  animation: socle-land 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+.socle__card--drop::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 16px;
+  border: 3px solid rgba(94, 231, 192, 0.9);
+  pointer-events: none;
+  animation: socle-wave 0.6s 0.28s ease-out both;
+}
+
+@keyframes socle-land {
+  0% {
+    transform: translateY(70%) rotate(-10deg) scale(0.55);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(-6%) rotate(2deg) scale(1.06);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(1%) scale(0.98);
+  }
+}
+
+@keyframes socle-wave {
+  from {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+/* la révélation : le gagnant bondit dans un éclat, le perdant vacille */
+.socle.is-winner .socle__card {
+  animation: socle-win 0.6s 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+.socle.is-winner .socle__slot::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(94, 231, 192, 0.55), rgba(255, 223, 120, 0.25) 55%, transparent);
+  animation: socle-burst 0.9s 0.7s ease-out both;
+}
+
+.socle.is-loser .socle__card {
+  animation: socle-lose 0.5s 0.75s ease-in-out both;
+}
+
+@keyframes socle-win {
+  40% {
+    transform: translateY(-8%) scale(1.07);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes socle-burst {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.1);
+    opacity: 0.55;
+  }
+}
+
+@keyframes socle-lose {
+  20% {
+    transform: translateX(-4%) rotate(-3deg);
+  }
+  45% {
+    transform: translateX(4%) rotate(2deg);
+  }
+  70% {
+    transform: translateX(-2%) rotate(-1deg);
+  }
+  to {
+    transform: rotate(-2deg) scale(0.97);
+  }
+}
+
+/* le score qui change saute */
+.board__score {
+  animation: score-pop 0.5s 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.6) backwards;
+}
+
+@keyframes score-pop {
+  from {
+    transform: scale(1.9);
+    background: #5ee7c0;
+  }
+}
+
+/* le panneau de la question se déplie quand l'annonce se replie */
+.board__question {
+  animation: question-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* ───────────── Ton camp et celui de l'adversaire ─────────────
+   Ton socle est vert d'eau, celui de l'adversaire corail : bordure, voile, dalle et étiquette (« Toi » / « Adversaire »
+   au-dessus du nom, en entier sur deux lignes au besoin). */
+.socle--me {
+  --side: #5ee7c0;
+  --side-ink: #05281b;
+}
+
+.socle--opp {
+  --side: #ff8f7a;
+  --side-ink: #3a0d06;
+}
+
+.socle .socle__slot {
+  border: 2px solid color-mix(in srgb, var(--side) 75%, transparent);
+  background: color-mix(in srgb, var(--side) 14%, rgba(14, 16, 28, 0.25));
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--side) 22%, transparent);
+}
+
+.socle .socle__slot::after {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--side) 90%, white 10%), color-mix(in srgb, var(--side) 35%, transparent) 70%, transparent);
+  opacity: 0.7;
+}
+
+.socle.is-winner .socle__slot {
+  border-color: var(--side);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--side) 70%, transparent);
+}
+
+.board .board__side {
+  align-items: center;
+  border: 1.5px solid var(--side);
+  border-radius: 16px;
+  max-width: calc(100cqw + 16px);
+  padding: 3px 12px 3px 4px;
+}
+
+.board .board__side .board__score {
+  background: var(--side);
+  color: var(--side-ink);
+}
+
+.board__id {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.1;
+}
+
+.board__who {
+  font: 800 9.5px/1.1 var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--side);
+}
+
+.board .board__name {
+  font-size: 12px;
+  line-height: 1.15;
+  -webkit-line-clamp: 2;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .board__who {
+    font-size: 11px;
+  }
+
+  .board .board__name {
+    font-size: 15px;
+  }
+}
+
+/* la carte posée fait une onde de la couleur de ton camp */
+.socle--me .socle__card--drop::after {
+  border-color: var(--side);
+}
+
+/* musique et son, dans le coin du terrain */
+.board__sound {
+  position: absolute;
+  z-index: 6;
+  top: max(8px, 1.4cqh);
+  left: max(8px, 2cqw);
+  display: flex;
+  gap: 6px;
+}
+
+.board__sound-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 16, 28, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  cursor: pointer;
+}
+
+.board__sound-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.board__sound-btn.is-off {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* sur téléphone, un bouton de chaque côté de l'équipe adverse */
+@media (max-width: 640px) {
+  .board__sound {
+    right: max(8px, 2cqw);
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .board__sound-btn {
+    pointer-events: auto;
+  }
+
+  .board__sound-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announce,
+  .announce__card,
+  .announce__badge,
+  .announce__ask,
+  .announce__rule,
+  .announce__more,
+  .announce__hint,
+  .board__hand,
+  .board__opp,
+  .board__score,
+  .socle__card--drop::after,
+  .socle.is-winner .socle__card,
+  .socle.is-winner .socle__slot::before,
+  .socle.is-loser .socle__card {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

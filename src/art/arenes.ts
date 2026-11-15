@@ -2,6 +2,7 @@ import type { SceneDef } from '../components/PackScene';
 
 // Décors du terrain de duel : un paysage par division de la Ligue des naturalistes, dans le monde de l'animal de son
 // blason. Les tons montent avec la ligue : prairies et sous-bois en bas, banquise, récif et nuits d'aurore en haut.
+// Chaque match tire l'un de ces paysages (matchArena), pour que le fond change d'un match à l'autre.
 
 const ARENES: Record<number, SceneDef> = {
   // Hérisson de bronze : prairie au matin
@@ -34,7 +35,33 @@ const ARENES: Record<number, SceneDef> = {
   1: { kind: 'ocean', creature: 'baleine', stars: true, palette: { sky: ['#040a26', '#2a5bb8'], sun: '#eaf3ff', far: '#1d3f8a', near: '#020617', accent: '#a9cdfb' } },
 };
 
-/** Le décor du terrain pour une division. */
+/** Le décor d'une division. */
 export function arenaScene(division: number): SceneDef {
   return ARENES[division] ?? ARENES[14];
+}
+
+const ALL = Object.values(ARENES);
+const KEY = 'animalcards-arene';
+
+/** Le décor d'un match : chaque duel tire l'un des 14 paysages d'après son identifiant, jamais le même que celui du
+ *  match précédent. Le choix est retenu (dans le navigateur) : le décor reste le même pendant tout le match, même
+ *  après un rechargement. */
+export function matchArena(matchId: string): SceneDef {
+  let saved: { id: string; index: number } | null = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(KEY) ?? 'null');
+  } catch {
+    saved = null;
+  }
+  if (saved?.id === matchId && ALL[saved.index]) return ALL[saved.index];
+  let h = 2166136261;
+  for (let i = 0; i < matchId.length; i++) h = Math.imul(h ^ matchId.charCodeAt(i), 16777619);
+  let index = (h >>> 0) % ALL.length;
+  if (saved && index === saved.index) index = (index + 1) % ALL.length;
+  try {
+    localStorage.setItem(KEY, JSON.stringify({ id: matchId, index }));
+  } catch {
+    // stockage indisponible : le tirage reste celui de l'identifiant
+  }
+  return ALL[index];
 }

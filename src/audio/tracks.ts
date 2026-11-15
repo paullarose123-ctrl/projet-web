@@ -1143,3 +1143,154 @@ export function allTracks(now: number = Date.now()): Track[] {
   if (season === 'muertos') return [huapango(), bolero(), jarocho(), danzon()];
   return [clairiere(), pluie(), savane(), banquise(), recif(), valse(), nid()];
 }
+
+// ───────────── Musiques de duel ─────────────
+// Trois morceaux plus rythmés pour le terrain de duel, toujours composés en direct : une pulsation (timbale feutrée
+// et tics), une basse qui avance, un ostinato de marimba ou de cordes pincées et un thème qui revient. Pas de
+// stress : un air de jeu télévisé nature, enjoué. Grille de 8 mesures : introduction (rythme et basse), thème,
+// pont (cordes et marimba), retour du thème, puis l'accord final.
+
+interface DuelSpec {
+  id: string;
+  title: string;
+  bpm: number;
+  chords: Chord[];
+  /** une phrase de thème par mesure de la grille */
+  theme: Note[][];
+  /** motif d'arpège sur l'accord (indices dans l'accord étendu), en croches */
+  arp: number[];
+  /** voix du thème */
+  lead: 'pluck' | 'marimba' | 'kalimba';
+  /** contretemps de tics (doubles croches) au lieu de croches */
+  busy?: boolean;
+}
+
+function duelTrack(spec: DuelSpec): Track {
+  const beat = 60 / spec.bpm;
+  const bars = 42;
+  return {
+    id: spec.id,
+    title: spec.title,
+    bpm: spec.bpm,
+    beats: 4,
+    bars,
+    bar(ac, out, t0, i) {
+      const { r, c } = spec.chords[i % spec.chords.length];
+      if (i >= bars - 2) {
+        if (i === bars - 2) {
+          boom(ac, out, t0, 0.12, 58);
+          bass(ac, out, midi(spec.chords[0].r), t0, beat * 6, 0.15);
+          strings(ac, out, spec.chords[0].c.map(midi), t0, beat * 6, 0.035, { attack: 0.2, release: 3 });
+          [...spec.chords[0].c, spec.chords[0].c[0] + 12].forEach((n, k) => marimba(ac, out, midi(n + 12), t0 + k * 0.09, 0.09, (k - 1.5) * 0.25));
+        }
+        return;
+      }
+      const intro = i < 8;
+      const bridge = i >= 24 && i < 32;
+      // la pulsation : timbale sur les temps forts, tics en croches (ou doubles croches)
+      boom(ac, out, t0, 0.09, 60);
+      boom(ac, out, t0 + beat * 2, 0.07, 60);
+      if (!intro && i % 2) boom(ac, out, t0 + beat * 3.5, 0.045, 66);
+      const steps = spec.busy && !intro ? 16 : 8;
+      for (let s = 0; s < steps; s++) tick(ac, out, t0 + s * (beat * 4 / steps), s % (steps / 4) === steps / 8 ? 0.014 : 0.006, s % 2 ? 3400 : 2600);
+      // la basse qui avance : fondamentale, octave, quinte
+      [0, 1.5, 2, 3].forEach((b, k) => bass(ac, out, midi(r + [0, 12, 7, 12][k]), t0 + b * beat, beat * (k === 1 ? 0.45 : 0.85), k === 0 ? 0.15 : 0.1));
+      // l'ostinato sur l'accord
+      const spread = [...c, ...c.map((n) => n + 12)];
+      if (i >= 2)
+        spec.arp.forEach((k, s) => {
+          const voice = bridge ? marimba : pluck;
+          voice(ac, out, midi(spread[k % spread.length]), t0 + s * (beat / 2), s % 4 === 0 ? 0.11 : 0.07, ((s % 4) - 1.5) * 0.2);
+        });
+      // les cordes portent le pont et le retour du thème
+      if (bridge || i >= 32) strings(ac, out, c.map(midi), t0, beat * 4 - 0.1, bridge ? 0.034 : 0.022, { attack: 0.4, release: 0.9, open: 2200 });
+      // le thème
+      if (!intro && !bridge) {
+        const phrase = spec.theme[i % spec.theme.length];
+        const voice = (freq: number, t: number) =>
+          spec.lead === 'marimba' ? marimba(ac, out, freq, t, 0.16, 0.1) : spec.lead === 'kalimba' ? kalimba(ac, out, freq, t, 0.16, 0.1) : pluck(ac, out, freq, t, 0.2, 0.1, 0.55);
+        play(phrase, t0, beat, voice);
+        // au retour, le thème est doublé à l'octave par le marimba
+        if (i >= 32) play(phrase, t0, beat, (freq, t) => marimba(ac, out, freq * 2, t, 0.06, -0.2));
+      }
+      if (bridge && i % 2 === 0) bell(ac, out, midi(c[2] + 24), t0 + beat * 3, 0.03, 0.3);
+    },
+  };
+}
+
+/** Les morceaux joués sur le terrain de duel. */
+export function duelTracks(): Track[] {
+  return [
+    duelTrack({
+      id: 'duel-arene',
+      title: 'L’arène des records',
+      bpm: 120,
+      lead: 'pluck',
+      busy: true,
+      chords: [
+        { r: 45, c: [57, 60, 64] }, // La m
+        { r: 41, c: [53, 57, 60] }, // Fa
+        { r: 48, c: [55, 60, 64] }, // Do
+        { r: 43, c: [55, 59, 62] }, // Sol
+      ],
+      arp: [0, 2, 1, 3, 2, 4, 3, 5],
+      theme: [
+        [[0, 76], [1, 76], [1.5, 77], [2, 79], [3, 76]],
+        [[0, 77], [1, 76], [2, 74], [3, 72]],
+        [[0, 72], [0.5, 74], [1, 76], [2, 79], [3, 84]],
+        [[0, 83], [1.5, 81], [2, 79], [3, 74]],
+        [[0, 76], [1, 76], [1.5, 77], [2, 79], [3, 81]],
+        [[0, 81], [1, 79], [2, 77], [3, 76]],
+        [[0, 74], [1, 76], [2, 79], [2.5, 77], [3, 76]],
+        [[0, 74], [2, 71]],
+      ],
+    }),
+    duelTrack({
+      id: 'duel-savane',
+      title: 'Course dans la savane',
+      bpm: 128,
+      lead: 'marimba',
+      chords: [
+        { r: 38, c: [62, 66, 69] }, // Ré
+        { r: 43, c: [59, 62, 67] }, // Sol
+        { r: 35, c: [59, 62, 66] }, // Si m
+        { r: 45, c: [61, 64, 69] }, // La
+      ],
+      arp: [0, 1, 2, 1, 3, 2, 4, 2],
+      theme: [
+        [[0, 78], [0.5, 81], [1, 83], [2, 81], [2.5, 78], [3, 76]],
+        [[0, 74], [1, 79], [2, 78], [3, 74]],
+        [[0, 71], [0.5, 74], [1, 78], [2, 76], [3, 74]],
+        [[0, 76], [1, 73], [2, 69]],
+        [[0, 78], [0.5, 81], [1, 83], [2, 86], [3, 83]],
+        [[0, 83], [1, 81], [1.5, 79], [2, 78], [3, 79]],
+        [[0, 78], [1, 76], [2, 74], [3, 73]],
+        [[0, 74], [2, 69], [3, 73]],
+      ],
+    }),
+    duelTrack({
+      id: 'duel-sommet',
+      title: 'Duel au sommet',
+      bpm: 112,
+      lead: 'kalimba',
+      busy: true,
+      chords: [
+        { r: 40, c: [55, 59, 64] }, // Mi m
+        { r: 36, c: [55, 60, 64] }, // Do
+        { r: 43, c: [55, 59, 62] }, // Sol
+        { r: 38, c: [54, 57, 62] }, // Ré
+      ],
+      arp: [0, 3, 1, 4, 2, 5, 1, 4],
+      theme: [
+        [[0, 79], [1, 78], [1.5, 79], [2, 83], [3, 79]],
+        [[0, 76], [2, 79], [3, 76]],
+        [[0, 74], [1, 79], [2, 83], [3, 86]],
+        [[0, 85], [1, 81], [2, 78]],
+        [[0, 79], [1, 78], [1.5, 79], [2, 83], [3, 88]],
+        [[0, 86], [1, 84], [2, 83], [3, 79]],
+        [[0, 79], [1, 81], [2, 83], [3, 81]],
+        [[0, 78], [2, 74]],
+      ],
+    }),
+  ];
+}
