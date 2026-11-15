@@ -3,7 +3,9 @@ import { ATHLETES_BY_ID } from '../data/athletes';
 import { MAX_TIEBREAKS, RECORDS, ROUNDS, formatRecordValue, isFree, isSuddenDeath, type DuelCard, type DuelRound, type DuelState } from '../engine/duel';
 import { divisionInfo } from '../engine/divisions';
 import { matchArena } from '../art/arenes';
+import { setMusicMode } from '../audio/music';
 import { sfx } from '../audio/sfx';
+import { useGame } from '../store/game';
 import { askOf } from '../engine/question';
 import { Card } from './Card';
 import { QuestionIcon } from './QuestionIcon';
@@ -37,14 +39,50 @@ function Value({ card, log, who }: { card: DuelCard; log: DuelRound; who: 'me' |
 }
 
 /** Le nom et le score d'un joueur, en étiquette sur le bord haut de son socle. */
-function Side({ name, score }: { name: string; score: number }) {
+function Side({ name, score, who }: { name: string; score: number; who: 'me' | 'opp' }) {
   return (
-    <div className="board__side">
+    <div className={`board__side board__side--${who}`}>
       {/* la clé rejoue l'animation du score quand il change */}
       <b className="board__score" key={score}>
         {score}
       </b>
-      <span className="board__name">{name}</span>
+      <span className="board__id">
+        <small className="board__who">{who === 'me' ? 'Toi' : 'Adversaire'}</small>
+        <span className="board__name">{name}</span>
+      </span>
+    </div>
+  );
+}
+
+/** Musique et son, dans le coin du terrain (sur téléphone, la barre du haut est cachée pendant le duel). */
+function SoundButtons() {
+  const musicOff = useGame((s) => s.musicOff);
+  const muted = useGame((s) => s.muted);
+  const toggleMusic = useGame((s) => s.toggleMusic);
+  const toggleMute = useGame((s) => s.toggleMute);
+  return (
+    <div className="board__sound">
+      <button
+        type="button"
+        className={`board__sound-btn${musicOff || muted ? ' is-off' : ''}`}
+        onClick={toggleMusic}
+        disabled={muted}
+        aria-label={musicOff ? 'Activer la musique' : 'Couper la musique'}
+        aria-pressed={!musicOff}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9,18 V6 L19,4 V16" />
+          <circle cx={6.5} cy={18} r={2.5} />
+          <circle cx={16.5} cy={16} r={2.5} />
+          {(musicOff || muted) && <path d="M3,3 L21,21" />}
+        </svg>
+      </button>
+      <button type="button" className={`board__sound-btn${muted ? ' is-off' : ''}`} onClick={toggleMute} aria-label={muted ? 'Activer le son' : 'Couper le son'} aria-pressed={!muted}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4,9 H8 L13,5 V19 L8,15 H4 Z" />
+          {muted ? <path d="M17,9 L22,14 M22,9 L17,14" /> : <path d="M16.5,8.5 A5,5 0 0 1 16.5,15.5 M19,6 A8.5,8.5 0 0 1 19,18" />}
+        </svg>
+      </button>
     </div>
   );
 }
@@ -71,9 +109,11 @@ export function DuelBoard({
   // le décor change à chaque match
   const scene = useMemo(() => matchArena(match.id), [match.id]);
 
-  // le terrain commence en haut de l'écran
+  // le terrain commence en haut de l'écran ; la radio laisse la place aux musiques de duel
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    setMusicMode('duel');
+    return () => setMusicMode('radio');
   }, []);
 
 
@@ -116,6 +156,8 @@ export function DuelBoard({
     <section className={`board board--${tier}`} style={{ ['--metal' as string]: DIVISION_PASTELS[tier] }} aria-label="Terrain du duel">
       <Landscape className="board__scene" scene={scene} seed={`terrain-${match.id}`} shade maxWidth={760} />
 
+      <SoundButtons />
+
       {/* en haut : l'équipe adverse, ses animaux déjà joués en grisé */}
       <div className="board__row board__row--opp">
         {match.opp.cards.map((card, i) => {
@@ -132,7 +174,7 @@ export function DuelBoard({
       <div className="board__lane board__lane--opp">
         <div className={`socle socle--opp${outcome('opp')}`}>
           <div className="socle__slot">
-            <Side name={match.opp.name} score={match.opp.score} />
+            <Side name={match.opp.name} score={match.opp.score} who="opp" />
             {oppCard ? (
               <div className="socle__card socle__card--flip" key={`o${roundIndex}`}>
                 <Card card={oppCard} size="sm" hideFacts style={w(W_SOCLE)} />
@@ -204,7 +246,7 @@ export function DuelBoard({
       <div className="board__lane board__lane--me">
         <div className={`socle socle--me${outcome('me')}`}>
           <div className="socle__slot">
-            <Side name={match.me.name} score={match.me.score} />
+            <Side name={match.me.name} score={match.me.score} who="me" />
             {myCard ? (
               <button
                 type="button"

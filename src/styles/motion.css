@@ -3837,6 +3837,142 @@ button.socle__card:not(:disabled) {
   animation: question-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
+/* ───────────── Ton camp et celui de l'adversaire ─────────────
+   Ton socle est vert d'eau, celui de l'adversaire corail : bordure, voile, dalle et étiquette (« Toi » / « Adversaire »
+   au-dessus du nom, en entier sur deux lignes au besoin). */
+.socle--me {
+  --side: #5ee7c0;
+  --side-ink: #05281b;
+}
+
+.socle--opp {
+  --side: #ff8f7a;
+  --side-ink: #3a0d06;
+}
+
+.socle .socle__slot {
+  border: 2px solid color-mix(in srgb, var(--side) 75%, transparent);
+  background: color-mix(in srgb, var(--side) 14%, rgba(14, 16, 28, 0.25));
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--side) 22%, transparent);
+}
+
+.socle .socle__slot::after {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--side) 90%, white 10%), color-mix(in srgb, var(--side) 35%, transparent) 70%, transparent);
+  opacity: 0.7;
+}
+
+.socle.is-winner .socle__slot {
+  border-color: var(--side);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--side) 70%, transparent);
+}
+
+.board .board__side {
+  align-items: center;
+  border: 1.5px solid var(--side);
+  border-radius: 16px;
+  max-width: calc(100cqw + 16px);
+  padding: 3px 12px 3px 4px;
+}
+
+.board .board__side .board__score {
+  background: var(--side);
+  color: var(--side-ink);
+}
+
+.board__id {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.1;
+}
+
+.board__who {
+  font: 800 9.5px/1.1 var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--side);
+}
+
+.board .board__name {
+  font-size: 12px;
+  line-height: 1.15;
+  -webkit-line-clamp: 2;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .board__who {
+    font-size: 11px;
+  }
+
+  .board .board__name {
+    font-size: 15px;
+  }
+}
+
+/* la carte posée fait une onde de la couleur de ton camp */
+.socle--me .socle__card--drop::after {
+  border-color: var(--side);
+}
+
+/* musique et son, dans le coin du terrain */
+.board__sound {
+  position: absolute;
+  z-index: 6;
+  top: max(8px, 1.4cqh);
+  left: max(8px, 2cqw);
+  display: flex;
+  gap: 6px;
+}
+
+.board__sound-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 16, 28, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  cursor: pointer;
+}
+
+.board__sound-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.board__sound-btn.is-off {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* sur téléphone, un bouton de chaque côté de l'équipe adverse */
+@media (max-width: 640px) {
+  .board__sound {
+    right: max(8px, 2cqw);
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .board__sound-btn {
+    pointer-events: auto;
+  }
+
+  .board__sound-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .announce,
   .announce__card,
