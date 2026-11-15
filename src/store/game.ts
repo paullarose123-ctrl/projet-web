@@ -5,7 +5,7 @@ import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
 import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE1_RETIREES, SERIE2_REMPLACEES } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
-import { FREE_PACK, FREE_PACK_MEXIQUE, NO_DUPE_WINDOW, SHOP_PACKS, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
+import { FREE_PACK, FREE_PACK_MEXIQUE, MAX_FREE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, addFreePacks, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
 import { isReleased, releasedAthletes, serieOf } from '../engine/series';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
@@ -67,7 +67,7 @@ export const FAVORITES_SIZE = 5;
  * sienne, pour ne jamais toucher à la vraie partie
  */
 const SAVE_NAME = import.meta.env.MODE === 'apercu' ? 'animalcards-apercu' : 'animalcards-save';
-export const MAX_FREE_PACKS = 5;
+export { MAX_FREE_PACKS };
 export const START_BALLES = 5_000;
 /** solde affiché « ∞ » quand les crédits illimités sont activées */
 export const UNLIMITED_BALLES = 99_999_999_999;
@@ -354,6 +354,12 @@ function playerName(): string {
   }
 }
 
+/** Message quand des boosters gratuits ne tiennent plus dans la réserve et sont payés en crédits. */
+function overflowText(overflow: number, credits: number): string {
+  const s = overflow > 1 ? 's' : '';
+  return `Tu as déjà ${MAX_FREE_PACKS} boosters, le maximum : ${overflow} booster${s} en trop converti${s} en ${formatBalles(credits)}`;
+}
+
 function formatBalles(value: number): string {
   return `${value.toLocaleString('fr-FR')} crédits`;
 }
@@ -595,7 +601,15 @@ export const useGame = create<GameState>()(
         ...initialState(Date.now()),
 
         tick: (now = Date.now()) => {
-          const state = get();
+          let state = get();
+          // une réserve de boosters au-dessus du maximum (anciennes sauvegardes, où les cadeaux s'ajoutaient sans
+          // limite) : le surplus est payé en crédits, rien n'est perdu
+          if (state.freePacks > MAX_FREE_PACKS) {
+            const capped = addFreePacks(state.freePacks, 0);
+            set((s) => ({ freePacks: capped.freePacks, balles: s.balles + capped.credits }));
+            pushToast('info', overflowText(capped.overflow, capped.credits));
+            state = get();
+          }
           // boosters gratuits
           if (state.freePacks < MAX_FREE_PACKS && now >= state.nextFreePackAt) {
             const earned = Math.floor((now - state.nextFreePackAt) / FREE_PACK_INTERVAL) + 1;
@@ -610,15 +624,17 @@ export const useGame = create<GameState>()(
             const played = state.seasonPlayed > 0;
             const reward = played ? seasonReward(state.division) : { balles: 0, boosters: 0 };
             const division = seasonStartDivision(state.division);
+            const packs = addFreePacks(get().freePacks, reward.boosters);
             set((s) => ({
               leagueSeason: season,
               seasonPlayed: 0,
               division,
               divisionPoints: 0,
               winStreak: 0,
-              balles: s.balles + reward.balles,
-              freePacks: s.freePacks + reward.boosters,
+              balles: s.balles + reward.balles + packs.credits,
+              freePacks: packs.freePacks,
             }));
+            if (packs.overflow) pushToast('info', overflowText(packs.overflow, packs.credits));
             if (played) {
               const boosters = reward.boosters ? ` et ${reward.boosters} booster${reward.boosters > 1 ? 's' : ''}` : '';
               pushToast(
@@ -851,20 +867,22 @@ export const useGame = create<GameState>()(
             : { division: state.division, points: state.divisionPoints, promoted: false, relegated: false };
           // première fois dans cette division : un booster offert, et une carte Prime en arrivant en Légende
           const firstTime = step.promoted && step.division < state.bestDivision;
+          const packs = addFreePacks(state.freePacks, firstTime ? 1 : 0);
           set((s) => ({
             match: null,
-            balles: s.balles + reward,
+            balles: s.balles + reward + packs.credits,
             division: step.division,
             divisionPoints: step.points,
             bestDivision: Math.min(s.bestDivision, step.division),
             winStreak,
             seasonPlayed: s.seasonPlayed + (league ? 1 : 0),
-            freePacks: s.freePacks + (firstTime ? 1 : 0),
+            freePacks: packs.freePacks,
             stats: { ...s.stats, matchesPlayed: s.stats.matchesPlayed + 1, matchesWon: s.stats.matchesWon + (result === 'win' ? 1 : 0) },
           }));
           const bonus = league && result === 'win' && streakMultiplier(winStreak) > 1 ? ` (série de ${winStreak} victoires : +25 %)` : '';
           pushToast(result === 'win' ? 'gold' : 'info', `${result === 'win' ? 'Victoire' : result === 'draw' ? 'Match nul' : 'Défaite'} : +${formatBalles(reward)}${bonus}`);
-          if (step.promoted) pushToast('gold', `Promotion ! Bienvenue en division ${divisionName(step.division)}${firstTime ? ' : un booster gratuit t’attend' : ''}`);
+          const gift = firstTime ? (packs.overflow ? ` : un booster offert, converti en ${formatBalles(packs.credits)} (réserve pleine)` : ' : un booster gratuit t’attend') : '';
+          if (step.promoted) pushToast('gold', `Promotion ! Bienvenue en division ${divisionName(step.division)}${gift}`);
           if (step.relegated) pushToast('error', `Relégation : retour en division ${divisionName(step.division)}`);
           if (firstTime && step.division <= PRIME_DIVISION) {
             const primes = releasedAthletes().filter((a) => canBePrime(a) && canDuel(a));
@@ -908,15 +926,17 @@ export const useGame = create<GameState>()(
           const visitors = s.reserve.visitors + amount;
           // les récompenses des niveaux gagnés avec ces visiteurs
           const due = levelRewardsDue(s.reserve.levelPaid ?? 1, visitors);
+          const packs = addFreePacks(s.freePacks, due.boosters);
           set({
-            balles: s.balles + amount + due.credits,
-            freePacks: s.freePacks + due.boosters,
+            balles: s.balles + amount + due.credits + packs.credits,
+            freePacks: packs.freePacks,
             reserve: { ...s.reserve, pending: 0, since: now, visitors, levelPaid: Math.max(due.level, s.reserve.levelPaid ?? 1) },
           });
           if (due.credits || due.boosters) {
             const gifts = [due.credits ? formatBalles(due.credits) : '', due.boosters ? `${due.boosters} booster${due.boosters > 1 ? 's' : ''} gratuit${due.boosters > 1 ? 's' : ''}` : ''].filter(Boolean).join(' et ');
             pushToast('gold', `Ta réserve passe au niveau ${due.level} ! Récompense : ${gifts}.`);
           }
+          if (packs.overflow) pushToast('info', overflowText(packs.overflow, packs.credits));
           return amount;
         },
 

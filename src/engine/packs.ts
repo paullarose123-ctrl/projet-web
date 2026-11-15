@@ -177,6 +177,24 @@ type Pool = Record<BaseRarityId, Athlete[]>;
 
 const poolCache = new Map<string, Pool>();
 
+/** Boosters gratuits d'avance, au plus : le compteur horaire s'arrête là, et les cadeaux ne vont pas au-delà. */
+export const MAX_FREE_PACKS = 5;
+
+/** Crédits versés pour un booster gratuit qui ne tient plus dans la réserve : le prix du Pack Découverte (mêmes chances). */
+export const FREE_PACK_CREDITS = 600;
+
+/**
+ * Ajoute `gained` boosters gratuits (récompense de ligue, de réserve…) à une réserve qui en a `current`, sans dépasser
+ * `max`. Ceux qui ne tiennent pas sont payés en crédits (FREE_PACK_CREDITS chacun) : rien n'est perdu. Avec
+ * `gained = 0`, ramène sous le plafond une réserve qui l'avait dépassé (anciennes sauvegardes).
+ */
+export function addFreePacks(current: number, gained: number, max: number = MAX_FREE_PACKS): { freePacks: number; overflow: number; credits: number } {
+  const total = Math.max(0, current) + Math.max(0, gained);
+  const freePacks = Math.min(max, total);
+  const overflow = total - freePacks;
+  return { freePacks, overflow, credits: overflow * FREE_PACK_CREDITS };
+}
+
 /** Booster qui ne contient que des Icônes (Pack Icônes). */
 export function isIconPack(pack: PackDef): boolean {
   return pack.tone === 'icon';
