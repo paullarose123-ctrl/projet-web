@@ -2,7 +2,7 @@ import type { SceneDef } from '../components/PackScene';
 
 // Décors du terrain de duel : un paysage par division de la Ligue des naturalistes, dans le monde de l'animal de son
 // blason. Les tons montent avec la ligue : prairies et sous-bois en bas, banquise, récif et nuits d'aurore en haut.
-// Chaque match tire l'un de ces paysages (matchArena), pour que le fond change d'un match à l'autre.
+// Chaque match tire l'un de ces paysages ou l'un des nouveaux décors (matchArena), pour que le fond change d'un match à l'autre.
 
 const ARENES: Record<number, SceneDef> = {
   // Hérisson de bronze : prairie au matin
@@ -61,7 +61,7 @@ export const NOUVEAUX: Array<{ name: string; scene: SceneDef }> = [
 const ALL = [...Object.values(ARENES), ...NOUVEAUX.map((n) => n.scene)];
 const KEY = 'animalcards-arene';
 
-/** Le décor d'un match : chaque duel tire l'un des 14 paysages d'après son identifiant, jamais le même que celui du
+/** Le décor d'un match : chaque duel tire l'un des paysages (ligue et nouveaux décors) d'après son identifiant, jamais le même que celui du
  *  match précédent. Le choix est retenu (dans le navigateur) : le décor reste le même pendant tout le match, même
  *  après un rechargement. */
 export function matchArena(matchId: string): SceneDef {

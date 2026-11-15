@@ -84,7 +84,7 @@ const DEFS: Def[] = [
     especes: ['manchot-empereur', 'leopard-de-mer', 'krill', 'baleine-bleue', 'orque', 'albatros', 'elephant-de-mer'],
     fact: 'Le continent le plus froid, le plus sec et le plus venté : on y a mesuré −89,2 °C en 1983. Sa glace contient la majorité de l’eau douce de la planète.',
     protection: 'Traité sur l’Antarctique (1959) : réservé à la paix et à la science',
-    scene: { kind: 'montagne', palette: { sky: ['#7fb2e6', '#e8f4ff'], sun: '#ffffff', far: '#a9c6e8', near: '#1c3657', accent: '#ffffff' } },
+    scene: { kind: 'banquise', creature: 'manchots', palette: { sky: ['#8cc0ec', '#fbe9dc'], sun: '#fffaf0', far: '#3f73b0', near: '#0b1f3d', accent: '#f4fbff' } },
   },
 
   // ───── épiques ─────
@@ -144,7 +144,7 @@ const DEFS: Def[] = [
     lieu: 'Océan Pacifique, près de l’île de Guam', superficie: '2 550 km de long',
     especes: ['baudroie', 'isopode-geant', 'poulpe-dumbo', 'calmar-geant'],
     fact: 'L’endroit le plus profond des océans : près de 11 000 m sous la surface. L’Everest y disparaîtrait entièrement.',
-    scene: { kind: 'recif', creature: 'meduses', palette: { sky: ['#1a3a7a', '#020818'], sun: '#cfe6ff', far: '#1c2f66', near: '#01040d', accent: '#8fd3ff' } },
+    scene: { kind: 'abysses', creature: 'baudroie', palette: { sky: ['#14306a', '#020818'], sun: '#dff4ff', far: '#1c2f66', near: '#01040d', accent: '#8fd3ff', accent2: '#ff8fb8' } },
   },
 
   // ───── rares ─────
@@ -182,7 +182,7 @@ const DEFS: Def[] = [
     lieu: 'Du Canada à la Sibérie, tout autour du Grand Nord', superficie: 'environ un tiers des forêts du monde',
     especes: ['glouton', 'elan', 'ours-brun', 'loup', 'renne', 'polatouche', 'lynx', 'harfang'],
     fact: 'La plus grande forêt du monde : une ceinture de sapins, d’épicéas et de bouleaux qui fait presque le tour de la Terre.',
-    scene: { kind: 'foret', palette: { sky: ['#7c9cc8', '#e6eef8'], sun: '#ffffff', far: '#8fa8b8', near: '#0f1e22', accent: '#ffffff' } },
+    scene: { kind: 'neige', creature: 'renard', palette: { sky: ['#7c9cc8', '#eef0f8'], sun: '#ffffff', far: '#8fa8b8', near: '#0f1e22', accent: '#ffffff', accent2: '#e8742c' } },
   },
   {
     id: 'patagonie', name: 'Patagonie', sport: 'rapaces', country: 'AR', fame: 66,
