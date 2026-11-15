@@ -1,14 +1,14 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ATHLETES_BY_ID } from '../data/athletes';
 import { MAX_TIEBREAKS, RECORDS, ROUNDS, formatRecordValue, isFree, isSuddenDeath, type DuelCard, type DuelRound, type DuelState } from '../engine/duel';
 import { divisionInfo } from '../engine/divisions';
-import { arenaScene } from '../art/arenes';
+import { matchArena } from '../art/arenes';
 import { sfx } from '../audio/sfx';
 import { Card } from './Card';
 import { DIVISION_PASTELS } from './DivisionBadge';
 import { Landscape } from './PackScene';
 
-// Le terrain du duel de records, comme une table de jeu de cartes : le décor de la division en fond, l'équipe adverse
+// Le terrain du duel de records, comme une table de jeu de cartes : un décor tiré pour chaque match en fond, l'équipe adverse
 // en haut, ta main de 5 animaux en bas, et au milieu les deux socles et la question de la manche.
 // Sur ordinateur, la question est au centre, entre ton socle (à gauche) et le socle adverse (à droite), avec Jouer
 // dessous ; sur téléphone, la question passe au-dessus des deux socles côte à côte. Le terrain occupe la hauteur de
@@ -61,6 +61,8 @@ export function DuelBoard({
   const [selected, setSelected] = useState<number | null>(null);
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const tier = divisionInfo(match.division).tier;
+  // le décor change à chaque match
+  const scene = useMemo(() => matchArena(match.id), [match.id]);
 
   // le terrain commence en haut de l'écran
   useEffect(() => {
@@ -91,7 +93,7 @@ export function DuelBoard({
 
   return (
     <section className={`board board--${tier}`} style={{ ['--metal' as string]: DIVISION_PASTELS[tier] }} aria-label="Terrain du duel">
-      <Landscape className="board__scene" scene={arenaScene(match.division)} seed={`terrain-${match.division}`} shade maxWidth={760} />
+      <Landscape className="board__scene" scene={scene} seed={`terrain-${match.id}`} shade maxWidth={760} />
 
       {/* en haut : l'équipe adverse, ses animaux déjà joués en grisé */}
       <div className="board__row board__row--opp">
