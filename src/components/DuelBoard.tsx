@@ -8,12 +8,11 @@ import { Card } from './Card';
 import { DIVISION_PASTELS } from './DivisionBadge';
 import { Landscape } from './PackScene';
 
-// Le terrain du duel de records, en face-à-face vertical comme une table de jeu de cartes, sur ordinateur comme sur
-// téléphone : le décor de la division en fond, l'équipe adverse en haut, son socle, la question de la manche au milieu,
-// ton socle, puis ta main de 5 animaux en bas. Les cartes des socles sont grandes ; le terrain occupe la hauteur de
+// Le terrain du duel de records, comme une table de jeu de cartes : le décor de la division en fond, l'équipe adverse
+// en haut, ta main de 5 animaux en bas, et au milieu les deux socles et la question de la manche.
+// Sur ordinateur, la question est au centre, entre ton socle (à gauche) et le socle adverse (à droite), avec Jouer
+// dessous ; sur téléphone, la question passe au-dessus des deux socles côte à côte. Le terrain occupe la hauteur de
 // l'écran et toutes les tailles en découlent (unités de conteneur, voir .board dans motion.css).
-// Sur téléphone (portrait), le terrain prend tout l'écran et les deux socles passent côte à côte pour des cartes et une
-// question plus grandes (voir « Terrain du duel sur téléphone » dans motion.css).
 // On pose un animal sur son socle, on valide, et l'animal adverse se retourne sur le sien.
 // Les règles ne changent pas : seules la présentation et la mise en scène sont celles d'un plateau.
 
@@ -35,7 +34,7 @@ function Value({ card, log, who }: { card: DuelCard; log: DuelRound; who: 'me' |
   );
 }
 
-/** Le nom et le score d'un joueur, à gauche de son socle. */
+/** Le nom et le score d'un joueur, en étiquette sur le bord haut de son socle. */
 function Side({ name, score }: { name: string; score: number }) {
   return (
     <div className="board__side">
@@ -108,9 +107,9 @@ export function DuelBoard({
 
       {/* le socle adverse : vide pendant que tu choisis, puis l'animal adverse s'y retourne */}
       <div className="board__lane board__lane--opp">
-        <Side name={match.opp.name} score={match.opp.score} />
         <div className={`socle socle--opp${outcome('opp')}`}>
           <div className="socle__slot">
+            <Side name={match.opp.name} score={match.opp.score} />
             {oppCard ? (
               <div className="socle__card socle__card--flip" key={`o${roundIndex}`}>
                 <Card card={oppCard} size="sm" hideFacts style={w(W_SOCLE)} />
@@ -156,9 +155,9 @@ export function DuelBoard({
 
       {/* ton socle : l'animal choisi dans ta main s'y pose ; le toucher le reprend */}
       <div className="board__lane board__lane--me">
-        <Side name={match.me.name} score={match.me.score} />
         <div className={`socle socle--me${outcome('me')}`}>
           <div className="socle__slot">
+            <Side name={match.me.name} score={match.me.score} />
             {myCard ? (
               <button
                 type="button"

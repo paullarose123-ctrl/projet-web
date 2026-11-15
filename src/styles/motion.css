@@ -2521,9 +2521,10 @@ h3 {
   }
 }
 
-/* ───────────── Terrain du duel : face-à-face vertical, sur toute la hauteur de l'écran ─────────────
-   Le terrain a la hauteur de l'écran (moins la barre du haut et la navigation) et un format portrait ; toutes les
-   tailles, cartes comprises, sont en unités de ce conteneur (cqh, cqw) pour que tout tienne sans défiler. */
+/* ───────────── Terrain du duel ─────────────
+   Le terrain a la hauteur de l'écran (moins la barre du haut et la navigation) ; toutes les tailles, cartes comprises,
+   sont en unités de ce conteneur (cqh, cqw) pour que tout tienne sans défiler. La disposition des éléments est donnée
+   plus bas : « sur téléphone » (portrait) et « sur ordinateur » (paysage). */
 .board {
   --metal: #eebf98;
   --board-h: max(560px, calc(100dvh - var(--nav-h) - 128px));
@@ -2597,11 +2598,22 @@ h3 {
   width: 100%;
 }
 
+/* le score et le nom du joueur : une étiquette posée sur le bord haut de son socle */
 .board__side {
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-  min-width: 0;
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  translate: -50% -60%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100cqw - 8px);
+  padding: 3px 12px 3px 4px;
+  border-radius: 99px;
+  background: rgba(6, 12, 9, 0.88);
+  border: 1px solid color-mix(in srgb, var(--metal) 55%, transparent);
 }
 
 .board__name {
@@ -2905,8 +2917,9 @@ button.socle__card:not(:disabled) {
    droite), ce qui libère la hauteur pour des cartes plus grandes et une question bien lisible :
      équipe adverse · question · les deux socles (score et nom posés sur leur bord) · Abandonner / Jouer · ta main.
    Les rangées .board__lane disparaissent (display: contents) et leurs éléments se placent dans la grille du terrain ;
-   les socles prennent toute la hauteur qui reste (ce sont eux-mêmes des conteneurs, d'où --w-socle en unités du socle). */
-@media (max-width: 640px) {
+   les socles prennent toute la hauteur qui reste (ce sont eux-mêmes des conteneurs, d'où --w-socle en unités du socle).
+   Une tablette tenue en portrait prend aussi cette mise en page. */
+@media (max-width: 640px), (orientation: portrait) and (max-width: 1100px) {
   /* pendant le duel, la barre du haut et le titre de la radio laissent la place au terrain et à la question */
   body:has(.board) .topbar,
   body:has(.board) .now-playing {
@@ -2947,6 +2960,13 @@ button.socle__card:not(:disabled) {
   .board__row--opp {
     grid-area: opp;
     gap: 2cqw;
+  }
+
+  /* à partir de 900 px, la navigation flotte à 16 px du bas */
+  @media (min-width: 900px) {
+    .board {
+      --board-h: calc(100dvh - var(--nav-h) - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .board__row--hand {
@@ -2992,28 +3012,17 @@ button.socle__card:not(:disabled) {
   }
 
   /* le score et le nom du joueur, en étiquette posée sur le bord haut de son socle */
-  .board__lane--me .board__side,
   .board__lane--me .socle {
     grid-area: me-socle;
   }
 
-  .board__lane--opp .board__side,
   .board__lane--opp .socle {
     grid-area: opp-socle;
   }
 
   .board__side {
-    z-index: 4;
-    align-self: start;
-    justify-self: center;
-    display: flex;
-    align-items: center;
     gap: 6px;
-    max-width: 100%;
     padding: 2px 10px 2px 3px;
-    border-radius: 99px;
-    background: rgba(6, 12, 9, 0.85);
-    border: 1px solid color-mix(in srgb, var(--metal) 55%, transparent);
   }
 
   .board__name {
@@ -3077,6 +3086,155 @@ button.socle__card:not(:disabled) {
 
   .board__hand:not(:disabled):hover {
     transform: none;
+  }
+}
+
+/* ───────────── Terrain du duel sur ordinateur et tablette (paysage) ─────────────
+   Le terrain s'étale en largeur et tient en entier entre la barre du haut et la navigation :
+     en haut l'équipe adverse ; au milieu ton socle, la question en grand puis Jouer, le socle adverse ;
+     en bas ta main.
+   Comme sur téléphone, les rangées .board__lane disparaissent et les socles remplissent leur case. */
+@media (min-width: 641px) and (orientation: landscape), (min-width: 1101px) {
+  .content:has(.board) {
+    padding-bottom: calc(var(--nav-h) + 24px);
+  }
+
+  .board {
+    --board-h: max(500px, calc(100dvh - 77px - var(--nav-h) - 40px));
+    --w-opp: min(6cqw, 11.5cqh);
+    --w-hand: min(9cqw, 16.5cqh);
+    grid-template-columns: 1fr minmax(260px, 1.15fr) 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      'opp opp opp'
+      'me-socle question opp-socle'
+      'me-socle go opp-socle'
+      'me-socle abandon opp-socle'
+      'hand hand hand';
+    column-gap: 2.5cqw;
+    row-gap: 1.6cqh;
+    /* sur grand écran, le terrain déborde de la colonne du site (1180 px) pour des cartes plus grandes */
+    --board-w: min(calc(100vw - 48px), 1500px);
+    width: var(--board-w);
+    margin-left: calc((100% - var(--board-w)) / 2);
+    padding: 1.8cqh 2.5cqw 2.2cqh;
+  }
+
+  .board__row--opp {
+    grid-area: opp;
+    gap: 1cqw;
+  }
+
+  .board__row--hand {
+    grid-area: hand;
+    gap: 1.4cqw;
+  }
+
+  .board__lane {
+    display: contents;
+  }
+
+  /* la question au centre du terrain, entre les deux socles, en grand */
+  .board__question {
+    grid-area: question;
+    align-self: end;
+    width: 100%;
+    margin: 0;
+    padding: 2.2cqh 22px 2.6cqh;
+    gap: 6px;
+    border-radius: 20px;
+  }
+
+  .board__rounds li {
+    width: 12px;
+    height: 12px;
+  }
+
+  .board__round {
+    font-size: max(13px, 1.9cqh);
+  }
+
+  .board__record {
+    font-size: clamp(26px, 2.8cqw, 40px);
+    line-height: 1.1;
+  }
+
+  .board__desc {
+    font-size: clamp(16px, 1.45cqw, 20px);
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .board__verdict {
+    font-size: clamp(22px, 2.2cqw, 32px);
+  }
+
+  /* le score et le nom, en étiquette sur le bord haut du socle */
+  .board__lane--me .socle {
+    grid-area: me-socle;
+  }
+
+  .board__lane--opp .socle {
+    grid-area: opp-socle;
+  }
+
+  .board__side {
+    gap: 8px;
+    padding: 3px 14px 3px 4px;
+  }
+
+  .board__name {
+    font-size: 15px;
+    -webkit-line-clamp: 1;
+    word-break: break-all;
+  }
+
+  .board__score {
+    flex: none;
+    font-size: 22px;
+    padding: 0 10px;
+  }
+
+  .socle {
+    --w-socle: min(100cqw, 100cqh * 100 / 140);
+    container-type: size;
+    width: 100%;
+    height: 100%;
+    padding-top: 18px;
+    align-content: center;
+    justify-items: center;
+  }
+
+  .socle__wait {
+    font-size: 16px;
+  }
+
+  .socle__value {
+    font-size: clamp(18px, 9cqw, 30px);
+    max-width: calc(var(--w-socle) + 8px);
+  }
+
+  .socle__value small {
+    max-width: 100%;
+    font-size: 13px;
+  }
+
+  /* sous la question : le grand bouton Jouer / Suivante, puis Abandonner */
+  .board__lane--me .board__aside {
+    grid-area: go;
+    justify-items: center;
+  }
+
+  .board__lane--opp .board__aside {
+    grid-area: abandon;
+    align-self: start;
+    justify-items: center;
+  }
+
+  .board__go {
+    min-width: min(100%, 260px);
+    min-height: 52px;
+    font-size: 20px;
   }
 }
 
