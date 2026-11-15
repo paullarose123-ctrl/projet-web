@@ -12,13 +12,16 @@ import { Landscape } from './PackScene';
 // téléphone : le décor de la division en fond, l'équipe adverse en haut, son socle, la question de la manche au milieu,
 // ton socle, puis ta main de 5 animaux en bas. Les cartes des socles sont grandes ; le terrain occupe la hauteur de
 // l'écran et toutes les tailles en découlent (unités de conteneur, voir .board dans motion.css).
+// Sur téléphone (portrait), le terrain prend tout l'écran et les deux socles passent côte à côte pour des cartes et une
+// question plus grandes (voir « Terrain du duel sur téléphone » dans motion.css).
 // On pose un animal sur son socle, on valide, et l'animal adverse se retourne sur le sien.
 // Les règles ne changent pas : seules la présentation et la mise en scène sont celles d'un plateau.
 
-/** Largeurs des cartes, en unités du terrain (le texte des cartes suit --card-w). */
-const W_OPP = 'min(7.6cqh, 16cqw)';
-const W_HAND = 'min(10.4cqh, 18.4cqw)';
-const W_SOCLE = 'min(21.5cqh, 48cqw)';
+/** Largeurs des cartes, en unités du terrain (le texte des cartes suit --card-w) ; le format téléphone les redéfinit
+ *  sur .board (voir motion.css). */
+const W_OPP = 'var(--w-opp)';
+const W_HAND = 'var(--w-hand)';
+const W_SOCLE = 'var(--w-socle)';
 const w = (width: string): CSSProperties => ({ ['--card-w' as string]: width });
 
 /** La réponse sur la carte du socle, la vraie mesure dessous (« Oui · 220 kg »). */
@@ -65,6 +68,7 @@ export function DuelBoard({
     window.scrollTo({ top: 0 });
   }, []);
 
+
   // les sons de la révélation, quand la carte adverse s'est retournée
   useEffect(() => {
     if (!reveal) return;
@@ -103,7 +107,7 @@ export function DuelBoard({
       </div>
 
       {/* le socle adverse : vide pendant que tu choisis, puis l'animal adverse s'y retourne */}
-      <div className="board__lane">
+      <div className="board__lane board__lane--opp">
         <Side name={match.opp.name} score={match.opp.score} />
         <div className={`socle socle--opp${outcome('opp')}`}>
           <div className="socle__slot">
@@ -151,7 +155,7 @@ export function DuelBoard({
       </div>
 
       {/* ton socle : l'animal choisi dans ta main s'y pose ; le toucher le reprend */}
-      <div className="board__lane">
+      <div className="board__lane board__lane--me">
         <Side name={match.me.name} score={match.me.score} />
         <div className={`socle socle--me${outcome('me')}`}>
           <div className="socle__slot">
