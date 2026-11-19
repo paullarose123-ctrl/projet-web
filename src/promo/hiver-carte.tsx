@@ -6,6 +6,8 @@ import '../styles/app.css';
 import '../styles/motion.css';
 import './promo.css';
 import { Card } from '../components/Card';
+import { cardsOfSerie } from '../engine/series';
+import { collectionNumber } from '../engine/cards';
 
 // Maquette des cartes de la Série 3 (Hiver) : l'ours polaire en classique, en Reverse et en Prime (Knut), dans le
 // style de l'hiver, à côté de la même carte en Série 1 et d'une carte du Mexique (page promo/hiver-carte.html).
@@ -63,4 +65,23 @@ function Planche() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(new URLSearchParams(location.search).has('raretes') ? <Raretes /> : <Planche />);
+/** Toutes les cartes de la série, dans l'ordre de l'album (promo/hiver-carte.html?toutes ; &de=0&a=40 pour une partie). */
+function Toutes() {
+  const params = new URLSearchParams(location.search);
+  const cards = cardsOfSerie(3)
+    .slice()
+    .sort((a, b) => Number(collectionNumber(a).slice(1)) - Number(collectionNumber(b).slice(1)))
+    .slice(Number(params.get('de') ?? 0), Number(params.get('a') ?? 999));
+  return (
+    <div className="hiver-planche hiver-planche--toutes">
+      <div className="hiver-planche__grid">
+        {cards.map((athlete) => (
+          <Card key={athlete.id} card={{ athleteId: athlete.id, variant: athlete.prime ? 'prime' : 'base' }} size="md" serie={3} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const PARAMS = new URLSearchParams(location.search);
+createRoot(document.getElementById('root')!).render(PARAMS.has('toutes') ? <Toutes /> : PARAMS.has('raretes') ? <Raretes /> : <Planche />);

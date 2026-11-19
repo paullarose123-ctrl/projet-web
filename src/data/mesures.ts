@@ -687,7 +687,7 @@ export const MESURES: Record<string, Mesure> = {
   'canard-du-labrador': [0.9, 0.5, 'L', null],
   'otarie-du-japon': [490, 2.4, 'L', null],
   'loup-des-malouines': [12, 1.2, 'L', null],
-  'loup-d-hokkaido': [35, 1.5, 'L', null],
+  'criquet-des-rocheuses': [0.001, 0.03, 'L', null],
 };
 
 const SENS_LABEL: Record<Sens, string> = { L: 'Longueur', H: 'Hauteur', E: 'Envergure' };

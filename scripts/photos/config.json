@@ -2776,6 +2776,112 @@
         0.62,
         1.0
       ]
-    }
+    },
+    "criquet-des-rocheuses": {
+      "etendre": true,
+      "fond": "auto",
+      "marge": 0.03
+    },
+    "requin-taupe": {
+      "etendre": true,
+      "fond": "auto",
+      "marge": 0.03
+    },
+    "golomyanka": {
+      "etendre": true,
+      "fond": "auto",
+      "marge": 0.03
+    },
+    "poisson-des-glaces": {
+      "etendre": true,
+      "fond": "auto",
+      "marge": 0.03
+    },
+    "hv-panthere-des-neiges": {
+      "corps": [
+        0.55,
+        0.28,
+        0.98,
+        0.95
+      ]
+    },
+    "boeuf-musque": {
+      "corps": [
+        0.12,
+        0.03,
+        0.58,
+        0.99
+      ]
+    },
+    "bharal": {
+      "corps": [
+        0.35,
+        0.33,
+        0.85,
+        0.88
+      ]
+    },
+    "hv-phoque-du-groenland": {
+      "corps": [
+        0.4,
+        0.3,
+        0.92,
+        0.82
+      ]
+    },
+    "hv-leopard-de-mer": [
+      0.6,
+      0.5,
+      1
+    ],
+    "lion-de-mer-de-steller": [
+      0.42,
+      0.5,
+      1
+    ],
+    "petit-rorqual-antarctique": {
+      "corps": [
+        0.0,
+        0.55,
+        0.62,
+        0.93
+      ]
+    },
+    "oie-des-neiges": [
+      0.56,
+      0.5,
+      1
+    ],
+    "cheval-yakoute": [
+      0.68,
+      0.6,
+      1
+    ],
+    "pygargue-de-steller": {
+      "corps": [
+        0.3,
+        0.05,
+        0.8,
+        0.92
+      ]
+    },
+    "hv-renne": [
+      0.7,
+      0.55,
+      1
+    ],
+    "hv-glouton": {
+      "corps": [
+        0.4,
+        0.42,
+        0.7,
+        0.66
+      ]
+    },
+    "phoque-du-saimaa": [
+      0.6,
+      0.5,
+      1
+    ]
   }
 }
