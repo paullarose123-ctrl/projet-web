@@ -91,11 +91,11 @@ const RARITY_GLOW: Record<string, string> = {
   legendaire: '#ff9a6a',
 };
 
-function tierOf(card: CardFace): number {
+export function tierOf(card: CardFace): number {
   return rarityOf(ATHLETES_BY_ID[card.athleteId]).order;
 }
 
-function isSpecial(card: CardFace): boolean {
+export function isSpecial(card: CardFace): boolean {
   // les Habitats n'ont pas de révélation « animal » (drapeau, numéro) : ils se retournent sur place
   if (ATHLETES_BY_ID[card.athleteId].habitat) return false;
   // une Icône (espèce disparue) est la carte la plus rare du jeu : elle a toujours sa grande révélation
@@ -108,7 +108,7 @@ function isSpecial(card: CardFace): boolean {
  */
 const MYSTERY_LIGHT = '#f6e3b0';
 
-function glowOf(card: CardFace): string {
+export function glowOf(card: CardFace): string {
   if (card.variant === 'prime') return '#f2b8cf';
   if (card.variant === 'reverse') return '#e3c6ff';
   if (ATHLETES_BY_ID[card.athleteId].habitat) return '#e9c77b';
@@ -117,7 +117,7 @@ function glowOf(card: CardFace): string {
   return RARITY_GLOW[rarityOf(ATHLETES_BY_ID[card.athleteId]).id];
 }
 
-function confettiColors(card: CardFace): string[] {
+export function confettiColors(card: CardFace): string[] {
   if (card.variant === 'prime') return ['#f2b8cf', '#f6dc95', '#a8e6d4', '#a0cdd7', '#c9aee8', '#ffffff'];
   // Icône : poussière d'étoiles, ivoire, or et bleu de nuit claire
   if (isIcon(ATHLETES_BY_ID[card.athleteId])) return ['#fff3c4', '#ffffff', '#f3dc9a', '#cfe3ff', '#e0c27a'];
@@ -127,14 +127,14 @@ function confettiColors(card: CardFace): string[] {
 }
 
 /** Ambiance de la révélation : lucioles (Épique), feuilles d'or (Légendaire), étoiles (Icône), pétales (Prime). */
-function themeOf(card: CardFace): RevealTheme {
+export function themeOf(card: CardFace): RevealTheme {
   if (card.variant === 'prime') return 'petales';
   if (isIcon(ATHLETES_BY_ID[card.athleteId])) return 'etoiles';
   return tierOf(card) >= 4 ? 'feuilles' : 'lucioles';
 }
 
 /** Ce qui retombe à la révélation : des feuilles (lilas pour une Épique, d'or pour une Légendaire), des étoiles, des pétales. */
-const SHOWER: Record<RevealTheme, NatureShape> = { lucioles: 'feuille', feuilles: 'feuille', etoiles: 'etoile', petales: 'petale' };
+export const SHOWER: Record<RevealTheme, NatureShape> = { lucioles: 'feuille', feuilles: 'feuille', etoiles: 'etoile', petales: 'petale' };
 
 // Rameau de feuilles qui encadre le nom de la rareté (la feuille du logo, en guirlande) : position, angle, taille.
 const SPRIG_LEAVES: Array<[x: number, y: number, angle: number, scale: number]> = [

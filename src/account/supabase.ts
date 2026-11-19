@@ -226,6 +226,12 @@ const toProfile = (row: ProfileRow): PublicProfile => ({
   updatedAt: row.updated_at,
 });
 
+/** Pseudos des joueurs les plus récemment actifs (la pioche miracle les mêle aux collectionneurs inventés). */
+export async function recentPseudos(limit = 60): Promise<string[]> {
+  const rows = await call<Array<{ pseudo: string }>>(`/rest/v1/profiles?select=pseudo&order=updated_at.desc&limit=${limit}`);
+  return rows.map((row) => row.pseudo).filter((pseudo) => !pseudoProblem(pseudo));
+}
+
 /** Profils publics de plusieurs comptes. */
 export async function profilesByIds(ids: string[]): Promise<PublicProfile[]> {
   if (!ids.length) return [];
