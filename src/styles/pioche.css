@@ -1,0 +1,398 @@
+/* ───────────── Pioche miracle (accueil) ─────────────
+   Les boosters ouverts par d'autres collectionneurs : une rangée de vignettes (les 5 cartes en éventail, le pseudo,
+   le coût en énergie), puis l'écran de pioche : les cartes se retournent, se mélangent et se redistribuent. */
+
+.pioche {
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.pioche__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.pioche__head h2 {
+  margin: 2px 0 4px;
+}
+
+.pioche__head p {
+  max-width: 52ch;
+  margin: 0;
+}
+
+.pioche__energy {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.pioche__energy small {
+  color: var(--muted, #a9b3a6);
+  font-size: 0.78rem;
+}
+
+.pioche__sparks {
+  display: flex;
+  gap: 4px;
+}
+
+.pm-spark {
+  width: 20px;
+  height: 20px;
+  fill: #ffd66b;
+  filter: drop-shadow(0 0 6px rgba(255, 214, 107, 0.65));
+}
+
+.pm-spark.is-off {
+  fill: rgba(232, 222, 196, 0.16);
+  filter: none;
+}
+
+/* la rangée de boosters défile à l'horizontale */
+.pioche__row {
+  display: flex;
+  gap: 12px;
+  margin: 0 -20px;
+  padding: 4px 20px 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.pm-tile {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: 8px;
+  width: 168px;
+  padding: 12px 10px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(232, 222, 196, 0.06), rgba(232, 222, 196, 0.01));
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.pm-tile:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: rgba(255, 214, 107, 0.55);
+  background: linear-gradient(180deg, rgba(255, 214, 107, 0.1), rgba(232, 222, 196, 0.02));
+}
+
+.pm-tile:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 3px;
+}
+
+.pm-tile.is-bonus {
+  border-color: rgba(127, 240, 193, 0.5);
+}
+
+.pm-tile.is-done {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.pm-tile.is-short .pm-cost {
+  opacity: 0.45;
+}
+
+/* les 5 cartes du booster, en petit éventail */
+.pm-tile__fan {
+  position: relative;
+  display: block;
+  width: 140px;
+  height: 86px;
+}
+
+.pm-tile__card {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 26px + var(--k) * 17px);
+  transform: rotate(calc(var(--k) * 6deg)) translateY(var(--lift));
+  transform-origin: 50% 120%;
+  pointer-events: none;
+}
+
+.pm-tile__card .card {
+  --w: 52px !important;
+  width: 52px !important;
+  font-size: calc(52px / 24) !important;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+}
+
+.pm-tile__who {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pm-tile__who b {
+  overflow: hidden;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-tile__who small {
+  color: var(--muted, #a9b3a6);
+  font-size: 0.72rem;
+}
+
+.pm-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 20px;
+}
+
+.pm-cost .pm-spark {
+  width: 16px;
+  height: 16px;
+}
+
+.pm-cost--bonus,
+.pm-tile__done {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pm-cost--bonus {
+  background: rgba(127, 240, 193, 0.18);
+  color: #9ff5d2;
+}
+
+.pm-tile__done {
+  background: rgba(232, 222, 196, 0.1);
+}
+
+/* ───────────── l'écran de pioche ───────────── */
+
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 12px;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  color: var(--text);
+  text-align: center;
+  touch-action: manipulation;
+  animation: fade-in 0.35s ease-out;
+}
+
+.pm-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #060d12;
+}
+
+.pm-overlay__scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pm-overlay__backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 55% at 50% 50%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.62) 100%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent 45%);
+}
+
+.pm-overlay__top {
+  display: grid;
+  gap: 4px;
+  max-width: 560px;
+}
+
+.pm-overlay__top h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 4.5vw, 1.9rem);
+}
+
+.pm-overlay__top p {
+  min-height: 1.3em;
+  margin: 0;
+}
+
+.pm-overlay__tag.tag {
+  position: static;
+  justify-self: center;
+  transform: none;
+}
+
+.pm-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+}
+
+.pm-overlay__short {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* la scène des cartes : chaque carte part du centre et va à sa place (--x, --y) */
+.pm-stage {
+  position: relative;
+  width: 100%;
+  min-height: calc(var(--pm-w) * 1.4 * 2 + 40px);
+  perspective: 1200px;
+}
+
+@media (min-width: 760px) {
+  .pm-stage {
+    min-height: calc(var(--pm-w) * 1.4 + 60px);
+  }
+}
+
+.pm-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--pm-w);
+  aspect-ratio: 100 / 140;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) rotate(var(--r));
+  transition: transform 0.5s cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+
+.pm-card__hit {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.pm-card__hit:not(:disabled) {
+  cursor: pointer;
+}
+
+.pm-card__shuffle,
+.pm-card__inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.pm-card__inner {
+  transition: transform 0.45s cubic-bezier(0.4, 0.1, 0.25, 1);
+}
+
+.pm-card.is-down .pm-card__inner {
+  transform: rotateY(180deg);
+}
+
+.pm-card__front,
+.pm-card__back {
+  position: absolute;
+  inset: 0;
+  display: block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.pm-card__front .card {
+  --w: var(--pm-w) !important;
+  width: var(--pm-w) !important;
+  font-size: calc(var(--pm-w) / 24) !important;
+}
+
+.pm-card__back {
+  transform: rotateY(180deg);
+}
+
+/* le mélange : les cartes se croisent au centre, chacune de son côté */
+.pm-overlay--shuffle .pm-card__shuffle {
+  animation: pm-shuffle 0.5s ease-in-out 3 alternate;
+  animation-delay: calc(var(--i) * 0.05s);
+}
+
+@keyframes pm-shuffle {
+  0% {
+    transform: translateX(0) rotate(0);
+  }
+  50% {
+    transform: translateX(var(--dx)) translateY(-10px) rotate(var(--dr));
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+}
+
+/* face cachée, en attente du choix : les cartes respirent */
+.pm-overlay--choose .pm-card__shuffle {
+  animation: pm-wait 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.18s);
+}
+
+.pm-overlay--choose .pm-card__hit:hover .pm-card__shuffle,
+.pm-overlay--choose .pm-card__hit:focus-visible .pm-card__shuffle {
+  animation: none;
+  transform: translateY(-10px) scale(1.04);
+  filter: drop-shadow(0 0 14px rgba(255, 214, 107, 0.75));
+}
+
+@keyframes pm-wait {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* la carte choisie s'avance et brille ; les autres, une fois retournées, s'effacent un peu */
+.pm-card.is-chosen {
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1.1);
+}
+
+.pm-card.is-chosen .pm-card__shuffle {
+  filter: drop-shadow(0 0 22px rgba(255, 225, 140, 0.8));
+}
+
+.pm-card.is-missed {
+  opacity: 0.62;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(0.94);
+  transition: transform 0.5s, opacity 0.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-card,
+  .pm-card__inner {
+    transition-duration: 0.01s;
+  }
+  .pm-overlay--shuffle .pm-card__shuffle,
+  .pm-overlay--choose .pm-card__shuffle {
+    animation: none;
+  }
+}
