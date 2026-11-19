@@ -2534,7 +2534,8 @@
 /* ───── le sachet en volume ───── */
 .opening__pack3d {
   position: relative;
-  width: min(250px, 60vw);
+  /* grand sachet : jusqu'à 380 px de large, sans dépasser la hauteur de l'écran */
+  width: min(380px, 80vw, calc(66vh * 120 / 172));
   aspect-ratio: 120 / 172;
   border: 0;
   padding: 0;
