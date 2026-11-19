@@ -15,7 +15,8 @@ import { startAnalytics } from './analytics';
 if (import.meta.env.DEV) (window as unknown as { __game: typeof useGame }).__game = useGame;
 
 // #galerie affiche la planche de contrôle visuel (matières de cartes et drapeaux) ;
-// #toutes-les-cartes affiche toutes les cartes, pour la planche de revue ; #serie-2 celles du Mexique ;
+// #toutes-les-cartes affiche toutes les cartes, pour la planche de revue ; #serie-2 celles du Mexique, #serie-3 celles
+// de l'Hiver ;
 // #fonds-mexique=panteon (monarcas, xochimilco, volcanes, barrancas, desierto, selva) un décor d'ouverture du Mexique ;
 // #divisions les blasons de la ligue.
 const hash = typeof window !== 'undefined' ? window.location.hash : '';
@@ -26,5 +27,5 @@ startAutoSave();
 startAnalytics();
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : hash === '#serie-2' ? <AllCards serie={2} /> : hash.startsWith('#fonds-mexique') ? <MexicoBackdropPreview scene={hash.split('=')[1] ?? ''} /> : hash === '#divisions' ? <DivisionBadges /> : <App />}</StrictMode>,
+  <StrictMode>{hash === '#galerie' ? <Gallery /> : hash === '#toutes-les-cartes' ? <AllCards /> : hash === '#serie-2' ? <AllCards serie={2} /> : hash === '#serie-3' ? <AllCards serie={3} /> : hash.startsWith('#fonds-mexique') ? <MexicoBackdropPreview scene={hash.split('=')[1] ?? ''} /> : hash === '#divisions' ? <DivisionBadges /> : <App />}</StrictMode>,
 );

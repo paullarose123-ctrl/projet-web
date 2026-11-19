@@ -3,8 +3,12 @@ import { serieOf } from '../engine/series';
 import { usePhoto } from '../photos';
 
 // Photo de profil d'un joueur : la photo d'un animal de sa collection, dans un rond.
-// Un animal de la Série 2 (Mexique) a un contour vert, blanc et rouge, comme le drapeau.
+// Un animal de la Série 2 (Mexique) a un contour vert, blanc et rouge, comme le drapeau ; un animal de la Série 3
+// (Hiver), un contour de givre bleu glacier et blanc.
 // Sans animal choisi (ou sans photo), l'initiale du pseudo.
+
+/** Classe du contour selon la série de l'animal (rien pour la Série 1). */
+const AVATAR_SERIE: Record<number, string> = { 2: 'avatar--mx ', 3: 'avatar--hv ' };
 
 interface AvatarProps {
   athleteId?: string;
@@ -21,7 +25,7 @@ function PhotoAvatar({ athleteId, pseudo, className }: { athleteId: string; pseu
   const photo = usePhoto(ATHLETES_BY_ID[athleteId]);
   if (!photo.src) return <Initial pseudo={pseudo} className={className} />;
   return (
-    <span className={`avatar ${serieOf(ATHLETES_BY_ID[athleteId]) === 2 ? 'avatar--mx ' : ''}${className}`}>
+    <span className={`avatar ${AVATAR_SERIE[serieOf(ATHLETES_BY_ID[athleteId])] ?? ''}${className}`}>
       <img src={photo.src} alt="" draggable={false} />
     </span>
   );

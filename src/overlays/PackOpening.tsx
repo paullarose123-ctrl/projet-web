@@ -6,9 +6,11 @@ import { SPORTS } from '../data/sports';
 import { collectionNumber, isIcon, quickSellValue, rarityOf } from '../engine/cards';
 import type { CardFace } from '../engine/types';
 import { Card } from '../components/Card';
-import { ALL_PACK_SCENES, PackArt, packScene } from '../components/PackArt';
+import { ALL_PACK_SCENES, PackArt, boosterButton, packScene } from '../components/PackArt';
 import { CardBack } from '../components/CardBack';
 import { CardBackMexique } from '../components/CardBackMexique';
+import { CardBackHiver } from '../components/CardBackHiver';
+import { HABITATS_HIVER } from '../data/habitats';
 import { serieDef } from '../engine/series';
 import { Landscape, type SceneDef } from '../components/PackScene';
 import { MEXICO_SCENES, MexicoBackdrop, type MexicoScene } from '../components/MexicoBackdrop';
@@ -31,8 +33,11 @@ type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
 
 /** Paysages possibles derrière une ouverture : tous ceux des boosters, des familles, des écrans et des nouveaux terrains de duel. */
 const BACKDROPS: SceneDef[] = [...ALL_PACK_SCENES, HERO_SCENE, ...Object.values(SCREEN_SCENES), ...NOUVEAUX.map((n) => n.scene)];
+/** Derrière le booster de l'Hiver : la nuit polaire de son sachet et les paysages de ses Habitats. */
+const WINTER_BACKDROPS: SceneDef[] = [packScene('hiver'), ...HABITATS_HIVER.flatMap((h) => (h.habitat ? [h.habitat.scene] : []))];
 let lastBackdrop = -1;
 let lastMexico = -1;
+let lastWinter = -1;
 
 type Backdrop = { scene: SceneDef; seed: string; mexique?: undefined } | { mexique: MexicoScene; seed: string };
 
@@ -44,14 +49,19 @@ function pickOther(n: number, last: number): number {
 }
 
 /**
- * Un décor au hasard (jamais deux fois de suite le même), redessiné avec une graine neuve : un paysage du jeu, ou
- * pour le booster du Mexique, un de ses décors (fête des morts ou nature du pays).
+ * Un décor au hasard (jamais deux fois de suite le même), redessiné avec une graine neuve : un paysage du jeu ; pour
+ * le booster du Mexique, un de ses décors (fête des morts ou nature du pays) ; pour celui de l'Hiver, un paysage
+ * enneigé.
  */
 function pickBackdrop(serie: number): Backdrop {
   const seed = `ouverture ${Math.random().toString(36).slice(2)}`;
   if (serie === 2) {
     lastMexico = pickOther(MEXICO_SCENES.length, lastMexico);
     return { mexique: MEXICO_SCENES[lastMexico], seed };
+  }
+  if (serie === 3) {
+    lastWinter = pickOther(WINTER_BACKDROPS.length, lastWinter);
+    return { scene: WINTER_BACKDROPS[lastWinter], seed };
   }
   lastBackdrop = pickOther(BACKDROPS.length, lastBackdrop);
   return { scene: BACKDROPS[lastBackdrop], seed };
@@ -213,8 +223,9 @@ function CardTag({ card }: { card: CardFace & { isNew?: boolean } }) {
   return <span className={`tag ${card.isNew ? 'tag--new' : 'tag--dupe'}`}>{card.isNew ? 'Nouveau' : 'Doublon'}</span>;
 }
 
-/** Dos de la carte : celui de sa série (le Mexique pour la Série 2). */
+/** Dos de la carte : celui de sa série (le Mexique pour la Série 2, l'Hiver pour la Série 3). */
 function BackOf({ serie, mixed = false }: { serie: number; mixed?: boolean }) {
+  if (serie === 3) return <CardBackHiver />;
   return serie === 2 ? <CardBackMexique /> : <CardBack label={mixed ? null : 'Série 1'} />;
 }
 
@@ -344,7 +355,7 @@ function Walkout({ card, serie, onDone }: { card: CardFace; serie: number; onDon
             )}
           </div>
           <div className="walkout__actions">
-            <button type="button" className={`btn btn--primary ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`} onClick={onDone}>
+            <button type="button" className={`btn btn--primary ${boosterButton(serie)}`} onClick={onDone}>
               Continuer
             </button>
             {phone && !showStats && (
@@ -745,7 +756,7 @@ export function PackOpening() {
           </div>
 
           <div className="opening__actions">
-            <button type="button" className={`btn btn--primary btn--lg ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`} onClick={advance} disabled={leaving}>
+            <button type="button" className={`btn btn--primary btn--lg ${boosterButton(serie)}`} onClick={advance} disabled={leaving}>
               {revealed <= current ? 'Retourner' : current < cards.length - 1 ? 'Suivante' : 'Récapitulatif'}
             </button>
             <button type="button" className="btn btn--ghost" onClick={revealAll} disabled={revealed >= cards.length}>
@@ -843,7 +854,7 @@ export function PackOpening() {
             {isFree && freePacks > 0 && (
               <button
                 type="button"
-                className={`btn btn--primary ${serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`}
+                className={`btn btn--primary ${boosterButton(serie)}`}
                 onClick={() => {
                   sfx.whoosh();
                   openFreePack(serie);

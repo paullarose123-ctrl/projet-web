@@ -4,6 +4,7 @@ import type { PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { Logo } from './Logo';
 import { PackArtMexique } from './PackArtMexique';
+import { PackArtHiver } from './PackArtHiver';
 import { PackScene, isLight, type SceneDef } from './PackScene';
 
 // Booster en affiche illustrée, imprimée sur un sachet plastique : un paysage peint propre à chaque pack
@@ -33,6 +34,11 @@ const PACK_SCENES: Record<Exclude<Tone, 'sport'>, SceneDef> = {
   black: { kind: 'nuit', palette: { sky: ['#05060b', '#2b2214'], sun: '#ffd46e', far: '#3b301d', near: '#050404', accent: '#ffd46e' } },
   // Série 2 · Mexique : désert sous un ciel rouge, terres vertes (son sachet est dessiné par PackArtMexique)
   mexique: { kind: 'desert', palette: { sky: ['#c4213a', '#ffe0b5'], sun: '#fff8ea', far: '#5ba878', near: '#05261a', accent: '#fff8ea' } },
+  // Série 3 · Hiver : nuit polaire sous l'aurore boréale (son sachet est dessiné par PackArtHiver)
+  hiver: {
+    kind: 'aurore',
+    palette: { sky: ['#081a33', '#1d4f6e'], sun: '#f4fbff', far: '#a9c9e2', near: '#0b2236', accent: '#7ff0c1', accent2: '#b28cff' },
+  },
 };
 
 const FAMILY_SCENES: Record<SportId, SceneDef> = {
@@ -58,6 +64,11 @@ const FAMILY_SCENES: Record<SportId, SceneDef> = {
 
 /** Tous les paysages des boosters (packs de la boutique et packs par famille). */
 export const ALL_PACK_SCENES: SceneDef[] = [...Object.values(PACK_SCENES), ...Object.values(FAMILY_SCENES)];
+
+/** Classe du bouton d'ouverture d'un booster : la couleur pastel du sachet de sa série. */
+export function boosterButton(serie: number | undefined): string {
+  return serie === 3 ? 'btn--booster-hv' : serie === 2 ? 'btn--booster-mx' : 'btn--booster';
+}
 
 /** Le paysage d'un pack (les packs par famille ont chacun le leur). */
 export function packScene(tone: Tone, sport?: SportId): SceneDef {
@@ -165,6 +176,10 @@ export function PackArt({ tone, name, title: customTitle, sport, size = 5, guara
   // la Série 2 a son propre sachet : la pyramide de Teotihuacan au soleil couchant
   if (tone === 'mexique') {
     return <PackArtMexique className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Mexique' : title)} line={guarantee ?? `${size} cartes`} />;
+  }
+  // la Série 3 aussi : la nuit polaire sous l'aurore
+  if (tone === 'hiver') {
+    return <PackArtHiver className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Hiver' : title)} line={guarantee ?? `${size} cartes`} />;
   }
   const style = {
     '--near': scene.palette.near,

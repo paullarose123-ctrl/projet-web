@@ -10,7 +10,7 @@ import { SportIcon } from '../components/SportIcon';
 import { Landscape } from '../components/PackScene';
 import { SCREEN_SCENES } from '../art/scenes';
 import { sfx } from '../audio/sfx';
-import { isReleased } from '../engine/series';
+import { isReleased, releasedSeries } from '../engine/series';
 import { useNow } from '../hooks/useNow';
 import { SaisonHead } from '../components/Saison';
 
@@ -19,7 +19,7 @@ function percent(value: number): string {
   return `${(value * 100).toLocaleString('fr-FR', { maximumFractionDigits: value < 0.01 ? 2 : 1 })} %`;
 }
 
-function Odds({ pack, mexique }: { pack: PackDef; mexique: boolean }) {
+function Odds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
   const total = RARITY_ORDER.reduce((sum, id) => sum + pack.odds[id], 0);
   const prime = primeOdds(pack);
   return (
@@ -57,13 +57,19 @@ function Odds({ pack, mexique }: { pack: PackDef; mexique: boolean }) {
             <b>{percent(reverseOdds(pack))}</b>
           </li>
         )}
-        {mexique && serieOdds(pack, 2) > 0 && (
-          <li className="rarity-row rarity-row--mexique">
-            <span className="rarity-dot" />
-            <span>Carte du Mexique (Série 2)</span>
-            <b>{percent(serieOdds(pack, 2))}</b>
-          </li>
-        )}
+        {/* la part de chaque série sortie après la première */}
+        {mixed &&
+          releasedSeries()
+            .filter((def) => def.number > 1 && serieOdds(pack, def.number) > 0)
+            .map((def) => (
+              <li key={def.number} className={`rarity-row rarity-row--serie-${def.number}`}>
+                <span className="rarity-dot" />
+                <span>
+                  Carte {def.number === 2 ? 'du Mexique' : 'de l’Hiver'} (Série {def.number})
+                </span>
+                <b>{percent(serieOdds(pack, def.number))}</b>
+              </li>
+            ))}
         {habitatOdds(pack) > 0 && !isIconPack(pack) && (
           <li className="rarity-row rarity-row--habitat">
             <span className="rarity-dot" />
@@ -88,8 +94,8 @@ function Odds({ pack, mexique }: { pack: PackDef; mexique: boolean }) {
 
 function PackTile({ pack }: { pack: PackDef }) {
   const balles = useGame((s) => s.balles);
-  // dès sa sortie, les cartes de la Série 2 se mêlent à celles de la Série 1 dans tous les packs
-  const mexique = isReleased(2, useNow(60_000)) && serieOdds(pack, 2) > 0;
+  // dès leur sortie, les cartes des séries suivantes se mêlent à celles de la Série 1 dans tous les packs
+  const mixed = isReleased(2, useNow(60_000)) && serieOdds(pack, 2) > 0;
   const buy = useGame((s) => s.buyPack);
   const affordable = balles >= pack.price;
   return (
@@ -103,11 +109,11 @@ function PackTile({ pack }: { pack: PackDef }) {
       />
       <div className="pack-tile__body">
         <h3>{pack.name}</h3>
-        {mexique && (
+        {mixed && (
           <p className="series-mix">Toutes les séries</p>
         )}
         <p className="muted small">{pack.tagline}</p>
-        <Odds pack={pack} mexique={mexique} />
+        <Odds pack={pack} mixed={mixed} />
         <button
           type="button"
           className="btn btn--primary"
@@ -127,9 +133,10 @@ function PackTile({ pack }: { pack: PackDef }) {
 export function ShopScreen() {
   const [sport, setSport] = useState<SportId>('felins');
   const balles = useGame((s) => s.balles);
-  // dès sa sortie, les cartes de la Série 2 se mêlent à celles de la Série 1 dans tous les packs
+  // dès leur sortie, les cartes des séries suivantes se mêlent à celles de la Série 1 dans tous les packs
   const now = useNow(60_000);
   const mexique = isReleased(2, now);
+  const hiver = isReleased(3, now);
   return (
     <div className="screen">
       <header className="screen__head screen__head--art">
@@ -140,7 +147,9 @@ export function ShopScreen() {
           <h1>Packs</h1>
           <p className="muted">
             Tu as <Balles value={balles} />. Gagne des crédits en vendant sur le marché, en jouant des duels de records et en remplissant les objectifs.
-            {mexique && ' Les packs mêlent les cartes de la Série 1 et de la Série 2 · Mexique.'}
+            {hiver
+              ? ' Les packs mêlent les cartes des trois séries : Animaux du monde, Mexique et Hiver.'
+              : mexique && ' Les packs mêlent les cartes de la Série 1 et de la Série 2 · Mexique.'}
           </p>
         </div>
       </header>

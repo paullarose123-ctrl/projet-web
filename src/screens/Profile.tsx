@@ -282,7 +282,7 @@ function Showcase() {
 function Badges() {
   const discovered = useGame((s) => s.discovered);
   const badges = useGame((s) => s.badges);
-  // séries de pays déjà sorties : un badge chacune
+  // séries suivantes déjà sorties : un badge chacune
   const countries = releasedSeries().filter((def) => def.number > 1);
   const earned = SPORT_ORDER.filter((sport) => badges[sport]).length + countries.filter((def) => badges[serieBadge(def.number)]).length;
   return (
@@ -297,7 +297,7 @@ function Badges() {
           const [owned, total] = serieProgress(discovered, def.number);
           return (
             <div key={def.number} className={`badges__item${earnedAt ? ' is-earned' : ''}`}>
-              <SerieBadge name={def.local ?? def.name} earned={!!earnedAt} />
+              <SerieBadge number={def.number} name={def.local ?? def.name} earned={!!earnedAt} />
               <span className="badges__name">Série {def.number}</span>
               <span className="badges__state">
                 {earnedAt ? `Obtenu le ${new Date(earnedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : `${owned}/${total} espèces`}

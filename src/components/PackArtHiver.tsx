@@ -5,7 +5,6 @@ import { Plastic } from './PackArt';
 
 // Booster de la Série 3 (Hiver), sur le même sachet que les autres boosters : une nuit polaire sous l'aurore
 // boréale, la pleine lune derrière les sommets, des sapins enneigés (art/hiver.tsx).
-// Premier visuel : pas encore utilisé dans le jeu.
 
 const styleFor = (name: string) => ({ '--near': HIVER_NEAR, '--ink': '#f4f9ff', '--pk-title': `${Math.min(15, 128 / Math.max(name.length, 7))}cqw` }) as CSSProperties;
 

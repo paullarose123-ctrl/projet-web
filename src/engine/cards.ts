@@ -222,9 +222,9 @@ export function athletesByRarity(): Record<RarityId, Athlete[]> {
 
 // ───────────── Numéros de collection ─────────────
 // Chaque espèce a son numéro dans l'album de sa série, famille par famille (dans l'ordre du jeu), sans trou :
-// N° 001 à N° 4xx pour la Série 1, M1 à M116 pour la Série 2 (Mexique). Dans chaque famille, ses Icônes (espèces
-// disparues) viennent en dernier. Les Habitats de la Série 1 ont leur propre suite (H01, H02…) ; ceux du Mexique
-// continuent la numérotation de la série après la dernière espèce.
+// N° 001 à N° 4xx pour la Série 1, M1 à M116 pour la Série 2 (Mexique), G1 à G110 pour la Série 3 (Hiver). Dans
+// chaque famille, ses Icônes (espèces disparues) viennent en dernier. Les Habitats de la Série 1 ont leur propre suite
+// (H01, H02…) ; ceux des séries suivantes continuent la numérotation de la série après la dernière espèce.
 let numbers: Map<string, string> | null = null;
 
 export function collectionNumber(athlete: Athlete): string {

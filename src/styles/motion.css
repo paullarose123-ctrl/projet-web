@@ -122,9 +122,11 @@ h3 {
 }
 
 /* boutons d'ouverture des boosters : un aplat pastel de la couleur de leur sachet, texte sombre comme sur les cartes,
-   sans dégradé ni reflet ; menthe pour la Série 1, rose bonbon pour la Série 2 (le Mexique) */
+   sans dégradé ni reflet ; menthe pour la Série 1, rose bonbon pour la Série 2 (le Mexique), bleu glacier pour la
+   Série 3 (l'Hiver) */
 .btn--primary.btn--booster,
-.btn--primary.btn--booster-mx {
+.btn--primary.btn--booster-mx,
+.btn--primary.btn--booster-hv {
   background: var(--pastel);
   color: var(--ink);
   border-color: transparent;
@@ -144,19 +146,28 @@ h3 {
   --edge: #d46aa8;
 }
 
+.btn--primary.btn--booster-hv {
+  --pastel: #bfe3f7;
+  --ink: #0d2a4a;
+  --edge: #7fb2d9;
+}
+
 .btn--primary.btn--booster:hover:not(:disabled),
-.btn--primary.btn--booster-mx:hover:not(:disabled) {
+.btn--primary.btn--booster-mx:hover:not(:disabled),
+.btn--primary.btn--booster-hv:hover:not(:disabled) {
   background: color-mix(in srgb, var(--pastel) 88%, #ffffff);
   box-shadow: 0 6px 0 var(--edge), 0 14px 26px rgba(4, 12, 10, 0.4);
 }
 
 .btn--primary.btn--booster:active:not(:disabled),
-.btn--primary.btn--booster-mx:active:not(:disabled) {
+.btn--primary.btn--booster-mx:active:not(:disabled),
+.btn--primary.btn--booster-hv:active:not(:disabled) {
   box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.3);
 }
 
 .btn--booster::after,
-.btn--booster-mx::after {
+.btn--booster-mx::after,
+.btn--booster-hv::after {
   display: none;
 }
 

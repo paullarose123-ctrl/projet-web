@@ -805,12 +805,27 @@
   padding: 0 20px;
 }
 
+/* trois séries sorties : trois boosters, un peu plus serrés */
+.hero--trio .hero__pack {
+  width: min(420px, 78vw);
+}
+
+.hero--trio .hero__boosters {
+  gap: 10px;
+}
+
 @media (min-width: 760px) {
   .hero--duo {
     grid-template-columns: 320px 1fr;
   }
   .hero--duo .hero__pack {
     width: 320px;
+  }
+  .hero--trio {
+    grid-template-columns: 420px 1fr;
+  }
+  .hero--trio .hero__pack {
+    width: 420px;
   }
 }
 
@@ -828,6 +843,12 @@
   }
   .hero--duo .hero__pack {
     width: 300px;
+  }
+  .hero--trio {
+    grid-template-columns: 360px 1fr auto;
+  }
+  .hero--trio .hero__pack {
+    width: 360px;
   }
   .showcase {
     position: relative;
@@ -4983,8 +5004,12 @@
   --dot: linear-gradient(180deg, #fff1bf, #e0b85a);
 }
 
-.rarity-row--mexique {
+.rarity-row--serie-2 {
   --dot: linear-gradient(90deg, #006847 0 34%, #ffffff 34% 66%, #ce1126 66%);
+}
+
+.rarity-row--serie-3 {
+  --dot: linear-gradient(180deg, #f7fbff, #9fd0f0);
 }
 
 /* boutique : les packs mêlent les deux séries */
@@ -6025,6 +6050,22 @@
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
+/* animal de l'hiver : un liseré de givre, bleu glacier et blanc */
+.avatar--hv {
+  padding: 2px;
+  background: repeating-conic-gradient(#bfe3f7 0 15deg, #f7fbff 15deg 30deg);
+  box-shadow: none;
+}
+
+.avatar--hv img {
+  border-radius: 50%;
+}
+
+.avatar--big.avatar--hv {
+  padding: 3px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
 .profile-id {
   display: flex;
   align-items: center;
@@ -6822,7 +6863,7 @@
 }
 
 /* les boutons principaux en orange citrouille pastel (le booster du Mexique garde son rose) */
-.saison-fete .btn--primary:not(.btn--booster-mx) {
+.saison-fete .btn--primary:not(.btn--booster-mx):not(.btn--booster-hv) {
   --pastel: #f9c48f;
   --ink: #4a2208;
   --edge: #d98a4a;
@@ -6833,12 +6874,12 @@
   box-shadow: 0 4px 0 var(--edge), 0 10px 20px rgba(4, 12, 10, 0.35);
 }
 
-.saison-fete .btn--primary:not(.btn--booster-mx):hover:not(:disabled) {
+.saison-fete .btn--primary:not(.btn--booster-mx):not(.btn--booster-hv):hover:not(:disabled) {
   background: color-mix(in srgb, var(--pastel) 88%, #ffffff);
   box-shadow: 0 6px 0 var(--edge), 0 14px 26px rgba(4, 12, 10, 0.4);
 }
 
-.saison-fete .btn--primary:not(.btn--booster-mx):active:not(:disabled) {
+.saison-fete .btn--primary:not(.btn--booster-mx):not(.btn--booster-hv):active:not(:disabled) {
   box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(4, 12, 10, 0.3);
 }
 
@@ -6908,7 +6949,7 @@
   box-shadow: 0 0 14px rgba(255, 120, 190, 0.85);
 }
 
-.saison-muertos .btn--primary:not(.btn--booster-mx) {
+.saison-muertos .btn--primary:not(.btn--booster-mx):not(.btn--booster-hv) {
   --pastel: #8fe3d4;
   --ink: #0c3b35;
   --edge: #3fa596;

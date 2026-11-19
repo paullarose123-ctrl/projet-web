@@ -139,7 +139,7 @@ export function enclosFor(athlete: Athlete): EnclosId | null {
   if (athlete.habitat || rarityOf(athlete).id === 'icone') return null;
   if (athlete.sport === 'ferme') return 'ferme';
   const milieu = milieuCourt(athlete);
-  if (milieu === 'Sous terre') return SOUS_TERRE[athlete.id.replace(/^mx-/, '')] ?? 'foret';
+  if (milieu === 'Sous terre') return SOUS_TERRE[athlete.id.replace(/^(mx|hv)-/, '')] ?? 'foret';
   // sur les côtes, les oiseaux et les autres animaux de rivage vont au marais ; les animaux marins à l'aquarium
   if (milieu === 'Côtes') return MARINS.includes(athlete.sport) ? 'aquarium' : 'marais';
   return ENCLOS.find((e) => e.milieux.includes(milieu))?.id ?? null;

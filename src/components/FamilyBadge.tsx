@@ -30,9 +30,28 @@ export function FamilyBadge({ sport, earned, size = 104 }: { sport: SportId; ear
   );
 }
 
-/** Badge d'une série de pays complète (Série 2 : le Mexique) : son paysage et l'aigle du drapeau. */
-export function SerieBadge({ name, earned, size = 104 }: { name: string; earned: boolean; size?: number }) {
-  const scene = packScene('mexique');
+/** Flocon à six branches (emblème de la Série 3), dans le repère des icônes de badge (-11 -5 22 10). */
+const FLAKE = (() => {
+  let d = '';
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3;
+    const [c, s] = [Math.cos(a), Math.sin(a)];
+    const [x, y] = [c * 4.6, s * 4.6];
+    d += `M0 0L${x.toFixed(2)} ${y.toFixed(2)}`;
+    // deux petites branches vers l'extérieur
+    const [bx, by] = [c * 2.8, s * 2.8];
+    for (const turn of [0.6, -0.6]) d += `M${bx.toFixed(2)} ${by.toFixed(2)}L${(bx + Math.cos(a + turn) * 1.5).toFixed(2)} ${(by + Math.sin(a + turn) * 1.5).toFixed(2)}`;
+  }
+  return d;
+})();
+
+/**
+ * Badge d'une série complète : son paysage, et son emblème (l'aigle du drapeau pour le Mexique, un flocon pour
+ * l'Hiver).
+ */
+export function SerieBadge({ number, name, earned, size = 104 }: { number: number; name: string; earned: boolean; size?: number }) {
+  const hiver = number === 3;
+  const scene = packScene(hiver ? 'hiver' : 'mexique');
   const style = {
     '--badge-size': `${size}px`,
     '--badge-near': scene.palette.near,
@@ -44,7 +63,7 @@ export function SerieBadge({ name, earned, size = 104 }: { name: string; earned:
         <PackScene scene={scene} seed={`badge ${name}`} className="fbadge__scene" shade={false} />
         <span className="fbadge__emblem">
           <svg className="sport-icon" viewBox="-11 -5 22 10" aria-hidden="true">
-            <path d={EAGLE} fill="currentColor" />
+            {hiver ? <path d={FLAKE} fill="none" stroke="currentColor" strokeWidth={0.9} strokeLinecap="round" /> : <path d={EAGLE} fill="currentColor" />}
           </svg>
         </span>
       </div>
