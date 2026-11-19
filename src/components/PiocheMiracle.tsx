@@ -115,17 +115,13 @@ export function PiocheMiracle() {
 
   return (
     <section className="panel pioche" aria-labelledby="pioche-title">
-      <header className="pioche__head">
-        <div>
-          <p className="eyebrow">Les boosters des autres collectionneurs</p>
-          <h2 id="pioche-title">Pioche miracle</h2>
-          <p className="muted small">Choisis un booster ouvert par un autre joueur : ses 5 cartes se retournent et se mélangent, et tu en pioches une au hasard.</p>
-        </div>
-        <div className="pioche__energy" aria-label={`Énergie miracle : ${energy} sur ${PIOCHE_MAX}`}>
+      <div className="pioche__head">
+        <h2 id="pioche-title">Pioche miracle</h2>
+        <span className="pioche__energy" aria-label={`Énergie miracle : ${energy} sur ${PIOCHE_MAX}`}>
+          <span className="pioche__timer">{energy >= PIOCHE_MAX ? 'Énergie pleine' : `+1 dans ${formatDuration((pioche?.nextAt ?? now) - now)}`}</span>
           <Gauge energy={energy} />
-          <small>{energy >= PIOCHE_MAX ? 'Énergie pleine' : `+1 dans ${formatDuration((pioche?.nextAt ?? now) - now)}`}</small>
-        </div>
-      </header>
+        </span>
+      </div>
       <div className="pioche__row">
         {offers.map((offer, n) => {
           const done = used.has(offer.id);
@@ -468,7 +464,6 @@ function PiocheOverlay({ offer, name, onClose }: { offer: PiocheOffer; name: str
         <span className="pm-overlay__motes" />
       </div>
       <div className="pm-overlay__top">
-        <p className="eyebrow">Pioche miracle</p>
         <h2 key={lit ? 'result' : phase === 'choose' ? 'choose' : mixing ? 'mix' : 'look'}>
           {(phase === 'deal' || phase === 'look') && <>Le booster de {name}</>}
           {mixing && <>Les cartes se mélangent…</>}
