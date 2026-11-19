@@ -217,6 +217,29 @@ const LOOKS: Record<string, Partial<Look>> = {
   axolotl: { type: 'salamandre', A: '#f1b0b8', B: '#f6d0d4', X: '#e0607a' },
   fourmi: { type: 'insecte', A: '#8a3a22', B: '#8a3a22' },
   'mante-religieuse': { type: 'insecte', A: '#7ab04a', B: '#7ab04a' },
+  // Série 3 · Hiver : pelages d'hiver et couleurs que le nom ne dit pas (l'ours « bleu » du Tibet est brun sombre)
+  'tigre-de-l-amour': { A: '#e08a3a', B: '#f6efe2', pattern: 'stripes', P: '#2a1a10' },
+  'leopard-de-l-amour': { A: '#e6b870', pattern: 'spots', P: '#3a2414' },
+  'lynx-du-canada': { A: '#a8957a' },
+  'loup-arctique': { A: '#f1ece0', B: '#f6f3ea' },
+  'renard-du-tibet': { A: '#c98a4a', B: '#d8d0c0' },
+  'renard-corsac': { A: '#c4ae8a', B: '#efe6d6' },
+  'ours-bleu-du-tibet': { A: '#4e4038', B: '#7a6a5c' },
+  'rhinopitheque-de-roxellane': { A: '#e08a2a', B: '#f0b050' },
+  'rhinopitheque-du-yunnan': { A: '#3a3a3e', B: '#ece8e0' },
+  'boeuf-musque': { A: '#4a3626', B: '#6a5440' },
+  'mouflon-de-dall': { A: '#efebe0', B: '#f6f3ea' },
+  'chevre-des-rocheuses': { A: '#f2efe6', B: '#e6e2d6' },
+  'lievre-arctique': { A: '#f4f4f0', B: '#ffffff' },
+  'lievre-variable': { A: '#ecebe6', B: '#ffffff' },
+  zibeline: { A: '#4a3424', B: '#7a5a3a' },
+  'lagopede-alpin': { A: '#f4f2ec', B: '#f4f2ec' },
+  'mouette-ivoire': { A: '#f6f4ee', B: '#f6f4ee' },
+  'oie-des-neiges': { A: '#f6f4ee', B: '#f6f4ee' },
+  'cygne-chanteur': { A: '#f6f4ee', B: '#f6f4ee' },
+  'petrel-des-neiges': { A: '#f6f4ee', B: '#f6f4ee' },
+  samoyede: { A: '#f6f3ea', B: '#f6f3ea' },
+  malamute: { A: '#6a6e72', B: '#f1ede4' },
   'calmar-geant': { A: '#c84a3a' },
   suricate: { type: 'rongeur', A: '#c4a070', B: '#e8d6b8' },
   'loutre-de-mer': { type: 'mustelide', A: '#5a3e2a', B: '#a88a6a' },
@@ -226,7 +249,7 @@ const has = (re: RegExp, a: Athlete) => re.test(a.id);
 
 /** La silhouette d'une espèce, d'après sa famille, son archétype et son nom. */
 export function typeOf(a: Athlete): SpriteType {
-  const t = LOOKS[a.id.replace(/^mx-/, '')]?.type;
+  const t = LOOKS[a.id.replace(/^(mx|hv)-/, '')]?.type;
   if (t) return t;
   switch (a.sport) {
     case 'felins':
@@ -254,7 +277,7 @@ export function typeOf(a: Athlete): SpriteType {
       if (has(/herisson|tatou|pangolin|porc-epic|tenrec/, a)) return 'herisson';
       if (has(/chauve|pipistrelle|vampire|roussette|murin|noctule/, a)) return 'chauve-souris';
       if (has(/lapin|lievre|pika/, a)) return 'lapin';
-      if (has(/loutre|belette|hermine|blaireau|glouton|martre|furet|vison|mouffette|raton|putois|zorille|ratel|mangouste|genette|civette|binturong|fossa/, a)) return 'mustelide';
+      if (has(/loutre|belette|hermine|blaireau|glouton|martre|zibeline|furet|vison|mouffette|raton|putois|zorille|ratel|mangouste|genette|civette|binturong|fossa/, a)) return 'mustelide';
       return 'rongeur';
     case 'marsupiaux':
       if (has(/kangourou|wallaby|wallaroo|quokka/, a)) return 'kangourou';
@@ -338,7 +361,7 @@ const NAME_COLORS: [RegExp, string][] = [
 export function lookOf(a: Athlete): Look {
   const type = typeOf(a);
   const base = { type, ...DEFAULTS_FOR_SHEET[type] };
-  const own = LOOKS[a.id.replace(/^mx-/, '')];
+  const own = LOOKS[a.id.replace(/^(mx|hv)-/, '')];
   if (own) return { ...base, ...own, type };
   const name = `${a.first} ${a.last}`.toLowerCase();
   const color = NAME_COLORS.find(([re]) => re.test(name))?.[1];

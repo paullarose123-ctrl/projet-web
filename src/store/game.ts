@@ -5,7 +5,7 @@ import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
 import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE1_RETIREES, SERIE2_REMPLACEES } from '../data/remplacements';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
-import { FREE_PACK, FREE_PACK_MEXIQUE, MAX_FREE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, addFreePacks, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
+import { FREE_PACK, MAX_FREE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, addFreePacks, freePackById, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
 import { isReleased, releasedAthletes, serieOf } from '../engine/series';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
@@ -450,8 +450,8 @@ export const OBJECTIVES: Objective[] = [
 ];
 
 export function packById(id: string): PackDef | undefined {
-  if (id === FREE_PACK.id) return FREE_PACK;
-  if (id === FREE_PACK_MEXIQUE.id) return FREE_PACK_MEXIQUE;
+  const free = freePackById(id);
+  if (free) return free;
   if (id.startsWith('sport-')) {
     const sport = SPORTS[id.slice(6) as keyof typeof SPORTS];
     return sport ? sportPack(sport.id, sport.name) : undefined;
@@ -500,10 +500,10 @@ export const useGame = create<GameState>()(
         const now = Date.now();
         const before = dailyFor(get().daily, now);
         const counts = { ...before.counts };
-        for (const [key, value] of Object.entries(delta) as [keyof DailyCounts, number][]) counts[key] += value;
+        for (const [key, value] of Object.entries(delta) as [keyof DailyCounts, number][]) counts[key] = (counts[key] ?? 0) + value;
         const after: DailyState = { ...before, counts };
         set({ daily: after });
-        for (const objective of dailyObjectives(after.day, isReleased(2, now))) {
+        for (const objective of dailyObjectives(after.day, isReleased(2, now), isReleased(3, now))) {
           if (!isDailyDone(objective, before) && isDailyDone(objective, after)) {
             const text = `Objectif du jour réussi : ${objective.title}. Récupère ${formatBalles(objective.reward)} sur l’accueil`;
             if (get().opening) heldDailyToasts.push(text);
@@ -550,6 +550,7 @@ export const useGame = create<GameState>()(
           newSpecies: new Set(faces.map((f) => f.athleteId).filter((id) => !state.discovered[id])).size,
           rare: faces.filter((f) => f.variant === 'prime' || rarityOf(ATHLETES_BY_ID[f.athleteId]).order >= 2).length,
           mexique: faces.filter((f) => serieOf(ATHLETES_BY_ID[f.athleteId]) === 2).length,
+          hiver: faces.filter((f) => serieOf(ATHLETES_BY_ID[f.athleteId]) === 3).length,
         });
       };
 
@@ -1064,7 +1065,7 @@ export const useGame = create<GameState>()(
         claimDaily: (id) => {
           const now = Date.now();
           const daily = dailyFor(get().daily, now);
-          const objective = dailyObjectives(daily.day, isReleased(2, now)).find((o) => o.id === id);
+          const objective = dailyObjectives(daily.day, isReleased(2, now), isReleased(3, now)).find((o) => o.id === id);
           if (!objective || daily.claimed.includes(id) || !isDailyDone(objective, daily)) return;
           set((s) => ({ balles: s.balles + objective.reward, daily: { ...daily, claimed: [...daily.claimed, id] } }));
           pushToast('gold', `Objectif du jour : +${formatBalles(objective.reward)}`);
@@ -1073,7 +1074,7 @@ export const useGame = create<GameState>()(
         claimDailyBonus: () => {
           const now = Date.now();
           const daily = dailyFor(get().daily, now);
-          const all = dailyObjectives(daily.day, isReleased(2, now));
+          const all = dailyObjectives(daily.day, isReleased(2, now), isReleased(3, now));
           if (daily.bonus || !all.every((o) => daily.claimed.includes(o.id))) return;
           set((s) => ({ balles: s.balles + DAILY_BONUS, daily: { ...daily, bonus: true } }));
           pushToast('gold', `Les trois objectifs du jour sont remplis : bonus de ${formatBalles(DAILY_BONUS)} !`);

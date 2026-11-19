@@ -12,14 +12,14 @@ describe('Objectifs du jour', () => {
     const counts = new Set<string>();
     for (let d = 1; d <= 60; d++) {
       const day = dayKey(new Date(2026, 10, d).getTime());
-      const list = dailyObjectives(day);
+      const list = dailyObjectives(day, true, true);
       expect(list).toHaveLength(3);
       expect(list[0].count).toBe('packs');
-      expect(['newSpecies', 'rare', 'quickSold', 'mexique']).toContain(list[1].count);
+      expect(['newSpecies', 'rare', 'quickSold', 'mexique', 'hiver']).toContain(list[1].count);
       expect(['played', 'won']).toContain(list[2].count);
       list.forEach((o) => counts.add(o.id));
       // le même jour donne toujours les mêmes défis
-      expect(dailyObjectives(day).map((o) => o.id)).toEqual(list.map((o) => o.id));
+      expect(dailyObjectives(day, true, true).map((o) => o.id)).toEqual(list.map((o) => o.id));
     }
     // sur deux mois, presque tous les défis sortent au moins une fois
     expect(counts.size).toBeGreaterThan(ALL_DAILY.length - 2);
@@ -29,6 +29,13 @@ describe('Objectifs du jour', () => {
     for (let d = 1; d <= 60; d++) {
       const day = dayKey(new Date(2026, 8, d).getTime());
       expect(dailyObjectives(day, false).some((o) => o.count === 'mexique')).toBe(false);
+    }
+  });
+
+  it('ne demandent pas de cartes de l’Hiver avant la sortie de la Série 3', () => {
+    for (let d = 1; d <= 60; d++) {
+      const day = dayKey(new Date(2026, 10, d).getTime());
+      expect(dailyObjectives(day, true, false).some((o) => o.count === 'hiver')).toBe(false);
     }
   });
 

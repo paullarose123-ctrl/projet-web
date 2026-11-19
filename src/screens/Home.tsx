@@ -5,7 +5,7 @@ import { useUi } from '../store/ui';
 import { useNow, formatDuration, timeAgo } from '../hooks/useNow';
 import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
 import { freePackChoices } from '../engine/packs';
-import { PackArt } from '../components/PackArt';
+import { PackArt, boosterButton } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
 import { HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/scenes';
 import { Card } from '../components/Card';
@@ -23,7 +23,8 @@ import { SaisonBanner, SaisonHead, useSeason } from '../components/Saison';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dailyProgress, nextMidnight } from '../engine/daily';
 
 // Ce qu'on peut décrocher : un guépard en version Prime, le roi des animaux, un orang-outan Épique (éventail fixe) ;
-// une fois la Série 2 sortie, deux de ses cartes phares encadrent le lion : le condor de Californie et le jaguar.
+// une fois la Série 2 sortie, deux de ses cartes phares encadrent le lion : le condor de Californie et le jaguar ;
+// une fois la Série 3 sortie, l'ours polaire de l'hiver en Prime au centre, entouré des vedettes du froid et du jaguar.
 const SHOWCASE: CardFace[] = [
   { athleteId: 'guepard', variant: 'prime' },
   { athleteId: 'lion', variant: 'base' },
@@ -38,9 +39,17 @@ const SHOWCASE_MEXIQUE: CardFace[] = [
   { athleteId: 'orang-outan', variant: 'base' },
 ];
 
+const SHOWCASE_HIVER: CardFace[] = [
+  { athleteId: 'tigre-de-l-amour', variant: 'base' },
+  { athleteId: 'mx-jaguar', variant: 'prime' },
+  { athleteId: 'hv-ours-polaire', variant: 'prime' },
+  { athleteId: 'hv-manchot-empereur', variant: 'prime' },
+  { athleteId: 'hv-panthere-des-neiges', variant: 'base' },
+];
+
 function Showcase() {
   const openDetail = useUi((s) => s.openDetail);
-  const cards = isReleased(2) ? SHOWCASE_MEXIQUE : SHOWCASE;
+  const cards = isReleased(3) ? SHOWCASE_HIVER : isReleased(2) ? SHOWCASE_MEXIQUE : SHOWCASE;
   return (
     <figure className="showcase">
       <div className={`showcase__fan${cards.length > 3 ? ' showcase__fan--five' : ''}`}>
@@ -133,13 +142,13 @@ function ExpansionBanner() {
               La Série {current.number} · {current.name} est arrivée
             </h2>
             <p className="expansion__sub">
-              {serieContents(current)} à collectionner : leur booster gratuit attend à côté de celui de la{' '}
-              <b>Série 1 · Animaux du monde</b>, et leurs cartes sortent aussi de tous les packs de la boutique. Chaque série a son album.
+              {serieContents(current)} à collectionner : leur booster gratuit attend sur l’accueil avec ceux des autres séries, et
+              leurs cartes sortent aussi de tous les packs de la boutique. Chaque série a son album.
             </p>
             <div className="expansion__cta">
               <button
                 type="button"
-                className="btn btn--primary btn--booster-mx"
+                className={`btn btn--primary ${boosterButton(current.number)}`}
                 disabled={freePacks <= 0}
                 onClick={() => {
                   sfx.whoosh();
@@ -165,18 +174,18 @@ function ExpansionBanner() {
         </ol>
       </div>
       {/* la série mise en avant : deux de ses boosters, et devant eux un dos de carte qui garde son mystère (avant sa
-          sortie) ou, pour le Mexique, l'aigle royal, l'emblème de son drapeau (après) */}
+          sortie) ou une de ses cartes (après) : l'aigle royal, emblème du drapeau mexicain, ou le harfang des neiges */}
       <div className="expansion__teaser" aria-hidden="true">
         <div className="expansion__pack expansion__pack--left">{hiver ? <PackArtHiver /> : <PackArtMexique />}</div>
         <div className="expansion__pack expansion__pack--right">{hiver ? <PackArtHiver /> : <PackArtMexique />}</div>
         <div className="expansion__card">
-          {next || hiver ? (
+          {next ? (
             <>
               {hiver ? <CardBackHiver /> : <CardBackMexique />}
               <span className="expansion__mystery">?</span>
             </>
           ) : (
-            <Card card={{ athleteId: 'mx-aigle-royal', variant: 'base' }} size="sm" />
+            <Card card={{ athleteId: hiver ? 'hv-harfang' : 'mx-aigle-royal', variant: 'base' }} size="sm" />
           )}
         </div>
       </div>
@@ -233,13 +242,14 @@ function FreePackHero() {
   // un booster par série sortie, côte à côte ; la réserve est la même pour les deux
   const choices = freePackChoices(now);
   const duo = choices.length > 1;
+  const trio = choices.length > 2;
   const open = (serie: number) => {
     sfx.whoosh();
     openFreePack(serie);
   };
 
   return (
-    <section className={`hero${duo ? ' hero--duo' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
+    <section className={`hero${duo ? ' hero--duo' : ''}${trio ? ' hero--trio' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
       <Landscape className="hero__art" scene={season === 'halloween' ? HERO_SCENE_HALLOWEEN : HERO_SCENE_MUERTOS} seed="accueil" />
       <SaisonHead seed="accueil" pendants={false} />
       <div className="hero__pack">
@@ -276,7 +286,7 @@ function FreePackHero() {
         </div>
       </div>
       <div className="hero__text">
-        <p className="eyebrow">{duo ? 'Boosters gratuits · deux séries' : `Série 1 · ${serieDef(1).name} · booster gratuit`}</p>
+        <p className="eyebrow">{duo ? `Boosters gratuits · ${trio ? 'trois' : 'deux'} séries` : `Série 1 · ${serieDef(1).name} · booster gratuit`}</p>
         <h1 id="hero-title">
           {freePacks > 0 ? (
             <>
@@ -303,11 +313,12 @@ function FreePackHero() {
               <button
                 key={pack.id}
                 type="button"
-                className={`btn btn--primary ${duo ? 'btn--lg' : 'btn--xl'} ${pack.serie === 2 ? 'btn--booster-mx' : 'btn--booster'}`}
+                className={`btn btn--primary ${trio ? '' : duo ? 'btn--lg' : 'btn--xl'} ${boosterButton(pack.serie)}`}
                 disabled={freePacks <= 0}
+                aria-label={`Ouvrir un booster Série ${serie.number} · ${serie.name}`}
                 onClick={() => open(serie.number)}
               >
-                {duo ? `Ouvrir · Série ${serie.number}` : 'Ouvrir un booster'}
+                {trio ? `Série ${serie.number}` : duo ? `Ouvrir · Série ${serie.number}` : 'Ouvrir un booster'}
               </button>
             );
           })}
@@ -393,7 +404,7 @@ function DailyObjectives() {
   const claimBonus = useGame((s) => s.claimDailyBonus);
   const now = useNow(1000);
   const daily = dailyFor(stored, now);
-  const list = dailyObjectives(daily.day, isReleased(2, now));
+  const list = dailyObjectives(daily.day, isReleased(2, now), isReleased(3, now));
   const allClaimed = list.every((o) => daily.claimed.includes(o.id));
   return (
     <section className="panel daily" aria-labelledby="daily-title">

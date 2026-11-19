@@ -40,7 +40,7 @@ export interface PackDef {
    */
   serie?: number;
   /** couleur dominante de l'emballage (mexique : le sachet de la Série 2) */
-  tone: 'bronze' | 'silver' | 'gold' | 'violet' | 'black' | 'icon' | 'prime' | 'sport' | 'mexique';
+  tone: 'bronze' | 'silver' | 'gold' | 'violet' | 'black' | 'icon' | 'prime' | 'sport' | 'mexique' | 'hiver';
   sport?: SportId;
 }
 
@@ -137,9 +137,9 @@ export const SHOP_PACKS: PackDef[] = [
   },
 ];
 
-// ───────────── Série 2 · Mexique ─────────────
+// ───────────── Séries suivantes ─────────────
 
-/** Booster gratuit de la Série 2, dès sa sortie : mêmes chances que celui de la Série 1. */
+/** Booster gratuit de la Série 2 (Mexique), dès sa sortie : mêmes chances que celui de la Série 1. */
 export const FREE_PACK_MEXIQUE: PackDef = {
   ...FREE_PACK,
   id: 'gratuit-mexique',
@@ -147,14 +147,30 @@ export const FREE_PACK_MEXIQUE: PackDef = {
   tone: 'mexique',
 };
 
-/** Les boosters gratuits proposés sur l'accueil : celui de chaque série déjà sortie (une seule réserve pour les deux). */
+/** Booster gratuit de la Série 3 (Hiver), dès sa sortie : mêmes chances aussi. */
+export const FREE_PACK_HIVER: PackDef = {
+  ...FREE_PACK,
+  id: 'gratuit-hiver',
+  serie: 3,
+  tone: 'hiver',
+};
+
+/** Le booster gratuit de chaque série. */
+const FREE_PACKS: PackDef[] = [FREE_PACK, FREE_PACK_MEXIQUE, FREE_PACK_HIVER];
+
+/** Les boosters gratuits proposés sur l'accueil : celui de chaque série déjà sortie (une seule réserve pour tous). */
 export function freePackChoices(now: number = Date.now()): PackDef[] {
-  return isReleased(2, now) ? [FREE_PACK, FREE_PACK_MEXIQUE] : [FREE_PACK];
+  return FREE_PACKS.filter((pack) => isReleased(pack.serie ?? 1, now));
 }
 
 /** Le booster gratuit d'une série (celui de la Série 1 si elle n'est pas encore sortie). */
 export function freePackOf(serie: number, now: number = Date.now()): PackDef {
-  return serie === 2 && isReleased(2, now) ? FREE_PACK_MEXIQUE : FREE_PACK;
+  return FREE_PACKS.find((pack) => pack.serie === serie && isReleased(serie, now)) ?? FREE_PACK;
+}
+
+/** Booster gratuit d'après son identifiant. */
+export function freePackById(id: string): PackDef | undefined {
+  return FREE_PACKS.find((pack) => pack.id === id);
 }
 
 /** Pack d'une seule famille : 3 cartes, jamais deux fois la même espèce (certaines familles sont petites). */
@@ -411,5 +427,5 @@ export function sortByRarity(cards: CardFace[]): CardFace[] {
 }
 
 export function allPacks(): PackDef[] {
-  return [FREE_PACK, FREE_PACK_MEXIQUE, ...SHOP_PACKS];
+  return [...FREE_PACKS, ...SHOP_PACKS];
 }

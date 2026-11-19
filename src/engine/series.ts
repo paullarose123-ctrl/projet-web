@@ -32,7 +32,6 @@ export const SERIES_LIST: SerieDef[] = [
     number: 3,
     name: 'Hiver',
     release: new Date(2026, 11, 1),
-    ready: false,
     teaser: 'Après le Mexique, cap sur le grand froid : les animaux qui vivent dans la neige et sur la glace, de l’ours polaire au harfang des neiges.',
   },
 ];

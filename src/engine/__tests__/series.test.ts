@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
-import { FREE_PACK, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, serieOdds, sportPack, type PackDef } from '../packs';
+import { FREE_PACK, FREE_PACK_HIVER, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, serieOdds, sportPack, type PackDef } from '../packs';
 import { cardsOfSerie, releasedAthletes, serieOf, setEarlyAccessForTesting } from '../series';
 import { createMarket } from '../market';
 import { collectionNumber, rarityOf } from '../cards';
@@ -88,7 +88,51 @@ describe('Série 2 · Mexique', () => {
   });
 });
 
+const NOV_30 = new Date(2026, 10, 30, 23, 59).getTime();
+const DEC_1 = new Date(2026, 11, 1, 0, 0, 1).getTime();
+
 describe('Série 3 · Hiver', () => {
+  beforeAll(() => setEarlyAccessForTesting(false));
+  afterAll(() => setEarlyAccessForTesting(true));
+  afterEach(() => vi.useRealTimers());
+
+  const seriesFrom = (pack: PackDef, rng: () => number, times = 400) => {
+    const out = new Set<number>();
+    for (let i = 0; i < times; i++) for (const card of openPack(pack, rng)) out.add(serieOf(ATHLETES_BY_ID[card.athleteId]));
+    return [...out].sort();
+  };
+  const PAID = [...SHOP_PACKS, sportPack('felins', SPORTS.felins.name)];
+
+  it('sort le 1er décembre : son booster gratuit rejoint ceux des deux autres séries', () => {
+    expect(freePackChoices(NOV_30)).toEqual([FREE_PACK, FREE_PACK_MEXIQUE]);
+    expect(freePackChoices(DEC_1)).toEqual([FREE_PACK, FREE_PACK_MEXIQUE, FREE_PACK_HIVER]);
+    expect(freePackOf(3, NOV_30)).toBe(FREE_PACK);
+    expect(freePackOf(3, DEC_1)).toBe(FREE_PACK_HIVER);
+    expect(releasedAthletes(NOV_30).some((a) => serieOf(a) === 3)).toBe(false);
+    expect(releasedAthletes(DEC_1).filter((a) => serieOf(a) === 3).length).toBe(110);
+  });
+
+  it('avant sa sortie, aucun booster ne donne ses cartes ; ensuite, son booster ne donne qu’elles et les packs mêlent les trois séries', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOV_30);
+    const rng = mulberry32(13);
+    for (const pack of [FREE_PACK, FREE_PACK_MEXIQUE, ...PAID]) expect(seriesFrom(pack, rng), pack.id).not.toContain(3);
+    vi.setSystemTime(DEC_1);
+    expect(seriesFrom(FREE_PACK_HIVER, rng)).toEqual([3]);
+    expect(seriesFrom(FREE_PACK, rng)).toEqual([1]);
+    for (const pack of PAID) expect(seriesFrom(pack, rng), pack.id).toEqual([1, 2, 3]);
+  });
+
+  it('le Pack Icônes donne aussi les Icônes de l’Hiver dès sa sortie', () => {
+    const icones = SHOP_PACKS.find((pack) => pack.id === 'icones')!;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOV_30);
+    expect(serieOdds(icones, 3)).toBe(0);
+    vi.setSystemTime(DEC_1);
+    expect(serieOdds(icones, 3)).toBeGreaterThan(0.05);
+    expect(seriesFrom(icones, mulberry32(9))).toEqual([1, 2, 3]);
+  });
+
   it('compte 110 cartes : espèces, Icônes et Habitats', () => {
     const cards = cardsOfSerie(3);
     expect(cards.length).toBe(110);
