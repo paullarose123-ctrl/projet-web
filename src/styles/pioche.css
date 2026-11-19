@@ -11,39 +11,37 @@
 .pioche__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px 24px;
+  gap: 4px 12px;
 }
 
 .pioche__head h2 {
-  margin: 2px 0 4px;
-}
-
-.pioche__head p {
-  max-width: 52ch;
   margin: 0;
 }
 
+/* l'énergie, comme le compte à rebours des objectifs du jour : discrète, à droite du titre */
 .pioche__energy {
-  display: grid;
-  justify-items: end;
-  gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.pioche__energy small {
-  color: var(--muted, #a9b3a6);
-  font-size: 0.78rem;
+.pioche__timer {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .pioche__sparks {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pm-spark {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: #ffd66b;
   filter: drop-shadow(0 0 6px rgba(255, 214, 107, 0.65));
 }
