@@ -91,8 +91,11 @@ export const SERIE2_REMPLACEES: Record<string, string> = {
   'quiscale-a-bec-fin': 'skiffia-dore',
 };
 
-/** Retirés du jeu puis revenus : le phoque moine des Caraïbes est redevenu une Icône, dans la Série 2. */
-const REVENUS = new Set(['phoque-moine-des-caraibes']);
+/**
+ * Retirés du jeu puis revenus : le phoque moine des Caraïbes est redevenu une Icône dans la Série 2, le grand pingouin
+ * dans la Série 3.
+ */
+const REVENUS = new Set(['phoque-moine-des-caraibes', 'grand-pingouin']);
 
 /** Identifiant actuel d'une carte qui a pu être enregistrée avant un remplacement. */
 export function currentAthleteId(id: string): string {

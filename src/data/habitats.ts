@@ -303,3 +303,59 @@ const DEFS_MEXIQUE: Def[] = [
 
 /** Habitats de la Série 2 (Mexique). */
 export const HABITATS_MEXIQUE: Athlete[] = DEFS_MEXIQUE.map((d) => ({ ...H(d), id: `habitat-mx-${d.id}`, serie: 2 }));
+
+// ───── Série 3 · Hiver (sortie le 1er décembre 2026) ─────
+// Six grands lieux du froid, au nord comme au sud, avec les animaux de la série qui y vivent.
+const DEFS_HIVER: Def[] = [
+  {
+    id: 'svalbard', name: 'Svalbard', sport: 'ours', country: 'NO', fame: 92,
+    lieu: 'Océan Arctique, entre la Norvège et le pôle Nord', superficie: '61 000 km²',
+    especes: ['hv-ours-polaire', 'hv-morse', 'hv-renard-polaire', 'hv-renne', 'phoque-barbu', 'hv-beluga', 'mergule-nain', 'mouette-ivoire', 'eider-a-duvet', 'lagopede-alpin', 'bruant-des-neiges', 'requin-du-groenland'],
+    fact: 'Hors des villages, la loi demande d’avoir de quoi se protéger des ours polaires. Dans la montagne, une chambre forte garde plus d’un million de sortes de graines du monde entier, au cas où.',
+    protection: 'Près des deux tiers de l’archipel sont des parcs nationaux et des réserves naturelles.',
+    scene: { kind: 'banquise', creature: 'renard', palette: { sky: ['#2b3f78', '#f2b8c6'], sun: '#fff4f0', far: '#7f95c8', near: '#0c1630', accent: '#f6fbff' } },
+  },
+  {
+    id: 'laponie', name: 'Laponie', sport: 'ongules', country: 'FI', fame: 80,
+    lieu: 'Nord de la Norvège, de la Suède, de la Finlande et de la Russie', superficie: 'environ 390 000 km²',
+    especes: ['hv-renne', 'hv-glouton', 'chouette-lapone', 'chouette-eperviere', 'lievre-variable', 'grand-tetras', 'jaseur-boreal', 'cygne-chanteur', 'hv-hermine', 'gerfaut', 'buse-pattue', 'bec-croise-des-sapins'],
+    fact: 'Le pays des Samis, qui y élèvent des rennes depuis des siècles. Au cœur de l’hiver, le soleil ne s’y lève pas pendant des semaines : c’est la nuit polaire, éclairée par les aurores.',
+    protection: 'Région de Laponie, en Suède, patrimoine mondial de l’UNESCO depuis 1996.',
+    scene: { kind: 'aurore', creature: 'cerf', palette: { sky: ['#071a2c', '#1d4a5e'], sun: '#eefaff', far: '#4f7a8c', near: '#06131c', accent: '#7cf5a8', accent2: '#c48cff' } },
+  },
+  {
+    id: 'kamtchatka', name: 'Kamtchatka', sport: 'rapaces', country: 'RU', fame: 80,
+    lieu: 'Extrême-Orient russe, entre la mer d’Okhotsk et le Pacifique', superficie: '270 000 km²',
+    especes: ['pygargue-de-steller', 'lion-de-mer-de-steller', 'zibeline', 'hv-glouton', 'hv-hermine', 'lievre-variable', 'omble-chevalier', 'gerfaut', 'lagopede-alpin'],
+    fact: 'Une péninsule de volcans couverts de neige, dont une trentaine en activité. Sa vallée des Geysers, découverte en 1941, est l’un des plus grands champs de geysers du monde.',
+    protection: 'Volcans du Kamtchatka, patrimoine mondial de l’UNESCO depuis 1996.',
+    scene: { kind: 'volcan', palette: { sky: ['#5a7fb8', '#ffd9c0'], sun: '#fff4e8', far: '#9aaccc', near: '#141c2c', accent: '#ffffff' } },
+  },
+  {
+    id: 'baikal', name: 'Lac Baïkal', sport: 'marins', country: 'RU', fame: 80,
+    lieu: 'Sibérie, Russie', superficie: '31 500 km²',
+    especes: ['phoque-du-baikal', 'golomyanka', 'zibeline', 'tamia-de-siberie', 'hv-hermine', 'lievre-variable', 'grand-tetras', 'cygne-chanteur'],
+    fact: 'Le lac le plus profond (1 642 m) et le plus ancien du monde, vieux d’environ 25 millions d’années ; il contient à lui seul plus d’un cinquième de l’eau douce liquide de la planète.',
+    protection: 'Patrimoine mondial de l’UNESCO depuis 1996.',
+    scene: { kind: 'lac', palette: { sky: ['#7fb0e0', '#eef6ff'], sun: '#ffffff', far: '#8fb8d8', near: '#16283c', accent: '#d8f0ff' } },
+  },
+  {
+    id: 'georgie-du-sud', name: 'Géorgie du Sud', sport: 'oiseaux', country: 'GB', fame: 66,
+    lieu: 'Atlantique Sud, à 1 400 km à l’est des Malouines', superficie: '3 500 km²',
+    especes: ['manchot-royal', 'otarie-a-fourrure-antarctique', 'hv-leopard-de-mer', 'petrel-des-neiges', 'labbe-antarctique', 'poisson-des-glaces'],
+    fact: 'En 1916, Ernest Shackleton y a traversé les montagnes à pied pour aller chercher du secours pour ses hommes, restés sur l’île de l’Éléphant : aucun n’est mort. Il y est enterré.',
+    protection: 'Aire marine protégée de Géorgie du Sud et des îles Sandwich du Sud depuis 2012.',
+    scene: { kind: 'montagne', creature: 'manchots', palette: { sky: ['#6f9ccf', '#f4e6dc'], sun: '#fffaf2', far: '#9ab4d0', near: '#18263a', accent: '#ffffff' } },
+  },
+  {
+    id: 'shiretoko', name: 'Shiretoko', sport: 'rapaces', country: 'JP', fame: 66,
+    lieu: 'Nord-est d’Hokkaidō, Japon', superficie: '710 km²',
+    especes: ['pygargue-de-steller', 'grand-duc-de-blakiston', 'lion-de-mer-de-steller', 'zibeline', 'hv-hermine'],
+    fact: 'L’endroit le plus au sud de l’hémisphère Nord où la mer gèle : chaque hiver, la glace dérivante de la mer d’Okhotsk vient s’y coller, et les pygargues s’y posent pour pêcher.',
+    protection: 'Patrimoine mondial de l’UNESCO depuis 2005.',
+    scene: { kind: 'banquise', creature: 'aigle', palette: { sky: ['#8a9fd0', '#ffe0cc'], sun: '#fff6ee', far: '#8fa6c8', near: '#101a30', accent: '#f8fcff' } },
+  },
+];
+
+/** Habitats de la Série 3 (Hiver). */
+export const HABITATS_HIVER: Athlete[] = DEFS_HIVER.map((d) => ({ ...H(d), id: `habitat-hv-${d.id}`, serie: 3 }));
