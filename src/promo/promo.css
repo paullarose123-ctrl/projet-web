@@ -1275,3 +1275,15 @@ body {
   gap: 14px;
   margin: 0;
 }
+
+/* toutes les cartes de la série (promo/hiver-carte.html?toutes) */
+.hiver-planche--toutes {
+  width: max-content;
+  padding: 24px;
+}
+.hiver-planche__grid {
+  display: grid;
+  grid-template-columns: repeat(8, auto);
+  gap: 14px;
+  justify-content: center;
+}

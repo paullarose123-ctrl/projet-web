@@ -1715,5 +1715,183 @@
   "zebre": "Zebra Family Luangwa Zambia Jul23 A7C 05903.jpg",
   "limule": "Overturned horseshoe crab on Plum Island (70116).jpg",
   "dalmatien": "Dog park photos (14293239497).jpg",
-  "caniche": "The dog, summer 2020.jpg"
+  "caniche": "The dog, summer 2020.jpg",
+  "hv-panthere-des-neiges": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/345672780/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/345672780",
+    "auteur": "kesangchunit",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "rhinopitheque-du-yunnan": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/207659493/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/207659493",
+    "auteur": "Lukasz Madrzynski 孟巨石",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "chevre-des-rocheuses": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/603905201/original.jpg",
+    "page": "https://www.inaturalist.org/photos/603905201",
+    "auteur": "Grady Duffy",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "takin": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/51303107/original.jpg",
+    "page": "https://www.inaturalist.org/photos/51303107",
+    "auteur": "Sheelagh Halsey",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "chirou": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/714943495/original.jpg",
+    "page": "https://www.inaturalist.org/photos/714943495",
+    "auteur": "邪犽",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lievre-variable": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2887757/original.jpg",
+    "page": "https://www.inaturalist.org/photos/2887757",
+    "auteur": "Nigel Voaden",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "phoque-a-capuchon": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/363849010/original.jpg",
+    "page": "https://www.inaturalist.org/photos/363849010",
+    "auteur": "Justin Hofman",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lion-de-mer-de-steller": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/28282646/original.jpg",
+    "page": "https://www.inaturalist.org/photos/28282646",
+    "auteur": "John D Reynolds",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "petit-rorqual-antarctique": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/469778816/original.jpg",
+    "page": "https://www.inaturalist.org/photos/469778816",
+    "auteur": "christiangau",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "bourdon-polaire": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/330774655/original.jpg",
+    "page": "https://www.inaturalist.org/photos/330774655",
+    "auteur": "alvanbuckley",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "ver-des-glaciers": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/210561985/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/210561985",
+    "auteur": "julegust",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-manchot-empereur": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6006682/original.jpg",
+    "page": "https://www.inaturalist.org/photos/6006682",
+    "auteur": "Greg Lasley",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-harfang": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2745180/original.jpg",
+    "page": "https://www.inaturalist.org/photos/2745180",
+    "auteur": "James Welch",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-renard-polaire": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/464764917/original.jpg",
+    "page": "https://www.inaturalist.org/photos/464764917",
+    "auteur": "Gregory Stroud",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-hermine": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/602974824/original.jpg",
+    "page": "https://www.inaturalist.org/photos/602974824",
+    "auteur": "Svit_Stramšak",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-beluga": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/480132066/original.jpg",
+    "page": "https://www.inaturalist.org/photos/480132066",
+    "auteur": "Rimma Gerasimenko",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-glouton": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/453725166/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/453725166",
+    "auteur": "james_barber",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-phoque-du-groenland": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/45967689/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/45967689",
+    "auteur": "bandanahawk",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "phoque-barbu": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/309399899/original.jpg",
+    "page": "https://www.inaturalist.org/photos/309399899",
+    "auteur": "Sebastián Lescano",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-renne": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109377691/original.jpg",
+    "page": "https://www.inaturalist.org/photos/109377691",
+    "auteur": "wheelhomie",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "samoyede": "Lulu - Samoyed in Snow.jpg",
+  "malamute": "Alaskan Malamute R Bartz.jpg",
+  "hv-husky": "Two Siberian Huskies.jpg",
+  "cheval-yakoute": "Oymyakon - 190228 DSC 5934.jpg",
+  "requin-taupe": "The Mackerel Shark.jpg",
+  "calmar-colossal": "NZ070415 Colossal Squid 01.jpg",
+  "araignee-de-mer-geante": "Colossendeis (MNHN-IU-2013-2065).jpeg",
+  "canard-du-labrador": "Camptorhynchus labradorius (Labrador duck) (8365390008).jpg",
+  "golomyanka": {
+    "fichier": "Cuvier-82-Comephorus baikalensis-coméphore (cropped).jpg",
+    "recadrage": [
+      0.02,
+      0.12,
+      0.96,
+      0.68
+    ]
+  },
+  "grand-pingouin": "Keulemans-GreatAuk.jpg",
+  "criquet-des-rocheuses": "Melanoplus spretusAnnReportAgExpStaUM1902B.jpg",
+  "habitat-hv-svalbard": "Adventfjorden, Svalbard.jpg",
+  "habitat-hv-kamtchatka": "Koryaksky Volcano - Kamchatka, Russian Federation - Summer 1993.jpg",
+  "habitat-hv-baikal": "Lake Baikal in winter.jpg",
+  "habitat-hv-georgie-du-sud": "King Penguins at St. Andrews Bay, South Georgia (5817286686).jpg",
+  "habitat-hv-shiretoko": "Hokkaido-Shiretoko's White-tailed Eagles and Steller's Sea Eagles・・hiretoko National Park・・xl.jpg",
+  "phoque-du-saimaa": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/668464334/original.jpg",
+    "page": "https://www.inaturalist.org/photos/668464334",
+    "auteur": "Johan Moraal",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lagopede-alpin": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/604484699/original.jpg",
+    "page": "https://www.inaturalist.org/photos/604484699",
+    "auteur": "Tobias Gratzer",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  }
 }

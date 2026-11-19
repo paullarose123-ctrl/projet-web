@@ -355,7 +355,7 @@ const VOLANTS = new Set([
   'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
   'abeille', 'monarque', 'mx-monarque', 'coccinelle', 'moustique', 'dynaste-hercule', 'lucane', 'libellule', 'luciole', 'cigale',
   'frelon', 'frelon-geant', 'criquet-pelerin', 'bourdon', 'morpho', 'guepe', 'goliath', 'melipone', 'bousier', 'mante-religieuse',
-  'baronia', 'haricot-sauteur', 'ver-de-maguey', 'bourdon-polaire',
+  'baronia', 'haricot-sauteur', 'ver-de-maguey', 'bourdon-polaire', 'criquet-des-rocheuses',
 ]);
 const vole = (a: Athlete) => (classeOf(a) === 'oiseau' ? !OISEAUX_COUREURS.has(a.id) : VOLANTS.has(a.id));
 
