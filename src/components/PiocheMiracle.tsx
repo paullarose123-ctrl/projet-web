@@ -61,13 +61,9 @@ function nameOf(offer: PiocheOffer, names: string[]): string {
 
 // ───────────── petits éléments ─────────────
 
-/** Petit éclat d'énergie miracle (étoile à quatre branches). */
+/** Un point d'énergie miracle : la petite feuille verte du logo (vide quand elle est dépensée). */
 function Spark({ off = false, className = '' }: { off?: boolean; className?: string }) {
-  return (
-    <svg className={`pm-spark${off ? ' is-off' : ''} ${className}`} viewBox="-10 -10 20 20" aria-hidden="true">
-      <path d="M0 -9C1 -3 3 -1 9 0C3 1 1 3 0 9C-1 3 -3 1 -9 0C-3 -1 -1 -3 0 -9Z" />
-    </svg>
-  );
+  return <i className={`pm-spark${off ? ' is-off' : ''} ${className}`} aria-hidden="true" />;
 }
 
 /** Coût d'une pioche : autant d'éclats que d'énergie, ou « Offerte ». */
