@@ -5,6 +5,7 @@ import './styles/base.css';
 import './styles/card.css';
 import './styles/app.css';
 import './styles/motion.css';
+import './styles/pioche.css';
 import { App } from './App';
 import { AllCards, DivisionBadges, Gallery, MexicoBackdropPreview } from './dev/Gallery';
 import { useGame } from './store/game';

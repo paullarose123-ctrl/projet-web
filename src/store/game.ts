@@ -7,6 +7,7 @@ import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, MAX_FREE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, addFreePacks, freePackById, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
 import { isReleased, releasedAthletes, serieOf } from '../engine/series';
+import { emptyPioche, piocheOffer, rechargePioche, spendPioche, type PiocheState } from '../engine/pioche';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
   MAX_MY_LISTINGS,
@@ -237,6 +238,8 @@ export interface GameState {
   badges: Record<string, number>;
   /** Ma Réserve : enclos, animaux installés et billetterie (voir engine/reserve.ts) */
   reserve: ReserveState;
+  /** pioche miracle : énergie et boosters où le joueur a déjà pioché (voir engine/pioche.ts) */
+  pioche: PiocheState;
   /**
    * Nombre d'actions du joueur sur cet appareil et ceux dont il a repris la partie (voir PASSIVE plus bas). Quand
    * deux appareils ont chacun changé la partie, la sauvegarde garde celle du joueur le plus actif (store/account.ts).
@@ -248,6 +251,11 @@ export interface GameState {
   tick: (now?: number) => void;
   /** ouvre un booster gratuit de la série choisie (la Série 1 par défaut) */
   openFreePack: (serie?: number) => boolean;
+  /**
+   * pioche miracle : dépense l'énergie du booster et prend une de ses 5 cartes au hasard ; renvoie la carte obtenue
+   * et sa place dans le booster (null si la pioche est impossible)
+   */
+  piocher: (offerId: string) => { card: CardFace & { uid: string; isNew: boolean }; index: number } | null;
   buyPack: (packId: string) => boolean;
   closeOpening: () => void;
   quickSell: (uids: string[]) => number;
@@ -399,6 +407,7 @@ function initialState(now: number) {
     avatar: '',
     badges: {} as Record<string, number>,
     reserve: emptyReserve(now),
+    pioche: emptyPioche(now),
     actions: 0,
     opening: null as Opening | null,
     toasts: [] as Toast[],
@@ -649,6 +658,9 @@ export const useGame = create<GameState>()(
               );
             }
           }
+          // énergie de la pioche miracle
+          const pioche = rechargePioche(get().pioche ?? emptyPioche(now), now);
+          if (pioche !== get().pioche) set({ pioche });
           // marché
           const { state: market, events } = advanceMarket(get().market, now, Math.random);
           const listingIds = new Set(market.listings.map((l) => l.id));
@@ -665,6 +677,37 @@ export const useGame = create<GameState>()(
           set({ freePacks: state.freePacks - 1, nextFreePackAt: state.freePacks >= MAX_FREE_PACKS ? Date.now() + FREE_PACK_INTERVAL : state.nextFreePackAt });
           addCards(cards, pack);
           return true;
+        },
+
+        piocher: (offerId) => {
+          const now = Date.now();
+          const state = get();
+          const pioche = rechargePioche(state.pioche ?? emptyPioche(now), now);
+          const offer = piocheOffer(offerId, now);
+          if (!offer || pioche.used.includes(offer.id)) return null;
+          if (pioche.energy < offer.cost) {
+            pushToast('error', `Il te faut ${offer.cost} énergie${offer.cost > 1 ? 's' : ''} miracle pour cette pioche`);
+            return null;
+          }
+          // les cartes ont été mélangées face cachée : celle que le joueur touche est l'une des cinq, au hasard
+          const index = Math.floor(Math.random() * offer.cards.length);
+          const face = offer.cards[index];
+          const card = toOwned(face, now);
+          const isNew = face.variant === 'prime' ? !state.primesFound[face.athleteId] : !state.discovered[face.athleteId];
+          set((s) => ({
+            pioche: spendPioche(pioche, offer, now),
+            collection: [...s.collection, card],
+            discovered: { ...s.discovered, [face.athleteId]: (s.discovered[face.athleteId] ?? 0) + 1 },
+            primesFound: face.variant === 'prime' ? { ...s.primesFound, [face.athleteId]: (s.primesFound[face.athleteId] ?? 0) + 1 } : s.primesFound,
+          }));
+          const athlete = ATHLETES_BY_ID[face.athleteId];
+          bumpDaily({
+            newSpecies: state.discovered[face.athleteId] ? 0 : 1,
+            rare: face.variant === 'prime' || rarityOf(athlete).order >= 2 ? 1 : 0,
+            mexique: serieOf(athlete) === 2 ? 1 : 0,
+            hiver: serieOf(athlete) === 3 ? 1 : 0,
+          });
+          return { card: { ...face, uid: card.uid, isNew }, index };
         },
 
         buyPack: (packId) => {

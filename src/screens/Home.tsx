@@ -15,6 +15,7 @@ import { PackArtHiver } from '../components/PackArtHiver';
 import { CardBackHiver } from '../components/CardBackHiver';
 import { cardsOfSerie, currentSerie, isReleased, nextSerie, releasedAthletes, releasedSeries, serieDef, type SerieDef } from '../engine/series';
 import { Balles } from '../components/Balles';
+import { PiocheMiracle } from '../components/PiocheMiracle';
 import { sfx } from '../audio/sfx';
 import { useAccount } from '../store/account';
 import { accountsEnabled } from '../account/supabase';
@@ -546,6 +547,7 @@ export function HomeScreen() {
   return (
     <div className="screen screen--home">
       <FreePackHero />
+      <PiocheMiracle />
       <AccountInvite />
       <SaisonBanner />
       <OnlinePlayers />
