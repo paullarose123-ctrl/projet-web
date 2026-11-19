@@ -15,6 +15,8 @@ const RULES: Array<[string, RegExp]> = [
   ['Campagne', w('campagne|ferme|fermes|prés|pâturages|champs|bocage|vergers|haies|jardins|poulailler|ruches|rizières|mûriers|cage|bocal|volière|cynodromes|coteaux|talus|provence|villages|granges')],
   ['Récif', w('récifs?|corallien|lagons?')],
   ['Abysses', w('abysses|profondeurs|profonds')],
+  // avant « Océan » : la toundra arctique, la banquise et les glaciers sont de la glace, pas la mer
+  ['Glaces', w('toundra|banquise|glaciers?|gelées?|gelés?')],
   ['Océan', w('océans?|haute mer|mers?|antarctique|austral|australes|arctique|atlantique|béring|barents|pôle')],
   ['Côtes', w('côtes?|côtières?|plages?|rochers|estuaires?|mangroves?|lagunes?|herbiers|fonds|falaises marines')],
   ['Glaces', w('banquise|toundra|neige|enneigées')],
@@ -25,7 +27,7 @@ const RULES: Array<[string, RegExp]> = [
   ['Marais', w('marais|marécages|everglades|floride')],
   // le fleuve Amazone (dauphin rose, piranha) : une rivière, pas la jungle
   ['Rivières', w('rivières?|sources?|fleuves?|lacs?|étangs|mares|bassins|yangzi|gironde|amazone')],
-  ['Prairie', w('prairies?|landes|plaines|steppe|garrigue|maquis')],
+  ['Prairie', w('prairies?|landes|plaines|steppes?|garrigue|maquis')],
   ['Îles', w('îles?|island|haida gwaii|galápagos|kodiak|rottnest|tasmanie|maurice|sonde')],
   ['Sous terre', w('sous terre|terriers|grottes')],
   ['Forêt', w('forêts?|boisés?|boisées?|honshū|cát tiên|appalaches|taïga|boréale|bambous|eucalyptus|pinèdes|bois|chênes|białowieża|parcs|feuilles|californie')],

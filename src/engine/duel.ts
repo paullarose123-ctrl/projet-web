@@ -165,6 +165,8 @@ const CLASSE_A_PART: Record<string, Classe> = {
   'poisson-rouge': 'poisson', escargot: 'autre', 'ver-a-soie': 'insecte',
   mygale: 'autre', 'mx-mygale': 'autre', scorpion: 'autre', 'veuve-noire': 'autre', epeire: 'autre', 'araignee-paon': 'autre',
   'mille-pattes': 'autre', 'scorpion-de-durango': 'autre', 'mygale-a-pattes-de-feu': 'autre',
+  // la puce des neiges est un collembole : six pattes, mais pas un insecte
+  'puce-des-neiges': 'autre',
 };
 
 export function classeOf(a: Athlete): Classe {
@@ -203,9 +205,13 @@ const classeQuestion = (id: Exclude<Classe, 'autre'>, name: string, precision = 
   format: yesNo,
 });
 
+/** Territoires d'outre-mer : le continent n'est pas celui du drapeau (les Malouines sont en Amérique du Sud). */
+const CONTINENT_A_PART: Record<string, Continent> = { 'loup-des-malouines': 'amerique' };
+
 /** Les continents où vit l'espèce : celui de son pays, et les autres pour une espèce de plusieurs continents. */
 function continentsOf(a: Athlete): Continent[] {
-  return [...new Set([...(CONTINENT[a.country] ? [CONTINENT[a.country]] : []), ...(CONTINENTS_MULTIPLES[a.id] ?? [])])];
+  const own = CONTINENT_A_PART[a.id] ?? CONTINENT[a.country];
+  return [...new Set([...(own ? [own] : []), ...(CONTINENTS_MULTIPLES[a.id] ?? [])])];
 }
 
 /** Question oui/non sur une mesure : « Plus lourd qu'un humain ? » ; la réponse montre la vraie mesure. */
@@ -341,12 +347,15 @@ function pondDesOeufs(e: Encyclo, a: Athlete): boolean {
 }
 
 /** Oiseaux qui ne volent pas ; et parmi les autres animaux, ceux qui volent vraiment (planer ne compte pas). */
-const OISEAUX_COUREURS = new Set(['manchot-empereur', 'autruche', 'autruche-d-arabie', 'kiwi', 'casoar', 'emeu', 'emeu-de-king-island']);
+const OISEAUX_COUREURS = new Set([
+  'manchot-empereur', 'autruche', 'autruche-d-arabie', 'kiwi', 'casoar', 'emeu', 'emeu-de-king-island',
+  'hv-manchot-empereur', 'manchot-royal', 'manchot-adelie', 'manchot-a-jugulaire', 'gorfou-sauteur', 'grand-pingouin',
+]);
 const VOLANTS = new Set([
   'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
   'abeille', 'monarque', 'mx-monarque', 'coccinelle', 'moustique', 'dynaste-hercule', 'lucane', 'libellule', 'luciole', 'cigale',
   'frelon', 'frelon-geant', 'criquet-pelerin', 'bourdon', 'morpho', 'guepe', 'goliath', 'melipone', 'bousier', 'mante-religieuse',
-  'baronia', 'haricot-sauteur', 'ver-de-maguey',
+  'baronia', 'haricot-sauteur', 'ver-de-maguey', 'bourdon-polaire',
 ]);
 const vole = (a: Athlete) => (classeOf(a) === 'oiseau' ? !OISEAUX_COUREURS.has(a.id) : VOLANTS.has(a.id));
 

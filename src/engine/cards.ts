@@ -234,6 +234,8 @@ export function collectionNumber(athlete: Athlete): string {
     const series: Array<{ number: number; species: (n: number) => string; habitat: (h: number, n: number) => string }> = [
       { number: 1, species: (n) => String(n).padStart(3, '0'), habitat: (h) => `H${String(h).padStart(2, '0')}` },
       { number: 2, species: (n) => `M${n}`, habitat: (h, n) => `M${n + h}` },
+      // G comme glace (H est déjà pris par les Habitats de la Série 1)
+      { number: 3, species: (n) => `G${n}`, habitat: (h, n) => `G${n + h}` },
     ];
     for (const serie of series) {
       const cards = ATHLETES.filter((a) => (a.serie ?? 1) === serie.number);

@@ -3,7 +3,10 @@ import { ATHLETES, ATHLETES_BY_ID } from '../../data/athletes';
 import { FREE_PACK, FREE_PACK_MEXIQUE, SHOP_PACKS, freePackChoices, freePackOf, openPack, serieOdds, sportPack, type PackDef } from '../packs';
 import { cardsOfSerie, releasedAthletes, serieOf, setEarlyAccessForTesting } from '../series';
 import { createMarket } from '../market';
-import { rarityOf } from '../cards';
+import { collectionNumber, rarityOf } from '../cards';
+import { encyclopedieOf } from '../../data/encyclopedie';
+import { MESURES } from '../../data/mesures';
+import { POPULATIONS } from '../../data/populations';
 import { mulberry32 } from '../random';
 import { SPORTS } from '../../data/sports';
 
@@ -82,5 +85,43 @@ describe('Série 2 · Mexique', () => {
     expect(releasedAthletes(NOV_1).filter((a) => serieOf(a) === 2).length).toBe(116);
     const before = createMarket(OCT_31, mulberry32(3));
     expect(before.listings.every((l) => serieOf(ATHLETES_BY_ID[l.card.athleteId]) === 1)).toBe(true);
+  });
+});
+
+describe('Série 3 · Hiver', () => {
+  it('compte 110 cartes : espèces, Icônes et Habitats', () => {
+    const cards = cardsOfSerie(3);
+    expect(cards.length).toBe(110);
+    expect(cards.filter((a) => a.habitat).length).toBe(6);
+    expect(cards.filter((a) => a.retired && !a.habitat).length).toBe(6);
+    expect(new Set(ATHLETES.map((a) => a.id)).size).toBe(ATHLETES.length);
+  });
+
+  it('a des espèces dans chaque rareté, et des Primes', () => {
+    const species = cardsOfSerie(3).filter((a) => !a.habitat && !a.retired);
+    for (const id of ['commune', 'peu-commune', 'rare', 'epique', 'legendaire']) {
+      expect(species.filter((a) => rarityOf(a).id === id).length, id).toBeGreaterThan(2);
+    }
+    expect(species.filter((a) => a.prime).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('ses Habitats ne citent que des cartes de la série', () => {
+    for (const habitat of cardsOfSerie(3).filter((a) => a.habitat)) {
+      for (const id of habitat.habitat!.especes) expect(serieOf(ATHLETES_BY_ID[id] ?? { serie: 0 } as never), `${habitat.id} → ${id}`).toBe(3);
+    }
+  });
+
+  it('chaque espèce a sa fiche, ses mesures et, si elle vit encore, sa population', () => {
+    for (const a of cardsOfSerie(3).filter((card) => !card.habitat)) {
+      expect(encyclopedieOf(a.id), a.id).toBeDefined();
+      expect(MESURES[a.id], a.id).toBeDefined();
+      if (!a.retired && !a.race) expect(POPULATIONS[a.id], a.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('numérote ses cartes G1, G2…', () => {
+    const numbers = cardsOfSerie(3).map((a) => collectionNumber(a));
+    expect(new Set(numbers).size).toBe(110);
+    expect(numbers.every((n) => /^G\d+$/.test(n))).toBe(true);
   });
 });
