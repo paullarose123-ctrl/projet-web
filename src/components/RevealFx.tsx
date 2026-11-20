@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { drawShape, type NatureShape } from './natureShapes';
+import { isLite } from '../fluidite';
 
 // Effets de lumière de la révélation d'une carte spéciale, dessinés dans un canvas :
 // - « charge » : des étincelles sont aspirées en spirale vers le centre, de plus en plus vite, autour d'un cœur qui grossit ;
@@ -61,7 +62,9 @@ export function RevealFx({ phase, colors, intensity = 1, theme = 'lucioles' }: R
     if (!ctx) return;
     let width = 0;
     let height = 0;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // mode léger (téléphone lent) : canvas à la résolution de l'écran et bien moins de particules
+    const dpr = isLite() ? 1 : Math.min(2, window.devicePixelRatio || 1);
+    const amount = isLite() ? 0.4 : 1;
     const resize = () => {
       width = el.clientWidth;
       height = el.clientHeight;
@@ -87,7 +90,7 @@ export function RevealFx({ phase, colors, intensity = 1, theme = 'lucioles' }: R
     };
 
     const explode = (cx: number, cy: number) => {
-      const count = Math.round(170 * intensity);
+      const count = Math.round(170 * intensity * amount);
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = (260 + Math.random() * 900) * (0.6 + intensity * 0.4);
@@ -106,7 +109,7 @@ export function RevealFx({ phase, colors, intensity = 1, theme = 'lucioles' }: R
         });
       }
       // la gerbe emporte aussi des feuilles, des pétales ou des étoiles (des lucioles pour une Épique)
-      const extra = Math.round(34 * intensity);
+      const extra = Math.round(34 * intensity * amount);
       for (let i = 0; i < extra; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 220 + Math.random() * 520;
@@ -229,7 +232,7 @@ export function RevealFx({ phase, colors, intensity = 1, theme = 'lucioles' }: R
       const t = (now - s.start) / 1000;
       if (charging) {
         // de plus en plus d'étincelles aspirées à mesure que la révélation approche
-        const rate = (30 + Math.min(t, 4) * 45) * intensity;
+        const rate = (30 + Math.min(t, 4) * 45) * intensity * amount;
         for (let i = 0; i < rate * dt; i++) spawnIn();
         // cœur d'énergie qui grossit et palpite
         const core = (18 + Math.min(t, 4) * 12) * (1 + Math.sin(t * 9) * 0.08) * (0.8 + intensity * 0.2);
@@ -250,10 +253,10 @@ export function RevealFx({ phase, colors, intensity = 1, theme = 'lucioles' }: R
         }
         const since = (now - s.burstAt) / 1000;
         if (since > 0.4) {
-          for (let i = 0; i < 6 * intensity * dt; i++) spawnEmber();
+          for (let i = 0; i < 6 * intensity * amount * dt; i++) spawnEmber();
           // l'ambiance s'installe en douceur
           const ramp = Math.min(1, (since - 0.4) / 1.5);
-          for (let i = 0; i < AMBIENT_RATE[theme] * intensity * ramp * dt; i++) spawnAmbient();
+          for (let i = 0; i < AMBIENT_RATE[theme] * intensity * amount * ramp * dt; i++) spawnAmbient();
         }
       }
 

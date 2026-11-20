@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { drawShape, type NatureShape } from './natureShapes';
+import { isLite } from '../fluidite';
 
 export interface ConfettiHandle {
   /** sans forme : confettis de papier ; sinon feuilles, pétales ou étoiles */
@@ -69,7 +70,9 @@ export const Confetti = forwardRef<ConfettiHandle>(function Confetti(_, ref) {
       if (!canvas) return;
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const dpr = window.devicePixelRatio || 1;
+      // mode léger (téléphone lent) : moins de confettis, dessinés à la résolution de l'écran
+      const dpr = isLite() ? 1 : window.devicePixelRatio || 1;
+      if (isLite()) count = Math.round(count * 0.4);
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       for (let i = 0; i < count; i++) {

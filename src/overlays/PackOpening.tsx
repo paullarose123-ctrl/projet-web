@@ -27,6 +27,7 @@ import { sfx } from '../audio/sfx';
 import { usePhoto } from '../photos';
 import { useAccount } from '../store/account';
 import { accountsEnabled } from '../account/supabase';
+import { watchScene } from '../fluidite';
 
 // pack : le sachet attend ; charging : il se charge et tremble ; tearing : il se déchire et les cartes sortent
 type Stage = 'pack' | 'charging' | 'tearing' | 'cards' | 'walkout' | 'summary';
@@ -418,6 +419,10 @@ export function PackOpening() {
   // le clic qui suit un geste de déchirure ne doit pas relancer l'ouverture automatique
   const justSwiped = useRef(false);
   const packRef = useRef<HTMLButtonElement>(null);
+
+  // la première ouverture sert aussi à juger la fluidité du téléphone (mode léger à la fermeture si elle saccade)
+  const isOpen = !!opening;
+  useEffect(() => (isOpen ? watchScene() : undefined), [isOpen]);
 
   // nouvelle ouverture : on repart du sachet fermé
   useEffect(() => {

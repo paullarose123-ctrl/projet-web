@@ -20,6 +20,7 @@ import { familyProgress, serieBadge, serieProgress } from '../engine/badges';
 import { releasedSeries } from '../engine/series';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { SaisonHead } from '../components/Saison';
+import { setFluidite, useFluidite, type Fluidite } from '../fluidite';
 
 // Écran Profil : le compte du joueur (création, connexion, sauvegarde), sa vitrine de cartes préférées,
 // ses badges de collection, et ses amis (demandes d'ami à accepter) : leur photo, leur vitrine et un duel contre elle.
@@ -629,6 +630,39 @@ export function ProfileScreen() {
       <Badges />
       {enabled && <Friends />}
       {enabled && <TradesPanel />}
+      <AnimationsPanel />
     </div>
+  );
+}
+
+const FLUIDITE: Array<[Fluidite, string]> = [
+  ['auto', 'Automatique'],
+  ['leger', 'Légères'],
+  ['complet', 'Complètes'],
+];
+
+/** Réglage des animations : allégées sur un téléphone lent (détecté tout seul en automatique). */
+function AnimationsPanel() {
+  const { lite, choice } = useFluidite();
+  const state =
+    choice === 'auto'
+      ? lite
+        ? 'Allégées : ton appareil a l’air un peu lent, le jeu reste fluide.'
+        : 'Complètes : ton appareil suit sans problème.'
+      : lite
+        ? 'Allégées : moins d’effets, un jeu plus fluide.'
+        : 'Complètes : tous les effets.';
+  return (
+    <section className="panel">
+      <h2>Animations</h2>
+      <p className="muted small">{state}</p>
+      <div className="btn-row" role="radiogroup" aria-label="Animations">
+        {FLUIDITE.map(([id, label]) => (
+          <button key={id} type="button" role="radio" aria-checked={choice === id} className={`btn btn--sm ${choice === id ? 'btn--primary' : 'btn--ghost'}`} onClick={() => setFluidite(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

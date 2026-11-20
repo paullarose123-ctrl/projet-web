@@ -134,7 +134,7 @@ function ExpansionBanner() {
   // la série mise en avant : la prochaine (son compte à rebours), sinon la dernière sortie
   const hiver = (next ?? current).number === 3;
   return (
-    <section className={`expansion${hiver ? ' expansion--hiver' : ''}`} aria-labelledby="expansion-title">
+    <section className={`expansion cv${hiver ? ' expansion--hiver' : ''}`} aria-labelledby="expansion-title">
       <div className="expansion__text">
         <p className="eyebrow">Extensions</p>
         {next ? <Countdown current={current} next={next} now={now} /> : (
@@ -349,7 +349,7 @@ function CollectionSummary() {
 
   const owned = Object.keys(discovered).length;
   return (
-    <section className="panel summary" aria-labelledby="summary-title">
+    <section className="panel summary cv" aria-labelledby="summary-title">
       <div className="summary__head">
         <h2 id="summary-title">Ta collection</h2>
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTab('collection')}>
@@ -408,7 +408,7 @@ function DailyObjectives() {
   const list = dailyObjectives(daily.day, isReleased(2, now), isReleased(3, now));
   const allClaimed = list.every((o) => daily.claimed.includes(o.id));
   return (
-    <section className="panel daily" aria-labelledby="daily-title">
+    <section className="panel daily cv" aria-labelledby="daily-title">
       <div className="daily__head">
         <h2 id="daily-title">Objectifs du jour</h2>
         <span className="daily__timer">Nouveaux défis dans {formatDuration(nextMidnight(now) - now)}</span>
@@ -462,7 +462,7 @@ function Objectives() {
   const claim = useGame((s) => s.claimObjective);
   const list = OBJECTIVES.filter((o) => !state.claimed.includes(o.id)).slice(0, 5);
   return (
-    <section className="panel" aria-labelledby="obj-title">
+    <section className="panel cv" aria-labelledby="obj-title">
       <h2 id="obj-title">Objectifs</h2>
       {list.length === 0 && <p className="muted">Tous les objectifs sont remplis. Chapeau.</p>}
       <ul className="objectives">
@@ -500,7 +500,7 @@ function MarketNewsPanel() {
   const setTab = useUi((s) => s.setTab);
   const now = useNow(15_000);
   return (
-    <section className="panel" aria-labelledby="news-title">
+    <section className="panel cv" aria-labelledby="news-title">
       <div className="summary__head">
         <h2 id="news-title">Actu du marché</h2>
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTab('mercato')}>
@@ -532,7 +532,7 @@ function RecentPulls() {
   const recent = collection.slice(-8).reverse();
   if (!recent.length) return null;
   return (
-    <section className="panel" aria-labelledby="recent-title">
+    <section className="panel cv" aria-labelledby="recent-title">
       <h2 id="recent-title">Dernières cartes</h2>
       <div className="card-row">
         {recent.map((card) => (

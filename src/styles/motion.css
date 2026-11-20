@@ -1111,14 +1111,25 @@ h3 {
 }
 
 .expansion__timeline .is-next i {
+  position: relative;
   background: var(--honey);
   border-color: #f0cf86;
+}
+
+/* le halo s'allume et s'éteint (sans redessiner la pastille) */
+.expansion__timeline .is-next i::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(217, 164, 65, 0.8);
+  opacity: 0;
   animation: next-blink 1.6s ease-in-out infinite;
 }
 
 @keyframes next-blink {
   50% {
-    box-shadow: 0 0 14px rgba(217, 164, 65, 0.8);
+    opacity: 1;
   }
 }
 
@@ -1158,17 +1169,21 @@ h3 {
   z-index: 1;
   aspect-ratio: 100 / 140;
   border-radius: 10px;
+  /* le reflet déborde : il est coupé aux bords arrondis (l'ombre portée, elle, reste dehors) */
+  overflow: hidden;
   filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.5));
   animation: teaser-float 4s ease-in-out infinite;
 }
 
+/* le reflet : une bande deux fois et demie plus large que la carte qui glisse dessus */
 .expansion__card::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 8% / 5.7%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 250%;
   background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 45%, transparent 60%);
-  background-size: 250% 100%;
   animation: teaser-shine 3.2s ease-in-out infinite;
   pointer-events: none;
 }
@@ -1196,10 +1211,10 @@ h3 {
 
 @keyframes teaser-shine {
   from {
-    background-position: 150% 0;
+    transform: translateX(-90%);
   }
   to {
-    background-position: -50% 0;
+    transform: translateX(30%);
   }
 }
 
@@ -4011,4 +4026,50 @@ button.socle__card:not(:disabled) {
   .board__verdict {
     animation: none;
   }
+}
+
+/* ───────────── Blocs hors de l'écran : ni dessinés ni animés tant qu'on n'y fait pas défiler ───────────── */
+.cv {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+/* ───────────── Mode léger (téléphones lents, voir src/fluidite.ts) ─────────────
+   Les animations en boucle sont arrêtées par le script ; ici, ce qui coûte cher à dessiner. */
+html.lite-off *,
+html.lite-off *::before,
+html.lite-off *::after {
+  animation-name: none !important;
+}
+
+html.lite .fireflies,
+html.lite .pm-overlay__motes,
+html.lite .opening__rays {
+  display: none;
+}
+
+/* plus d'ombres floues sous les cartes ni de flous d'arrière-plan */
+html.lite .card,
+html.lite .card.is-clickable:not(.has-tilt):hover,
+html.lite .has-tilt[data-active='true'] {
+  filter: none;
+}
+
+html.lite *,
+html.lite *::before,
+html.lite *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* les cartes restent à plat (sans calque 3D chacune) et la photo ne glisse plus sous le doigt */
+html.lite .card,
+html.lite .card.has-tilt[data-active='true'],
+html.lite .has-tilt[data-active='true'] .card__player {
+  transform: none;
+}
+
+/* changement d'écran sans pivot 3D */
+html.lite .view {
+  animation: none;
 }

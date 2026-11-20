@@ -1453,41 +1453,51 @@
   }
 }
 
-/* éclat de lumière qui traverse le plastique de temps en temps */
+/* éclat de lumière qui traverse le plastique de temps en temps : une bande deux fois et demie plus large que le
+   sachet glisse dessus (elle se déplace sans que le sachet soit redessiné) */
 .pack-art__shine {
-  background: linear-gradient(110deg, transparent 42%, rgba(255, 255, 255, 0.1) 46%, rgba(255, 255, 255, 0.55) 49.5%, rgba(255, 255, 255, 0.1) 53%, transparent 57%);
-  background-size: 250% 100%;
-  animation: pack-shine 5s ease-in-out infinite;
+  --band: linear-gradient(110deg, transparent 42%, rgba(255, 255, 255, 0.1) 46%, rgba(255, 255, 255, 0.55) 49.5%, rgba(255, 255, 255, 0.1) 53%, transparent 57%);
+  overflow: hidden;
   mix-blend-mode: soft-light;
   z-index: 7;
 }
 
+.pack-art__shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 250%;
+  background: var(--band);
+  animation: pack-shine 5s ease-in-out infinite;
+}
+
 /* prime : plastique nacré irisé */
 .pack-art--prime .pack-art__shine {
-  background:
-    linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.65) 49.5%, transparent 59%) 0 0 / 250% 100%,
-    linear-gradient(125deg, rgba(255, 180, 220, 0.3), rgba(170, 240, 225, 0.3) 35%, rgba(200, 190, 255, 0.3) 65%, rgba(255, 235, 180, 0.3));
+  --band: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.65) 49.5%, transparent 59%);
+  background: linear-gradient(125deg, rgba(255, 180, 220, 0.3), rgba(170, 240, 225, 0.3) 35%, rgba(200, 190, 255, 0.3) 65%, rgba(255, 235, 180, 0.3));
   mix-blend-mode: overlay;
 }
 
 /* légende : dorure qui accroche la lumière */
 .pack-art--black .pack-art__shine {
-  background: linear-gradient(110deg, transparent 42%, rgba(255, 220, 140, 0.55) 49.5%, transparent 57%) 0 0 / 250% 100%;
+  --band: linear-gradient(110deg, transparent 42%, rgba(255, 220, 140, 0.55) 49.5%, transparent 57%);
   mix-blend-mode: screen;
 }
 
 @keyframes pack-shine {
   0%,
   45% {
-    background-position: 120% 0;
+    transform: translateX(-72%);
   }
   100% {
-    background-position: -120% 0;
+    transform: translateX(72%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pack-art__shine {
+  .pack-art__shine::before {
     animation: none;
   }
 }
