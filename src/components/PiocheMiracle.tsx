@@ -110,7 +110,7 @@ export function PiocheMiracle() {
   const used = new Set(pioche?.used ?? []);
 
   return (
-    <section className="panel pioche" aria-labelledby="pioche-title">
+    <section className="panel pioche cv" aria-labelledby="pioche-title">
       <div className="pioche__head">
         <h2 id="pioche-title">Pioche miracle</h2>
         <span className="pioche__energy" aria-label={`Énergie miracle : ${energy} sur ${PIOCHE_MAX}`}>
