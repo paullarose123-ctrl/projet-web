@@ -5,14 +5,18 @@
   flex-direction: column;
 }
 
-/* fond de page : le sous-bois peint, fixe, un peu voilé pour laisser la vedette aux cartes */
+/* fond de page : le sous-bois peint, fixe, un peu voilé pour laisser la vedette aux cartes. Sa hauteur ne suit pas
+   la barre d'adresse du téléphone (qui se replie en défilant) : sinon le dessin, avec ses flous, serait repeint à
+   chaque image du défilement */
 .backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: 0;
   display: block;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100lvh;
   opacity: 0.85;
   pointer-events: none;
 }
