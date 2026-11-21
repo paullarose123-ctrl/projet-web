@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist, type PersistStorage, type StateStorage } from 'zustand/middleware';
 import type { CardFace, OwnedCard } from '../engine/types';
 import { ATHLETES, ATHLETES_BY_ID } from '../data/athletes';
 import { ICONES_REMPLACEES, ICONES_RETIREES, PREHISTOIRE_REMPLACEE, SERIE1_RETIREES, SERIE2_REMPLACEES } from '../data/remplacements';
@@ -352,6 +352,51 @@ const safeStorage: StateStorage = {
     }
   },
 };
+
+// La partie change souvent (le marché avance toutes les 4 secondes, chaque action compte) : la réécrire en entier dans
+// le stockage du navigateur à chaque fois fait saccader les téléphones. Elle est écrite au plus une fois par seconde,
+// et tout de suite quand le jeu passe en arrière-plan ou se ferme (ou quand on relit la sauvegarde).
+const SAVE_DELAY = 1000;
+let flushPending: () => void = () => {};
+
+/** Écrit tout de suite la sauvegarde en attente. */
+export function flushSave(): void {
+  flushPending();
+}
+
+function deferredStorage<S>(base: PersistStorage<S> | undefined): PersistStorage<S> | undefined {
+  if (!base) return base;
+  let pending: { name: string; value: Parameters<PersistStorage<S>['setItem']>[1] } | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  flushPending = () => {
+    if (timer !== undefined) clearTimeout(timer);
+    timer = undefined;
+    if (!pending) return;
+    const { name, value } = pending;
+    pending = null;
+    base.setItem(name, value);
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushSave();
+    });
+  }
+  return {
+    getItem: (name) => {
+      flushSave();
+      return base.getItem(name);
+    },
+    setItem: (name, value) => {
+      pending = { name, value };
+      if (timer === undefined) timer = setTimeout(flushSave, SAVE_DELAY);
+    },
+    removeItem: (name) => {
+      pending = null;
+      base.removeItem(name);
+    },
+  };
+}
 
 function toOwned(face: CardFace, now: number): OwnedCard {
   return { uid: makeUid('c'), athleteId: face.athleteId, variant: face.variant, obtainedAt: now, ...(face.record ? { record: face.record } : {}) };
@@ -1190,7 +1235,7 @@ export const useGame = create<GameState>()(
       // AnimalCards a sa propre sauvegarde (même si AthletiCards est publié sur le même domaine)
       name: SAVE_NAME,
       version: SAVE_VERSION,
-      storage: createJSONStorage(() => safeStorage),
+      storage: deferredStorage(createJSONStorage(() => safeStorage)),
       migrate: (persisted, version) => {
         let state = persisted as GameState;
         // versions 5, 7, 8, 9 et 11 : des espèces sont remplacées par une autre ; les cartes déjà obtenues deviennent
@@ -1460,11 +1505,14 @@ if (typeof window !== 'undefined' && OFFERED > 0) {
 
 /** La sauvegarde telle qu'elle est stockée (« { state, version } » en JSON), pour l'envoyer au compte du joueur. */
 export function readSave(): string | null {
+  flushSave();
   return safeStorage.getItem(SAVE_NAME) as string | null;
 }
 
 /** Remplace la partie par une sauvegarde venue du compte du joueur (migrée si elle vient d'une ancienne version). */
 export async function writeSave(raw: string): Promise<void> {
+  // la partie en attente d'écriture est remplacée : elle est écrite d'abord, puis écrasée
+  flushSave();
   safeStorage.setItem(SAVE_NAME, raw);
   await useGame.persist.rehydrate();
 }
