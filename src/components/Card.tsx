@@ -223,6 +223,56 @@ function Givre() {
   );
 }
 
+// Fleurs de givre de la Série 3 : des plumes de glace qui poussent depuis les quatre coins de la carte, comme sur une
+// vitre gelée (une tige, et des barbes de chaque côté qui raccourcissent vers la pointe). Toujours les mêmes.
+const FERNS = (() => {
+  let seed = 7;
+  const rnd = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  const feather = (x: number, y: number, angle: number, length: number) => {
+    const [dx, dy] = [Math.cos(angle), Math.sin(angle)];
+    let d = `M${pt(x, y)}L${pt(x + dx * length, y + dy * length)}`;
+    const steps = Math.floor(length / 0.85);
+    for (let i = 1; i < steps; i++) {
+      const u = (i / steps) * length;
+      const [bx, by] = [x + dx * u, y + dy * u];
+      const barb = (1 - i / steps) * length * 0.34 + 0.25;
+      for (const s of [-1, 1]) {
+        const b = angle + s * 0.95;
+        d += `M${pt(bx, by)}L${pt(bx + Math.cos(b) * barb, by + Math.sin(b) * barb)}`;
+      }
+    }
+    return d;
+  };
+  let d = '';
+  // chaque coin : cinq plumes en éventail ; les plus longues longent les bords (dans la bordure), les plus courtes
+  // partent en diagonale vers le cadre
+  for (const [x, y, base] of [
+    [0.4, 0.4, Math.PI / 4],
+    [99.6, 0.4, (3 * Math.PI) / 4],
+    [99.6, 139.6, (-3 * Math.PI) / 4],
+    [0.4, 139.6, -Math.PI / 4],
+  ] as [number, number, number][]) {
+    for (let k = 0; k < 5; k++) {
+      const off = (k - 2) * 0.33;
+      const angle = base + off + (rnd() - 0.5) * 0.12;
+      d += feather(x, y, angle, 8 + Math.abs(off) * 11 + rnd() * 3);
+    }
+  }
+  return d;
+})();
+
+function Ferns() {
+  return (
+    <svg className="card__ferns" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
+      <path className="card__ferns-glow" d={FERNS} />
+      <path d={FERNS} />
+    </svg>
+  );
+}
+
 function Greca() {
   return (
     <svg className="card__greca" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
@@ -363,6 +413,8 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
                 <Bust color={sport.color} sport={athlete.sport} className="card__bust" />
               )}
             </div>
+            {/* l'hiver : la photo vue à travers une vitre gelée */}
+            {hiver && <i className="card__frost" aria-hidden="true" />}
           </div>
 
           <Frame mexique={mexique} hiver={hiver} />
@@ -409,6 +461,7 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
           {!compact && athlete.latin && <div className="card__latin">{athlete.latin}</div>}
         </div>
 
+        {hiver && <Ferns />}
         <div className="card__holo" aria-hidden="true" />
         <div className="card__shine" aria-hidden="true" />
       </div>

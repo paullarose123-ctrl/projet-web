@@ -1628,6 +1628,24 @@
   fill: var(--panel);
 }
 
+/* fleurs de givre dans les coins, par-dessus le cadre, comme sur une vitre gelée */
+.card__ferns {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 0.26;
+  stroke-linecap: round;
+}
+
+.card__ferns-glow {
+  stroke: rgba(225, 242, 255, 0.35);
+  stroke-width: 0.8;
+}
+
 /* les couleurs de chaque rareté, en tons d'hiver, avec le même code que les autres séries (vert, bleu, orange,
    violet, puis l'aurore) pour qu'on les reconnaisse d'un coup d'œil : sapin givré, glacier, soleil d'hiver, nuit
    violette et aurore boréale */
@@ -1659,13 +1677,56 @@
   --plate-ink: #241a52;
 }
 
-/* légendaire : une aurore boréale franche, du vert au rose, avec le scintillement du givre */
+/* légendaire : le coucher de soleil des autres séries, du violet à l'or */
 .card.serie-3.r-legendaire:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
-    radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.9) 0 0.05em, transparent 0.12em) 0 0 / 1.2em 1.6em,
-    radial-gradient(42% 20% at 50% 96%, rgba(255, 255, 255, 0.85), transparent 70%),
-    linear-gradient(150deg, transparent 15%, rgba(255, 255, 255, 0.4) 30%, transparent 45%),
-    linear-gradient(172deg, #4fdcab 0%, #58bfe8 28%, #8f7bea 55%, #dd7fcb 80%, #ffb08f 100%);
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 242, 196, 0.95), transparent 70%),
+    conic-gradient(from 210deg at 35% 30%, rgba(255, 120, 190, 0.14), rgba(255, 230, 120, 0.12), rgba(120, 255, 200, 0.1), rgba(120, 180, 255, 0.14), rgba(210, 120, 255, 0.12), rgba(255, 120, 190, 0.14)),
+    linear-gradient(172deg, #b7a0dc 0%, #e0a3c6 32%, #f8b3a4 62%, #ffd09e 85%, #ffe3a6 100%);
+}
+
+/* le froid sur toutes les cartes de l'hiver : du givre gagne les quatre coins du cadre, des cristaux scintillent,
+   un voile bleuté glace les couleurs et un liseré de glace borde la carte */
+.card.serie-3 .card__bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(34% 20% at 0% 0%, rgba(255, 255, 255, 0.85), rgba(232, 245, 255, 0.35) 40%, transparent 72%),
+    radial-gradient(28% 16% at 100% 0%, rgba(255, 255, 255, 0.7), rgba(232, 245, 255, 0.25) 40%, transparent 72%),
+    radial-gradient(32% 18% at 100% 100%, rgba(255, 255, 255, 0.75), rgba(232, 245, 255, 0.3) 40%, transparent 72%),
+    radial-gradient(26% 18% at 0% 100%, rgba(255, 255, 255, 0.65), rgba(232, 245, 255, 0.25) 40%, transparent 72%),
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.95) 0 0.04em, transparent 0.1em) 0 0 / 0.9em 1.1em,
+    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.75) 0 0.035em, transparent 0.09em) 0 0 / 1.3em 0.8em,
+    linear-gradient(180deg, rgba(214, 236, 255, 0.16), transparent 45%, rgba(205, 230, 255, 0.14));
+  box-shadow:
+    inset 0 0 0 0.1em rgba(240, 250, 255, 0.9),
+    inset 0 0 0.6em rgba(190, 225, 255, 0.5);
+}
+
+/* la photo, vue à travers une vitre gelée : buée de givre dans les coins, liseré de glace, teinte un peu plus froide */
+.card__frost {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(24% 15% at 0% 0%, rgba(255, 255, 255, 0.7), rgba(225, 242, 255, 0.22) 45%, transparent 75%),
+    radial-gradient(18% 11% at 100% 0%, rgba(255, 255, 255, 0.5), transparent 72%);
+  box-shadow:
+    inset 0 0 0 0.08em rgba(235, 248, 255, 0.8),
+    inset 0 0 0.7em rgba(196, 230, 255, 0.45);
+}
+
+.card__frost::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(150, 205, 255, 0.28), rgba(190, 225, 255, 0.1) 60%, rgba(150, 205, 255, 0.2));
+  mix-blend-mode: soft-light;
 }
 
 /* Prime de l'hiver : nuit polaire et aurore boréale, cadre bleu nuit, voile d'aurore sur la photo */
