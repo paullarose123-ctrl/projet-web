@@ -1,0 +1,196 @@
+/* Pub « ouverture d'un booster Mexique » (promo/pub-mexique.html), 1080 × 1920.
+   Tout bouge depuis le script (window.__seek(t)) : rien n'est laissé aux transitions du navigateur. */
+
+.mxa {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #12060a;
+  font-family: var(--font-body);
+  color: #fff8ec;
+}
+
+.mxa *,
+.mxa *::before,
+.mxa *::after {
+  transition: none !important;
+}
+
+.mxa-cam {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+}
+
+.mxa-land {
+  position: absolute;
+  inset: -3%;
+  transform-origin: 50% 50%;
+}
+
+.mxa-land > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mxa-cv {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+}
+
+.mxa-world {
+  position: absolute;
+  inset: 0;
+  perspective: 1600px;
+  perspective-origin: 540px 960px;
+  transform-style: preserve-3d;
+}
+
+.mxa-ob {
+  position: absolute;
+  left: 540px;
+  top: 960px;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 0;
+}
+
+.mxa-in {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+}
+
+/* le sachet en volume : la face, l'épaisseur (feuilles empilées), la bande du haut en tranches */
+.mxa-pack {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.mxa-layer {
+  position: absolute;
+  inset: 0.5% 0.6%;
+  border-radius: 2.5%;
+  background: linear-gradient(180deg, #ffe0b5 0%, #f28a5c 30%, #c4213a 65%, #05261a 100%);
+}
+
+.mxa-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.mxa-strip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.mxa-slice {
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+}
+
+.mxa-cut {
+  overflow: hidden;
+}
+
+.mxa-art {
+  position: absolute;
+  top: 0;
+}
+
+/* l'intérieur de la feuille métallisée, quand la bande se retourne */
+.mxa-inside {
+  background: linear-gradient(180deg, #fff6f8 0%, #f1dde6 40%, #d4b3c3 100%);
+}
+
+/* le sachet du jeu, sans son ombre portée (la lumière est dessinée autour) */
+.mxa .pack-art {
+  filter: none;
+}
+
+/* feuille holographique : un arc-en-ciel nacré qui glisse quand le sachet tourne */
+.mxa-holo {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    rgba(255, 90, 160, 0) 18%,
+    rgba(255, 120, 190, 0.6) 28%,
+    rgba(130, 230, 255, 0.6) 38%,
+    rgba(255, 244, 160, 0.6) 48%,
+    rgba(190, 130, 255, 0.55) 58%,
+    rgba(120, 255, 210, 0.5) 68%,
+    rgba(255, 90, 160, 0) 80%
+  );
+  background-size: 320% 100%;
+  background-position: var(--hx, 50%) 0;
+  mix-blend-mode: color-dodge;
+  opacity: 0.5;
+}
+
+.mxa-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 6px rgba(255, 240, 220, 0.9));
+}
+
+.mxa-logo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 120px;
+  display: flex;
+  justify-content: center;
+  font-size: 128px;
+  filter: drop-shadow(0 0 40px rgba(255, 214, 150, 0.45)) drop-shadow(0 10px 24px rgba(10, 3, 6, 0.7));
+}
+
+.mxa-cta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 118px;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.mxa-cta b {
+  font-family: 'Lilita One', var(--font-display);
+  font-weight: 400;
+  font-size: 66px;
+  line-height: 1;
+  color: #fff8ec;
+  text-shadow:
+    0 0 30px rgba(255, 180, 120, 0.45),
+    0 6px 18px rgba(10, 3, 6, 0.8);
+}
+
+.mxa-cta span {
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: 0.04em;
+  color: #ffd36b;
+  text-shadow: 0 4px 14px rgba(10, 3, 6, 0.85);
+}
