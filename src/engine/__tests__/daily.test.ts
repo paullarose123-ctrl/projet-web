@@ -39,6 +39,12 @@ describe('Objectifs du jour', () => {
     }
   });
 
+  it('demandent des cartes de l’Hiver chaque jour de sa semaine de lancement, puis au hasard', () => {
+    for (const day of ['2026-12-01', '2026-12-04', '2026-12-07']) expect(dailyObjectives(day, true, true)[1].id, day).toBe('hiver-5');
+    const after = Array.from({ length: 20 }, (_, i) => dailyObjectives(`2027-01-${String(i + 1).padStart(2, '0')}`, true, true)[1].id);
+    expect(new Set(after).size).toBeGreaterThan(1);
+  });
+
   it('repartent de zéro le lendemain', () => {
     const today = { ...emptyDaily('2026-11-03'), claimed: ['packs-2'] };
     today.counts.packs = 4;

@@ -111,6 +111,8 @@ function serieContents(serie: SerieDef): string {
   const species = cards.filter((a) => !a.habitat).length;
   const habitats = cards.filter((a) => a.habitat).length;
   const icons = cards.filter((a) => a.retired && !a.habitat).length;
+  // une série sans Icône (l'Hiver) : « 95 espèces et 6 Habitats »
+  if (!icons) return `${species} espèces et ${habitats} Habitats`;
   return `${species} espèces, ${habitats} Habitats et ${icons} Icônes`;
 }
 

@@ -85,11 +85,17 @@ export function nextMidnight(now: number): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
 }
 
+/** Semaine de lancement de l'Hiver : chaque jour, l'objectif de collection est d'obtenir des cartes de l'Hiver. */
+const HIVER_LAUNCH = ['2026-12-01', '2026-12-07'];
+
 /** Les trois objectifs d'un jour : un booster, un de collection, un de duel (cartes d'une série : une fois sortie). */
 export function dailyObjectives(day: string, mexiqueOut = true, hiverOut = false): DailyObjective[] {
   const rng: Rng = mulberry32(hashString(`objectifs ${day}`));
   const collection = [...COLLECTION, ...(mexiqueOut ? [MEXIQUE] : []), ...(hiverOut ? [HIVER] : [])];
-  return [pick(rng, BOOSTERS), pick(rng, collection), pick(rng, DUELS)];
+  const booster = pick(rng, BOOSTERS);
+  const drawn = pick(rng, collection);
+  const launch = hiverOut && day >= HIVER_LAUNCH[0] && day <= HIVER_LAUNCH[1];
+  return [booster, launch ? HIVER : drawn, pick(rng, DUELS)];
 }
 
 export function emptyDaily(day: string): DailyState {
