@@ -186,8 +186,12 @@ export function roundPrice(value: number): number {
   return Math.round(value / 1_000) * 1_000;
 }
 
-/** Valeur de vente rapide (au comptoir) : immédiate mais peu intéressante. */
+/** Vente rapide d'une Icône : un prix fixe, quelle que soit l'espèce. */
+export const ICON_QUICK_SELL = 300_000;
+
+/** Valeur de vente rapide (au comptoir) : immédiate mais peu intéressante ; une Icône se revend toujours 300 000. */
 export function quickSellValue(athlete: Athlete, variant: Variant = 'base'): number {
+  if (isIcon(athlete)) return ICON_QUICK_SELL;
   return roundPrice(baseValueOf(athlete, variant) * 0.3);
 }
 
