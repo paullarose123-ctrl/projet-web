@@ -258,7 +258,8 @@ const FERNS = (() => {
     for (let k = 0; k < 5; k++) {
       const off = (k - 2) * 0.33;
       const angle = base + off + (rnd() - 0.5) * 0.12;
-      d += feather(x, y, angle, 8 + Math.abs(off) * 11 + rnd() * 3);
+      // la plume du milieu reste courte : elle ne doit pas mordre sur la photo
+      d += feather(x, y, angle, 6 + Math.abs(off) * 14 + rnd() * 2);
     }
   }
   return d;
@@ -413,8 +414,6 @@ export const Card = memo(function Card({ card, size = 'md', tilt = false, locked
                 <Bust color={sport.color} sport={athlete.sport} className="card__bust" />
               )}
             </div>
-            {/* l'hiver : la photo vue à travers une vitre gelée */}
-            {hiver && <i className="card__frost" aria-hidden="true" />}
           </div>
 
           <Frame mexique={mexique} hiver={hiver} />
