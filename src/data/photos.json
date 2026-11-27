@@ -703,7 +703,7 @@
    1800,
    1198
   ],
-  "v": "9eb0bf2e"
+  "v": "05a317c9"
  },
  "cachalot": {
   "file": "cachalot.webp",
@@ -722,19 +722,6 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
   "page": "https://commons.wikimedia.org/wiki/File:Great_Hornbill_Goa.jpg",
   "v": "af0baa47"
- },
- "calmar-colossal": {
-  "file": "calmar-colossal.webp",
-  "cutout": false,
-  "author": "Oren Rozen",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:NZ070415_Colossal_Squid_01.jpg",
-  "brut": [
-   1600,
-   2400
-  ],
-  "v": "f459bfa6"
  },
  "calmar-de-humboldt": {
   "file": "calmar-de-humboldt.webp",
@@ -784,15 +771,6 @@
   "licenseUrl": "",
   "page": "https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_oustaleti_last_male.jpg",
   "v": "30eda0a9"
- },
- "canard-du-labrador": {
-  "file": "canard-du-labrador.webp",
-  "cutout": false,
-  "author": "Bloopityboop",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-  "page": "https://commons.wikimedia.org/wiki/File:Labrador_duck_(Camptorhynchus_labradorius)_3.jpg",
-  "v": "41a7c22f"
  },
  "caniche": {
   "file": "caniche.webp",
@@ -1129,7 +1107,7 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/359632098",
-  "v": "91fd2c0b"
+  "v": "8679eecf"
  },
  "chevreuil": {
   "file": "chevreuil.webp",
@@ -1927,7 +1905,7 @@
    1800,
    1354
   ],
-  "v": "fb4812c4"
+  "v": "18212429"
  },
  "elan": {
   "file": "elan.webp",
@@ -2266,11 +2244,11 @@
  "gerfaut": {
   "file": "gerfaut.webp",
   "cutout": false,
-  "author": "Mark D. Read",
-  "license": "CC BY-NC 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/11651571",
-  "v": "a9997cd0"
+  "author": "Todd Boland",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/110222900",
+  "v": "cd397e3a"
  },
  "gibbon": {
   "file": "gibbon.webp",
@@ -2317,25 +2295,6 @@
   "page": "https://www.inaturalist.org/photos/15670633",
   "v": "b4fe39ee"
  },
- "golomyanka": {
-  "file": "golomyanka.webp",
-  "cutout": false,
-  "author": "Rvalette",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Cuvier-82-Comephorus_baikalensis-com%C3%A9phore_(cropped).jpg",
-  "crop": [
-   0.02,
-   0.12,
-   0.96,
-   0.68
-  ],
-  "brut": [
-   1037,
-   413
-  ],
-  "v": "bd38cef1"
- },
  "gorfou-sauteur": {
   "file": "gorfou-sauteur.webp",
   "cutout": false,
@@ -2347,7 +2306,7 @@
    1800,
    1950
   ],
-  "v": "8fd51fdd"
+  "v": "ff77385a"
  },
  "gorille": {
   "file": "gorille.webp",
@@ -2383,20 +2342,11 @@
  "grand-duc-de-blakiston": {
   "file": "grand-duc-de-blakiston.webp",
   "cutout": false,
-  "author": "jitensha2021",
+  "author": "M P (Nevakee716)",
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/133749749",
-  "v": "8d5dc4b7"
- },
- "grand-pingouin": {
-  "file": "grand-pingouin.webp",
-  "cutout": false,
-  "author": "Jim, the Photographer from Springfield PA, United States of America",
-  "license": "CC BY 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
-  "page": "https://commons.wikimedia.org/wiki/File:Philadelphia_Great_Auk.jpg",
-  "v": "f8eddee9"
+  "page": "https://www.inaturalist.org/photos/754512898",
+  "v": "bad43366"
  },
  "grand-tetras": {
   "file": "grand-tetras.webp",
@@ -2409,7 +2359,7 @@
    1800,
    1564
   ],
-  "v": "a65accbf"
+  "v": "cb5a57a1"
  },
  "grenouille-de-montezuma": {
   "file": "grenouille-de-montezuma.webp",
@@ -2683,65 +2633,45 @@
   "cutout": false,
   "author": "Sergey Pesterev",
   "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
   "page": "https://commons.wikimedia.org/wiki/File:Lake_Baikal_in_winter.jpg",
-  "brut": [
-   1800,
-   1201
-  ],
-  "v": "df675e8a"
+  "v": "b544d747"
  },
  "habitat-hv-georgie-du-sud": {
   "file": "habitat-hv-georgie-du-sud.webp",
   "cutout": false,
   "author": "Liam Quinn from Canada",
   "license": "CC BY-SA 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:King_Penguins_at_St._Andrews_Bay,_South_Georgia_(5817286686).jpg",
-  "brut": [
-   1800,
-   1200
-  ],
-  "v": "80cd75c5"
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:King_Penguins_at_St._Andrews_Bay,_South_Georgia_(5816524799).jpg",
+  "v": "165bbf34"
  },
  "habitat-hv-kamtchatka": {
   "file": "habitat-hv-kamtchatka.webp",
   "cutout": false,
-  "author": "Giorgio Galeotti",
+  "author": "NadezhdaKhaustova",
   "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Koryaksky_Volcano_-_Kamchatka,_Russian_Federation_-_Summer_1993.jpg",
-  "brut": [
-   1800,
-   1200
-  ],
-  "v": "77386681"
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:%D0%9B%D0%B8%D1%81%D0%B0-%D0%BE%D0%B3%D0%BD%D0%B5%D0%B2%D0%BA%D0%B0_%D0%BD%D0%B0_%D1%84%D0%BE%D0%BD%D0%B5_%D0%92%D0%B8%D0%BB%D1%8E%D1%87%D0%B8%D0%BD%D1%81%D0%BA%D0%BE%D0%B3%D0%BE_%D0%B2%D1%83%D0%BB%D0%BA%D0%B0%D0%BD%D0%B0.jpg",
+  "v": "504af2a7"
  },
  "habitat-hv-laponie": {
   "file": "habitat-hv-laponie.webp",
   "cutout": false,
-  "author": "Silje Bergum Kinsten",
-  "license": "CC BY 2.5 dk",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.5/dk/deed.en",
-  "page": "https://commons.wikimedia.org/wiki/File:Gabna_sameby_i_Nord-Sverige_(1).jpg",
-  "brut": [
-   1800,
-   1205
-  ],
-  "v": "f0e42d4f"
+  "author": "Ximonic (Simo Räsänen)",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Palkaskero_in_Muonio,_Finland,_2019_January.jpg",
+  "v": "6bc0cf84"
  },
  "habitat-hv-shiretoko": {
   "file": "habitat-hv-shiretoko.webp",
   "cutout": false,
-  "author": "koichi_hayakawa",
+  "author": "kkawamura",
   "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Hokkaido-Shiretoko%27s_White-tailed_Eagles_and_Steller%27s_Sea_Eagles%E3%83%BB%E3%83%BBhiretoko_National_Park%E3%83%BB%E3%83%BBxl.jpg",
-  "brut": [
-   1800,
-   1200
-  ],
-  "v": "485dd4b9"
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Hokkaido-Drift_ice,_Shiretoko_Peninsula-xl.jpg",
+  "v": "a2afb21c"
  },
  "habitat-hv-svalbard": {
   "file": "habitat-hv-svalbard.webp",
@@ -2980,15 +2910,11 @@
  "hamster-de-siberie": {
   "file": "hamster-de-siberie.webp",
   "cutout": false,
-  "author": "Dirk Goldhahn",
-  "license": "CC BY-SA 2.5",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
-  "page": "https://commons.wikimedia.org/wiki/File:Phodopus_sungorus2.jpg",
-  "brut": [
-   1800,
-   1314
-  ],
-  "v": "52c0fcb3"
+  "author": "Svyatoslav Knyazev",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/314234677",
+  "v": "22516ec3"
  },
  "harfang": {
   "file": "harfang.webp",
@@ -3174,20 +3100,16 @@
    1800,
    2689
   ],
-  "v": "c9d7ed09"
+  "v": "5ffd9659"
  },
  "hv-leopard-de-mer": {
   "file": "hv-leopard-de-mer.webp",
   "cutout": false,
-  "author": "Butterfly voyages - Serge Ouachée",
-  "license": "CC BY-SA 3.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Leopard_seal_(Hydrurga_leptonyx).jpg",
-  "brut": [
-   1800,
-   1372
-  ],
-  "v": "1cb9eed2"
+  "author": "Sebastián Lescano",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/255694425",
+  "v": "8507cd56"
  },
  "hv-loup-arctique": {
   "file": "hv-loup-arctique.webp",
@@ -3235,20 +3157,16 @@
    918,
    611
   ],
-  "v": "917077e4"
+  "v": "86d77fe9"
  },
  "hv-narval": {
   "file": "hv-narval.webp",
   "cutout": false,
-  "author": "Dr. Kristin Laidre, Polar Science Center, UW NOAA/OAR/OER",
-  "license": "Public domain",
-  "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Pod_Monodon_monoceros.jpg",
-  "brut": [
-   1800,
-   931
-  ],
-  "v": "e41c1437"
+  "author": "azure27014",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/561463407",
+  "v": "d139d839"
  },
  "hv-ours-polaire": {
   "file": "hv-ours-polaire.webp",
@@ -3270,11 +3188,7 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/345672780",
-  "brut": [
-   1800,
-   1350
-  ],
-  "v": "cd986c3f"
+  "v": "cda4e061"
  },
  "hv-phoque-du-groenland": {
   "file": "hv-phoque-du-groenland.webp",
@@ -3470,7 +3384,7 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/341096796",
-  "v": "16908a4e"
+  "v": "94f869af"
  },
  "labrador": {
   "file": "labrador.webp",
@@ -3492,7 +3406,7 @@
    1584,
    1056
   ],
-  "v": "cd6f13ff"
+  "v": "52f02998"
  },
  "lama": {
   "file": "lama.webp",
@@ -3550,15 +3464,11 @@
  "legine-antarctique": {
   "file": "legine-antarctique.webp",
   "cutout": false,
-  "author": "No machine-readable author provided. Pcziko assumed (based on copyright claims).",
-  "license": "CC BY 2.5",
-  "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
-  "page": "https://commons.wikimedia.org/wiki/File:Dmawsoni_Head_shot.jpg",
-  "brut": [
-   320,
-   240
-  ],
-  "v": "0a7d5636"
+  "author": "Citron",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "page": "https://commons.wikimedia.org/wiki/File:Dissostichus_mawsoni.jpg",
+  "v": "d6de6dda"
  },
  "lemming": {
   "file": "lemming.webp",
@@ -3666,11 +3576,11 @@
  "lievre-arctique": {
   "file": "lievre-arctique.webp",
   "cutout": false,
-  "author": "Becky Brenner",
-  "license": "CC BY-NC 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/182623563",
-  "v": "ebea1d7c"
+  "author": "Stan Rullman",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/625489854",
+  "v": "76aac769"
  },
  "lievre-variable": {
   "file": "lievre-variable.webp",
@@ -3758,7 +3668,7 @@
    1800,
    1431
   ],
-  "v": "68f2d1c2"
+  "v": "2747de38"
  },
  "loris-lent": {
   "file": "loris-lent.webp",
@@ -3807,7 +3717,7 @@
    1500,
    996
   ],
-  "v": "fdcf2fc7"
+  "v": "dfae5267"
  },
  "loup-d-ethiopie": {
   "file": "loup-d-ethiopie.webp",
@@ -3817,15 +3727,6 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
   "page": "https://commons.wikimedia.org/wiki/File:Ethiopian_wolf_(Canis_simensis_citernii)_2.jpg",
   "v": "eae68aaf"
- },
- "loup-des-malouines": {
-  "file": "loup-des-malouines.webp",
-  "cutout": false,
-  "author": "Kane Fleury, MothmanNZ",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "page": "https://commons.wikimedia.org/wiki/File:Falkland_Island_wolf,_Dusicyon_australis_OMNZVT2369_!1pub.jpg",
-  "v": "7054a5e2"
  },
  "loup-du-japon": {
   "file": "loup-du-japon.webp",
@@ -4002,7 +3903,7 @@
    700,
    666
   ],
-  "v": "ad1193b4"
+  "v": "8ec34e0f"
  },
  "manchot-adelie": {
   "file": "manchot-adelie.webp",
@@ -4015,7 +3916,7 @@
    800,
    980
   ],
-  "v": "0e056759"
+  "v": "023f2979"
  },
  "manchot-empereur": {
   "file": "manchot-empereur.webp",
@@ -4193,7 +4094,7 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/260372050",
-  "v": "bb0a14b7"
+  "v": "d523e397"
  },
  "milan-royal": {
   "file": "milan-royal.webp",
@@ -4347,7 +4248,7 @@
    1200,
    857
   ],
-  "v": "3f441627"
+  "v": "1f00f306"
  },
  "moufette": {
   "file": "moufette.webp",
@@ -4664,15 +4565,11 @@
  "omble-chevalier": {
   "file": "omble-chevalier.webp",
   "cutout": false,
-  "author": "Totti",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Salvelinus_alpinus_Kaiyukan.jpg",
-  "brut": [
-   1800,
-   956
-  ],
-  "v": "842f92e3"
+  "author": "JaRo Guiding",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/280101340",
+  "v": "9d75d1b9"
  },
  "opossum": {
   "file": "opossum.webp",
@@ -4748,7 +4645,7 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/354563509",
-  "v": "e909b067"
+  "v": "5fe1e017"
  },
  "otocyon": {
   "file": "otocyon.webp",
@@ -4798,15 +4695,11 @@
  "ours-bleu-du-tibet": {
   "file": "ours-bleu-du-tibet.webp",
   "cutout": false,
-  "author": "pelican from Tokyo, Japan",
-  "license": "CC BY-SA 2.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Oji_zoo,_Kobe,_Japan_(6631356045)_2.jpg",
-  "brut": [
-   1800,
-   1800
-  ],
-  "v": "ba07fb77"
+  "author": "花蚀",
+  "license": "CC BY-NC-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "page": "https://www.inaturalist.org/photos/333538211",
+  "v": "224cf8b6"
  },
  "ours-brun": {
   "file": "ours-brun.webp",
@@ -5070,11 +4963,11 @@
  "petit-rorqual-antarctique": {
   "file": "petit-rorqual-antarctique.webp",
   "cutout": false,
-  "author": "whale_nerd",
+  "author": "dougiewainwright",
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/257440989",
-  "v": "500e576b"
+  "page": "https://www.inaturalist.org/photos/469775221",
+  "v": "805643e0"
  },
  "petite-roussette": {
   "file": "petite-roussette.webp",
@@ -5198,15 +5091,11 @@
  "phoque-du-baikal": {
   "file": "phoque-du-baikal.webp",
   "cutout": false,
-  "author": "Dion Art",
-  "license": "CC BY-SA 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:%D0%91%D0%B0%D0%B9%D0%BA%D0%B0%D0%BB%D1%8C%D1%81%D0%BA%D0%B0%D1%8F_%D0%BD%D0%B5%D1%80%D0%BF%D0%B0_-_Pusa_sibirica.jpg",
-  "brut": [
-   1700,
-   1359
-  ],
-  "v": "a498767f"
+  "author": "Pavel Zhovtiuk",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "page": "https://www.inaturalist.org/photos/598723181",
+  "v": "5615bf9b"
  },
  "phoque-du-groenland": {
   "file": "phoque-du-groenland.webp",
@@ -5358,15 +5247,11 @@
  "plongeon-imbrin": {
   "file": "plongeon-imbrin.webp",
   "cutout": false,
-  "author": "P199",
-  "license": "CC BY-SA 2.5",
-  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
-  "page": "https://commons.wikimedia.org/wiki/File:Common_Loon.jpg",
-  "brut": [
-   925,
-   625
-  ],
-  "v": "ad0266ea"
+  "author": "Hungry-Sarracenia Photo",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "page": "https://www.inaturalist.org/photos/427504235",
+  "v": "4629ef59"
  },
  "poisson-archer": {
   "file": "poisson-archer.webp",
@@ -5398,19 +5283,6 @@
    1014
   ],
   "v": "4330682e"
- },
- "poisson-des-glaces": {
-  "file": "poisson-des-glaces.webp",
-  "cutout": false,
-  "author": "Arthur Hodson Searle",
-  "license": "Public domain",
-  "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Chaenocephalus_aceratus.jpg",
-  "brut": [
-   1247,
-   810
-  ],
-  "v": "7c9ea642"
  },
  "poisson-lune": {
   "file": "poisson-lune.webp",
@@ -5554,11 +5426,11 @@
  "puce-des-neiges": {
   "file": "puce-des-neiges.webp",
   "cutout": false,
-  "author": "Tom Murray",
+  "author": "chipperatl",
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
-  "page": "https://www.inaturalist.org/photos/178645816",
-  "v": "fdc45f4c"
+  "page": "https://www.inaturalist.org/photos/245435878",
+  "v": "dbcb6e8d"
  },
  "puma": {
   "file": "puma.webp",
@@ -6093,7 +5965,7 @@
    1800,
    1200
   ],
-  "v": "885368ea"
+  "v": "ad5fc496"
  },
  "salamandre-geante": {
   "file": "salamandre-geante.webp",
@@ -6115,7 +5987,7 @@
    1800,
    1200
   ],
-  "v": "2a8c95dd"
+  "v": "73b95484"
  },
  "sanglier": {
   "file": "sanglier.webp",
@@ -6341,7 +6213,7 @@
    1800,
    1350
   ],
-  "v": "4d97c057"
+  "v": "7f486351"
  },
  "tamarin-lion": {
   "file": "tamarin-lion.webp",
@@ -6876,6 +6748,6 @@
   "license": "CC BY-NC 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "page": "https://www.inaturalist.org/photos/618649311",
-  "v": "3661c969"
+  "v": "dc74644b"
  }
 }
