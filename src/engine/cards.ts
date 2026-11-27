@@ -140,12 +140,14 @@ export function isHabitat(athlete: Athlete): boolean {
 
 // ───────────── Icônes ─────────────
 // Espèces disparues depuis 1800 (thylacine, lion de l'Atlas, loup du Japon…) : un palier de rareté à part, au-dessus
-// de Légendaire. Un trésor, environ 1 carte sur 1 000 dans les boosters ordinaires. Seul le Pack Icônes, bien plus
-// cher, n'en contient que.
+// de Légendaire. Un trésor, environ 1 carte sur 1 000 dans les boosters ordinaires. Le Pack Icônes, bien plus
+// cher, en garantit une.
 export const ICON_CHANCE = 0.001;
 /** Une Icône vaut de ICON_MIN_VALUE (une espèce peu connue) à ICON_MAX_VALUE (la plus célèbre). */
-export const ICON_MIN_VALUE = 100_000;
-export const ICON_MAX_VALUE = 350_000;
+// au-dessus de leur prix de vente rapide (ICON_QUICK_SELL) : une Icône achetée au marché ne se revend pas à perte… ni
+// avec un bénéfice au comptoir
+export const ICON_MIN_VALUE = 400_000;
+export const ICON_MAX_VALUE = 900_000;
 
 /** Poids de tirage d'une Icône : plus elle est célèbre, plus elle sort rarement. */
 export function iconWeight(athlete: Athlete): number {

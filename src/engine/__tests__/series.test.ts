@@ -120,16 +120,18 @@ describe('Série 3 · Hiver', () => {
     vi.setSystemTime(DEC_1);
     expect(seriesFrom(FREE_PACK_HIVER, rng)).toEqual([3]);
     expect(seriesFrom(FREE_PACK, rng)).toEqual([1]);
-    // le Pack Icônes reste aux deux premières séries : l'Hiver n'a pas d'Icône
-    for (const pack of PAID) expect(seriesFrom(pack, rng), pack.id).toEqual(pack.id === 'icones' ? [1, 2] : [1, 2, 3]);
+    for (const pack of PAID) expect(seriesFrom(pack, rng), pack.id).toEqual([1, 2, 3]);
   });
 
-  it('le Pack Icônes reste aux Icônes des deux premières séries (l’Hiver n’en a pas)', () => {
+  it('le Pack Icônes donne aussi des cartes de l’Hiver dès sa sortie (ses deux premières cartes : l’Hiver n’a pas d’Icône)', () => {
     const icones = SHOP_PACKS.find((pack) => pack.id === 'icones')!;
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(DEC_1);
+    vi.setSystemTime(NOV_30);
     expect(serieOdds(icones, 3)).toBe(0);
-    expect(seriesFrom(icones, mulberry32(9))).toEqual([1, 2]);
+    vi.setSystemTime(DEC_1);
+    expect(serieOdds(icones, 3)).toBeGreaterThan(0.03);
+    expect(seriesFrom(icones, mulberry32(9))).toEqual([1, 2, 3]);
+    for (let i = 0; i < 200; i++) expect(ATHLETES_BY_ID[openPack(icones, mulberry32(i))[2].athleteId].retired).toBeTruthy();
   });
 
   it('compte 101 cartes : des espèces et des Habitats, sans Icône', () => {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../store/game';
 import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { RARITIES, RARITY_ORDER } from '../engine/cards';
-import { SHOP_PACKS, iconOdds, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, serieOdds, sportPack, type PackDef } from '../engine/packs';
+import { ICON_PACK_FIRST, ICON_PACK_PRIME_CHANCE, SHOP_PACKS, iconOdds, iconPool, habitatOdds, isIconPack, primeOdds, primePool, reverseOdds, serieOdds, sportPack, type PackDef } from '../engine/packs';
 import type { SportId } from '../engine/types';
 import { PackArt } from '../components/PackArt';
 import { Balles } from '../components/Balles';
@@ -19,7 +19,70 @@ function percent(value: number): string {
   return `${(value * 100).toLocaleString('fr-FR', { maximumFractionDigits: value < 0.01 ? 2 : 1 })} %`;
 }
 
+/** Part de chaque série sortie après la première dans un pack. */
+function SerieShares({ pack }: { pack: PackDef }) {
+  return (
+    <>
+      {releasedSeries()
+        .filter((def) => def.number > 1 && serieOdds(pack, def.number) > 0)
+        .map((def) => (
+          <li key={def.number} className={`rarity-row rarity-row--serie-${def.number}`}>
+            <span className="rarity-dot" />
+            <span>
+              Carte {def.number === 2 ? 'du Mexique' : 'de l’Hiver'} (Série {def.number})
+            </span>
+            <b>{percent(serieOdds(pack, def.number))}</b>
+          </li>
+        ))}
+    </>
+  );
+}
+
+/** Pack Icônes : ce que donne chacune de ses trois cartes. */
+function IconPackOdds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
+  const first = Object.entries(ICON_PACK_FIRST) as [keyof typeof RARITIES, number][];
+  const total = first.reduce((sum, [, odds]) => sum + odds, 0);
+  return (
+    <details className="odds">
+      <summary>Chances par carte</summary>
+      <p className="small muted">1re carte : une Rare ou mieux</p>
+      <ul>
+        {first
+          .slice()
+          .reverse()
+          .map(([id, odds]) => (
+            <li key={id} className={`rarity-row rarity-row--${id}`}>
+              <span className="rarity-dot" />
+              <span>{RARITIES[id].name}</span>
+              <b>{percent(odds / total)}</b>
+            </li>
+          ))}
+      </ul>
+      <p className="small muted">2e carte : une Légendaire, ou une version Prime</p>
+      <ul>
+        <li className="rarity-row rarity-row--prime">
+          <span className="rarity-dot" />
+          <span>Version Prime</span>
+          <b>{percent(ICON_PACK_PRIME_CHANCE)}</b>
+        </li>
+        <li className="rarity-row rarity-row--legendaire">
+          <span className="rarity-dot" />
+          <span>{RARITIES.legendaire.name}</span>
+          <b>{percent(1 - ICON_PACK_PRIME_CHANCE)}</b>
+        </li>
+      </ul>
+      <p className="small muted">3e carte : une Icône, parmi les {iconPool(pack).length} espèces disparues de toutes les séries</p>
+      {mixed && (
+        <ul>
+          <SerieShares pack={pack} />
+        </ul>
+      )}
+    </details>
+  );
+}
+
 function Odds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
+  if (isIconPack(pack)) return <IconPackOdds pack={pack} mixed={mixed} />;
   const total = RARITY_ORDER.reduce((sum, id) => sum + pack.odds[id], 0);
   const prime = primeOdds(pack);
   return (
@@ -58,18 +121,7 @@ function Odds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
           </li>
         )}
         {/* la part de chaque série sortie après la première */}
-        {mixed &&
-          releasedSeries()
-            .filter((def) => def.number > 1 && serieOdds(pack, def.number) > 0)
-            .map((def) => (
-              <li key={def.number} className={`rarity-row rarity-row--serie-${def.number}`}>
-                <span className="rarity-dot" />
-                <span>
-                  Carte {def.number === 2 ? 'du Mexique' : 'de l’Hiver'} (Série {def.number})
-                </span>
-                <b>{percent(serieOdds(pack, def.number))}</b>
-              </li>
-            ))}
+        {mixed && <SerieShares pack={pack} />}
         {habitatOdds(pack) > 0 && !isIconPack(pack) && (
           <li className="rarity-row rarity-row--habitat">
             <span className="rarity-dot" />
@@ -82,9 +134,7 @@ function Odds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
         <p className="small muted">
           {pack.guaranteed.prime
             ? `Dernière carte : une version Prime garantie, parmi les ${primePool(pack).length} individus célèbres.`
-            : pack.tone === 'icon'
-              ? 'Une seule carte, toujours une Icône : une espèce disparue, le palier le plus rare du jeu, au-dessus de Légendaire.'
-              : `Dernière carte : ${RARITIES[pack.guaranteed.min].name} ou mieux garantie.`}
+            : `Dernière carte : ${RARITIES[pack.guaranteed.min].name} ou mieux garantie.`}
         </p>
       )}
       {!isIconPack(pack) && <p className="small muted">Seules les espèces vedettes existent en version Prime : un individu célèbre (Laïka, Keiko, Knut…).</p>}
@@ -97,7 +147,7 @@ function PackTile({ pack }: { pack: PackDef }) {
   // dès leur sortie, les cartes des séries suivantes se mêlent à celles de la Série 1 dans tous les packs
   const now = useNow(60_000);
   const mixed = isReleased(2, now) && serieOdds(pack, 2) > 0;
-  // séries dont le pack donne des cartes (le Pack Icônes n'a pas l'Hiver, qui n'a pas d'Icône)
+  // séries dont le pack donne des cartes
   const series = releasedSeries(now).filter((def) => def.number === 1 || serieOdds(pack, def.number) > 0);
   const allSeries = series.length === releasedSeries(now).length;
   const buy = useGame((s) => s.buyPack);
@@ -109,7 +159,7 @@ function PackTile({ pack }: { pack: PackDef }) {
         name={pack.name}
         sport={pack.sport}
         size={pack.size}
-        guarantee={pack.guaranteed && (pack.tone === 'icon' ? '1 Icône garantie' : pack.guaranteed.prime ? '1 Prime garantie' : `1 ${RARITIES[pack.guaranteed.min].name} garantie`)}
+        guarantee={pack.guaranteed && (isIconPack(pack) ? '1 Icône garantie' : pack.guaranteed.prime ? '1 Prime garantie' : `1 ${RARITIES[pack.guaranteed.min].name} garantie`)}
       />
       <div className="pack-tile__body">
         <h3>{pack.name}</h3>
@@ -164,7 +214,7 @@ export function ShopScreen() {
       </div>
       <section className="panel">
         <h2>Packs par famille</h2>
-        <p className="muted small">3 cartes d’une seule famille, jamais deux fois la même espèce, pour compléter ton album plus vite. Les espèces disparues de chaque famille (ses Icônes) y sortent très rarement : le Pack Icônes n’a qu’elles.</p>
+        <p className="muted small">3 cartes d’une seule famille, jamais deux fois la même espèce, pour compléter ton album plus vite. Les espèces disparues de chaque famille (ses Icônes) y sortent très rarement : le Pack Icônes en garantit une.</p>
         <div className="sport-tabs" role="tablist" aria-label="Choisir une famille">
           {SPORT_ORDER.map((id) => (
             <button
