@@ -7,7 +7,8 @@ import { RARITIES, RARITY_TIERS, rarityOf } from '../engine/cards';
 import { freePackChoices } from '../engine/packs';
 import { PackArt, boosterButton } from '../components/PackArt';
 import { Landscape } from '../components/PackScene';
-import { HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS } from '../art/scenes';
+import { HERO_SCENE_HALLOWEEN, HERO_SCENE_MUERTOS, HERO_SCENE_NOEL } from '../art/scenes';
+import { AdventCalendar } from '../components/Avent';
 import { Card } from '../components/Card';
 import { CardBackMexique } from '../components/CardBackMexique';
 import { PackArtMexique } from '../components/PackArtMexique';
@@ -253,7 +254,7 @@ function FreePackHero() {
 
   return (
     <section className={`hero${duo ? ' hero--duo' : ''}${trio ? ' hero--trio' : ''}`} aria-labelledby="hero-title" onPointerMove={tiltHero} onPointerLeave={untiltHero}>
-      <Landscape className="hero__art" scene={season === 'halloween' ? HERO_SCENE_HALLOWEEN : HERO_SCENE_MUERTOS} seed="accueil" />
+      <Landscape className="hero__art" scene={season === 'halloween' ? HERO_SCENE_HALLOWEEN : season === 'noel' ? HERO_SCENE_NOEL : HERO_SCENE_MUERTOS} seed="accueil" />
       <SaisonHead seed="accueil" pendants={false} />
       <div className="hero__pack">
         <div className="hero__boosters">
@@ -549,6 +550,8 @@ export function HomeScreen() {
   return (
     <div className="screen screen--home">
       <FreePackHero />
+      {/* du 1er au 24 décembre, le calendrier de l'Avent juste sous les boosters gratuits */}
+      <AdventCalendar />
       <PiocheMiracle />
       <AccountInvite />
       <SaisonBanner />

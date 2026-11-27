@@ -7,7 +7,8 @@ import { SPORTS, SPORT_ORDER } from '../data/sports';
 import { canBePrime, canBeReverse, quickSellValue, rarityOf, rarityScore } from '../engine/cards';
 import { FREE_PACK, MAX_FREE_PACKS, NO_DUPE_WINDOW, SHOP_PACKS, addFreePacks, freePackById, freePackOf, openPack, sportPack, type PackDef } from '../engine/packs';
 import { isReleased, releasedAthletes, serieOf } from '../engine/series';
-import { emptyPioche, piocheOffer, rechargePioche, spendPioche, type PiocheState } from '../engine/pioche';
+import { PIOCHE_MAX, PIOCHE_INTERVAL, emptyPioche, piocheOffer, rechargePioche, spendPioche, type PiocheState } from '../engine/pioche';
+import { AVENT, AVENT_ENERGY_CREDITS, EMPTY_AVENT, canOpenAvent, markAvent, type AventDay, type AventState } from '../engine/avent';
 import { DAILY_BONUS, dailyFor, dailyObjectives, dayKey, emptyDaily, isDailyDone, type DailyCounts, type DailyState } from '../engine/daily';
 import {
   MAX_MY_LISTINGS,
@@ -240,6 +241,8 @@ export interface GameState {
   reserve: ReserveState;
   /** pioche miracle : énergie et boosters où le joueur a déjà pioché (voir engine/pioche.ts) */
   pioche: PiocheState;
+  /** calendrier de l'Avent : les cases ouvertes cette année (voir engine/avent.ts) */
+  avent: AventState;
   /**
    * Nombre d'actions du joueur sur cet appareil et ceux dont il a repris la partie (voir PASSIVE plus bas). Quand
    * deux appareils ont chacun changé la partie, la sauvegarde garde celle du joueur le plus actif (store/account.ts).
@@ -313,6 +316,8 @@ export interface GameState {
   toast: (kind: ToastKind, text: string) => void;
   dismissToast: (id: string) => void;
   resetGame: () => void;
+  /** ouvre la case du jour du calendrier de l'Avent et donne son cadeau (null si elle ne peut pas s'ouvrir) */
+  openAvent: (day: number) => AventDay | null;
   /** marché en ligne : ventes, achats et retours déjà réglés dans cette partie (clé « rôle:id ») */
   onlineDone: string[];
   /** retire une carte de la réserve pour la mettre en vente en ligne (null si elle n'est pas vendable) */
@@ -453,6 +458,7 @@ function initialState(now: number) {
     badges: {} as Record<string, number>,
     reserve: emptyReserve(now),
     pioche: emptyPioche(now),
+    avent: EMPTY_AVENT,
     actions: 0,
     opening: null as Opening | null,
     toasts: [] as Toast[],
@@ -1173,6 +1179,38 @@ export const useGame = create<GameState>()(
         toast: pushToast,
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
         resetGame: () => set({ ...initialState(Date.now()) }),
+
+        openAvent: (day) => {
+          const now = Date.now();
+          const state = get();
+          const entry = AVENT[day - 1];
+          if (!entry || state.opening || !canOpenAvent(state.avent, day, now)) return null;
+          set({ avent: markAvent(state.avent, day, now) });
+          const reward = entry.reward;
+          const label = `Calendrier de l’Avent, ${day === 1 ? '1er' : day} décembre`;
+          if (reward.kind === 'credits') {
+            set((s) => ({ balles: s.balles + reward.amount }));
+            pushToast('gold', `${label} : +${formatBalles(reward.amount)}`);
+          } else if (reward.kind === 'boosters') {
+            const packs = addFreePacks(get().freePacks, reward.count);
+            set((s) => ({ freePacks: packs.freePacks, balles: s.balles + packs.credits }));
+            pushToast('gold', `${label} : ${reward.count} boosters gratuits`);
+            if (packs.overflow) pushToast('info', overflowText(packs.overflow, packs.credits));
+          } else if (reward.kind === 'energie') {
+            const pioche = rechargePioche(get().pioche ?? emptyPioche(now), now);
+            if (pioche.energy >= PIOCHE_MAX) {
+              // jauge déjà pleine : des crédits à la place
+              set((s) => ({ pioche, balles: s.balles + AVENT_ENERGY_CREDITS }));
+              pushToast('gold', `${label} : ton énergie miracle était déjà pleine, voici +${formatBalles(AVENT_ENERGY_CREDITS)}`);
+            } else {
+              set({ pioche: { ...pioche, energy: PIOCHE_MAX, nextAt: now + PIOCHE_INTERVAL } });
+              pushToast('gold', `${label} : énergie miracle au maximum`);
+            }
+          } else {
+            addCards(drawPack(reward.pack), reward.pack);
+          }
+          return entry;
+        },
 
         escrowCard: (uid) => {
           const card = get().collection.find((c) => c.uid === uid);

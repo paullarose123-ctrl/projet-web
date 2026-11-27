@@ -7037,6 +7037,455 @@
   }
 }
 
+/* ───────────── Noël (1er décembre – 6 janvier) : neige, guirlande lumineuse, sapins et cadeaux ─────────────
+   Une nuit d'hiver bleu marine, l'or et le rouge de Noël pour les accents : l'onglet actif et les surtitres dorés, les
+   boutons principaux rouge sucre d'orge coiffés de neige, de la neige sur la barre du bas, des stalactites au haut des
+   en-têtes, et la neige qui tombe à la place des lucioles (components/Snowfall.tsx). */
+:root.saison-noel {
+  --accent-text: #ffd27a;
+  /* le sous-bois vert devient une nuit d'hiver bleu marine */
+  --bg: #0a1322;
+  --bg-2: #0f1b2e;
+  --bg-3: #15253c;
+  --bg-4: #1e324f;
+  --line: rgba(214, 232, 255, 0.1);
+  --line-2: rgba(214, 232, 255, 0.18);
+}
+
+.saison-noel .panel {
+  border-color: rgba(190, 225, 255, 0.22);
+}
+
+.saison-noel .topbar {
+  background: rgba(6, 18, 42, 0.9);
+  border-bottom-color: rgba(255, 210, 122, 0.4);
+}
+
+.saison-noel .bottomnav {
+  background: rgba(6, 16, 36, 0.95);
+  border-top-color: rgba(190, 225, 255, 0.4);
+}
+
+/* des congères posées sur le haut de la barre du bas */
+.saison-noel .bottomnav::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: var(--snowdrift) repeat-x 0 0 / auto 12px;
+  pointer-events: none;
+}
+
+.saison-noel .bottomnav__item.is-active::before {
+  box-shadow: 0 0 14px rgba(255, 210, 122, 0.85);
+}
+
+/* les boutons principaux en rouge sucre d'orge pastel, de la neige sur le dessus (les boosters gardent leur couleur) */
+.saison-noel .btn--primary:not(.btn--booster-mx):not(.btn--booster-hv):not(.btn--booster) {
+  --pastel: #ffadb4;
+  --ink: #5c0b18;
+  --edge: #d8566a;
+}
+
+/* (sélecteur renforcé pour passer devant l'orange des fêtes) */
+.saison-noel .btn--primary.btn--booster:not(.btn--booster-mx):not(.btn--booster-hv) {
+  --pastel: #b8e6d6;
+  --ink: #12372f;
+  --edge: #7fbfab;
+}
+
+.saison-noel .btn--primary::after {
+  display: block;
+  top: -1px;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: 11px;
+  background: var(--snowcap) repeat-x 0 0 / auto 11px;
+  transform: none;
+  animation: none;
+  opacity: 0.95;
+}
+
+.saison-noel .firefly {
+  display: none;
+}
+
+/* la guirlande lumineuse sous la barre du haut : les halos s'allument tour à tour */
+.hw-garland--lights {
+  top: calc(100% - 5px);
+  height: 22px;
+  background-size: auto 22px;
+  filter: none;
+}
+
+.hw-lights {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-x;
+  background-size: auto 22px;
+  animation: hw-lights 1.4s ease-in-out infinite alternate;
+}
+
+.hw-lights--b {
+  animation-delay: -1.4s;
+}
+
+@keyframes hw-lights {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* le petit sapin du logo sur téléphone */
+.sapin-mark {
+  height: 1.05em;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.55));
+}
+
+/* neige et stalactites au haut des en-têtes illustrés */
+.hw-head__snow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background-repeat: repeat-x;
+  background-size: auto 20px;
+  filter: drop-shadow(0 1px 1px rgba(8, 26, 51, 0.35));
+}
+
+/* la neige qui tombe : derrière le contenu (fine), et devant quelques gros flocons */
+.snowfall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.snowfall--front {
+  z-index: 29;
+}
+
+.snowflake {
+  position: absolute;
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #f4f9ff;
+  opacity: var(--o);
+  animation:
+    snow-fall var(--d) linear var(--delay) infinite,
+    snow-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+}
+
+.snowflake--crystal {
+  border-radius: 0;
+  background-color: transparent;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+@keyframes snow-fall {
+  from {
+    transform: translate3d(0, calc(-1 * var(--y) - 4vh), 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(0, calc(104vh - var(--y)), 0) rotate(160deg);
+  }
+}
+
+@keyframes snow-sway {
+  from {
+    translate: calc(-1 * var(--dx)) 0;
+  }
+  to {
+    translate: var(--dx) 0;
+  }
+}
+
+/* en mode léger, la neige s'arrête là où elle est, et les gros flocons de devant s'en vont */
+html.lite .snowfall--front {
+  display: none;
+}
+
+/* l'annonce de Noël sur l'accueil (après le 24 décembre) */
+.hw-banner--noel {
+  border-color: rgba(190, 225, 255, 0.35);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(74, 163, 223, 0.32), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, rgba(215, 38, 61, 0.22), transparent 60%),
+    linear-gradient(160deg, #0f2547, #0a1631);
+}
+
+/* ───────────── calendrier de l'Avent (components/Avent.tsx) ───────────── */
+.avent {
+  position: relative;
+  overflow: hidden;
+  padding-top: 40px;
+  border-color: rgba(255, 210, 122, 0.45);
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(255, 210, 122, 0.14), transparent 70%),
+    radial-gradient(120% 120% at 100% 100%, rgba(215, 38, 61, 0.2), transparent 60%),
+    linear-gradient(170deg, #12305a, #0a1631 70%);
+}
+
+/* la guirlande de sapin en festons et ses boules, en haut du calendrier */
+.avent__garland {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 22px;
+}
+
+.avent__bauble {
+  position: absolute;
+  width: 24px;
+  height: 34px;
+  transform: translateX(-50%);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.avent__head {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.avent__head h2 {
+  margin: 0 0 4px;
+  text-wrap: balance;
+}
+
+.avent__head p {
+  margin: 0;
+}
+
+/* 4 colonnes sur téléphone, 6 sur tablette, 8 puis 12 sur grand écran (des portes de 70 à 110 px environ) */
+.avent__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  perspective: 900px;
+}
+
+@media (min-width: 561px) {
+  .avent__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (min-width: 900px) {
+  .avent__grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1180px) {
+  .avent__grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.avent-door {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #06101f;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font: inherit;
+  transform-style: preserve-3d;
+}
+
+.avent-door:disabled {
+  cursor: default;
+}
+
+/* la porte : un papier de Noël rouge, vert, bleu glacier ou or, son numéro et un petit motif */
+.avent-door__leaf {
+  --wrap: #b3273a;
+  --wrap-2: #c93a4d;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 9px, rgba(255, 255, 255, 0.06) 9px 11px),
+    linear-gradient(160deg, var(--wrap-2), var(--wrap));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 0 rgba(0, 0, 0, 0.35);
+  transform-origin: 0 50%;
+  transition:
+    transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1),
+    filter 0.3s,
+    opacity 0.3s 0.4s;
+}
+
+.avent-door--w1 .avent-door__leaf {
+  --wrap: #1d6040;
+  --wrap-2: #2f8f5b;
+}
+
+.avent-door--w2 .avent-door__leaf {
+  --wrap: #22548a;
+  --wrap-2: #3a7cbf;
+}
+
+.avent-door--w3 .avent-door__leaf {
+  --wrap: #8a5a14;
+  --wrap-2: #c58f1f;
+}
+
+/* le 24 : la porte dorée du réveillon */
+.avent-door--grand .avent-door__leaf {
+  --wrap: #b8860b;
+  --wrap-2: #f2c14e;
+  border-color: rgba(255, 243, 196, 0.7);
+}
+
+.avent-door__day {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 4.6vw, 1.9rem);
+  font-weight: 400;
+  line-height: 1;
+  color: #fff8e6;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.avent-door__motif {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 30%;
+  height: 30%;
+  opacity: 0.85;
+  overflow: visible;
+}
+
+/* la porte du jour brille et appelle */
+.avent-door--today {
+  cursor: pointer;
+}
+
+.avent-door--today .avent-door__leaf {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(0, 0, 0, 0.35), 0 0 0 2px #ffd27a, 0 0 18px rgba(255, 210, 122, 0.7);
+}
+
+.avent-door--today::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 13px;
+  box-shadow: 0 0 22px 4px rgba(255, 210, 122, 0.7);
+  animation: avent-call 1.3s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes avent-call {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.avent-door--today:hover .avent-door__leaf {
+  transform: rotateY(-14deg);
+}
+
+/* une case passée sans être ouverte : la porte reste fermée, givrée */
+.avent-door--missed .avent-door__leaf {
+  filter: grayscale(0.85) brightness(0.6);
+}
+
+/* une case à venir */
+.avent-door--later .avent-door__leaf {
+  filter: saturate(0.8) brightness(0.85);
+}
+
+/* une case ouverte : la porte pivote sur ses gonds, s'efface et laisse le cadeau dans sa fenêtre prédécoupée */
+.avent-door--open .avent-door__leaf {
+  transform: rotateY(-115deg);
+  filter: brightness(0.75);
+  opacity: 0;
+}
+
+.avent-door--open .avent-door__inside {
+  outline: 1px dashed rgba(255, 243, 214, 0.28);
+  outline-offset: -4px;
+}
+
+.avent-door__inside {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  overflow: hidden;
+  background: radial-gradient(80% 80% at 50% 40%, rgba(255, 210, 122, 0.22), transparent 70%);
+}
+
+.avent-gift {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 0 4px;
+  text-align: center;
+  animation: avent-gift 0.6s 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.3) both;
+}
+
+.avent-gift__icon {
+  width: clamp(18px, 6vw, 28px);
+  height: clamp(18px, 6vw, 28px);
+}
+
+.avent-gift__text {
+  font-size: clamp(0.6rem, 2.3vw, 0.74rem);
+  font-weight: 600;
+  line-height: 1.1;
+  color: #fff3d6;
+}
+
+@keyframes avent-gift {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avent-door__leaf {
+    transition: none;
+  }
+  .avent-door--today::after,
+  .hw-lights,
+  .snowflake {
+    animation: none;
+  }
+  .snowfall--front {
+    display: none;
+  }
+}
+
 /* ───────────── duels en direct entre amis (components/LiveDuel.tsx) ───────────── */
 
 .live-layer {
