@@ -358,7 +358,9 @@ export function CardDetail() {
             <Spin3D card={detail.card} size="lg" locked={!!detail.unknown} />
           </div>
           <p className="detail__tip">Fais tourner la carte · double-clic pour la retourner</p>
-          {photoCredit(face.athleteId) && (
+          {photoCredit(face.athleteId)?.ia ? (
+            <p className="detail__credit">Image générée par intelligence artificielle</p>
+          ) : photoCredit(face.athleteId) && (
             <p className="detail__credit">
               Photo :{' '}
               <a href={photoCredit(face.athleteId)!.page} target="_blank" rel="noreferrer">

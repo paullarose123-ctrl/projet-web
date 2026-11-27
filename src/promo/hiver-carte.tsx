@@ -83,5 +83,31 @@ function Toutes() {
   );
 }
 
+/** Cinq des plus belles cartes de la série, une de chaque rareté (une couleur de cadre chacune), pour les réseaux
+ *  (promo/hiver-carte.html?top). */
+function Top() {
+  // hermine (Peu commune), renard polaire (Rare), tigre de l'Amour (Légendaire), grue du Japon (Épique), bruant (Commune)
+  const cards: [string, 'base' | 'prime'][] = [
+    ['hv-hermine', 'base'],
+    ['hv-renard-polaire', 'base'],
+    ['tigre-de-l-amour', 'base'],
+    ['grue-du-japon', 'base'],
+    ['bruant-des-neiges', 'base'],
+  ];
+  return (
+    <div className="hiver-planche hiver-planche--top">
+      <div className="hiver-planche__hero hiver-planche__hero--top">
+        {cards.map(([id, variant], i) => (
+          <figure key={id} className={i === 2 ? 'is-center' : ''}>
+            <Card card={{ athleteId: id, variant }} size="xl" serie={3} />
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const PARAMS = new URLSearchParams(location.search);
-createRoot(document.getElementById('root')!).render(PARAMS.has('toutes') ? <Toutes /> : PARAMS.has('raretes') ? <Raretes /> : <Planche />);
+createRoot(document.getElementById('root')!).render(
+  PARAMS.has('toutes') ? <Toutes /> : PARAMS.has('raretes') ? <Raretes /> : PARAMS.has('top') ? <Top /> : <Planche />,
+);

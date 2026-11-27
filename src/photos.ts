@@ -13,6 +13,8 @@ export interface PhotoCredit {
   license: string;
   licenseUrl: string;
   page: string;
+  /** image générée par intelligence artificielle (aucune vraie photo libre de l'espèce) : les crédits le disent */
+  ia?: boolean;
   /** empreinte de l'image : ajoutée à son adresse, elle force le navigateur à recharger une photo qui a changé */
   v?: string;
 }
