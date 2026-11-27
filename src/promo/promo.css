@@ -1276,6 +1276,37 @@ body {
   margin: 0;
 }
 
+/* les cinq plus belles cartes (promo/hiver-carte.html?top) : la carte du milieu un peu plus grande et plus haute */
+.hiver-planche--top {
+  width: 1900px;
+  padding: 56px 70px 64px;
+  text-align: center;
+}
+
+.hiver-planche--top header p {
+  margin: 0 auto;
+}
+
+.hiver-planche__hero--top {
+  align-items: flex-end;
+  gap: 40px;
+  margin: 100px 0 0;
+}
+
+.hiver-planche__hero--top figure {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  margin: 0;
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.5));
+}
+
+.hiver-planche__hero--top figure.is-center {
+  transform: scale(1.12);
+  transform-origin: 50% 100%;
+  margin: 0 26px;
+}
+
 /* toutes les cartes de la série (promo/hiver-carte.html?toutes) */
 .hiver-planche--toutes {
   width: max-content;
