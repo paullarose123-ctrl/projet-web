@@ -1628,38 +1628,44 @@
   fill: var(--panel);
 }
 
-/* les couleurs de chaque rareté, en tons de glace */
+/* les couleurs de chaque rareté, en tons d'hiver, avec le même code que les autres séries (vert, bleu, orange,
+   violet, puis l'aurore) pour qu'on les reconnaisse d'un coup d'œil : sapin givré, glacier, soleil d'hiver, nuit
+   violette et aurore boréale */
 .card.serie-3.r-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
     radial-gradient(50% 22% at 80% 6%, rgba(255, 255, 255, 0.95), transparent 70%),
-    linear-gradient(172deg, #d9e8f2 0%, #f4f9fc 45%, #dbe7f0 100%);
+    linear-gradient(172deg, #a8d9c2 0%, #d2eedf 42%, #eef8f2 72%, #bfe1d0 100%);
 }
 
 .card.serie-3.r-peu-commune:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
     radial-gradient(50% 20% at 20% 6%, rgba(255, 255, 255, 0.95), transparent 70%),
-    linear-gradient(172deg, #b5d5f0 0%, #d8eafb 40%, #f0f8ff 75%, #c9def2 100%);
+    linear-gradient(172deg, #7fbcf0 0%, #a9d2f8 38%, #dcecff 72%, #98c4ef 100%);
 }
 
+/* rare : le soleil bas de l'hiver sur la neige, orangé et doré */
 .card.serie-3.r-rare:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
-    radial-gradient(48% 24% at 50% 100%, rgba(255, 255, 255, 0.9), transparent 70%),
-    linear-gradient(172deg, #9fe0d0 0%, #c4efe3 40%, #e6faf4 70%, #b9e2f0 100%);
+    radial-gradient(48% 24% at 50% 100%, rgba(255, 250, 235, 0.9), transparent 70%),
+    radial-gradient(40% 18% at 80% 4%, rgba(255, 255, 255, 0.8), transparent 70%),
+    linear-gradient(172deg, #f39a5f 0%, #f7b67c 35%, #ffd39d 68%, #f6b88a 100%);
 }
 
+/* épique : la nuit polaire, violette, traversée d'un trait d'aurore */
 .card.serie-3.r-epique:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
-    linear-gradient(160deg, transparent 20%, rgba(170, 245, 215, 0.6) 38%, transparent 55%),
-    linear-gradient(172deg, #b7a9ec 0%, #cfc2f5 45%, #e4dcfb 75%, #c3d4f5 100%);
+    linear-gradient(160deg, transparent 22%, rgba(150, 245, 205, 0.7) 38%, transparent 54%),
+    linear-gradient(172deg, #8a6fdf 0%, #a28cec 42%, #c2b1f7 78%, #a99be8 100%);
   --plate-ink: #241a52;
 }
 
-/* légendaire : une aurore boréale dans la glace, du vert au violet */
+/* légendaire : une aurore boréale franche, du vert au rose, avec le scintillement du givre */
 .card.serie-3.r-legendaire:not(.is-icon, .is-prime, .is-reverse, .is-habitat) {
   --foil:
-    radial-gradient(42% 20% at 50% 96%, rgba(255, 255, 255, 0.9), transparent 70%),
-    linear-gradient(150deg, transparent 15%, rgba(255, 255, 255, 0.45) 30%, transparent 45%),
-    linear-gradient(172deg, #9fe8cf 0%, #a6d9f0 30%, #c3b3f2 62%, #efc6e8 100%);
+    radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.9) 0 0.05em, transparent 0.12em) 0 0 / 1.2em 1.6em,
+    radial-gradient(42% 20% at 50% 96%, rgba(255, 255, 255, 0.85), transparent 70%),
+    linear-gradient(150deg, transparent 15%, rgba(255, 255, 255, 0.4) 30%, transparent 45%),
+    linear-gradient(172deg, #4fdcab 0%, #58bfe8 28%, #8f7bea 55%, #dd7fcb 80%, #ffb08f 100%);
 }
 
 /* Prime de l'hiver : nuit polaire et aurore boréale, cadre bleu nuit, voile d'aurore sur la photo */
