@@ -6572,15 +6572,16 @@
  "vaquita": {
   "file": "vaquita.webp",
   "cutout": false,
-  "author": "Paula Olson , NOAA",
-  "license": "Public domain",
+  "author": "Image générée par intelligence artificielle",
+  "license": "Image générée par IA",
   "licenseUrl": "",
-  "page": "https://commons.wikimedia.org/wiki/File:Vaquita6_Olson_NOAA.jpg",
+  "page": "ia",
+  "ia": true,
   "brut": [
-   1252,
-   580
+   1448,
+   1086
   ],
-  "v": "26431a5b"
+  "v": "2e0e9342"
  },
  "vautour-fauve": {
   "file": "vautour-fauve.webp",
