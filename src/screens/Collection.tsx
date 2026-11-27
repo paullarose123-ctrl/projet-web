@@ -315,7 +315,8 @@ function Album() {
       )}
       {serie > 1 && (
         <p className="serie-goal muted small">
-          Toutes les espèces de la Série {serie} ({serieOwned}/{serieTotal}, sans ses Icônes ni ses Habitats) donnent le badge {serieDef(serie).name}.
+          Toutes les espèces de la Série {serie} ({serieOwned}/{serieTotal}, sans ses{' '}
+          {cardsOfSerie(serie).some((a) => a.retired && !a.habitat) ? 'Icônes ni ses ' : ''}Habitats) donnent le badge {serieDef(serie).name}.
         </p>
       )}
       <div className="sport-tabs" role="tablist" aria-label="Familles de l’album">

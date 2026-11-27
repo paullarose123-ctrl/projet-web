@@ -103,7 +103,7 @@ export const SHOP_PACKS: PackDef[] = [
   {
     id: 'icones',
     name: 'Pack Icônes',
-    tagline: '1 seule carte, une Icône garantie : une espèce disparue depuis 1800, de toutes les séries (lion de l’Atlas, thylacine, grizzli du Mexique…)',
+    tagline: '1 seule carte, une Icône garantie : une espèce disparue depuis 1800 (lion de l’Atlas, thylacine, grizzli du Mexique…)',
     price: 600_000,
     size: 1,
     // aucune carte des paliers ordinaires : l'unique carte est tirée parmi les Icônes (voir drawIcon)

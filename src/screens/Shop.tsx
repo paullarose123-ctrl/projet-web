@@ -95,7 +95,11 @@ function Odds({ pack, mixed }: { pack: PackDef; mixed: boolean }) {
 function PackTile({ pack }: { pack: PackDef }) {
   const balles = useGame((s) => s.balles);
   // dès leur sortie, les cartes des séries suivantes se mêlent à celles de la Série 1 dans tous les packs
-  const mixed = isReleased(2, useNow(60_000)) && serieOdds(pack, 2) > 0;
+  const now = useNow(60_000);
+  const mixed = isReleased(2, now) && serieOdds(pack, 2) > 0;
+  // séries dont le pack donne des cartes (le Pack Icônes n'a pas l'Hiver, qui n'a pas d'Icône)
+  const series = releasedSeries(now).filter((def) => def.number === 1 || serieOdds(pack, def.number) > 0);
+  const allSeries = series.length === releasedSeries(now).length;
   const buy = useGame((s) => s.buyPack);
   const affordable = balles >= pack.price;
   return (
@@ -110,7 +114,7 @@ function PackTile({ pack }: { pack: PackDef }) {
       <div className="pack-tile__body">
         <h3>{pack.name}</h3>
         {mixed && (
-          <p className="series-mix">Toutes les séries</p>
+          <p className="series-mix">{allSeries ? 'Toutes les séries' : `Séries ${series.map((def) => def.number).join(' et ')}`}</p>
         )}
         <p className="muted small">{pack.tagline}</p>
         <Odds pack={pack} mixed={mixed} />
