@@ -2777,15 +2777,13 @@
         1.0
       ]
     },
-    "criquet-des-rocheuses": {
-      "etendre": true,
-      "fond": "auto",
-      "marge": 0.03
-    },
     "requin-taupe": {
-      "etendre": true,
-      "fond": "auto",
-      "marge": 0.03
+      "corps": [
+        0.35,
+        0.3,
+        1,
+        0.95
+      ]
     },
     "golomyanka": {
       "etendre": true,
@@ -2807,17 +2805,17 @@
     },
     "boeuf-musque": {
       "corps": [
-        0.12,
-        0.03,
-        0.58,
-        0.99
+        0.3,
+        0.2,
+        0.72,
+        0.8
       ]
     },
     "bharal": {
       "corps": [
-        0.35,
-        0.33,
-        0.85,
+        0.34,
+        0.18,
+        0.98,
         0.88
       ]
     },
@@ -2841,10 +2839,10 @@
     ],
     "petit-rorqual-antarctique": {
       "corps": [
-        0.0,
-        0.55,
-        0.62,
-        0.93
+        0,
+        0.35,
+        1,
+        0.75
       ]
     },
     "oie-des-neiges": [
@@ -2859,29 +2857,259 @@
     ],
     "pygargue-de-steller": {
       "corps": [
+        0.28,
+        0.15,
+        0.75,
+        0.98
+      ]
+    },
+    "hv-renne": {
+      "corps": [
+        0.02,
+        0.08,
+        0.96,
+        1
+      ]
+    },
+    "hv-glouton": {
+      "corps": [
+        0.36,
+        0.38,
+        0.88,
+        0.84
+      ]
+    },
+    "phoque-du-saimaa": {
+      "corps": [
+        0.08,
         0.3,
+        0.9,
+        0.98
+      ]
+    },
+    "hv-macaque-japonais": {
+      "corps": [
+        0.15,
+        0.08,
+        0.88,
+        0.98
+      ]
+    },
+    "rhinopitheque-du-yunnan": {
+      "corps": [
+        0.25,
         0.05,
-        0.8,
+        0.82,
+        0.95
+      ]
+    },
+    "mouflon-de-dall": {
+      "corps": [
+        0.25,
+        0.12,
+        0.72,
+        0.95
+      ]
+    },
+    "chevre-des-rocheuses": {
+      "corps": [
+        0.38,
+        0.32,
+        0.7,
+        0.55
+      ]
+    },
+    "argali": {
+      "corps": [
+        0.35,
+        0.18,
+        0.92,
         0.92
       ]
     },
-    "hv-renne": [
-      0.7,
-      0.55,
-      1
-    ],
-    "hv-glouton": {
+    "porte-musc-de-siberie": {
       "corps": [
-        0.4,
-        0.42,
-        0.7,
-        0.66
+        0.25,
+        0.12,
+        0.95,
+        0.98
       ]
     },
-    "phoque-du-saimaa": [
-      0.6,
-      0.5,
-      1
-    ]
+    "lievre-arctique": {
+      "corps": [
+        0.32,
+        0.22,
+        0.65,
+        0.7
+      ]
+    },
+    "zibeline": {
+      "corps": [
+        0.02,
+        0.25,
+        0.68,
+        0.78
+      ]
+    },
+    "lemming-a-collier": {
+      "corps": [
+        0.3,
+        0.25,
+        0.65,
+        0.75
+      ]
+    },
+    "gerfaut": {
+      "corps": [
+        0.3,
+        0.25,
+        0.75,
+        0.75
+      ]
+    },
+    "grand-duc-de-blakiston": {
+      "corps": [
+        0.25,
+        0.08,
+        0.78,
+        0.92
+      ]
+    },
+    "grue-du-japon": {
+      "corps": [
+        0.28,
+        0.15,
+        0.85,
+        0.98
+      ]
+    },
+    "jaseur-boreal": {
+      "corps": [
+        0.3,
+        0.22,
+        0.8,
+        0.75
+      ]
+    },
+    "cincle-plongeur": {
+      "corps": [
+        0.3,
+        0.25,
+        0.7,
+        0.6
+      ]
+    },
+    "mesange-a-tete-noire": {
+      "corps": [
+        0.2,
+        0.2,
+        0.9,
+        1
+      ]
+    },
+    "bec-croise-des-sapins": {
+      "corps": [
+        0.45,
+        0.2,
+        1,
+        0.92
+      ]
+    },
+    "chirou": {
+      "corps": [
+        0.22,
+        0.12,
+        0.9,
+        0.95
+      ]
+    },
+    "otarie-a-fourrure-antarctique": {
+      "corps": [
+        0.05,
+        0.05,
+        0.95,
+        0.95
+      ]
+    },
+    "labbe-antarctique": {
+      "corps": [
+        0.15,
+        0.12,
+        0.75,
+        0.82
+      ]
+    },
+    "lezard-vivipare": {
+      "corps": [
+        0.41,
+        0.33,
+        0.93,
+        0.72
+      ]
+    },
+    "phoque-crabier": {
+      "corps": [
+        0.46,
+        0.2,
+        0.82,
+        0.74
+      ]
+    },
+    "tigre-de-l-amour": {
+      "corps": [
+        0.25,
+        0.15,
+        0.8,
+        1
+      ]
+    },
+    "leopard-de-l-amour": {
+      "corps": [
+        0.3,
+        0.28,
+        0.66,
+        0.95
+      ]
+    },
+    "renard-du-tibet": {
+      "corps": [
+        0.12,
+        0.25,
+        0.66,
+        0.78
+      ]
+    },
+    "renard-corsac": {
+      "corps": [
+        0.2,
+        0.08,
+        0.8,
+        0.9
+      ]
+    },
+    "grand-pingouin": {
+      "corps": [
+        0.15,
+        0.1,
+        0.92,
+        0.95
+      ]
+    },
+    "canard-du-labrador": {
+      "corps": [
+        0.18,
+        0.05,
+        0.92,
+        0.92
+      ]
+    },
+    "loup-des-malouines": {
+      "corps": [
+        0.3,
+        0.05,
+        0.76,
+        0.85
+      ]
+    }
   }
 }

@@ -109,7 +109,7 @@ describe('Série 3 · Hiver', () => {
     expect(freePackOf(3, NOV_30)).toBe(FREE_PACK);
     expect(freePackOf(3, DEC_1)).toBe(FREE_PACK_HIVER);
     expect(releasedAthletes(NOV_30).some((a) => serieOf(a) === 3)).toBe(false);
-    expect(releasedAthletes(DEC_1).filter((a) => serieOf(a) === 3).length).toBe(110);
+    expect(releasedAthletes(DEC_1).filter((a) => serieOf(a) === 3).length).toBe(107);
   });
 
   it('avant sa sortie, aucun booster ne donne ses cartes ; ensuite, son booster ne donne qu’elles et les packs mêlent les trois séries', () => {
@@ -129,15 +129,15 @@ describe('Série 3 · Hiver', () => {
     vi.setSystemTime(NOV_30);
     expect(serieOdds(icones, 3)).toBe(0);
     vi.setSystemTime(DEC_1);
-    expect(serieOdds(icones, 3)).toBeGreaterThan(0.05);
+    expect(serieOdds(icones, 3)).toBeGreaterThan(0.03);
     expect(seriesFrom(icones, mulberry32(9))).toEqual([1, 2, 3]);
   });
 
-  it('compte 110 cartes : espèces, Icônes et Habitats', () => {
+  it('compte 107 cartes : espèces, Icônes et Habitats', () => {
     const cards = cardsOfSerie(3);
-    expect(cards.length).toBe(110);
+    expect(cards.length).toBe(107);
     expect(cards.filter((a) => a.habitat).length).toBe(6);
-    expect(cards.filter((a) => a.retired && !a.habitat).length).toBe(6);
+    expect(cards.filter((a) => a.retired && !a.habitat).length).toBe(3);
     expect(new Set(ATHLETES.map((a) => a.id)).size).toBe(ATHLETES.length);
   });
 
@@ -165,7 +165,7 @@ describe('Série 3 · Hiver', () => {
 
   it('numérote ses cartes G1, G2…', () => {
     const numbers = cardsOfSerie(3).map((a) => collectionNumber(a));
-    expect(new Set(numbers).size).toBe(110);
+    expect(new Set(numbers).size).toBe(107);
     expect(numbers.every((n) => /^G\d+$/.test(n))).toBe(true);
   });
 });

@@ -1724,18 +1724,18 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "rhinopitheque-du-yunnan": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/207659493/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/207659493",
-    "auteur": "Lukasz Madrzynski 孟巨石",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/762371812/original.jpg",
+    "page": "https://www.inaturalist.org/photos/762371812",
+    "auteur": "Royle Safaris",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "chevre-des-rocheuses": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/603905201/original.jpg",
-    "page": "https://www.inaturalist.org/photos/603905201",
-    "auteur": "Grady Duffy",
-    "licence": "CC BY 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/359632098/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/359632098",
+    "auteur": "Connor",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "takin": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/51303107/original.jpg",
@@ -1745,9 +1745,9 @@
     "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
   },
   "chirou": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/714943495/original.jpg",
-    "page": "https://www.inaturalist.org/photos/714943495",
-    "auteur": "邪犽",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/26678858/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/26678858",
+    "auteur": "pfaucher",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -1773,9 +1773,9 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "petit-rorqual-antarctique": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/469778816/original.jpg",
-    "page": "https://www.inaturalist.org/photos/469778816",
-    "auteur": "christiangau",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/257440989/original.jpg",
+    "page": "https://www.inaturalist.org/photos/257440989",
+    "auteur": "whale_nerd",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -1829,9 +1829,9 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "hv-glouton": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/453725166/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/453725166",
-    "auteur": "james_barber",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/361912379/original.jpg",
+    "page": "https://www.inaturalist.org/photos/361912379",
+    "auteur": "oldjon",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -1849,21 +1849,21 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "hv-renne": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109377691/original.jpg",
-    "page": "https://www.inaturalist.org/photos/109377691",
-    "auteur": "wheelhomie",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  },
+  "hv-renne": "Reindeer Antlers Contrasted Against the Snow (24165335876).jpg",
   "samoyede": "Lulu - Samoyed in Snow.jpg",
   "malamute": "Alaskan Malamute R Bartz.jpg",
   "hv-husky": "Two Siberian Huskies.jpg",
   "cheval-yakoute": "Oymyakon - 190228 DSC 5934.jpg",
-  "requin-taupe": "The Mackerel Shark.jpg",
+  "requin-taupe": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/196758043/original.jpg",
+    "page": "https://www.inaturalist.org/photos/196758043",
+    "auteur": "Giosue Reale",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
   "calmar-colossal": "NZ070415 Colossal Squid 01.jpg",
   "araignee-de-mer-geante": "Colossendeis (MNHN-IU-2013-2065).jpeg",
-  "canard-du-labrador": "Camptorhynchus labradorius (Labrador duck) (8365390008).jpg",
+  "canard-du-labrador": "Labrador duck (Camptorhynchus labradorius) 3.jpg",
   "golomyanka": {
     "fichier": "Cuvier-82-Comephorus baikalensis-coméphore (cropped).jpg",
     "recadrage": [
@@ -1873,16 +1873,15 @@
       0.68
     ]
   },
-  "grand-pingouin": "Keulemans-GreatAuk.jpg",
-  "criquet-des-rocheuses": "Melanoplus spretusAnnReportAgExpStaUM1902B.jpg",
+  "grand-pingouin": "Philadelphia Great Auk.jpg",
   "habitat-hv-svalbard": "Adventfjorden, Svalbard.jpg",
   "habitat-hv-kamtchatka": "Koryaksky Volcano - Kamchatka, Russian Federation - Summer 1993.jpg",
   "habitat-hv-baikal": "Lake Baikal in winter.jpg",
   "habitat-hv-georgie-du-sud": "King Penguins at St. Andrews Bay, South Georgia (5817286686).jpg",
   "habitat-hv-shiretoko": "Hokkaido-Shiretoko's White-tailed Eagles and Steller's Sea Eagles・・hiretoko National Park・・xl.jpg",
   "phoque-du-saimaa": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/668464334/original.jpg",
-    "page": "https://www.inaturalist.org/photos/668464334",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/621977784/original.jpg",
+    "page": "https://www.inaturalist.org/photos/621977784",
     "auteur": "Johan Moraal",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
@@ -1893,5 +1892,177 @@
     "auteur": "Tobias Gratzer",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
-  }
+  },
+  "hv-macaque-japonais": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/314035804/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/314035804",
+    "auteur": "John P Martin",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "boeuf-musque": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/580848181/original.jpg",
+    "page": "https://www.inaturalist.org/photos/580848181",
+    "auteur": "andribuehler",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "mouflon-de-dall": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/605249159/original.jpg",
+    "page": "https://www.inaturalist.org/photos/605249159",
+    "auteur": "Crobsauce",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "argali": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/540736048/original.jpg",
+    "page": "https://www.inaturalist.org/photos/540736048",
+    "auteur": "vladimirblinov",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "bharal": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/474764155/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/474764155",
+    "auteur": "Biray Pinar",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "porte-musc-de-siberie": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/346878759/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/346878759",
+    "auteur": "rvorob1899",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lievre-arctique": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/182623563/original.jpg",
+    "page": "https://www.inaturalist.org/photos/182623563",
+    "auteur": "Becky Brenner",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "zibeline": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/618649311/original.jpg",
+    "page": "https://www.inaturalist.org/photos/618649311",
+    "auteur": "Kai Klawitter",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lemming-a-collier": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/109285795/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/109285795",
+    "auteur": "Игорь Поспелов",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "pygargue-de-steller": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/347765802/original.jpg",
+    "page": "https://www.inaturalist.org/photos/347765802",
+    "auteur": "Donna Pomeroy",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "gerfaut": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11651571/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/11651571",
+    "auteur": "Mark D. Read",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "grand-duc-de-blakiston": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/133749749/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/133749749",
+    "auteur": "jitensha2021",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "grue-du-japon": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/106272207/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/106272207",
+    "auteur": "desertnaturalist",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "jaseur-boreal": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/243942600/original.jpg",
+    "page": "https://www.inaturalist.org/photos/243942600",
+    "auteur": "bsteer",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "cincle-plongeur": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/353172555/original.jpg",
+    "page": "https://www.inaturalist.org/photos/353172555",
+    "auteur": "Antti Henttonen",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "mesange-a-tete-noire": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/260372050/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/260372050",
+    "auteur": "mhalsted",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "bec-croise-des-sapins": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/478001552/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/478001552",
+    "auteur": "Ingrid Hofer",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "otarie-a-fourrure-antarctique": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/354563509/original.jpg",
+    "page": "https://www.inaturalist.org/photos/354563509",
+    "auteur": "Jeffrey H. Skevington",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "labbe-antarctique": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/341096796/original.jpg",
+    "page": "https://www.inaturalist.org/photos/341096796",
+    "auteur": "Noah Strycker",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "lezard-vivipare": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/21003708/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/21003708",
+    "auteur": "Desy Allen",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "phoque-crabier": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/12620828/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/12620828",
+    "auteur": "pfaucher",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "bruant-des-neiges": "Snow bunting in the snow - 52827880231.jpg",
+  "puce-des-neiges": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/178645816/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/178645816",
+    "auteur": "Tom Murray",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "tigre-de-l-amour": "Siberian Tiger enjoying snow 42.jpg",
+  "leopard-de-l-amour": "ZOO Olomouc07 Panthera pardus orientalis.JPG",
+  "renard-du-tibet": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/26758292/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/26758292",
+    "auteur": "pfaucher",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "renard-corsac": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/248704560/original.jpg",
+    "page": "https://www.inaturalist.org/photos/248704560",
+    "auteur": "Dina Nesterkova",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "loup-des-malouines": "Falkland Island wolf, Dusicyon australis OMNZVT2369 !1pub.jpg"
 }
