@@ -175,11 +175,11 @@ export function PackArt({ tone, name, title: customTitle, sport, size = 5, guara
   const title = customTitle ?? short.charAt(0).toUpperCase() + short.slice(1);
   // la Série 2 a son propre sachet : la pyramide de Teotihuacan au soleil couchant
   if (tone === 'mexique') {
-    return <PackArtMexique className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Mexique' : title)} line={guarantee ?? `${size} cartes`} />;
+    return <PackArtMexique className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Mexique' : title)} line={guarantee ?? `${size} carte${size > 1 ? 's' : ''}`} />;
   }
   // la Série 3 aussi : la nuit polaire sous l'aurore
   if (tone === 'hiver') {
-    return <PackArtHiver className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Hiver' : title)} line={guarantee ?? `${size} cartes`} />;
+    return <PackArtHiver className={className} kicker={kicker} name={customTitle ?? (short === 'gratuit' ? 'Hiver' : title)} line={guarantee ?? `${size} carte${size > 1 ? 's' : ''}`} />;
   }
   const style = {
     '--near': scene.palette.near,
@@ -200,7 +200,7 @@ export function PackArt({ tone, name, title: customTitle, sport, size = 5, guara
         <div className="pack-art__kicker">{kicker}</div>
         <div className="pack-art__name">{title}</div>
         <div className="pack-art__line">
-          <span>{guarantee ?? `${size} cartes`}</span>
+          <span>{guarantee ?? `${size} carte${size > 1 ? 's' : ''}`}</span>
         </div>
         <div className="pack-art__pillow" />
         <Plastic seed={name} />

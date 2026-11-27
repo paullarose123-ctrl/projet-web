@@ -3,6 +3,8 @@ import { circle, ellipse, f, mulberry32, poly, type Pt, type Rng } from '../art/
 import { seasonAt, type Season } from '../engine/season';
 import { useNow } from '../hooks/useNow';
 import { Calavera, Glow, Marigolds, candle, monarch, timing } from './MexicoBackdrop';
+import { ICICLES_TILE, LIGHTS_GLOW_A, LIGHTS_GLOW_B, LIGHTS_TILE, NoelGlows, XMAS, bauble, candyCane, flakePath, gift, holly, snowBank, snowman, star, xmasTree } from './Noel';
+import { aventDay } from '../engine/avent';
 
 // Décors des fêtes d'automne (voir engine/season.ts) :
 // - Halloween, du 20 au 31 octobre : une guirlande de cempasúchil sous la barre du haut, des citrouilles qui luisent,
@@ -170,7 +172,28 @@ function Corners({ className, season }: { className: string; season: Season }) {
         {candle(4, id, flip ? 72 : 12, 62, 5, r)}
       </>
     );
-    const scene = season === 'muertos' ? muertos : halloween;
+    // Noël : un sapin décoré et ses cadeaux à gauche ; un bonhomme de neige, des paquets et un sucre d'orge à droite
+    const noel = (flip: boolean) =>
+      flip ? (
+        <>
+          {snowBank(0, 86, 59, 64)}
+          {candyCane(1, 14, 61, 11)}
+          {gift(2, 30, 61, 8, 6.5, XMAS.green, XMAS.red)}
+          {gift(3, 40, 62, 6, 5, XMAS.blue, '#fff3d6')}
+          {snowman(4, 58, 61.5, 24)}
+          {xmasTree(5, id, 77, 61, 16, r, false)}
+        </>
+      ) : (
+        <>
+          {snowBank(0, 86, 59, 64)}
+          {xmasTree(1, id, 24, 61, 28, r)}
+          {gift(2, 44, 62, 9, 7, XMAS.red, XMAS.gold)}
+          {gift(3, 54, 62, 6.5, 8.5, XMAS.green, XMAS.red)}
+          {gift(4, 9, 62, 6, 4.5, XMAS.gold, XMAS.red)}
+          {candyCane(5, 66, 61.5, 9)}
+        </>
+      );
+    const scene = season === 'noel' ? noel : season === 'muertos' ? muertos : halloween;
     return { left: scene(false), right: scene(true) };
   }, [id, season]);
   return (
@@ -180,6 +203,7 @@ function Corners({ className, season }: { className: string; season: Season }) {
           <defs>
             <Glow id={id} name="flame" color="#ffb347" />
             <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
+            <NoelGlows id={id} />
           </defs>
           {corners[side]}
         </svg>
@@ -220,6 +244,15 @@ export function SaisonGarland() {
   const season = useSeason();
   if (!season) return null;
   if (season === 'muertos') return <div className="hw-garland hw-garland--papel" aria-hidden="true" style={{ backgroundImage: PAPEL_TILE }} />;
+  if (season === 'noel') {
+    // la guirlande lumineuse de Noël : le fil et ses ampoules, puis deux rangs de halos qui s'allument tour à tour
+    return (
+      <div className="hw-garland hw-garland--lights" aria-hidden="true" style={{ backgroundImage: LIGHTS_TILE }}>
+        <i className="hw-lights hw-lights--a" style={{ backgroundImage: LIGHTS_GLOW_A }} />
+        <i className="hw-lights hw-lights--b" style={{ backgroundImage: LIGHTS_GLOW_B }} />
+      </div>
+    );
+  }
   return <div className="hw-garland" aria-hidden="true" style={{ backgroundImage: GARLAND_TILE }} />;
 }
 
@@ -260,6 +293,29 @@ export function SaisonHead({ seed = 'en-tête', pendants = true }: { seed?: stri
   const id = `hh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const art = useMemo(() => {
     const r = mulberry32([...seed].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7));
+    if (season === 'noel') {
+      // deux boules de Noël et une étoile en pendeloques ; du houx et des flocons qui scintillent dans le coin
+      let flakes = '';
+      for (const [x, y, s] of [[60, 12, 2.6], [76, 30, 2], [90, 36, 1.6], [48, 30, 1.4]]) flakes += flakePath(x, y, s);
+      return {
+        pendants: (
+          <>
+            <path d="M24 0V14 M42 0V8 M60 0V21" stroke="rgba(255, 250, 240, 0.45)" strokeWidth={0.35} />
+            {bauble(1, 24, 14, 4.6, XMAS.red)}
+            <circle className="mx-glow" cx={42} cy={12.6} r={7} fill={`url(#${id}-star)`} style={timing(2.4, r() * 2)} />
+            <path d={star(42, 12.6, 4)} fill={XMAS.gold} stroke="#fff3c4" strokeWidth={0.3} />
+            {bauble(2, 60, 21, 3.8, XMAS.blue)}
+          </>
+        ),
+        corner: (
+          <>
+            <path className="mx-twinkle" d={flakes} fill="none" stroke="#f4f9ff" strokeWidth={0.5} strokeLinecap="round" opacity={0.85} style={timing(2.8, r() * 2)} />
+            {holly(1, 88, 7, 3.4, 160)}
+            {holly(2, 76, 3, 2.6, -170)}
+          </>
+        ),
+      };
+    }
     if (season === 'muertos') {
       return {
         pendants: (
@@ -297,10 +353,13 @@ export function SaisonHead({ seed = 'en-tête', pendants = true }: { seed?: stri
   if (!season) return null;
   return (
     <div className="hw-head" aria-hidden="true">
+      {/* Noël : de la neige et des stalactites de glace pendent du haut de l'en-tête */}
+      {season === 'noel' && <div className="hw-head__snow" style={{ backgroundImage: ICICLES_TILE }} />}
       {pendants && (
         <svg className="mx-scene hw-head__pendants" viewBox="0 0 80 40">
           <defs>
             <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
+            <NoelGlows id={id} />
           </defs>
           {art.pendants}
         </svg>
@@ -319,6 +378,19 @@ export function SaisonBanner() {
   const id = `hb${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const art = useMemo(() => {
     const r = mulberry32(11);
+    if (season === 'noel') {
+      return (
+        <>
+          <path d={flakePath(14, 14, 2.4) + flakePath(84, 10, 2) + flakePath(70, 30, 1.4) + flakePath(26, 32, 1.2)} fill="none" stroke="#f4f9ff" strokeWidth={0.45} strokeLinecap="round" opacity={0.8} />
+          {snowBank(0, 100, 51, 60)}
+          {xmasTree(1, id, 30, 54, 34, r)}
+          {gift(2, 48, 55, 9, 7, XMAS.red, XMAS.gold)}
+          {gift(3, 57, 55.5, 6.5, 8.5, XMAS.green, XMAS.red)}
+          {snowman(4, 76, 55, 26)}
+          {candyCane(5, 90, 55, 10)}
+        </>
+      );
+    }
     if (season === 'muertos') {
       return (
         <>
@@ -347,14 +419,17 @@ export function SaisonBanner() {
     );
   }, [id, season]);
   if (!season) return null;
-  // la lune orange d'Halloween, la lune dorée du cempasúchil pour le Jour des morts
-  const moon = season === 'muertos' ? '#ffd166' : '#ffb35c';
+  // jusqu'au 24 décembre, le calendrier de l'Avent tient lieu d'annonce (voir components/Avent.tsx)
+  if (season === 'noel' && aventDay()) return null;
+  // la lune orange d'Halloween, la lune dorée du cempasúchil pour le Jour des morts, la lune blanche de Noël
+  const moon = season === 'noel' ? '#f4fbff' : season === 'muertos' ? '#ffd166' : '#ffb35c';
   return (
-    <section className={`panel hw-banner${season === 'muertos' ? ' hw-banner--muertos' : ''}`} aria-labelledby="hw-title">
+    <section className={`panel hw-banner${season === 'muertos' ? ' hw-banner--muertos' : season === 'noel' ? ' hw-banner--noel' : ''}`} aria-labelledby="hw-title">
       <svg className="mx-scene hw-banner__art" viewBox="0 0 100 60" aria-hidden="true">
         <defs>
           <Glow id={id} name="flame" color="#ffb347" />
           <Glow id={id} name="pumpkin" color="#ff9a3c" opacity={0.8} />
+          <NoelGlows id={id} />
           <radialGradient id={`${id}-moon`}>
             <stop offset="0" stopColor={moon} stopOpacity={0.55} />
             <stop offset="1" stopColor={moon} stopOpacity={0} />
@@ -364,7 +439,16 @@ export function SaisonBanner() {
         <circle cx={50} cy={20} r={10} fill={moon} />
         {art}
       </svg>
-      {season === 'muertos' ? (
+      {season === 'noel' ? (
+        <div className="hw-banner__text">
+          <p className="eyebrow">Joyeux Noël</p>
+          <h2 id="hw-title">Noël sous la neige</h2>
+          <p className="muted">
+            Jusqu’au 6 janvier, la neige tombe sur AnimalCards, entre les guirlandes et les sapins. La Série 3 · Hiver est
+            sortie : ouvre son booster gratuit et retrouve l’hermine, le renard polaire et le harfang des neiges !
+          </p>
+        </div>
+      ) : season === 'muertos' ? (
         <div className="hw-banner__text">
           <p className="eyebrow">Día de Muertos · Jour des morts</p>
           <h2 id="hw-title">Le Mexique fête ses morts</h2>

@@ -32,7 +32,9 @@ import { OnlinePlayers } from './components/OnlinePlayers';
 import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
 import { Landscape } from './components/PackScene';
-import { SITE_SCENE_HALLOWEEN, SITE_SCENE_MUERTOS } from './art/scenes';
+import { SITE_SCENE_HALLOWEEN, SITE_SCENE_MUERTOS, SITE_SCENE_NOEL } from './art/scenes';
+import { SNOWCAP_TILE, SNOWDRIFT_TILE, SapinMark } from './components/Noel';
+import { Snowfall } from './components/Snowfall';
 
 const NAV: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   {
@@ -95,8 +97,17 @@ function Topbar() {
     <header className="topbar">
       <button type="button" className="brand" onClick={() => setTab('boosters')} aria-label="AnimalCards, retour aux boosters">
         <Logo className="brand__logo" />
-        {/* sur téléphone, la feuille du logo devient une citrouille pendant Halloween, une calavera pendant le Jour des morts */}
-        {season === 'halloween' ? <PumpkinMark className="brand__mark" /> : season === 'muertos' ? <CalaveraMark className="brand__mark" /> : <LogoMark className="brand__mark" />}
+        {/* sur téléphone, la feuille du logo devient une citrouille pendant Halloween, une calavera pendant le Jour des
+            morts, un petit sapin décoré à Noël */}
+        {season === 'halloween' ? (
+          <PumpkinMark className="brand__mark" />
+        ) : season === 'muertos' ? (
+          <CalaveraMark className="brand__mark" />
+        ) : season === 'noel' ? (
+          <SapinMark className="brand__mark" />
+        ) : (
+          <LogoMark className="brand__mark" />
+        )}
       </button>
       <SaisonGarland />
       <div className="topbar__right">
@@ -214,14 +225,19 @@ export function App() {
   const tick = useGame((s) => s.tick);
   const muted = useGame((s) => s.muted);
   const musicOff = useGame((s) => s.musicOff);
-  // couleurs du jeu : celles du Jour des morts (rose, turquoise, nuit indigo), sauf à Halloween qui a les siennes
-  // (orange) et ses décors de fête (voir components/Saison.tsx)
+  // couleurs du jeu : celles du Jour des morts (rose, turquoise, nuit indigo), sauf à Halloween (orange) et à Noël
+  // (nuit bleue, rouge et or) qui ont les leurs, avec leurs décors de fête (voir components/Saison.tsx)
   const season = useSeason();
   useEffect(() => {
     const root = document.documentElement.classList;
     root.toggle('saison-fete', true);
     root.toggle('saison-halloween', season === 'halloween');
-    root.toggle('saison-muertos', season !== 'halloween');
+    root.toggle('saison-noel', season === 'noel');
+    root.toggle('saison-muertos', season !== 'halloween' && season !== 'noel');
+    // la neige posée sur les boutons et sur la barre du bas (motifs dessinés dans components/Noel.tsx)
+    const style = document.documentElement.style;
+    style.setProperty('--snowcap', SNOWCAP_TILE);
+    style.setProperty('--snowdrift', SNOWDRIFT_TILE);
   }, [season]);
 
   useEffect(() => {
@@ -294,9 +310,16 @@ export function App() {
 
   return (
     <div className="app">
-      {/* fond de page : un sous-bois sous les étoiles (sous la lune de chaque fête en saison), fixe derrière le contenu */}
-      <Landscape className="backdrop" scene={season === 'halloween' ? SITE_SCENE_HALLOWEEN : SITE_SCENE_MUERTOS} seed="sous-bois" maxWidth={600} />
-      <Fireflies />
+      {/* fond de page : un sous-bois sous les étoiles (sous la lune de chaque fête en saison ; enneigé à Noël), fixe
+          derrière le contenu */}
+      <Landscape
+        className="backdrop"
+        scene={season === 'halloween' ? SITE_SCENE_HALLOWEEN : season === 'noel' ? SITE_SCENE_NOEL : SITE_SCENE_MUERTOS}
+        seed="sous-bois"
+        maxWidth={600}
+      />
+      {/* à Noël, la neige tombe à la place des lucioles */}
+      {season === 'noel' ? <Snowfall /> : <Fireflies />}
       <SaisonNight />
       <Topbar />
       <main className="content" id="contenu">
@@ -312,6 +335,7 @@ export function App() {
         </div>
       </main>
       <SaisonFlyover />
+      {season === 'noel' && <Snowfall front />}
       <BottomNav />
       <CardDetail />
       <PackOpening />

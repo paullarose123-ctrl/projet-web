@@ -23,6 +23,13 @@ export const SITE_SCENE_MUERTOS: SceneDef = {
   palette: { sky: ['#06182e', '#8a1d63'], sun: '#ffd166', far: '#17485a', near: '#05101a', accent: '#ffffff' },
 };
 
+/** Le fond du site pendant Noël : une nuit d'hiver bleue sous la lune, des collines enneigées et des sapins poudrés. */
+export const SITE_SCENE_NOEL: SceneDef = {
+  kind: 'neige',
+  stars: true,
+  palette: { sky: ['#061430', '#24507e'], sun: '#f4fbff', far: '#5d7fa8', near: '#06101f', accent: '#e9f3ff' },
+};
+
 /** Accueil (boosters gratuits) : sommets à l'aube et un aigle. */
 export const HERO_SCENE: SceneDef = {
   kind: 'montagne',
@@ -42,6 +49,13 @@ export const HERO_SCENE_MUERTOS: SceneDef = {
   kind: 'montagne',
   stars: true,
   palette: { sky: ['#08213f', '#d1347a'], sun: '#ffd166', far: '#1d5d6e', near: '#071422', accent: '#7fe0d0' },
+};
+
+/** Accueil pendant Noël : des sommets enneigés sous un ciel de nuit bleu, une grosse lune blanche. */
+export const HERO_SCENE_NOEL: SceneDef = {
+  kind: 'neige',
+  stars: true,
+  palette: { sky: ['#0a1a3c', '#3d6c9c'], sun: '#f4fbff', far: '#7795bd', near: '#0a1628', accent: '#f1f7ff' },
 };
 
 /** Bannières des écrans */
