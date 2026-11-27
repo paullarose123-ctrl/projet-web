@@ -131,16 +131,24 @@ describe('boosters', () => {
     }
     expect(icons / total).toBeGreaterThan(0.0004);
     expect(icons / total).toBeLessThan(0.0018);
-    // le Pack Icônes contient une seule carte : toujours une Icône, en version classique
+    // le Pack Icônes : trois cartes, une Rare ou mieux, une Légendaire ou une Prime, puis une Icône en version classique
     const single = SHOP_PACKS.find((p) => p.id === 'icones')!;
     const seen = new Set<string>();
+    let primes = 0;
     for (let i = 0; i < 400; i++) {
       const cards = openPack(single, rng);
-      expect(cards).toHaveLength(1);
-      expect(isIconCard(cards[0])).toBe(true);
-      expect(cards[0].variant).toBe('base');
-      seen.add(cards[0].athleteId);
+      expect(cards).toHaveLength(3);
+      const [first, second, icon] = cards;
+      expect(isIconCard(icon)).toBe(true);
+      expect(icon.variant).toBe('base');
+      expect(isIconCard(first) || isIconCard(second)).toBe(false);
+      expect(rarityOf(ATHLETES_BY_ID[first.athleteId]).order).toBeGreaterThanOrEqual(2);
+      if (second.variant === 'prime') primes += 1;
+      else expect(rarityOf(ATHLETES_BY_ID[second.athleteId]).id).toBe('legendaire');
+      seen.add(icon.athleteId);
     }
+    expect(primes).toBeGreaterThan(60);
+    expect(primes).toBeLessThan(150);
     // toutes ou presque y passent, le lion de l'Atlas (la plus célèbre) bien plus rarement que le bubale
     expect(seen.size).toBeGreaterThan(15);
     // l'Icône est un palier de rareté à part, au-dessus de Légendaire, sans Reverse

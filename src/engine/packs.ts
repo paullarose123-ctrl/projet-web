@@ -103,14 +103,13 @@ export const SHOP_PACKS: PackDef[] = [
   {
     id: 'icones',
     name: 'Pack Icônes',
-    tagline: '1 seule carte, une Icône garantie : une espèce disparue depuis 1800 (lion de l’Atlas, thylacine, grizzli du Mexique…)',
+    tagline: '3 cartes de toutes les séries : une Rare ou mieux, une Légendaire ou une Prime, et une Icône garantie (lion de l’Atlas, thylacine, grizzli du Mexique…)',
     price: 600_000,
-    size: 1,
-    // aucune carte des paliers ordinaires : l'unique carte est tirée parmi les Icônes (voir drawIcon)
+    size: 3,
+    // trois cartes, chacune son tirage (voir openPack) : ICON_PACK_FIRST, puis Légendaire ou Prime, puis une Icône
     odds: { commune: 0, 'peu-commune': 0, rare: 0, epique: 0, legendaire: 0 },
     primeChance: 0,
-    guaranteed: { min: 'commune' },
-    filter: (athlete) => !!athlete.retired,
+    guaranteed: { min: 'legendaire' },
     tone: 'icon',
   },
   {
@@ -211,10 +210,15 @@ export function addFreePacks(current: number, gained: number, max: number = MAX_
   return { freePacks, overflow, credits: overflow * FREE_PACK_CREDITS };
 }
 
-/** Booster qui ne contient que des Icônes (Pack Icônes). */
+/** Pack Icônes : trois cartes de toutes les séries sorties, de plus en plus rares, la dernière une Icône. */
 export function isIconPack(pack: PackDef): boolean {
   return pack.tone === 'icon';
 }
+
+/** Pack Icônes, 1re carte : une Rare ou mieux. */
+export const ICON_PACK_FIRST: Partial<Odds> = { rare: 80, epique: 16, legendaire: 4 };
+/** Pack Icônes, 2e carte : une Légendaire, ou (une fois sur quatre) une Prime, encore plus rare. */
+export const ICON_PACK_PRIME_CHANCE = 0.25;
 
 function poolFor(pack: PackDef): Pool {
   const cached = poolCache.get(cacheKey(pack));
@@ -239,21 +243,24 @@ export function iconPool(pack: PackDef): Athlete[] {
  * des espèces de la série dans chacune. Les Icônes et les Prime garanties ne changent presque rien : on les ignore.
  */
 export function serieOdds(pack: PackDef, serie: number): number {
-  // un pack d'Icônes tire sa carte parmi les Icônes de toutes les séries sorties
-  if (isIconPack(pack)) {
-    const icons = iconPool(pack);
-    const all = icons.reduce((w, athlete) => w + iconWeight(athlete), 0);
-    const mine = icons.filter((athlete) => serieOf(athlete) === serie).reduce((w, athlete) => w + iconWeight(athlete), 0);
-    return all ? mine / all : 0;
-  }
   const pool = poolFor(pack);
-  const total = RARITY_ORDER.reduce((sum, id) => sum + (pool[id].length ? pack.odds[id] : 0), 0);
-  if (!total) return 0;
-  return RARITY_ORDER.reduce((sum, id) => {
-    const all = pool[id].reduce((w, athlete) => w + dropWeight(athlete), 0);
-    const mine = pool[id].filter((athlete) => serieOf(athlete) === serie).reduce((w, athlete) => w + dropWeight(athlete), 0);
-    return all ? sum + (pack.odds[id] / total) * (mine / all) : sum;
-  }, 0);
+  // part d'une série parmi des cartes tirées au poids
+  const share = (cards: Athlete[], weight: (athlete: Athlete) => number) => {
+    const all = cards.reduce((w, athlete) => w + weight(athlete), 0);
+    const mine = cards.filter((athlete) => serieOf(athlete) === serie).reduce((w, athlete) => w + weight(athlete), 0);
+    return all ? mine / all : 0;
+  };
+  const byRarity = (odds: Partial<Odds>) => {
+    const total = RARITY_ORDER.reduce((sum, id) => sum + (pool[id].length ? (odds[id] ?? 0) : 0), 0);
+    if (!total) return 0;
+    return RARITY_ORDER.reduce((sum, id) => (pool[id].length ? sum + ((odds[id] ?? 0) / total) * share(pool[id], dropWeight) : sum), 0);
+  };
+  // Pack Icônes : la moyenne de ses trois cartes
+  if (isIconPack(pack)) {
+    const second = (1 - ICON_PACK_PRIME_CHANCE) * byRarity({ legendaire: 1 }) + ICON_PACK_PRIME_CHANCE * share(primePool(pack), primeWeight);
+    return (byRarity(ICON_PACK_FIRST) + second + share(iconPool(pack), iconWeight)) / 3;
+  }
+  return byRarity(pack.odds);
 }
 
 /** Probabilité qu'une carte ordinaire du booster soit une Icône (affichée en boutique ; 1 pour les packs d'Icônes). */
@@ -401,7 +408,11 @@ export function openPack(pack: PackDef, rng: Rng, avoid: ReadonlySet<string> = n
     const isLast = i === pack.size - 1;
     let card: CardFace;
     if (isIconPack(pack)) {
-      card = drawIcon(rng, pack, avoid, taken);
+      // une Rare ou mieux, puis une Légendaire ou une Prime, puis une Icône
+      if (i === 0) card = drawCard(rng, pack, ICON_PACK_FIRST, pool, false, avoid, taken);
+      else if (i === 1 && rng() < ICON_PACK_PRIME_CHANCE) card = cardOf(pickFresh(rng, primePool(pack), primeWeight, avoid, taken), 'prime');
+      else if (i === 1) card = drawCard(rng, pack, { legendaire: 1 }, pool, false, avoid, taken);
+      else card = drawIcon(rng, pack, avoid, taken);
     } else if (isLast && pack.guaranteed?.prime) {
       card = cardOf(pickFresh(rng, primePool(pack), primeWeight, avoid, taken), 'prime');
     } else if (isLast && pack.guaranteed) {
@@ -413,7 +424,8 @@ export function openPack(pack: PackDef, rng: Rng, avoid: ReadonlySet<string> = n
     taken.add(card.athleteId);
     cards.push(card);
   }
-  return sortByRarity(cards);
+  // le Pack Icônes se révèle dans l'ordre de ses cartes : l'Icône toujours en dernier, même après une Prime
+  return isIconPack(pack) ? cards : sortByRarity(cards);
 }
 
 export function cardRank(card: CardFace): number {
