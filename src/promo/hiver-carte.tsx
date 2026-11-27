@@ -83,22 +83,18 @@ function Toutes() {
   );
 }
 
-/** Les cinq plus belles cartes de la série, pour les réseaux (promo/hiver-carte.html?top). */
+/** Cinq des plus belles cartes de la série, une de chaque rareté (une couleur de cadre chacune), pour les réseaux
+ *  (promo/hiver-carte.html?top). */
 function Top() {
   const cards: [string, 'base' | 'prime', string][] = [
+    ['hv-hermine', 'base', 'Peu commune'],
     ['hv-renard-polaire', 'base', 'Rare'],
-    ['hv-harfang', 'base', 'Légendaire'],
     ['tigre-de-l-amour', 'base', 'Légendaire'],
-    ['hv-ours-polaire', 'prime', 'Prime'],
-    ['hv-macaque-japonais', 'base', 'Rare'],
+    ['grue-du-japon', 'base', 'Épique'],
+    ['bruant-des-neiges', 'base', 'Commune'],
   ];
   return (
     <div className="hiver-planche hiver-planche--top">
-      <header>
-        <p className="eyebrow">Série 3 · Hiver</p>
-        <h1>Les 5 plus belles cartes</h1>
-        <p>101 animaux du grand froid, à collectionner dès le 1er décembre sur animalcards.fr</p>
-      </header>
       <div className="hiver-planche__hero hiver-planche__hero--top">
         {cards.map(([id, variant, label], i) => (
           <figure key={id} className={i === 2 ? 'is-center' : ''}>
