@@ -334,7 +334,7 @@ const DEFS_HIVER: Def[] = [
   {
     id: 'baikal', name: 'Lac Baïkal', sport: 'marins', country: 'RU', fame: 80,
     lieu: 'Sibérie, Russie', superficie: '31 500 km²',
-    especes: ['phoque-du-baikal', 'golomyanka', 'zibeline', 'tamia-de-siberie', 'hv-hermine', 'lievre-variable', 'grand-tetras', 'cygne-chanteur'],
+    especes: ['phoque-du-baikal', 'zibeline', 'tamia-de-siberie', 'hv-hermine', 'lievre-variable', 'grand-tetras', 'cygne-chanteur'],
     fact: 'Le lac le plus profond (1 642 m) et le plus ancien du monde, vieux d’environ 25 millions d’années ; il contient à lui seul plus d’un cinquième de l’eau douce liquide de la planète.',
     protection: 'Patrimoine mondial de l’UNESCO depuis 1996.',
     scene: { kind: 'lac', palette: { sky: ['#7fb0e0', '#eef6ff'], sun: '#ffffff', far: '#8fb8d8', near: '#16283c', accent: '#d8f0ff' } },
@@ -342,7 +342,7 @@ const DEFS_HIVER: Def[] = [
   {
     id: 'georgie-du-sud', name: 'Géorgie du Sud', sport: 'oiseaux', country: 'GB', fame: 66,
     lieu: 'Atlantique Sud, à 1 400 km à l’est des Malouines', superficie: '3 500 km²',
-    especes: ['manchot-royal', 'otarie-a-fourrure-antarctique', 'hv-leopard-de-mer', 'petrel-des-neiges', 'labbe-antarctique', 'poisson-des-glaces'],
+    especes: ['manchot-royal', 'otarie-a-fourrure-antarctique', 'hv-leopard-de-mer', 'petrel-des-neiges', 'labbe-antarctique'],
     fact: 'En 1916, Ernest Shackleton y a traversé les montagnes à pied pour aller chercher du secours pour ses hommes, restés sur l’île de l’Éléphant : aucun n’est mort. Il y est enterré.',
     protection: 'Aire marine protégée de Géorgie du Sud et des îles Sandwich du Sud depuis 2012.',
     scene: { kind: 'montagne', creature: 'manchots', palette: { sky: ['#6f9ccf', '#f4e6dc'], sun: '#fffaf2', far: '#9ab4d0', near: '#18263a', accent: '#ffffff' } },

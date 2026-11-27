@@ -29,10 +29,6 @@ export const ICONES_RETIREES: Record<string, string> = {
   'cerf-de-schomburgk': 'wapiti-de-l-est',
   'tourte-voyageuse': 'tetras-des-bruyeres',
   'arlequin-de-chiriqui': 'crapaud-dore',
-  // Icônes de la Série 3 (Hiver) retirées avant sa sortie, faute de vraie photo (page d'aperçu seulement)
-  'cormoran-de-pallas': 'grand-pingouin',
-  'otarie-du-japon': 'loup-des-malouines',
-  'criquet-des-rocheuses': 'canard-du-labrador',
 };
 
 /**
@@ -96,15 +92,29 @@ export const SERIE2_REMPLACEES: Record<string, string> = {
 };
 
 /**
- * Retirés du jeu puis revenus : le phoque moine des Caraïbes est redevenu une Icône dans la Série 2, le grand pingouin
- * dans la Série 3.
+ * Cartes de la Série 3 (Hiver) retirées avant sa sortie, faute de vraie photo (page d'aperçu seulement) : ses Icônes
+ * deviennent une Icône de la Série 1, les autres une espèce de l'hiver de la même famille. Le grand pingouin, revenu
+ * un temps dans cette série, redevient le canard des Mariannes (ICONES_REMPLACEES).
  */
-const REVENUS = new Set(['phoque-moine-des-caraibes', 'grand-pingouin']);
+export const SERIE3_RETIREES: Record<string, string> = {
+  'cormoran-de-pallas': 'canard-des-mariannes',
+  'canard-du-labrador': 'canard-des-mariannes',
+  'otarie-du-japon': 'loutre-du-japon',
+  'loup-des-malouines': 'loup-du-japon',
+  'criquet-des-rocheuses': 'tetras-des-bruyeres',
+  'poisson-des-glaces': 'legine-antarctique',
+  golomyanka: 'omble-chevalier',
+  'calmar-colossal': 'meduse-a-criniere-de-lion',
+};
+
+/** Retiré du jeu puis revenu : le phoque moine des Caraïbes est redevenu une Icône dans la Série 2. */
+const REVENUS = new Set(['phoque-moine-des-caraibes']);
 
 /** Identifiant actuel d'une carte qui a pu être enregistrée avant un remplacement. */
 export function currentAthleteId(id: string): string {
   const next = PREHISTOIRE_REMPLACEE[id] ?? (REVENUS.has(id) ? undefined : ICONES_REMPLACEES[id]) ?? id;
   const icon = ICONES_RETIREES[next] ?? next;
   const serie2 = SERIE2_REMPLACEES[icon] ?? icon;
-  return SERIE1_RETIREES[serie2] ?? serie2;
+  const serie3 = SERIE3_RETIREES[serie2] ?? serie2;
+  return SERIE1_RETIREES[serie3] ?? serie3;
 }

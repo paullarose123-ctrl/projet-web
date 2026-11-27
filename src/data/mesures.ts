@@ -631,11 +631,9 @@ export const MESURES: Record<string, Mesure> = {
   'petit-rorqual-antarctique': [7000, 9, 'L', 50],
   'requin-du-groenland': [700, 5, 'L', 400],
   'requin-taupe': [150, 2.5, 'L', 65],
-  'poisson-des-glaces': [1, 0.6, 'L', 15],
   'omble-chevalier': [2, 0.6, 'L', 20],
   lompe: [5, 0.5, 'L', 13],
   'loup-atlantique': [15, 1.5, 'L', 20],
-  golomyanka: [0.03, 0.2, 'L', 5],
   'legine-antarctique': [100, 2, 'L', 50],
   'hv-harfang': [2, 1.5, 'E', 10],
   'pygargue-de-steller': [7, 2.4, 'E', 25],
@@ -673,7 +671,6 @@ export const MESURES: Record<string, Mesure> = {
   'puce-des-neiges': [0.0000005, 0.002, 'L', 1],
   'moucheron-de-l-antarctique': [0.000001, 0.006, 'L', 2],
   'chenille-laineuse-arctique': [0.001, 0.04, 'L', 7],
-  'calmar-colossal': [495, 9, 'L', null],
   'ange-de-mer': [0.001, 0.03, 'L', 2],
   'araignee-de-mer-geante': [0.05, 0.7, 'E', null],
   'meduse-a-criniere-de-lion': [null, 36, 'L', 1],
@@ -682,9 +679,6 @@ export const MESURES: Record<string, Mesure> = {
   samoyede: [25, 0.55, 'H', 13],
   malamute: [38, 0.64, 'H', 12],
   'cheval-yakoute': [450, 1.4, 'H', 25],
-  'grand-pingouin': [5, 0.85, 'H', null],
-  'canard-du-labrador': [0.9, 0.5, 'L', null],
-  'loup-des-malouines': [12, 1.2, 'L', null],
 };
 
 const SENS_LABEL: Record<Sens, string> = { L: 'Longueur', H: 'Hauteur', E: 'Envergure' };

@@ -140,7 +140,6 @@ export const CONTINENTS_MULTIPLES: Record<string, Continent[]> = {
   'lezard-vivipare': EURASIE,
   'salamandre-de-siberie': EURASIE,
   'bourdon-polaire': HOLARCTIQUE,
-  'grand-pingouin': ['amerique', 'europe'],
 };
 
 /**

@@ -2785,24 +2785,6 @@
         0.95
       ]
     },
-    "golomyanka": {
-      "etendre": true,
-      "fond": "auto",
-      "marge": 0.03
-    },
-    "poisson-des-glaces": {
-      "etendre": true,
-      "fond": "auto",
-      "marge": 0.03
-    },
-    "hv-panthere-des-neiges": {
-      "corps": [
-        0.55,
-        0.28,
-        0.98,
-        0.95
-      ]
-    },
     "boeuf-musque": {
       "corps": [
         0.3,
@@ -2827,24 +2809,11 @@
         0.82
       ]
     },
-    "hv-leopard-de-mer": [
-      0.6,
-      0.5,
-      1
-    ],
     "lion-de-mer-de-steller": [
       0.42,
       0.5,
       1
     ],
-    "petit-rorqual-antarctique": {
-      "corps": [
-        0,
-        0.35,
-        1,
-        0.75
-      ]
-    },
     "oie-des-neiges": [
       0.56,
       0.5,
@@ -2911,14 +2880,11 @@
         0.95
       ]
     },
-    "chevre-des-rocheuses": {
-      "corps": [
-        0.38,
-        0.32,
-        0.7,
-        0.55
-      ]
-    },
+    "chevre-des-rocheuses": [
+      0.54,
+      0.46,
+      2.0
+    ],
     "argali": {
       "corps": [
         0.35,
@@ -2935,44 +2901,17 @@
         0.98
       ]
     },
-    "lievre-arctique": {
-      "corps": [
-        0.32,
-        0.22,
-        0.65,
-        0.7
-      ]
-    },
-    "zibeline": {
-      "corps": [
-        0.02,
-        0.25,
-        0.68,
-        0.78
-      ]
-    },
+    "zibeline": [
+      0.45,
+      0.5,
+      1
+    ],
     "lemming-a-collier": {
       "corps": [
         0.3,
         0.25,
         0.65,
         0.75
-      ]
-    },
-    "gerfaut": {
-      "corps": [
-        0.3,
-        0.25,
-        0.75,
-        0.75
-      ]
-    },
-    "grand-duc-de-blakiston": {
-      "corps": [
-        0.25,
-        0.08,
-        0.78,
-        0.92
       ]
     },
     "grue-du-japon": {
@@ -2999,14 +2938,11 @@
         0.6
       ]
     },
-    "mesange-a-tete-noire": {
-      "corps": [
-        0.2,
-        0.2,
-        0.9,
-        1
-      ]
-    },
+    "mesange-a-tete-noire": [
+      0.5,
+      0.5,
+      1
+    ],
     "bec-croise-des-sapins": {
       "corps": [
         0.45,
@@ -3023,22 +2959,16 @@
         0.95
       ]
     },
-    "otarie-a-fourrure-antarctique": {
-      "corps": [
-        0.05,
-        0.05,
-        0.95,
-        0.95
-      ]
-    },
-    "labbe-antarctique": {
-      "corps": [
-        0.15,
-        0.12,
-        0.75,
-        0.82
-      ]
-    },
+    "otarie-a-fourrure-antarctique": [
+      0.6,
+      0.5,
+      1
+    ],
+    "labbe-antarctique": [
+      0.5,
+      0.5,
+      1
+    ],
     "lezard-vivipare": {
       "corps": [
         0.41,
@@ -3087,29 +3017,205 @@
         0.9
       ]
     },
-    "grand-pingouin": {
-      "corps": [
-        0.15,
-        0.1,
-        0.92,
-        0.95
+    "hv-morse": [
+      0.57,
+      0.5,
+      1
+    ],
+    "lompe": {
+      "miroir": true,
+      "cadre": [
+        0.5,
+        0.45,
+        1.15
       ]
     },
-    "canard-du-labrador": {
-      "corps": [
-        0.18,
-        0.05,
-        0.92,
-        0.92
+    "loup-atlantique": {
+      "miroir": true,
+      "cadre": [
+        0.6,
+        0.5,
+        1
       ]
     },
-    "loup-des-malouines": {
-      "corps": [
-        0.3,
-        0.05,
-        0.76,
-        0.85
+    "buse-pattue": [
+      0.36,
+      0.45,
+      1
+    ],
+    "manchot-adelie": {
+      "miroir": true,
+      "cadre": [
+        0.5,
+        0.45,
+        1.15
       ]
-    }
+    },
+    "manchot-a-jugulaire": {
+      "miroir": true,
+      "cadre": [
+        0.6,
+        0.5,
+        1
+      ]
+    },
+    "gorfou-sauteur": {
+      "miroir": true,
+      "cadre": [
+        0.55,
+        0.5,
+        1
+      ]
+    },
+    "lagopede-alpin": [
+      0.6,
+      0.42,
+      1.5
+    ],
+    "eider-a-duvet": [
+      0.5,
+      0.5,
+      1
+    ],
+    "mouette-ivoire": {
+      "miroir": true,
+      "cadre": [
+        0.45,
+        0.5,
+        1
+      ]
+    },
+    "grand-tetras": [
+      0.58,
+      0.55,
+      1
+    ],
+    "salamandre-de-siberie": [
+      0.62,
+      0.5,
+      1
+    ],
+    "hv-husky": [
+      0.35,
+      0.72,
+      1.6
+    ],
+    "samoyede": [
+      0.5,
+      0.5,
+      1.15
+    ],
+    "takin": {
+      "miroir": true,
+      "cadre": [
+        0.55,
+        0.5,
+        1
+      ]
+    },
+    "hv-panthere-des-neiges": [
+      0.74,
+      0.5,
+      1.1
+    ],
+    "ours-bleu-du-tibet": [
+      0.45,
+      0.5,
+      1.2
+    ],
+    "hv-narval": [
+      0.65,
+      0.42,
+      1.25
+    ],
+    "omble-chevalier": [
+      0.52,
+      0.5,
+      1.1
+    ],
+    "hv-leopard-de-mer": {
+      "miroir": true,
+      "cadre": [
+        0.68,
+        0.5,
+        1
+      ]
+    },
+    "phoque-du-baikal": [
+      0.37,
+      0.5,
+      1
+    ],
+    "plongeon-imbrin": [
+      0.52,
+      0.5,
+      1
+    ],
+    "lievre-arctique": {
+      "miroir": true,
+      "cadre": [
+        0.5,
+        0.5,
+        1.1
+      ]
+    },
+    "gerfaut": [
+      0.48,
+      0.47,
+      1.3
+    ],
+    "grand-duc-de-blakiston": [
+      0.55,
+      0.5,
+      1
+    ],
+    "petit-rorqual-antarctique": {
+      "miroir": true,
+      "cadre": [
+        0.62,
+        0.5,
+        1
+      ]
+    },
+    "hamster-de-siberie": [
+      0.6,
+      0.5,
+      1
+    ],
+    "puce-des-neiges": [
+      0.42,
+      0.5,
+      1.6
+    ],
+    "legine-antarctique": [
+      0.74,
+      0.5,
+      1
+    ],
+    "habitat-hv-laponie": [
+      0.5,
+      0.5,
+      1
+    ],
+    "habitat-hv-baikal": [
+      0.42,
+      0.5,
+      1
+    ],
+    "habitat-hv-shiretoko": [
+      0.55,
+      0.5,
+      1
+    ],
+    "habitat-hv-kamtchatka": [
+      0.52,
+      0.5,
+      1
+    ],
+    "habitat-hv-georgie-du-sud": [
+      0.6,
+      0.5,
+      1
+    ]
   }
 }

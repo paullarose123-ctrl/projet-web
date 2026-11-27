@@ -1773,9 +1773,9 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "petit-rorqual-antarctique": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/257440989/original.jpg",
-    "page": "https://www.inaturalist.org/photos/257440989",
-    "auteur": "whale_nerd",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/469775221/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/469775221",
+    "auteur": "dougiewainwright",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -1861,24 +1861,12 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "calmar-colossal": "NZ070415 Colossal Squid 01.jpg",
   "araignee-de-mer-geante": "Colossendeis (MNHN-IU-2013-2065).jpeg",
-  "canard-du-labrador": "Labrador duck (Camptorhynchus labradorius) 3.jpg",
-  "golomyanka": {
-    "fichier": "Cuvier-82-Comephorus baikalensis-coméphore (cropped).jpg",
-    "recadrage": [
-      0.02,
-      0.12,
-      0.96,
-      0.68
-    ]
-  },
-  "grand-pingouin": "Philadelphia Great Auk.jpg",
   "habitat-hv-svalbard": "Adventfjorden, Svalbard.jpg",
-  "habitat-hv-kamtchatka": "Koryaksky Volcano - Kamchatka, Russian Federation - Summer 1993.jpg",
+  "habitat-hv-kamtchatka": "Лиса-огневка на фоне Вилючинского вулкана.jpg",
   "habitat-hv-baikal": "Lake Baikal in winter.jpg",
-  "habitat-hv-georgie-du-sud": "King Penguins at St. Andrews Bay, South Georgia (5817286686).jpg",
-  "habitat-hv-shiretoko": "Hokkaido-Shiretoko's White-tailed Eagles and Steller's Sea Eagles・・hiretoko National Park・・xl.jpg",
+  "habitat-hv-georgie-du-sud": "King Penguins at St. Andrews Bay, South Georgia (5816524799).jpg",
+  "habitat-hv-shiretoko": "Hokkaido-Drift ice, Shiretoko Peninsula-xl.jpg",
   "phoque-du-saimaa": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/621977784/original.jpg",
     "page": "https://www.inaturalist.org/photos/621977784",
@@ -1936,11 +1924,11 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "lievre-arctique": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/182623563/original.jpg",
-    "page": "https://www.inaturalist.org/photos/182623563",
-    "auteur": "Becky Brenner",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/625489854/original.jpg",
+    "page": "https://www.inaturalist.org/photos/625489854",
+    "auteur": "Stan Rullman",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
   },
   "zibeline": {
     "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/618649311/original.jpg",
@@ -1964,16 +1952,16 @@
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
   "gerfaut": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11651571/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/11651571",
-    "auteur": "Mark D. Read",
-    "licence": "CC BY-NC 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/110222900/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/110222900",
+    "auteur": "Todd Boland",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
   },
   "grand-duc-de-blakiston": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/133749749/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/133749749",
-    "auteur": "jitensha2021",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/754512898/original.jpg",
+    "page": "https://www.inaturalist.org/photos/754512898",
+    "auteur": "M P (Nevakee716)",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -2042,9 +2030,9 @@
   },
   "bruant-des-neiges": "Snow bunting in the snow - 52827880231.jpg",
   "puce-des-neiges": {
-    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/178645816/original.jpeg",
-    "page": "https://www.inaturalist.org/photos/178645816",
-    "auteur": "Tom Murray",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/245435878/original.jpg",
+    "page": "https://www.inaturalist.org/photos/245435878",
+    "auteur": "chipperatl",
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
@@ -2064,5 +2052,55 @@
     "licence": "CC BY-NC 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
   },
-  "loup-des-malouines": "Falkland Island wolf, Dusicyon australis OMNZVT2369 !1pub.jpg"
+  "ours-bleu-du-tibet": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/333538211/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/333538211",
+    "auteur": "花蚀",
+    "licence": "CC BY-NC-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+  },
+  "hv-narval": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/561463407/original.jpg",
+    "page": "https://www.inaturalist.org/photos/561463407",
+    "auteur": "azure27014",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "omble-chevalier": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/280101340/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/280101340",
+    "auteur": "JaRo Guiding",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "hv-leopard-de-mer": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/255694425/original.jpg",
+    "page": "https://www.inaturalist.org/photos/255694425",
+    "auteur": "Sebastián Lescano",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "phoque-du-baikal": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/598723181/original.jpg",
+    "page": "https://www.inaturalist.org/photos/598723181",
+    "auteur": "Pavel Zhovtiuk",
+    "licence": "CC BY-NC 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-nc/4.0/"
+  },
+  "plongeon-imbrin": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/427504235/original.png",
+    "page": "https://www.inaturalist.org/photos/427504235",
+    "auteur": "Hungry-Sarracenia Photo",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "hamster-de-siberie": {
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/314234677/original.jpeg",
+    "page": "https://www.inaturalist.org/photos/314234677",
+    "auteur": "Svyatoslav Knyazev",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "legine-antarctique": "Dissostichus mawsoni.jpg",
+  "habitat-hv-laponie": "Palkaskero in Muonio, Finland, 2019 January.jpg"
 }

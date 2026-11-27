@@ -793,11 +793,9 @@ const HIVER: Athlete[] = [
   x('requin-du-groenland', 'Requin du Groenland', 'requins', 'requin-curieux', 'Eaux glacées de l’Arctique', 'GL', 62, 70, 'Le vertébré qui vit le plus longtemps : certains auraient près de 400 ans, et il ne grandit que d’un centimètre par an.', L('Somniosus microcephalus')),
   x('requin-taupe', 'Requin-taupe commun', 'requins', 'requin-rapide', 'Eaux froides de l’Atlantique Nord', 'XO', 38, 72, 'Ses muscles chauffent son sang : son corps reste jusqu’à 10 °C plus chaud que l’eau glacée qui l’entoure.', L('Lamna nasus')),
   // poissons
-  x('poisson-des-glaces', 'Poisson des glaces', 'poissons', 'poisson-etrange', 'Eaux glacées de l’Antarctique', 'AQ', 40, 30, 'Avec ses cousins, ce sont les seuls vertébrés au sang transparent : il n’a pas de globules rouges, l’oxygène se dissout directement dans son sang.', L('Chaenocephalus aceratus')),
   x('omble-chevalier', 'Omble chevalier', 'poissons', 'poisson-rapide', 'Lacs et rivières du Grand Nord', 'IS', 36, 46, 'Le poisson d’eau douce qui vit le plus au nord ; dans les lacs des Alpes, il est arrivé avec les glaciers de l’ère glaciaire.', L('Salvelinus alpinus')),
   x('lompe', 'Lompe', 'poissons', 'poisson-etrange', 'Eaux froides de l’Atlantique Nord', 'IS', 34, 28, 'Ce poisson rond comme une boule porte sous le ventre une ventouse, pour s’accrocher aux rochers malgré les vagues.', L('Cyclopterus lumpus')),
   x('loup-atlantique', 'Loup atlantique', 'poissons', 'poisson-coriace', 'Fonds rocheux de l’Atlantique Nord', 'NO', 36, 48, 'Une sorte d’antigel l’empêche de geler dans l’eau à −1 °C ; ses grosses dents broient oursins et coquillages.', L('Anarhichas lupus')),
-  x('golomyanka', 'Golomyanka', 'poissons', 'poisson-etrange', 'Profondeurs du lac Baïkal', 'RU', 26, 20, 'Ce poisson du Baïkal est presque transparent et fait de graisse pour un tiers ; laissé au soleil, il fond comme du beurre.', L('Comephorus baicalensis')),
   x('legine-antarctique', 'Légine antarctique', 'poissons', 'poisson-coriace', 'Grands fonds de l’océan Austral', 'AQ', 30, 60, 'Ce géant des profondeurs, qui dépasse 2 mètres, fabrique son propre antigel ; le phoque de Weddell en est friand.', L('Dissostichus mawsoni')),
   // rapaces
   x('hv-harfang', 'Harfang des neiges', 'rapaces', 'rapace-nocturne', 'Toundra arctique', 'CA', 82, 72, 'Les années où les lemmings abondent, un couple peut élever 11 petits ; les mauvaises années, il ne niche pas du tout.', L('Bubo scandiacus')),
@@ -841,7 +839,6 @@ const HIVER: Athlete[] = [
   x('moucheron-de-l-antarctique', 'Moucheron de l’Antarctique', 'insectes', 'insecte-voltigeur', 'Rochers gelés de l’Antarctique', 'AQ', 30, 10, 'Le seul insecte vraiment de l’Antarctique : il n’a pas d’ailes, car le vent l’emporterait.', L('Belgica antarctica')),
   x('chenille-laineuse-arctique', 'Chenille laineuse arctique', 'insectes', 'insecte-voltigeur', 'Toundra du Groenland et du Canada', 'GL', 30, 16, 'Elle gèle chaque hiver et met jusqu’à 7 ans pour devenir papillon, en ne mangeant que quelques semaines par été.', L('Gynaephora groenlandica')),
   // invertébrés
-  x('calmar-colossal', 'Calmar colossal', 'invertebres', 'cephalopode', 'Profondeurs de l’océan Austral', 'AQ', 64, 80, 'L’invertébré le plus lourd du monde, jusqu’à 500 kg ; ses yeux, gros comme des ballons, sont les plus grands du règne animal.', L('Mesonychoteuthis hamiltoni')),
   x('ange-de-mer', 'Ange de mer', 'invertebres', 'invertebre-etrange', 'Mers glacées des deux pôles', 'XO', 34, 14, 'Ce petit escargot de mer sans coquille nage en battant de deux ailes transparentes, comme un ange.', L('Clione limacina')),
   x('araignee-de-mer-geante', 'Araignée de mer géante', 'invertebres', 'invertebre-etrange', 'Fonds de l’océan Austral', 'AQ', 30, 24, 'Dans le froid de l’Antarctique, ces cousines des araignées deviennent géantes : leurs pattes s’étendent sur 70 cm.', L('Colossendeis megalonyx')),
   x('meduse-a-criniere-de-lion', 'Méduse à crinière de lion', 'invertebres', 'invertebre-etrange', 'Mers froides de l’Arctique', 'NO', 40, 40, 'La plus grande méduse du monde : ses tentacules peuvent dépasser 30 mètres, plus qu’une baleine bleue.', L('Cyanea capillata')),
@@ -852,10 +849,6 @@ const HIVER: Athlete[] = [
   x('malamute', 'Malamute d’Alaska', 'ferme', 'ferme-trait', 'Neige et traîneaux', 'US', 50, 66, 'Plus lourd et plus fort que le husky, il tirait de lourdes charges sur la glace pour le peuple inupiat des Malemiut.', C),
   x('cheval-yakoute', 'Cheval yakoute', 'ferme', 'ferme-trait', 'Plaines gelées de la Iakoutie', 'RU', 40, 60, 'Il passe l’hiver dehors par −50 °C, sans écurie : il trouve l’herbe en grattant la neige avec ses sabots.', L('Equus caballus')),
 
-  // Icônes : espèces du froid disparues depuis le XVIIIe siècle
-  x('grand-pingouin', 'Grand pingouin', 'oiseaux', 'oiseau-coureur', 'Îles de l’Atlantique Nord', 'IS', 66, 60, 'Le vrai « pingouin », qui ne volait pas ; les deux derniers ont été tués en 1844 sur l’îlot d’Eldey, en Islande, pour un collectionneur.', { ...L('Pinguinus impennis'), ...D(1844) }),
-  x('canard-du-labrador', 'Canard du Labrador', 'oiseaux', 'oiseau-voyageur', 'Côtes du Labrador', 'CA', 40, 40, 'Il passait l’hiver sur les côtes jusqu’à New York ; on n’a jamais trouvé un seul de ses nids, et le dernier a été vu en 1878.', { ...L('Camptorhynchus labradorius'), ...D(1878) }),
-  x('loup-des-malouines', 'Loup des Malouines', 'canides', 'canide-ruse', 'Îles Malouines', 'GB', 50, 60, 'Le seul mammifère terrestre des îles Malouines ; il ne craignait pas l’homme, et Darwin avait prédit sa disparition dès 1834.', { ...L('Dusicyon australis'), ...D(1876) }),
 ].map(hv);
 
 // une espèce présente sur plusieurs continents porte le logo « Plusieurs continents » (XW) au lieu d'un drapeau

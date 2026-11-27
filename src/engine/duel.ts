@@ -206,7 +206,7 @@ const classeQuestion = (id: Exclude<Classe, 'autre'>, name: string, precision = 
 });
 
 /** Territoires d'outre-mer : le continent n'est pas celui du drapeau (les Malouines sont en Amérique du Sud). */
-const CONTINENT_A_PART: Record<string, Continent> = { 'loup-des-malouines': 'amerique' };
+const CONTINENT_A_PART: Record<string, Continent> = {};
 
 /** Les continents où vit l'espèce : celui de son pays, et les autres pour une espèce de plusieurs continents. */
 function continentsOf(a: Athlete): Continent[] {
@@ -349,7 +349,7 @@ function pondDesOeufs(e: Encyclo, a: Athlete): boolean {
 /** Oiseaux qui ne volent pas ; et parmi les autres animaux, ceux qui volent vraiment (planer ne compte pas). */
 const OISEAUX_COUREURS = new Set([
   'manchot-empereur', 'autruche', 'autruche-d-arabie', 'kiwi', 'casoar', 'emeu', 'emeu-de-king-island',
-  'hv-manchot-empereur', 'manchot-royal', 'manchot-adelie', 'manchot-a-jugulaire', 'gorfou-sauteur', 'grand-pingouin',
+  'hv-manchot-empereur', 'manchot-royal', 'manchot-adelie', 'manchot-a-jugulaire', 'gorfou-sauteur',
 ]);
 const VOLANTS = new Set([
   'vampire', 'pipistrelle', 'chauve-souris-des-agaves',
