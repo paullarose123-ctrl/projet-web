@@ -854,11 +854,8 @@ const HIVER: Athlete[] = [
 
   // Icônes : espèces du froid disparues depuis le XVIIIe siècle
   x('grand-pingouin', 'Grand pingouin', 'oiseaux', 'oiseau-coureur', 'Îles de l’Atlantique Nord', 'IS', 66, 60, 'Le vrai « pingouin », qui ne volait pas ; les deux derniers ont été tués en 1844 sur l’îlot d’Eldey, en Islande, pour un collectionneur.', { ...L('Pinguinus impennis'), ...D(1844) }),
-  x('cormoran-de-pallas', 'Cormoran de Pallas', 'oiseaux', 'oiseau-voyageur', 'Îles du Commandeur', 'RU', 34, 46, 'Le plus grand des cormorans, presque incapable de voler, découvert par Steller en 1741 ; mangé par les chasseurs de fourrures, il a disparu vers 1850.', { ...L('Urile perspicillatus'), ...D(1850) }),
   x('canard-du-labrador', 'Canard du Labrador', 'oiseaux', 'oiseau-voyageur', 'Côtes du Labrador', 'CA', 40, 40, 'Il passait l’hiver sur les côtes jusqu’à New York ; on n’a jamais trouvé un seul de ses nids, et le dernier a été vu en 1878.', { ...L('Camptorhynchus labradorius'), ...D(1878) }),
-  x('otarie-du-japon', 'Otarie du Japon', 'marins', 'marin-pinnipede', 'Côtes de la mer du Japon', 'JP', 44, 62, 'Elle vivait des côtes de la Corée à celles d’Hokkaidō ; chassée pour sa graisse et sa peau, et capturée pour les cirques, la dernière a été vue en 1974, près de l’île de Rebun.', { ...L('Zalophus japonicus'), ...D(1974) }),
   x('loup-des-malouines', 'Loup des Malouines', 'canides', 'canide-ruse', 'Îles Malouines', 'GB', 50, 60, 'Le seul mammifère terrestre des îles Malouines ; il ne craignait pas l’homme, et Darwin avait prédit sa disparition dès 1834.', { ...L('Dusicyon australis'), ...D(1876) }),
-  x('criquet-des-rocheuses', 'Criquet des Rocheuses', 'insectes', 'insecte-colonie', 'Plaines et vallées des Rocheuses', 'US', 34, 40, 'Ses nuées étaient les plus grandes jamais vues : celle de 1875 couvrait plus de 500 000 km². Moins de 30 ans plus tard, il avait disparu ; le dernier a été trouvé en 1902.', { ...L('Melanoplus spretus'), ...D(1902) }),
 ].map(hv);
 
 // une espèce présente sur plusieurs continents porte le logo « Plusieurs continents » (XW) au lieu d'un drapeau

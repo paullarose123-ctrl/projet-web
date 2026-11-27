@@ -683,11 +683,8 @@ export const MESURES: Record<string, Mesure> = {
   malamute: [38, 0.64, 'H', 12],
   'cheval-yakoute': [450, 1.4, 'H', 25],
   'grand-pingouin': [5, 0.85, 'H', null],
-  'cormoran-de-pallas': [6, 0.9, 'L', null],
   'canard-du-labrador': [0.9, 0.5, 'L', null],
-  'otarie-du-japon': [490, 2.4, 'L', null],
   'loup-des-malouines': [12, 1.2, 'L', null],
-  'criquet-des-rocheuses': [0.001, 0.03, 'L', null],
 };
 
 const SENS_LABEL: Record<Sens, string> = { L: 'Longueur', H: 'Hauteur', E: 'Envergure' };

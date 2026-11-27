@@ -29,6 +29,10 @@ export const ICONES_RETIREES: Record<string, string> = {
   'cerf-de-schomburgk': 'wapiti-de-l-est',
   'tourte-voyageuse': 'tetras-des-bruyeres',
   'arlequin-de-chiriqui': 'crapaud-dore',
+  // Icônes de la Série 3 (Hiver) retirées avant sa sortie, faute de vraie photo (page d'aperçu seulement)
+  'cormoran-de-pallas': 'grand-pingouin',
+  'otarie-du-japon': 'loup-des-malouines',
+  'criquet-des-rocheuses': 'canard-du-labrador',
 };
 
 /**
