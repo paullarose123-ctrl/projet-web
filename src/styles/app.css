@@ -7299,16 +7299,17 @@ html.lite .snowfall--front {
 }
 
 /* ───────────── calendrier de l'Avent (components/Avent.tsx) ─────────────
-   Un village de Noël, la nuit, sous la neige : six maisons de bois aux toits enneigés, leurs guirlandes qui clignotent,
-   la fumée des cheminées, le traîneau qui passe devant la lune. Les 24 cases sont les fenêtres, volets fermés ; celle
-   du jour laisse filtrer sa lumière. Tout ce qui bouge ne fait que se déplacer ou s'estomper. */
+   Le grand sapin de la forêt, la nuit, sous la neige : ses lumières chaudes scintillent, une chouette cligne des
+   yeux, la neige tombe. Les cases sont 23 nichoirs en bois sur ses branches (et l'étoile du sommet pour le 24) :
+   porte ronde fermée et numérotée ; celle du jour brille et un rouge-gorge sautille sur son toit. Tout ce qui bouge
+   ne fait que se déplacer ou s'estomper. */
 .avent {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  padding: 22px 18px 40px;
-  border-color: rgba(255, 210, 140, 0.35);
-  background: linear-gradient(180deg, #0a1533 0%, #172a5a 40%, #33427a 70%, #5b5a8e 100%);
+  padding: 22px 18px 16px;
+  border-color: rgba(255, 220, 160, 0.3);
+  background: linear-gradient(180deg, #081430 0%, #12285a 42%, #23477a 72%, #3d6c96 100%);
 }
 
 /* filet de cadre, comme sur les boosters et l'affiche de l'accueil */
@@ -7350,56 +7351,25 @@ html.lite .snowfall--front {
   }
 }
 
-/* une grosse lune chaude */
 .avent__moon {
   position: absolute;
   top: 16px;
   right: 7%;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 38%, #fffdf2, #fff1cf 58%, #f1d9a6);
-  box-shadow: 0 0 30px 10px rgba(255, 236, 190, 0.25), 0 0 90px 34px rgba(255, 220, 160, 0.12);
+  box-shadow: 0 0 30px 10px rgba(255, 236, 190, 0.22), 0 0 90px 34px rgba(255, 220, 160, 0.1);
 }
 
-/* le traîneau du Père Noël passe devant la lune, de temps en temps */
-.avent__sleigh {
-  position: absolute;
-  top: 26px;
-  left: 0;
-  width: 150px;
-  fill: #ffe7a6;
-  stroke: #ffe7a6;
-  filter: drop-shadow(0 0 5px rgba(255, 214, 120, 0.85));
-  animation: avent-sleigh 19s linear infinite;
-}
-
-.avent__sleigh-trail {
-  stroke: none;
-  opacity: 0.8;
-}
-
-@keyframes avent-sleigh {
-  0% {
-    transform: translate3d(-170px, 44px, 0);
-  }
-  42% {
-    transform: translate3d(calc(var(--pw) + 40px), -6px, 0);
-  }
-  100% {
-    transform: translate3d(calc(var(--pw) + 40px), -6px, 0);
-  }
-}
-
-/* derrière le village : sommets, brume et sapins enneigés */
+/* au loin : sommets, brume et sapins enneigés */
 .avent__ground {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 190px;
+  height: 200px;
   background: var(--ground) center bottom / cover no-repeat;
-  opacity: 0.9;
 }
 
 .avent__snow i {
@@ -7427,9 +7397,8 @@ html.lite .snowfall--front {
 
 .avent__head {
   position: relative;
-  max-width: 60ch;
-  margin-bottom: 8px;
-  padding-right: 70px;
+  max-width: 52ch;
+  padding-right: 64px;
 }
 
 .avent__head h2 {
@@ -7440,471 +7409,339 @@ html.lite .snowfall--front {
 
 .avent__sub {
   margin: 0;
-  color: #f3e6cc;
+  color: #e6eef8;
   font-size: 0.9rem;
   text-shadow: 0 1px 6px rgba(2, 10, 24, 0.7);
 }
 
-/* le village : une rue de maisons (6 côte à côte sur grand écran, 3 ou 2 par rangée ailleurs) */
-.avent__village {
+.avent__progress {
+  margin: 10px 0 0;
+  color: #ffe2a8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgba(2, 10, 24, 0.7);
+}
+
+.avent__cta {
+  margin-top: 14px;
+}
+
+/* le sapin : un repère de 100 × 125, les nichoirs posés dessus en pourcentages */
+.avent__tree {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--houses), minmax(0, 1fr));
-  gap: 30px 14px;
-  align-items: end;
-  padding-top: 26px;
+  width: min(100% + 16px, 500px);
+  aspect-ratio: 100 / 125;
+  margin: 10px auto 0;
 }
 
-/* une maison : ses couleurs (murs, toit, volets) */
-.maison {
-  --wall: #a8322d;
-  --roof: #4a2a20;
-  --volet: #2f6b4a;
-  --planks: rgba(0, 0, 0, 0.16);
-  position: relative;
-  container-type: inline-size;
-}
-
-.maison--1 {
-  --wall: #2f6b4a;
-  --roof: #3a2418;
-  --volet: #b3262e;
-}
-
-.maison--2 {
-  --wall: #efe0c0;
-  --roof: #7a3b26;
-  --volet: #2c5d8a;
-}
-
-.maison--3 {
-  --wall: #3f6a99;
-  --roof: #2a2a3a;
-  --volet: #d9a441;
-}
-
-.maison--4 {
-  --wall: #8a5a3c;
-  --roof: #4a2c1c;
-  --volet: #b3262e;
-}
-
-.maison--5 {
-  --wall: #d9a441;
-  --roof: #6b3a24;
-  --volet: #2f6b4a;
-}
-
-.maison__roof {
-  position: relative;
-  z-index: 1;
-  display: block;
+.avent__tree-art {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  margin-bottom: -2.2%;
+  height: 100%;
   overflow: visible;
 }
 
-.maison__gable {
-  fill: var(--wall);
+.avent__lights {
+  animation: avent-twinkle 1.2s ease-in-out infinite alternate;
 }
 
-.maison__eave {
-  fill: none;
-  stroke: var(--roof);
-  stroke-width: 7;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+.avent__lights--b {
+  animation-delay: -1.2s;
 }
 
-.maison__brick {
-  fill: #8a3a2a;
-}
-
-.maison__brick-top {
-  fill: #5e2419;
-}
-
-/* la guirlande du toit : deux rangs de halos qui s'allument tour à tour */
-.maison__glow {
-  animation: avent-twinkle 1.1s ease-in-out infinite alternate;
-}
-
-.maison__glow--b {
-  animation-delay: -1.1s;
-}
-
-.maison__wall {
-  position: relative;
-  margin: 0 7.1%;
-  background:
-    repeating-linear-gradient(0deg, var(--planks) 0 1px, transparent 1px 7cqw),
-    var(--wall);
-  box-shadow: inset 0 4cqw 4cqw -3cqw rgba(0, 0, 0, 0.4), inset 1.6cqw 0 0 -0.6cqw rgba(0, 0, 0, 0.18), inset -1.6cqw 0 0 -0.6cqw rgba(0, 0, 0, 0.18);
-}
-
-/* la maison crème : des colombages */
-.maison--2 .maison__wall {
-  background:
-    linear-gradient(90deg, transparent 48.4%, #6b4226 48.4% 51.6%, transparent 51.6%),
-    linear-gradient(0deg, transparent 49%, #6b4226 49% 52%, transparent 52%),
-    linear-gradient(90deg, #6b4226 0 3%, transparent 3% 97%, #6b4226 97%),
-    var(--wall);
-}
-
-/* la neige tassée au pied de la maison */
-.maison::after {
-  content: '';
+/* la chouette, sur sa souche au pied du sapin, qui cligne des yeux */
+.avent__owl {
   position: absolute;
-  left: -5%;
-  right: -5%;
-  bottom: -3cqw;
-  z-index: 2;
-  height: 8cqw;
-  background: var(--snowdrift) repeat-x 0 0 / auto 100%;
-  pointer-events: none;
+  top: 74.4%;
+  left: 3.4%;
+  width: 10%;
+  overflow: visible;
 }
 
-.maison__windows {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9cqw 10cqw;
-  padding: 9cqw 8cqw 13cqw;
+.avent__owl-lids {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+  animation: avent-blink 5s ease-in-out infinite;
 }
 
-/* la fumée des cheminées */
-.maison__smoke {
-  position: absolute;
-  top: 3.7cqw;
-  width: 0;
-  height: 0;
-}
-
-.maison__smoke i {
-  position: absolute;
-  top: -5cqw;
-  left: -5cqw;
-  width: 10cqw;
-  height: 10cqw;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(232, 238, 248, 0.6), rgba(232, 238, 248, 0) 70%);
-  opacity: 0;
-  animation: avent-smoke 4.5s ease-out infinite;
-}
-
-.maison__smoke i:nth-child(2) {
-  animation-delay: -1.5s;
-}
-
-.maison__smoke i:nth-child(3) {
-  animation-delay: -3s;
-}
-
-@keyframes avent-smoke {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.5);
-  }
-  15% {
-    opacity: 0.9;
-  }
+@keyframes avent-blink {
+  0%,
+  90%,
   100% {
-    opacity: 0;
-    transform: translate(7cqw, -34cqw) scale(1.9);
+    transform: scaleY(0);
+  }
+  93%,
+  96% {
+    transform: scaleY(1);
   }
 }
 
-/* ── les fenêtres ── */
-.fenetre {
-  position: relative;
-  isolation: isolate;
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 5;
+@media (min-width: 860px) {
+  .avent {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+    align-items: center;
+    gap: 20px;
+    padding: 26px 30px 18px;
+  }
+  .avent__head {
+    align-self: start;
+    padding-top: 40px;
+  }
+  .avent__head h2 {
+    font-size: 2.3rem;
+  }
+  .avent__sub {
+    font-size: 1rem;
+  }
+  .avent__tree {
+    width: 100%;
+    margin: 0;
+  }
+  .avent__moon {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* ── un nichoir : ses bois (bouleau, chêne, noyer, pin), son toit enneigé, sa porte ronde ── */
+.nichoir {
+  --wood: #d4a26a;
+  --grain: #a9773f;
+  --roof: #5a3a24;
+  position: absolute;
+  width: 12%;
+  aspect-ratio: 1;
   padding: 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
+  translate: -50% -50%;
+  transform-origin: 50% 0;
+  container-type: inline-size;
 }
 
-.fenetre:disabled {
+.nichoir:disabled {
   cursor: default;
 }
 
-.fenetre__frame {
-  position: absolute;
-  inset: 0;
-  border-radius: 3cqw 3cqw 1.2cqw 1.2cqw;
-  background: #f3e6cc;
-  box-shadow: 0 1.5cqw 2.5cqw rgba(0, 0, 0, 0.35);
-  perspective: 260px;
-  transition: box-shadow 0.6s;
+.nichoir--w0 {
+  --wood: #e7d8bd;
+  --grain: #a8957a;
+  --roof: #4a6b3a;
 }
 
-.fenetre__inside {
+.nichoir--w1 {
+  --wood: #b98149;
+  --grain: #8a5a2c;
+  --roof: #7a3b26;
+}
+
+.nichoir--w2 {
+  --wood: #8a5d3b;
+  --grain: #5e3d25;
+  --roof: #3e5a46;
+}
+
+.nichoir__art {
   position: absolute;
-  inset: 2.2cqw;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.nichoir__body {
+  fill: var(--wood);
+}
+
+.nichoir__grain {
+  fill: none;
+  stroke: var(--grain);
+  stroke-width: 2.2;
+  opacity: 0.5;
+}
+
+.nichoir__perch {
+  fill: var(--grain);
+}
+
+.nichoir__roofline {
+  fill: none;
+  stroke: var(--roof);
+  stroke-width: 13;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* l'entrée ronde : sombre, ou éclairée d'une lumière chaude quand le nichoir est ouvert */
+.nichoir__hole,
+.nichoir__door {
+  position: absolute;
+  top: 59.7%;
+  left: 50%;
+  width: 54cqw;
+  aspect-ratio: 1;
+  margin: -27cqw 0 0 -27cqw;
+  border-radius: 50%;
+}
+
+.nichoir__hole {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 2cqw 2cqw 0.6cqw 0.6cqw;
-  background: linear-gradient(#1a2645, #0e1830);
+  background: radial-gradient(circle at 50% 40%, #2a1a10, #120a05);
+  box-shadow: inset 0 1.5cqw 2cqw rgba(0, 0, 0, 0.6);
 }
 
-/* la lumière derrière les volets : chaude, avec des rideaux rouges */
-.fenetre.is-lit .fenetre__inside,
-.fenetre--today .fenetre__inside {
-  background: radial-gradient(circle at 50% 64%, #fff6d2 0%, #ffd77e 36%, #f0a040 76%, #c66a2a 100%);
+.nichoir.is-lit .nichoir__hole {
+  background: radial-gradient(circle at 50% 55%, #fff6d2, #ffd27a 45%, #e98f35 85%);
+  box-shadow: 0 0 7cqw 2cqw rgba(255, 190, 90, 0.6), inset 0 1cqw 2cqw rgba(140, 60, 10, 0.5);
 }
 
-.fenetre.is-lit .fenetre__inside::before,
-.fenetre.is-lit .fenetre__inside::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 22%;
-  width: 22%;
-  background: linear-gradient(90deg, #8e1c24, #c0392b 60%, #8e1c24);
+.nichoir__gift {
+  width: 32cqw;
+  height: 32cqw;
+  filter: drop-shadow(0 0.8cqw 1cqw rgba(120, 50, 10, 0.45));
 }
 
-.fenetre.is-lit .fenetre__inside::before {
-  left: 0;
-  border-bottom-right-radius: 100% 60%;
-}
-
-.fenetre.is-lit .fenetre__inside::after {
-  right: 0;
-  border-bottom-left-radius: 100% 60%;
-}
-
-.fenetre.is-lit .fenetre__frame {
-  box-shadow: 0 0 5cqw 1.5cqw rgba(255, 190, 90, 0.5), 0 1.5cqw 2.5cqw rgba(0, 0, 0, 0.35);
-}
-
-.fenetre__gift {
-  position: relative;
-  z-index: 1;
-  width: 13cqw;
-  height: 13cqw;
-  margin-top: 4cqw;
-  filter: drop-shadow(0 0.6cqw 0.8cqw rgba(120, 50, 10, 0.45));
-}
-
-.fenetre__gift--sport {
+.nichoir__gift--sport {
   color: #5a2a10;
 }
 
-.fenetre__gift--card {
+.nichoir__gift--card {
   display: block;
-  width: 9.6cqw;
-  height: 13.4cqw;
-  border-radius: 1cqw;
+  width: 24cqw;
+  height: 34cqw;
+  border-radius: 2cqw;
   background-position: center;
   background-size: cover;
 }
 
-.fenetre__date {
-  position: absolute;
-  top: 1.2cqw;
-  left: 50%;
+/* la porte : un disque de bois aux cernes, son numéro ; elle s'ouvre sur sa charnière */
+.nichoir__door {
   z-index: 1;
-  font-family: var(--font-display);
-  font-size: 5.4cqw;
-  line-height: 1;
-  color: #7a2a12;
-  transform: translateX(-50%);
-}
-
-/* les volets de bois, à lattes, avec un petit sapin découpé ; ils s'ouvrent sur leurs gonds */
-.fenetre__volet {
-  position: absolute;
-  top: 2.2cqw;
-  bottom: 2.2cqw;
-  width: calc(50% - 2.2cqw);
-  border: 0.5cqw solid rgba(0, 0, 0, 0.28);
-  background:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 0.45cqw, transparent 0.45cqw 2.4cqw),
-    var(--volet);
-  transition: transform 0.75s cubic-bezier(0.3, 1.25, 0.5, 1);
-}
-
-.fenetre__volet--g {
-  left: 2.2cqw;
-  border-radius: 2cqw 0 0 0.6cqw;
-  transform-origin: 0 50%;
-}
-
-.fenetre__volet--d {
-  right: 2.2cqw;
-  border-radius: 0 2cqw 0.6cqw 0;
-  transform-origin: 100% 50%;
-}
-
-.fenetre__volet::after {
-  content: '';
-  position: absolute;
-  top: 20%;
-  left: 50%;
-  width: 7cqw;
-  height: 8cqw;
-  margin-left: -3.5cqw;
-  background: var(--cut, #0c1424);
-  clip-path: polygon(50% 0, 100% 72%, 62% 72%, 62% 100%, 38% 100%, 38% 72%, 0 72%);
-}
-
-
-.fenetre--today:not(.is-opening):hover .fenetre__volet--g {
-  transform: rotateY(-30deg);
-}
-
-.fenetre--today:not(.is-opening):hover .fenetre__volet--d {
-  transform: rotateY(30deg);
-}
-
-.fenetre.is-lit .fenetre__volet--g {
-  transform: rotateY(-112deg);
-}
-
-.fenetre.is-lit .fenetre__volet--d {
-  transform: rotateY(112deg);
-}
-
-/* le numéro, sur une plaque ronde accrochée aux volets */
-.fenetre__num {
-  position: absolute;
-  top: 46%;
-  left: 50%;
-  z-index: 2;
   display: grid;
+  transform-style: preserve-3d;
   place-items: center;
-  width: 15cqw;
-  aspect-ratio: 1;
-  margin: -7.5cqw 0 0 -7.5cqw;
-  border: 0.9cqw solid #b3262e;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fffaf0, #efdcb4);
-  box-shadow: 0 0.6cqw 1cqw rgba(0, 0, 0, 0.4);
+  border: 1.8cqw solid #5e3a1e;
+  background: radial-gradient(circle at 40% 35%, #e3ad72, #c4884d 45%, #9a6233 75%, #7a4a26);
+  box-shadow: 0 1cqw 1.6cqw rgba(0, 0, 0, 0.45), inset 0 0 0 2.6cqw rgba(255, 230, 190, 0.12);
+  transform-origin: 0 50%;
+  transition: transform 0.75s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.nichoir__door b {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   font-family: var(--font-display);
-  font-size: 8cqw;
+  font-size: 30cqw;
   font-weight: 400;
   line-height: 1;
-  color: #8e1c24;
-  transition:
-    transform 0.4s,
-    opacity 0.3s;
+  color: #fff3dc;
+  text-shadow: 0 1cqw 0 rgba(60, 30, 10, 0.6);
 }
 
-.fenetre.is-lit .fenetre__num {
-  opacity: 0;
-  transform: translateY(-6cqw) scale(0.6);
+.nichoir.is-lit .nichoir__door {
+  transform: perspective(160px) rotateY(-128deg);
 }
 
-/* le 24 : la plaque dorée du réveillon */
-.fenetre--grand .fenetre__num {
-  border-color: #c58f1f;
-  background: radial-gradient(circle at 35% 30%, #fff7d6, #f2c14e);
-  color: #6b3a00;
-}
-
-/* un rebord de fenêtre chargé de neige */
-.fenetre::after {
-  content: '';
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: -6%;
-  z-index: 3;
-  height: 9%;
-  border-radius: 50% 50% 1cqw 1cqw / 100% 100% 1cqw 1cqw;
-  background: #f4f9ff;
-  box-shadow: 0 0.5cqw 0 rgba(120, 150, 180, 0.5);
-}
-
-/* la fenêtre du jour : la lumière passe entre les volets et par le petit sapin découpé, la plaque se balance */
-.fenetre--today {
-  --cut: #ffd27a;
+/* le nichoir du jour : sa porte cerclée d'or brille, il se balance, un rouge-gorge sautille sur le toit */
+.nichoir--today {
   cursor: pointer;
+  z-index: 2;
+  animation: avent-call 2s ease-in-out infinite;
 }
 
-.fenetre--today::before {
-  content: '';
-  position: absolute;
-  inset: -48% -60%;
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 205, 110, 0.85), rgba(255, 170, 70, 0.3) 55%, transparent);
-  animation: avent-beckon 1.3s ease-in-out infinite alternate;
-}
-
-@keyframes avent-beckon {
-  from {
-    opacity: 0.55;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-}
-
-/* les volets du jour sont entrouverts : la lumière dorée filtre entre eux */
-.fenetre--today .fenetre__volet--g {
-  transform: rotateY(-14deg);
-}
-
-.fenetre--today .fenetre__volet--d {
-  transform: rotateY(14deg);
-}
-
-.fenetre--today .fenetre__frame {
-  box-shadow: 0 0 4cqw 1cqw rgba(255, 196, 90, 0.6), 0 1.5cqw 2.5cqw rgba(0, 0, 0, 0.35);
-}
-
-.fenetre--today .fenetre__frame::after {
-  content: '';
-  position: absolute;
-  top: 2.6cqw;
-  bottom: 2.6cqw;
-  left: 50%;
-  z-index: 1;
-  width: 2.2cqw;
-  margin-left: -1.1cqw;
-  border-radius: 1cqw;
-  background: #fff6cf;
-  box-shadow: 0 0 3cqw 1.6cqw rgba(255, 200, 90, 0.95);
-  animation: avent-beckon 1.1s ease-in-out infinite alternate;
-}
-
-.fenetre--today.is-opening .fenetre__frame::after {
-  display: none;
-}
-
-.fenetre--today .fenetre__num {
-  border-color: #e0a019;
-  transform-origin: 50% -40%;
-  animation: avent-wiggle 1.8s ease-in-out infinite;
-}
-
-@keyframes avent-wiggle {
+@keyframes avent-call {
   0%,
   60%,
   100% {
     rotate: 0deg;
   }
   70% {
-    rotate: -12deg;
+    rotate: -6deg;
   }
   80% {
-    rotate: 10deg;
+    rotate: 5deg;
   }
   90% {
-    rotate: -5deg;
+    rotate: -2deg;
   }
 }
 
-/* la fenêtre qui s'ouvre : un éclair de lumière */
-.fenetre.is-opening .fenetre__inside {
+.nichoir--today .nichoir__door {
+  border-color: #f2c14e;
+}
+
+.nichoir--today::after {
+  content: '';
+  position: absolute;
+  top: 59.7%;
+  left: 50%;
+  z-index: 0;
+  width: 120cqw;
+  aspect-ratio: 1;
+  margin: -60cqw 0 0 -60cqw;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 210, 120, 0.95), rgba(255, 170, 70, 0.35) 55%, transparent);
+  animation: avent-beckon 1.3s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.nichoir--today.is-opening::after {
+  animation: avent-beckon 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes avent-beckon {
+  from {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.nichoir--today:not(.is-opening):hover .nichoir__door {
+  transform: perspective(160px) rotateY(-28deg);
+}
+
+.nichoir__robin {
+  position: absolute;
+  top: -16cqw;
+  left: 34%;
+  z-index: 3;
+  width: 52cqw;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  animation: avent-hop 2.6s ease-in-out infinite;
+}
+
+@keyframes avent-hop {
+  0%,
+  55%,
+  70%,
+  100% {
+    transform: none;
+  }
+  62% {
+    transform: translateY(-9cqw) rotate(-6deg);
+  }
+  80% {
+    transform: scaleX(-1);
+  }
+  92% {
+    transform: scaleX(-1) translateY(-6cqw);
+  }
+}
+
+/* la porte s'ouvre : un éclair de lumière, et une mésange s'envole */
+.nichoir.is-opening .nichoir__hole {
   animation: avent-flash 0.8s ease-out;
 }
 
@@ -7914,24 +7751,158 @@ html.lite .snowfall--front {
   }
 }
 
-/* une fenêtre oubliée : close, éteinte, prise dans le givre */
-.fenetre--missed .fenetre__volet {
-  filter: saturate(0.35) brightness(0.75);
-}
-
-.fenetre--missed .fenetre__num {
-  filter: grayscale(0.8) brightness(0.85);
-}
-
-.fenetre__givre {
+.nichoir__bird {
   position: absolute;
-  inset: 0;
+  top: 59.7%;
+  left: 50%;
   z-index: 3;
-  border-radius: inherit;
+  width: 56cqw;
+  margin: -22cqw 0 0 -28cqw;
+  overflow: visible;
+  opacity: 0;
+  animation: avent-fly 1.1s cubic-bezier(0.3, 0.6, 0.4, 1) 0.35s both;
+}
+
+@keyframes avent-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3);
+  }
+  15% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(190cqw, -240cqw) scale(1.15) rotate(-12deg);
+  }
+}
+
+.nichoir__wing {
+  transform-box: fill-box;
+  transform-origin: 20% 90%;
+  animation: avent-wing 0.14s ease-in-out infinite alternate;
+}
+
+@keyframes avent-wing {
+  to {
+    transform: scaleY(-0.7);
+  }
+}
+
+/* un nichoir oublié : fermé, terni, pris dans le givre */
+.nichoir--missed .nichoir__art,
+.nichoir--missed .nichoir__door {
+  filter: saturate(0.3) brightness(0.75);
+}
+
+.nichoir__givre {
+  position: absolute;
+  top: 30%;
+  bottom: 3%;
+  left: 13%;
+  right: 13%;
+  z-index: 2;
+  border-radius: 4cqw;
   background:
     radial-gradient(70% 45% at 0% 0%, rgba(255, 255, 255, 0.8), transparent 70%),
     radial-gradient(60% 40% at 100% 100%, rgba(255, 255, 255, 0.75), transparent 70%),
-    linear-gradient(rgba(210, 230, 248, 0.35), rgba(210, 230, 248, 0.35));
+    linear-gradient(rgba(210, 230, 248, 0.3), rgba(210, 230, 248, 0.3));
+}
+
+/* ── l'étoile du sommet : la case du 24 ── */
+.etoile {
+  position: absolute;
+  top: 2.6%;
+  left: 50%;
+  z-index: 2;
+  width: 17%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  translate: -50% -50%;
+  container-type: inline-size;
+}
+
+.etoile:disabled {
+  cursor: default;
+}
+
+.etoile svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.etoile__shape {
+  fill: #c99a2e;
+  stroke: #fff3c4;
+  stroke-width: 0.6;
+}
+
+.etoile__core {
+  fill: #e9bd4c;
+}
+
+.etoile b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 6cqw;
+  font-family: var(--font-display);
+  font-size: 24cqw;
+  font-weight: 400;
+  color: #6b3a00;
+}
+
+.etoile::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 220, 140, 0.55), transparent);
+  pointer-events: none;
+}
+
+.etoile--today {
+  cursor: pointer;
+  animation: avent-call 2s ease-in-out infinite;
+}
+
+.etoile--today::after,
+.etoile.is-lit::after {
+  inset: -60%;
+  background: radial-gradient(closest-side, rgba(255, 225, 140, 0.95), rgba(255, 180, 80, 0.35) 55%, transparent);
+  animation: avent-beckon 1.2s ease-in-out infinite alternate;
+}
+
+.etoile--today .etoile__shape,
+.etoile.is-lit .etoile__shape {
+  fill: #ffd166;
+}
+
+.etoile.is-opening svg {
+  animation: avent-spin-once 0.9s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes avent-spin-once {
+  50% {
+    transform: rotate(180deg) scale(1.4);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.etoile--missed {
+  filter: saturate(0.3) brightness(0.7);
 }
 
 /* ── la cérémonie du cadeau : un grand paquet arrive, tremble, s'ouvre dans un éclat de lumière ── */
@@ -8347,7 +8318,7 @@ html.lite .snowfall--front {
   .snowflake {
     animation: none !important;
   }
-  .fenetre__volet {
+  .nichoir__door {
     transition: none;
   }
   .avent-reveal__present,
