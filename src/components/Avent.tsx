@@ -1,28 +1,31 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGame } from '../store/game';
 import { useNow } from '../hooks/useNow';
 import { AVENT, AVENT_DAYS, AVENT_LAYOUT, aventDay, aventOpened, type AventDay } from '../engine/avent';
 import { AVENT_BACK, AVENT_GROUND, AVENT_STARS_A, AVENT_STARS_B } from '../art/avent';
-import { f } from '../art/kit';
+import { ellipse, f, poly, type Pt } from '../art/kit';
 import { BallIcon } from './Balles';
 import { MiniPack } from './MiniPack';
 import { PackArt } from './PackArt';
 import { SportIcon } from './SportIcon';
 import { CardBackHiver } from './CardBackHiver';
+import { star } from './Noel';
+import { fox, rabbit, stag } from './PackScene';
 import { sfx } from '../audio/sfx';
 
-// Calendrier de l'Avent, sur l'accueil du 1er au 24 décembre (voir engine/avent.ts) : un village de Noël, la nuit,
-// sous la neige. Six maisons de bois aux toits enneigés, leurs guirlandes qui clignotent au bord du toit, une
-// couronne de houx sur le pignon, la fumée qui monte des cheminées ; le traîneau du Père Noël passe devant la lune.
-// Les 24 cases sont les fenêtres des maisons, volets fermés, numérotées dans le désordre. Derrière la fenêtre du jour,
-// la lumière filtre entre les volets ; on la touche, les volets s'ouvrent sur une lumière dorée, et un grand paquet
-// cadeau arrive à l'écran, tremble, s'ouvre dans un éclat de lumière et montre le cadeau. Les fenêtres déjà ouvertes
-// restent allumées, avec leur cadeau derrière la vitre ; les fenêtres oubliées restent closes, prises dans le givre.
+// Calendrier de l'Avent, sur l'accueil du 1er au 24 décembre (voir engine/avent.ts), dans la nature comme le reste du
+// jeu : le grand sapin de la forêt, la nuit, sous la neige et la lune. Ses lumières chaudes scintillent, une chouette
+// cligne des yeux sur une branche. Sur ses branches, 23 nichoirs en bois, porte ronde fermée et numérotée dans le
+// désordre ; tout en haut, l'étoile du sapin garde la case du 24. Le nichoir du jour brille autour de sa porte et un
+// rouge-gorge sautille sur son toit ; on le touche, la porte s'ouvre sur une lumière chaude et une mésange s'envole.
+// Puis le cadeau arrive à l'écran, emballé dans du papier kraft avec sa ficelle et un brin de sapin : il tremble,
+// s'ouvre dans un éclat de lumière et montre ce qu'il contient. Les nichoirs ouverts restent éclairés, leur cadeau
+// au creux de l'entrée ; les nichoirs oubliés restent fermés, pris dans le givre.
 
-type WindowState = 'open' | 'today' | 'missed' | 'later';
+type BoxState = 'open' | 'today' | 'missed' | 'later';
 
-/** Le cadeau en quelques mots (dans l'étiquette d'une fenêtre ouverte). */
+/** Le cadeau en quelques mots. */
 function shortTitle(entry: AventDay): string {
   if (entry.short) return entry.short;
   const reward = entry.reward;
@@ -33,15 +36,15 @@ function shortTitle(entry: AventDay): string {
   return reward.pack.name;
 }
 
-/** Le cadeau en petit, derrière la vitre d'une fenêtre ouverte. */
+/** Le cadeau en petit, au creux d'un nichoir ouvert. */
 function SmallGift({ entry }: { entry: AventDay }) {
   const reward = entry.reward;
-  if (reward.kind === 'credits') return <BallIcon className="fenetre__gift" />;
-  if (reward.kind === 'boosters') return <MiniPack className="fenetre__gift" />;
-  if (reward.kind === 'energie') return <Bolt className="fenetre__gift" />;
-  if (reward.pack.sport) return <SportIcon sport={reward.pack.sport} className="fenetre__gift fenetre__gift--sport" />;
-  if (reward.pack.id.startsWith('avent-')) return <span className="fenetre__gift fenetre__gift--card" style={{ backgroundImage: AVENT_BACK }} />;
-  return <MiniPack className="fenetre__gift" />;
+  if (reward.kind === 'credits') return <BallIcon className="nichoir__gift" />;
+  if (reward.kind === 'boosters') return <MiniPack className="nichoir__gift" />;
+  if (reward.kind === 'energie') return <Bolt className="nichoir__gift" />;
+  if (reward.pack.sport) return <SportIcon sport={reward.pack.sport} className="nichoir__gift nichoir__gift--sport" />;
+  if (reward.pack.id.startsWith('avent-')) return <span className="nichoir__gift nichoir__gift--card" style={{ backgroundImage: AVENT_BACK }} />;
+  return <MiniPack className="nichoir__gift" />;
 }
 
 function Bolt({ className = '' }: { className?: string }) {
@@ -52,176 +55,279 @@ function Bolt({ className = '' }: { className?: string }) {
   );
 }
 
-// ───────────── les maisons ─────────────
+// ───────────── le grand sapin ─────────────
 
-/** Ampoules de la guirlande au bord du toit : [x, y] le long des deux pentes. */
-const EAVE: [number, number][] = [];
-for (let k = 0; k <= 12; k++) {
-  const t = k / 12;
-  EAVE.push(t <= 0.5 ? [2 + t * 2 * 48, 47 - t * 2 * 37] : [50 + (t - 0.5) * 2 * 48, 10 + (t - 0.5) * 2 * 37]);
+/** Les cinq étages du sapin : [pointe, base, demi-largeur], dans un repère de 100 × 125. */
+const TIERS: [number, number, number][] = [
+  [3, 27, 15],
+  [13, 41, 23],
+  [26, 55, 31],
+  [39, 69, 39],
+  [52, 83, 47],
+];
+
+/** Les nichoirs sur les branches : une rangée par étage (2, 3, 4, 5, 6), puis trois dans la neige au pied du sapin. */
+const SPOTS: Pt[] = [
+  ...[
+    [21, 2],
+    [35, 3],
+    [49, 4],
+    [63, 5],
+    [77, 6],
+  ].flatMap(([y, n]) => Array.from({ length: n }, (_, i): Pt => [50 + (i - (n - 1) / 2) * 14, y])),
+  [22, 104],
+  [50, 108],
+  [78, 104],
+];
+/** Les jours des nichoirs, mélangés (le 24 est l'étoile). */
+const DAYS = AVENT_LAYOUT.filter((day) => day !== AVENT_DAYS);
+
+const WARM = ['#ffd166', '#ffe7a3', '#ffb35c', '#fff1c1'];
+
+function useTreeArt() {
+  return useMemo(() => {
+    let body = '';
+    let shade = '';
+    let snow = '';
+    let lumps = '';
+    let wire = '';
+    const bulbs: [number, number, string, number][] = [];
+    TIERS.forEach(([apex, base, half], k) => {
+      // l'étage : un triangle au bas festonné en pointes
+      const n = 8;
+      const pts: Pt[] = [[50, apex], [50 + half, base]];
+      for (let i = 1; i < n; i++) pts.push([50 + half - (i * 2 * half) / n, base - (i % 2 ? 3.4 : 0.4)]);
+      pts.push([50 - half, base]);
+      body += poly(pts);
+      shade += poly([[50, apex], [50 + half, base], [50, base - 1]]);
+      // la neige : un bonnet à la pointe, et des paquets sur les pointes du bas
+      const t = 0.17;
+      snow += poly([[50, apex - 0.6], [50 + half * t, apex + (base - apex) * t], [50 + half * t * 0.3, apex + (base - apex) * t * 1.12], [50 - half * t * 0.4, apex + (base - apex) * t * 0.98], [50 - half * t, apex + (base - apex) * t]]);
+      for (let i = 2; i <= n - 2; i += 2) lumps += ellipse(50 + half - (i * 2 * half) / n, base - 1.4, 1.7, 0.75);
+      // une guirlande de lumières chaudes en feston sur l'étage
+      const y0 = apex + (base - apex) * 0.62;
+      const w0 = half * 0.62;
+      wire += `M${f(50 - w0)} ${f(y0)}Q50 ${f(y0 + 7)} ${f(50 + w0)} ${f(y0 - 1)}`;
+      const count = 4 + k;
+      for (let i = 0; i <= count; i++) {
+        const u = i / count;
+        const x = (1 - u) * (1 - u) * (50 - w0) + 2 * u * (1 - u) * 50 + u * u * (50 + w0);
+        const y = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * (y0 + 7) + u * u * (y0 - 1);
+        bulbs.push([x, y + 0.8, WARM[(i + k) % WARM.length], (i + k) % 2]);
+      }
+    });
+    return { body, shade, snow, lumps, wire, bulbs };
+  }, []);
 }
-const BULB_COLORS = ['#ffd166', '#ff6b6b', '#7ee8a6', '#fff1c1', '#7cc8ff'];
 
-/** Le toit d'une maison : le pignon, la couronne de houx, les pentes enneigées, la cheminée et la guirlande. */
-function Roof({ chimney }: { chimney: number }) {
-  const id = `roof${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const bulbs = EAVE.map(([x, y], k) => ({ x, y: y + 2.4, color: BULB_COLORS[k % BULB_COLORS.length], group: k % 2 }));
+/** Le sapin, son tronc, la neige à son pied et ses lumières. */
+function Tree() {
+  const id = `sapin${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const art = useTreeArt();
   return (
-    <svg className="maison__roof" viewBox="-6 -2 112 52" aria-hidden="true">
+    <svg className="avent__tree-art" viewBox="0 0 100 125" aria-hidden="true">
       <defs>
         <radialGradient id={`${id}-glow`}>
           <stop offset="0" stopColor="#fff2c4" stopOpacity={0.95} />
           <stop offset="0.4" stopColor="#ffc861" stopOpacity={0.4} />
           <stop offset="1" stopColor="#ffc861" stopOpacity={0} />
         </radialGradient>
+        <linearGradient id={`${id}-snow`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f4f9ff" />
+          <stop offset="1" stopColor="#c9dcef" />
+        </linearGradient>
       </defs>
-      {/* la cheminée, derrière le toit */}
-      <rect className="maison__brick" x={chimney} y={8} width={11} height={26} />
-      <rect className="maison__brick-top" x={chimney - 1.6} y={6} width={14.2} height={4} rx={0.8} />
-      <ellipse cx={chimney + 5.5} cy={6} rx={8} ry={2.2} fill="#f4f9ff" />
-      {/* le pignon et sa couronne */}
-      <path className="maison__gable" d="M2 48L50 11L98 48Z" />
-      <circle cx={50} cy={32} r={6} fill="none" stroke="#2f6b4a" strokeWidth={3.4} />
-      <circle cx={50} cy={32} r={6} fill="none" stroke="#3f8a5f" strokeWidth={1.2} strokeDasharray="1.4 2.2" />
-      <path d={`M${f(47.8)} 37.6L45.4 41.6L49 39.4ZM${f(52.2)} 37.6L54.6 41.6L51 39.4Z`} fill="#c0392b" />
-      <circle cx={50} cy={38} r={1.4} fill="#c0392b" />
-      {[[45.4, 28.6], [54.8, 29.4], [50, 26]].map(([x, y], k) => (
-        <circle key={k} cx={x} cy={y} r={0.9} fill="#e74c3c" />
-      ))}
-      {/* les pentes du toit et la neige dessus */}
-      <path className="maison__eave" d="M-4 49L50 6L104 49" />
-      <path d="M-4.6 46.4L50 3.2L104.6 46.4" fill="none" stroke="#f4f9ff" strokeWidth={4.2} strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M8 38.2q1.6 2.8 3.2 0M20 28.6q1.4 3.4 2.8 0M36 16.2q1.2 2.6 2.4 0M62 16.2q1.2 2.6 2.4 0M78 28.6q1.4 3.4 2.8 0M90 38.2q1.6 2.8 3.2 0" fill="#f4f9ff" />
-      {/* la guirlande : les ampoules, et leurs halos qui s'allument tour à tour */}
+      {/* la neige au pied du sapin, et son ombre */}
+      <path d="M-240 132V108Q-120 100 -20 102Q20 90 50 93T120 101Q220 100 340 108V132Z" fill={`url(#${id}-snow)`} />
+      <path d={ellipse(50, 95.5, 22, 3)} fill="#8fb0cf" opacity={0.5} />
+      {/* des animaux dans la neige : un cerf (sur grand écran, à gauche du sapin), un lièvre, un renard */}
+      <g transform="translate(-58 106) scale(1.25)">{stag('#5b3d28')}</g>
+      <g transform="translate(-88 109) scale(0.9)">{stag('#6b4a33')}</g>
+      <g transform="translate(36 115) scale(0.55)">{rabbit('#9a7552')}</g>
+      <g transform="translate(94 101.4) scale(0.5)">{fox('#d9662a', '#fff4e6')}</g>
+      {/* une souche dans la neige, où la chouette s'est posée */}
+      <path d="M3.6 96.6H13.4L13 102H4Z" fill="#6b4428" />
+      <path d={ellipse(8.5, 96.6, 4.9, 1.5)} fill="#c4925a" />
+      <path d={ellipse(8.5, 96.2, 4.4, 0.9)} fill="#f4f9ff" />
+      {/* le tronc */}
+      <path d="M45.6 80H54.4L55.4 96H44.6Z" fill="#5a3a24" />
+      <path d="M48 82V95M51.6 83V94" stroke="#3e2716" strokeWidth={0.6} opacity={0.7} />
+      {/* les étages, de bas en haut (l'étage du haut passe devant celui du dessous) */}
+      <path d={art.body} fill="#1f4d3a" />
+      <path d={art.shade} fill="#0c2a1f" opacity={0.35} />
+      <path d={art.snow} fill="#f4f9ff" opacity={0.94} />
+      <path d={art.lumps} fill="#f4f9ff" opacity={0.9} />
+      {/* les lumières : le fil, puis deux rangs de halos qui s'allument tour à tour */}
+      <path d={art.wire} fill="none" stroke="#2c1d12" strokeWidth={0.35} opacity={0.7} />
       {[0, 1].map((group) => (
-        <g key={group} className={`maison__glow maison__glow--${group ? 'b' : 'a'}`}>
-          {bulbs
-            .filter((b) => b.group === group)
-            .map((b, k) => (
-              <circle key={k} cx={f(b.x)} cy={f(b.y)} r={4.4} fill={`url(#${id}-glow)`} />
+        <g key={group} className={`avent__lights avent__lights--${group ? 'b' : 'a'}`}>
+          {art.bulbs
+            .filter((b) => b[3] === group)
+            .map(([x, y], k) => (
+              <circle key={k} cx={f(x)} cy={f(y)} r={3.4} fill={`url(#${id}-glow)`} />
             ))}
         </g>
       ))}
-      {bulbs.map((b, k) => (
-        <circle key={k} cx={f(b.x)} cy={f(b.y)} r={1.25} fill={b.color} />
+      {art.bulbs.map(([x, y, color], k) => (
+        <circle key={k} cx={f(x)} cy={f(y)} r={0.85} fill={color} />
       ))}
     </svg>
   );
 }
 
-function Fenetre({ day, state, opening, onOpen }: { day: number; state: WindowState; opening: boolean; onOpen: () => void }) {
+/** Chouette perchée sur une branche, qui cligne des yeux de temps en temps. */
+function Owl() {
+  return (
+    <svg className="avent__owl" viewBox="-10 -14 20 22" aria-hidden="true">
+      <path d="M-6.4 -8.6L-5 -13L-3 -9.4ZM6.4 -8.6L5 -13L3 -9.4Z" fill="#6b4a2f" />
+      <ellipse cx={0} cy={-2} rx={7.2} ry={9} fill="#7a5638" />
+      <ellipse cx={0} cy={1.4} rx={4.6} ry={5.4} fill="#d9bf96" />
+      <path d="M-3 0.4l1 1 1-1M1 0.4l1 1 1-1M-1 3l1 1 1-1" stroke="#8a6a46" strokeWidth={0.5} fill="none" />
+      <circle cx={-2.9} cy={-6} r={2.7} fill="#fff4dc" />
+      <circle cx={2.9} cy={-6} r={2.7} fill="#fff4dc" />
+      <circle cx={-2.9} cy={-6} r={1.5} fill="#e0a019" />
+      <circle cx={2.9} cy={-6} r={1.5} fill="#e0a019" />
+      <circle cx={-2.9} cy={-6} r={0.8} fill="#1b1410" />
+      <circle cx={2.9} cy={-6} r={0.8} fill="#1b1410" />
+      <g className="avent__owl-lids">
+        <ellipse cx={-2.9} cy={-6} rx={2.8} ry={2.8} fill="#7a5638" />
+        <ellipse cx={2.9} cy={-6} rx={2.8} ry={2.8} fill="#7a5638" />
+      </g>
+      <path d="M-0.9 -4.4L0 -2.4L0.9 -4.4Z" fill="#e0a019" />
+      <path d="M-3 7.2l-1 1.2M-1.6 7.4v1.4M1.6 7.4v1.4M3 7.2l1 1.2" stroke="#e0a019" strokeWidth={0.7} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Rouge-gorge posé sur le toit du nichoir du jour, qui sautille. */
+function Robin() {
+  return (
+    <svg className="nichoir__robin" viewBox="-12 -16 24 18" aria-hidden="true">
+      <path d="M-9 -6L-12.5 -9L-11.5 -4.5Z" fill="#6b4a33" />
+      <ellipse cx={-1} cy={-6} rx={8} ry={6} fill="#8a6345" />
+      <path d="M-1.5 -10.5C3 -11 6.6 -8 6 -3.8C5.4 -1 2 0 -0.6 -0.6C1.6 -3 1.6 -7.4 -1.5 -10.5Z" fill="#e2603a" />
+      <circle cx={4.4} cy={-11} r={4.2} fill="#8a6345" />
+      <path d="M2.4 -12.6C5 -14.4 8.4 -12.4 8 -9.6C6.6 -8.6 4.4 -8.8 3 -10Z" fill="#e2603a" />
+      <circle cx={5.4} cy={-12} r={0.75} fill="#1b1410" />
+      <path d="M8.2 -11.2L11 -10.4L8.2 -9.6Z" fill="#3a2a1d" />
+      <path d="M-2 -0.4V2M1 -0.6V2" stroke="#4a3526" strokeWidth={0.7} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Mésange qui s'envole du nichoir qu'on ouvre. */
+function Bird() {
+  return (
+    <svg className="nichoir__bird" viewBox="-12 -12 24 20" aria-hidden="true">
+      <ellipse cx={0} cy={0} rx={6} ry={4.4} fill="#f2c94c" />
+      <path d="M-6 -1L-11 -3L-10 1.6Z" fill="#4a6fa5" />
+      <circle cx={4.4} cy={-2.6} r={3.4} fill="#2a3b55" />
+      <circle cx={4.6} cy={-2.2} r={2} fill="#ffffff" />
+      <circle cx={5.4} cy={-2.8} r={0.6} fill="#1b1410" />
+      <path d="M7.4 -2.6L9.6 -2L7.4 -1.4Z" fill="#3a2a1d" />
+      <path className="nichoir__wing" d="M-2 -2C-1 -10 4 -11 5 -8C3 -5 1 -3 -2 -2Z" fill="#4a6fa5" />
+    </svg>
+  );
+}
+
+/** Le toit et le corps d'un nichoir (la porte ronde et son entrée sont posées par-dessus). */
+function NichoirArt() {
+  return (
+    <svg className="nichoir__art" viewBox="-12 -4 124 124" aria-hidden="true">
+      <rect className="nichoir__body" x={6} y={34} width={88} height={82} rx={5} />
+      <path className="nichoir__grain" d="M24 40V112M42 38V114M58 38V114M76 40V112" />
+      <rect className="nichoir__perch" x={44} y={98} width={12} height={6} rx={3} />
+      <path className="nichoir__roofline" d="M-6 44L50 8L106 44" />
+      <path d="M-8 38.6L50 2.6L108 38.6" fill="none" stroke="#f4f9ff" strokeWidth={8} strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M8 31q2 5 4 0M26 19.6q2 6 4 0M70 19.6q2 6 4 0M88 31q2 5 4 0" fill="#f4f9ff" />
+    </svg>
+  );
+}
+
+function Nichoir({ day, index, state, opening, at, onOpen }: { day: number; index: number; state: BoxState; opening: boolean; at: Pt; onOpen: () => void }) {
   const entry = AVENT[day - 1];
   const date = `${day === 1 ? '1er' : day} décembre`;
   const label =
     state === 'open'
       ? `${date} : ${shortTitle(entry)}`
       : state === 'today'
-        ? `Ouvrir la fenêtre du ${date}`
+        ? `Ouvrir le nichoir du ${date}`
         : state === 'missed'
-          ? `Fenêtre du ${date}, passée`
-          : `Fenêtre du ${date}, à ouvrir ce jour-là`;
+          ? `Nichoir du ${date}, passé`
+          : `Nichoir du ${date}, à ouvrir ce jour-là`;
   const lit = state === 'open' || opening;
   return (
     <button
       type="button"
-      className={`fenetre fenetre--${state}${opening ? ' is-opening' : ''}${lit ? ' is-lit' : ''}${day === AVENT_DAYS ? ' fenetre--grand' : ''}`}
+      className={`nichoir nichoir--w${index % 4} nichoir--${state}${opening ? ' is-opening' : ''}${lit ? ' is-lit' : ''}`}
+      style={{ left: `${at[0]}%`, top: `${(at[1] / 125) * 100}%`, '--i': index } as CSSProperties}
       disabled={state !== 'today' || opening}
       onClick={onOpen}
       aria-label={label}
       title={label}
     >
-      <span className="fenetre__frame">
-        <span className="fenetre__inside">
-          {lit && (
-            <>
-              <small className="fenetre__date">{day}</small>
-              <SmallGift entry={entry} />
-            </>
-          )}
-        </span>
-        <span className="fenetre__volet fenetre__volet--g" />
-        <span className="fenetre__volet fenetre__volet--d" />
-        <b className="fenetre__num">{day}</b>
-        {state === 'missed' && <i className="fenetre__givre" />}
+      <NichoirArt />
+      <span className="nichoir__hole">{lit && <SmallGift entry={entry} />}</span>
+      <span className="nichoir__door">
+        <b>{day}</b>
       </span>
+      {state === 'missed' && <i className="nichoir__givre" />}
+      {state === 'today' && !opening && <Robin />}
+      {opening && <Bird />}
     </button>
   );
 }
 
-/** Fumée d'une cheminée (`chimney` : sa place sur le toit) : trois volutes qui montent tour à tour. */
-function Smoke({ chimney }: { chimney: number }) {
-  // le haut de la cheminée, en % de la largeur du toit (repère du toit : de -6 à 106)
-  const left = ((chimney + 5.5 + 6) / 112) * 100;
+/** L'étoile en haut du sapin : la case du 24. */
+function Etoile({ state, opening, onOpen }: { state: BoxState; opening: boolean; onOpen: () => void }) {
+  const entry = AVENT[AVENT_DAYS - 1];
+  const lit = state === 'open' || opening;
+  const label = state === 'open' ? `24 décembre : ${shortTitle(entry)}` : state === 'today' ? 'Ouvrir l’étoile du 24 décembre' : 'L’étoile du 24 décembre, le grand cadeau du réveillon';
   return (
-    <span className="maison__smoke" style={{ left: `${left.toFixed(1)}%` }} aria-hidden="true">
-      <i />
-      <i />
-      <i />
-    </span>
-  );
-}
-
-const HOUSES = AVENT_LAYOUT.length / 4;
-/** Cheminée de chaque maison (position sur le toit, en % du toit). */
-const CHIMNEYS = [70, 18, 66, 22, 72, 20];
-
-// ───────────── le traîneau ─────────────
-
-/** Le traîneau du Père Noël et ses deux rennes, en silhouette dorée, avec sa traînée d'étincelles. */
-function Sleigh() {
-  const reindeer = (x: number, key: number) => (
-    <g key={key} transform={`translate(${x} 0)`}>
-      <ellipse cx={0} cy={-6} rx={5.2} ry={2.4} />
-      <path d="M-3.6 -4.6L-5.6 -0.6M-2 -4.4L-0.6 -0.4M2.6 -4.4L5 -1.4M3.8 -4.6L2.4 -0.2" strokeWidth={1} strokeLinecap="round" fill="none" />
-      <path d="M3.2 -7.6L5.6 -11.4L7.2 -10.6L5 -6.4Z" />
-      <ellipse cx={7.4} cy={-10.8} rx={2} ry={1} transform="rotate(18 7.4 -10.8)" />
-      <path d="M6.2 -11.6L5.2 -14.6M5.5 -13.4L4 -14M6.6 -11.8L7.6 -15M7.3 -13.8L8.8 -14.3" strokeWidth={0.6} strokeLinecap="round" fill="none" />
-      <path d="M-5 -6.6L-6.6 -8" strokeWidth={0.8} strokeLinecap="round" fill="none" />
-    </g>
-  );
-  return (
-    <svg className="avent__sleigh" viewBox="-30 -18 110 22" aria-hidden="true">
-      <g className="avent__sleigh-trail">
-        {[[-26, -6, 0.9], [-21, -8.4, 0.6], [-16, -5, 1.1], [-11, -7.6, 0.7], [-6, -4.4, 0.8]].map(([x, y, r], k) => (
-          <circle key={k} cx={x} cy={y} r={r} />
-        ))}
-      </g>
-      <g className="avent__sleigh-body">
-        <path d="M14 -6.4L46 -9.2M14 -6.4L64 -9.2" strokeWidth={0.4} fill="none" />
-        {reindeer(46, 1)}
-        {reindeer(64, 2)}
-        <path d="M-2 0H17Q21 0 21 -3.4" strokeWidth={1} fill="none" strokeLinecap="round" />
-        <path d="M0 -2L15 -2Q18.4 -2 18.4 -6L18.4 -8.4L14 -8.4L12.4 -5.2L3 -5.2Q-1 -5.2 0 -2Z" />
-        <circle cx={8.6} cy={-11.6} r={1.7} />
-        <path d="M5.4 -5.2Q5.4 -10 8.6 -10Q11.8 -10 11.8 -5.2Z" />
-        <path d="M7 -12.8L8.6 -16.4L10.6 -12.6Z" />
-        <path d="M11 -9.2L13.6 -10.6L14.4 -6.4L11.6 -6.2Z" />
-      </g>
-    </svg>
+    <button
+      type="button"
+      className={`etoile etoile--${state}${opening ? ' is-opening' : ''}${lit ? ' is-lit' : ''}`}
+      disabled={state !== 'today' || opening}
+      onClick={onOpen}
+      aria-label={label}
+      title={label}
+    >
+      <svg viewBox="-12 -12 24 24" aria-hidden="true">
+        <path d={star(0, 0.6, 11)} className="etoile__shape" />
+        <path d={star(0, 0.6, 7.6)} className="etoile__core" />
+      </svg>
+      <b>24</b>
+    </button>
   );
 }
 
 // ───────────── la cérémonie du cadeau ─────────────
 
-/** Le grand paquet cadeau : la boîte rouge, son ruban doré, et le couvercle (à part, il s'envole). */
+/** Le cadeau emballé dans du papier kraft : sa ficelle, son brin de sapin et ses baies (le couvercle s'envole). */
 function Present() {
   return (
     <svg className="avent-reveal__present" viewBox="0 0 120 110" aria-hidden="true">
       <g className="avent-reveal__box">
-        <rect x={14} y={42} width={92} height={64} rx={4} fill="#c0392b" />
-        <rect x={60} y={42} width={46} height={64} fill="#000" opacity={0.12} />
-        <rect x={52} y={42} width={16} height={64} fill="#f2c14e" />
-        <rect x={52} y={42} width={6} height={64} fill="#fff3c4" opacity={0.35} />
-        <path d="M18 52L26 60M30 52L22 60M90 70L98 78M102 70L94 78M24 88L30 94M30 88L24 94" stroke="#fff" strokeOpacity={0.35} strokeWidth={1.6} strokeLinecap="round" />
+        <rect x={14} y={42} width={92} height={64} rx={4} fill="#c9a271" />
+        <path d="M14 56H106M14 72H106M14 90H106" stroke="#b08a5a" strokeWidth={0.8} opacity={0.5} />
+        <rect x={60} y={42} width={46} height={64} fill="#000" opacity={0.1} />
+        <path d="M59 42V106M62 42V106" stroke="#7a4a24" strokeWidth={1.4} />
+        <path d="M14 74H106M14 77H106" stroke="#7a4a24" strokeWidth={1.4} />
       </g>
       <g className="avent-reveal__lid">
-        <rect x={8} y={28} width={104} height={18} rx={3} fill="#d84a3c" />
-        <rect x={8} y={40} width={104} height={6} fill="#000" opacity={0.15} />
-        <rect x={52} y={28} width={16} height={18} fill="#f2c14e" />
-        <path d="M60 28C44 6 26 18 40 26C46 29 54 29 60 28Z" fill="#f2c14e" />
-        <path d="M60 28C76 6 94 18 80 26C74 29 66 29 60 28Z" fill="#f2c14e" />
-        <path d="M60 28C50 14 38 18 44 24Z M60 28C70 14 82 18 76 24Z" fill="#c58f1f" opacity={0.6} />
-        <circle cx={60} cy={27} r={5} fill="#ffd166" />
+        <rect x={8} y={28} width={104} height={18} rx={3} fill="#d4ad7c" />
+        <rect x={8} y={40} width={104} height={6} fill="#000" opacity={0.12} />
+        <path d="M59 28V46M62 28V46" stroke="#7a4a24" strokeWidth={1.4} />
+        {/* le nœud de ficelle, un brin de sapin, des baies et une pomme de pin */}
+        <path d="M60.5 28C50 14 40 22 48 27C52 29 57 29 60.5 28ZM60.5 28C71 14 81 22 73 27C69 29 64 29 60.5 28Z" fill="none" stroke="#7a4a24" strokeWidth={1.6} />
+        <path d="M60 26L30 14M60 26L88 12M44 20.2L41 15.6M44 20.2L40.6 22.4M36 17L33.6 12.6M36 17L32.6 19.4M74 19.4L76.2 14.6M74 19.4L77.6 21.4M82 15.6L83.4 10.8M82 15.6L86 17.2" stroke="#2f6b4a" strokeWidth={2.4} strokeLinecap="round" />
+        <path d="M60 26L30 14M60 26L88 12" stroke="#1f4d3a" strokeWidth={1} />
+        <ellipse cx={68} cy={21} rx={4} ry={6} transform="rotate(-30 68 21)" fill="#8a5a2c" />
+        <path d="M65 17l5 2M64.4 20.4l6 1.6M65 23.6l4.6 1" stroke="#5a3a1c" strokeWidth={0.9} />
+        <circle cx={54} cy={22} r={3} fill="#c0392b" />
+        <circle cx={50} cy={25} r={2.6} fill="#d64541" />
+        <circle cx={55.6} cy={26.6} r={2.4} fill="#b3262e" />
+        <circle cx={53} cy={21} r={0.9} fill="#fff" opacity={0.7} />
       </g>
     </svg>
   );
@@ -320,14 +426,7 @@ function Reveal({ day, onClaim }: { day: number; onClaim: () => void }) {
 
 // ───────────── le calendrier ─────────────
 
-/** Nombre de maisons par rangée selon la largeur du calendrier. */
-function housesPerRow(width: number): number {
-  if (width < 560) return 2;
-  if (width < 900) return 3;
-  return 6;
-}
-
-/** Neige qui tombe sur le village. */
+/** Neige qui tombe sur la forêt. */
 const FLAKES = Array.from({ length: 18 }, (_, k) => ({
   left: `${(k * 61.8) % 100}%`,
   '--s': `${2 + ((k * 7) % 5)}px`,
@@ -341,17 +440,17 @@ export function AdventCalendar() {
   const today = aventDay(now);
   const avent = useGame((s) => s.avent);
   const openAvent = useGame((s) => s.openAvent);
-  // la fenêtre qui s'ouvre, puis le paquet cadeau à l'écran
+  // le nichoir qui s'ouvre, puis le cadeau à l'écran
   const [opening, setOpening] = useState<number | null>(null);
   const [reveal, setReveal] = useState<number | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
   const ref = useRef<HTMLElement>(null);
-  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [height, setHeight] = useState(0);
   useLayoutEffect(() => {
     const section = ref.current;
     if (!section) return;
-    const measure = () => setBox({ w: section.clientWidth, h: section.offsetHeight });
+    const measure = () => setHeight(section.offsetHeight);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(section);
@@ -362,12 +461,12 @@ export function AdventCalendar() {
   const opened = aventOpened(avent, now);
   const doneToday = opened.includes(today);
   const entry = AVENT[today - 1];
-  const stateOf = (day: number): WindowState => (opened.includes(day) ? 'open' : day === today ? 'today' : day < today ? 'missed' : 'later');
+  const stateOf = (day: number): BoxState => (opened.includes(day) ? 'open' : day === today ? 'today' : day < today ? 'missed' : 'later');
   const open = (day: number) => {
     if (opening || reveal) return;
     sfx.flip();
     setOpening(day);
-    timer.current = window.setTimeout(() => setReveal(day), 750);
+    timer.current = window.setTimeout(() => setReveal(day), 900);
   };
   const claim = () => {
     if (!reveal) return;
@@ -375,30 +474,9 @@ export function AdventCalendar() {
     setReveal(null);
     setOpening(null);
   };
-
-  const perRow = housesPerRow(box.w);
-  const houses: ReactNode[] = [];
-  for (let h = 0; h < HOUSES; h++) {
-    const days = AVENT_LAYOUT.slice(h * 4, h * 4 + 4);
-    houses.push(
-      <div key={h} className={`maison maison--${h}`}>
-        <Smoke chimney={CHIMNEYS[h]} />
-        <Roof chimney={CHIMNEYS[h]} />
-        <div className="maison__wall">
-          <div className="maison__windows">
-            {days.map((day) => (
-              <Fenetre key={day} day={day} state={stateOf(day)} opening={opening === day} onOpen={() => open(day)} />
-            ))}
-          </div>
-        </div>
-      </div>,
-    );
-  }
   const date = `${today === 1 ? '1er' : today} décembre`;
   const style = {
-    '--houses': perRow,
-    '--pw': `${box.w || 360}px`,
-    '--fall': `${box.h || 800}px`,
+    '--fall': `${height || 800}px`,
     '--ground': AVENT_GROUND,
     '--stars-a': AVENT_STARS_A,
     '--stars-b': AVENT_STARS_B,
@@ -410,7 +488,6 @@ export function AdventCalendar() {
         <i className="avent__stars" />
         <i className="avent__stars avent__stars--b" />
         <i className="avent__moon" />
-        <Sleigh />
         <i className="avent__ground" />
         <span className="avent__snow">
           {FLAKES.map((flake, k) => (
@@ -420,14 +497,32 @@ export function AdventCalendar() {
       </div>
       <header className="avent__head">
         <p className="eyebrow">Calendrier de l’Avent</p>
-        <h2 id="avent-title">{doneToday ? `${date} : ${entry.title.charAt(0).toLowerCase()}${entry.title.slice(1)} !` : `Ouvre la fenêtre du ${date}`}</h2>
+        <h2 id="avent-title">{doneToday ? `${date} : ${entry.title.charAt(0).toLowerCase()}${entry.title.slice(1)} !` : `Ouvre le nichoir du ${date}`}</h2>
         <p className="avent__sub">
           {doneToday
-            ? `${entry.note ? `${entry.note}. ` : ''}${today < AVENT_DAYS ? 'Une autre fenêtre s’allumera demain.' : 'Joyeux Noël !'}`
-            : `${entry.note ? `${entry.note} ! ` : ''}Une fenêtre par jour jusqu’au 24 décembre, chacune avec son cadeau. Celle du jour est éclairée : touche-la !`}
+            ? `${entry.note ? `${entry.note}. ` : ''}${today < AVENT_DAYS ? 'Un autre nichoir s’ouvrira demain.' : 'Joyeux Noël !'}`
+            : today === AVENT_DAYS
+              ? 'Le grand cadeau du réveillon t’attend dans l’étoile du sapin : touche-la !'
+              : `${entry.note ? `${entry.note} ! ` : ''}Un nichoir par jour jusqu’au 24 décembre, chacun avec son cadeau ; l’étoile garde celui du réveillon. Le rouge-gorge t’attend sur celui du jour !`}
         </p>
+        <p className="avent__progress">
+          {opened.length} cadeau{opened.length > 1 ? 'x' : ''} ouvert{opened.length > 1 ? 's' : ''} sur {AVENT_DAYS}
+          {today < AVENT_DAYS ? ` · encore ${AVENT_DAYS - today} jour${AVENT_DAYS - today > 1 ? 's' : ''} avant le réveillon` : ' · c’est le réveillon !'}
+        </p>
+        {!doneToday && (
+          <button type="button" className="btn btn--primary avent__cta" disabled={!!opening || !!reveal} onClick={() => open(today)}>
+            {today === AVENT_DAYS ? 'Ouvrir l’étoile' : 'Ouvrir le nichoir du jour'}
+          </button>
+        )}
       </header>
-      <div className="avent__village">{houses}</div>
+      <div className="avent__tree">
+        <Tree />
+        <Owl />
+        <Etoile state={stateOf(AVENT_DAYS)} opening={opening === AVENT_DAYS} onOpen={() => open(AVENT_DAYS)} />
+        {SPOTS.map((at, k) => (
+          <Nichoir key={DAYS[k]} day={DAYS[k]} index={k} state={stateOf(DAYS[k])} opening={opening === DAYS[k]} at={at} onOpen={() => open(DAYS[k])} />
+        ))}
+      </div>
       {reveal && <Reveal day={reveal} onClaim={claim} />}
     </section>
   );

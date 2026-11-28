@@ -132,7 +132,7 @@ function giraffe(fill: string): ReactNode {
 }
 
 /** Cerf : corps, cou dressé et grands bois ramifiés. */
-function stag(fill: string): ReactNode {
+export function stag(fill: string): ReactNode {
   return (
     <g fill={fill} stroke={fill} strokeLinecap="round" strokeLinejoin="round">
       <path d="M-6 -9L-6.6 0M-4.6 -9L-4.2 0M3 -9.5L2.8 0M4.4 -9.5L4.8 0" strokeWidth={0.95} fill="none" />
@@ -179,7 +179,7 @@ function flamingo(fill: string): ReactNode {
   );
 }
 
-function rabbit(fill: string): ReactNode {
+export function rabbit(fill: string): ReactNode {
   return (
     <g fill={fill}>
       <ellipse cx={-1} cy={-3.4} rx={4.2} ry={3.5} />
@@ -282,7 +282,7 @@ function panda(light: string, dark: string): ReactNode {
 }
 
 /** Renard assis, de profil, la queue enroulée devant lui. */
-function fox(fill: string, tip: string): ReactNode {
+export function fox(fill: string, tip: string): ReactNode {
   return (
     <g>
       <path d="M-6 0C-9.6 0 -11 -2.6 -9.8 -4.4C-8.6 -6 -6 -5 -4.2 -3.6Z" fill={fill} />
