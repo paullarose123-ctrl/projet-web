@@ -33,7 +33,7 @@ import { NowPlaying } from './components/NowPlaying';
 import { accountsEnabled } from './account/supabase';
 import { Landscape } from './components/PackScene';
 import { SITE_SCENE_HALLOWEEN, SITE_SCENE_MUERTOS, SITE_SCENE_NOEL } from './art/scenes';
-import { SNOWCAP_TILE, SNOWDRIFT_TILE, SapinMark } from './components/Noel';
+import { SNOWCAP_TILE, SNOWDRIFT_TILE, SNOWGROUND_TILE, SapinMark } from './components/Noel';
 import { Snowfall } from './components/Snowfall';
 
 const NAV: Array<{ id: Tab; label: string; icon: ReactNode }> = [
@@ -238,6 +238,7 @@ export function App() {
     const style = document.documentElement.style;
     style.setProperty('--snowcap', SNOWCAP_TILE);
     style.setProperty('--snowdrift', SNOWDRIFT_TILE);
+    style.setProperty('--snowground', SNOWGROUND_TILE);
   }, [season]);
 
   useEffect(() => {

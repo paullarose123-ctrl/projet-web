@@ -287,6 +287,13 @@ export const SNOWDRIFT_TILE = svgUrl(
   `<path d="M0 12V7Q8 2.6 17 5.4Q24 1.6 33 4.8Q40 6.6 46 3.8Q55 0.6 63 4.6Q70 7 76 4.2Q84 1.8 90 6V12Z" fill="#f4f9ff"/><path d="M0 12V9Q20 6.4 45 8.6T90 8.4V12Z" fill="#c4d9ee" fill-opacity="0.6"/>`,
 );
 
+/** Tapis de neige au bas de l'écran (grand écran), à la hauteur de la neige des décors des coins. */
+export const SNOWGROUND_TILE = svgUrl(
+  120,
+  20,
+  `<path d="M0 20V5.6Q15 3.6 30 5.2T60 5.4T90 5T120 5.6V20Z" fill="${XMAS.snow}"/><path d="M0 20V8.6Q30 6.8 60 8.4T120 8.6V20Z" fill="${XMAS.snowShade}" fill-opacity="0.55"/>`,
+);
+
 /** Neige et stalactites de glace pendues au haut des en-têtes illustrés. */
 export const ICICLES_TILE = svgUrl(
   64,
