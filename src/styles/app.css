@@ -809,13 +809,59 @@
   padding: 0 20px;
 }
 
-/* trois séries sorties : trois boosters, un peu plus serrés */
+/* trois séries sorties : les boosters en triangle, le Mexique à gauche, les Animaux du monde à droite et l'Hiver
+   devant eux, en bas au milieu ; les boutons d'ouverture en triangle de la même façon */
 .hero--trio .hero__pack {
-  width: min(420px, 78vw);
+  width: min(270px, 72vw);
 }
 
 .hero--trio .hero__boosters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    's2 s1'
+    's3 s3';
+  gap: 0 14px;
+}
+
+.hero--trio .hero__booster--s1 {
+  grid-area: s1;
+}
+
+.hero--trio .hero__booster--s2 {
+  grid-area: s2;
+}
+
+.hero--trio .hero__booster--s3 {
+  grid-area: s3;
+  justify-self: center;
+  position: relative;
+  z-index: 1;
+  width: calc(50% - 7px);
+  margin-top: -26%;
+}
+
+.hero--trio .hero__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(124px, auto));
+  grid-template-areas:
+    's2 s1'
+    's3 s3';
   gap: 10px;
+}
+
+.hero--trio .hero__open--s1 {
+  grid-area: s1;
+}
+
+.hero--trio .hero__open--s2 {
+  grid-area: s2;
+}
+
+.hero--trio .hero__open--s3 {
+  grid-area: s3;
+  justify-self: center;
+  min-width: 124px;
 }
 
 @media (min-width: 760px) {
@@ -826,10 +872,10 @@
     width: 320px;
   }
   .hero--trio {
-    grid-template-columns: 420px 1fr;
+    grid-template-columns: 320px 1fr;
   }
   .hero--trio .hero__pack {
-    width: 420px;
+    width: 300px;
   }
 }
 
@@ -849,10 +895,10 @@
     width: 300px;
   }
   .hero--trio {
-    grid-template-columns: 360px 1fr auto;
+    grid-template-columns: 320px 1fr auto;
   }
   .hero--trio .hero__pack {
-    width: 360px;
+    width: 300px;
   }
   .showcase {
     position: relative;
@@ -7042,7 +7088,9 @@
    boutons principaux rouge sucre d'orge coiffés de neige, de la neige sur la barre du bas, des stalactites au haut des
    en-têtes, et la neige qui tombe à la place des lucioles (components/Snowfall.tsx). */
 :root.saison-noel {
-  --accent-text: #ffd27a;
+  /* l'or et l'orange des accents passent au bleu glacier */
+  --accent-text: #a8dcff;
+  --honey: #6fc3f2;
   /* le sous-bois vert devient une nuit d'hiver bleu marine */
   --bg: #0a1322;
   --bg-2: #0f1b2e;
@@ -7058,7 +7106,13 @@
 
 .saison-noel .topbar {
   background: rgba(6, 18, 42, 0.9);
-  border-bottom-color: rgba(255, 210, 122, 0.4);
+  border-bottom-color: rgba(168, 220, 255, 0.4);
+}
+
+/* le petit trait des surtitres, en bleu glacier */
+.saison-noel .eyebrow::before {
+  background: linear-gradient(90deg, #6fc3f2, #cdeeff);
+  box-shadow: 0 0 10px rgba(111, 195, 242, 0.6);
 }
 
 .saison-noel .bottomnav {
@@ -7079,7 +7133,8 @@
 }
 
 .saison-noel .bottomnav__item.is-active::before {
-  box-shadow: 0 0 14px rgba(255, 210, 122, 0.85);
+  background: #a8dcff;
+  box-shadow: 0 0 14px rgba(140, 205, 255, 0.85);
 }
 
 /* les boutons principaux en rouge sucre d'orge pastel, de la neige sur le dessus (les boosters gardent leur couleur) */
@@ -7145,7 +7200,24 @@
 /* le petit sapin du logo sur téléphone */
 .sapin-mark {
   height: 1.05em;
-  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.55));
+  filter: drop-shadow(0 0 6px rgba(168, 220, 255, 0.55));
+}
+
+/* sur grand écran, un tapis de neige relie les décors des deux coins, tout le long du bas de l'écran */
+.hw-snowground {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .hw-snowground {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20px;
+    background: var(--snowground) repeat-x 0 100% / auto 20px;
+  }
 }
 
 /* neige et stalactites au haut des en-têtes illustrés */
@@ -7231,9 +7303,9 @@ html.lite .snowfall--front {
   position: relative;
   overflow: hidden;
   padding-top: 40px;
-  border-color: rgba(255, 210, 122, 0.45);
+  border-color: rgba(168, 220, 255, 0.4);
   background:
-    radial-gradient(90% 70% at 50% 0%, rgba(255, 210, 122, 0.14), transparent 70%),
+    radial-gradient(90% 70% at 50% 0%, rgba(168, 220, 255, 0.14), transparent 70%),
     radial-gradient(120% 120% at 100% 100%, rgba(215, 38, 61, 0.2), transparent 60%),
     linear-gradient(170deg, #12305a, #0a1631 70%);
 }
@@ -7382,7 +7454,7 @@ html.lite .snowfall--front {
 }
 
 .avent-door--today .avent-door__leaf {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(0, 0, 0, 0.35), 0 0 0 2px #ffd27a, 0 0 18px rgba(255, 210, 122, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(0, 0, 0, 0.35), 0 0 0 2px #a8dcff, 0 0 18px rgba(140, 205, 255, 0.75);
 }
 
 .avent-door--today::after {
@@ -7390,7 +7462,7 @@ html.lite .snowfall--front {
   position: absolute;
   inset: -4px;
   border-radius: 13px;
-  box-shadow: 0 0 22px 4px rgba(255, 210, 122, 0.7);
+  box-shadow: 0 0 22px 4px rgba(140, 205, 255, 0.75);
   animation: avent-call 1.3s ease-in-out infinite alternate;
   pointer-events: none;
 }

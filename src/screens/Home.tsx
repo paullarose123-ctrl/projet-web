@@ -41,12 +41,13 @@ const SHOWCASE_MEXIQUE: CardFace[] = [
   { athleteId: 'orang-outan', variant: 'base' },
 ];
 
+/** Avec l'Hiver : les trois séries mêlées autour de l'ours polaire Prime, en vedette au centre. */
 const SHOWCASE_HIVER: CardFace[] = [
-  { athleteId: 'tigre-de-l-amour', variant: 'base' },
+  { athleteId: 'lion', variant: 'base' },
   { athleteId: 'mx-jaguar', variant: 'prime' },
   { athleteId: 'hv-ours-polaire', variant: 'prime' },
-  { athleteId: 'hv-manchot-empereur', variant: 'prime' },
-  { athleteId: 'hv-panthere-des-neiges', variant: 'base' },
+  { athleteId: 'guepard', variant: 'prime' },
+  { athleteId: 'mx-axolotl', variant: 'base' },
 ];
 
 function Showcase() {
@@ -189,7 +190,8 @@ function ExpansionBanner() {
               <span className="expansion__mystery">?</span>
             </>
           ) : (
-            <Card card={{ athleteId: hiver ? 'hv-harfang' : 'mx-aigle-royal', variant: 'base' }} size="sm" />
+            // la carte à la largeur de son cadre (112 px), sinon elle en déborde et se retrouve coupée
+            <Card card={{ athleteId: hiver ? 'hv-harfang' : 'mx-aigle-royal', variant: 'base' }} size="sm" style={{ ['--card-w' as string]: '112px' }} />
           )}
         </div>
       </div>
@@ -264,7 +266,7 @@ function FreePackHero() {
               <button
                 key={pack.id}
                 type="button"
-                className="hero__booster"
+                className={`hero__booster hero__booster--s${serie.number}`}
                 disabled={freePacks <= 0}
                 aria-label={`Ouvrir un booster Série ${serie.number} · ${serie.name}`}
                 onClick={() => open(serie.number)}
@@ -317,7 +319,7 @@ function FreePackHero() {
               <button
                 key={pack.id}
                 type="button"
-                className={`btn btn--primary ${trio ? '' : duo ? 'btn--lg' : 'btn--xl'} ${boosterButton(pack.serie)}`}
+                className={`btn btn--primary hero__open--s${serie.number} ${trio ? '' : duo ? 'btn--lg' : 'btn--xl'} ${boosterButton(pack.serie)}`}
                 disabled={freePacks <= 0}
                 aria-label={`Ouvrir un booster Série ${serie.number} · ${serie.name}`}
                 onClick={() => open(serie.number)}

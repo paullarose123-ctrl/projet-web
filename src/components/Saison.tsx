@@ -218,6 +218,8 @@ export const SaisonNight = memo(function SaisonNight() {
   if (!season) return null;
   return (
     <div className="hw-night" aria-hidden="true">
+      {/* Noël, sur grand écran : un tapis de neige relie les deux coins */}
+      {season === 'noel' && <div className="hw-snowground" />}
       <Corners className="hw-corner--back" season={season} />
     </div>
   );
