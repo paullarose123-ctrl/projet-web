@@ -82,6 +82,26 @@ select {
   color: inherit;
 }
 
+/* le jeu se manipule comme une application : cliquer sur un texte n'y fait apparaître ni curseur clignotant (même avec
+   la navigation au curseur du navigateur, touche F7), ni la barre en I au survol, ni de sélection au moindre double
+   clic. Seuls les champs de saisie gardent leur curseur et leur sélection. */
+body {
+  caret-color: transparent;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  caret-color: auto;
+  cursor: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 button {
   cursor: pointer;
 }
